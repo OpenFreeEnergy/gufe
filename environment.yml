@@ -1,0 +1,17 @@
+name: gufe
+channels:
+  - jaimergp/label/unsupported-cudatoolkit-shim
+  - conda-forge
+  - openeye
+dependencies:
+  - numpy
+  - networkx
+  - rdkit
+  - pip
+  - pytest
+  - pytest-xdist
+  - pytest-cov
+  - coverage
+  - openff-toolkit
+  - openeye-toolkits
+  - typing-extensions
