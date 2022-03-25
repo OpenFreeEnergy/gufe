@@ -17,7 +17,7 @@ class ChemicalState:
     ----------
     components
         The molecular representation of the chemical state, including connectivity and
-        coordinates. Given as a dict with user-defined labels as keys, RDKit
+        coordinates. This is a frozendict with user-defined labels as keys, RDKit
         molecules as values.
     box_vectors
         Numpy array indicating shape and size of unit cell for the system.
@@ -41,7 +41,8 @@ class ChemicalState:
         ----------
         components
             The molecular representation of the chemical state, including connectivity and
-            coordinates. This is a `frozendict`
+            coordinates. Given as a dict with user-defined labels as keys, RDKit
+            molecules as values.
         box_vectors
             Numpy array indicating shape and size of unit cell for the system.
             May be a partial definition to allow for variability on certain dimensions.
