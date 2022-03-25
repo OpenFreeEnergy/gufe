@@ -15,3 +15,4 @@ dependencies:
   - openff-toolkit
   - openeye-toolkits
   - typing-extensions
+  - frozendict
