@@ -1,0 +1,80 @@
+name: "CI"
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  schedule:
+    # At 07:00 UTC on Monday and Thursday.
+    - cron: "0 7 * * 1,4"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.OS }}-latest
+    name: "tests"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu', 'macos']
+        python-version:
+          - 3.8
+          - 3.9
+
+    env:
+      OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+            auto-update-conda: true
+            use-mamba: true
+            python-version: ${{ matrix.python-version }}
+            miniforge-variant: Mambaforge
+            environment-file: environment.yml
+            activate-environment: gufe
+
+      - name: Decrypt OpenEye license
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        env:
+          OE_LICENSE_TEXT: ${{ secrets.OE_LICENSE }}
+        run: |
+          echo "${OE_LICENSE_TEXT}" > ${OE_LICENSE}
+          python -c "import openeye; assert openeye.oechem.OEChemIsLicensed(), 'OpenEye license checks failed!'"
+
+      - name: "Install"
+        run: python setup.py develop --no-deps
+
+      - name: "Test imports"
+        run: |
+          # if we add more to this, consider changing to for + env vars
+          python -Ic "import gufe"
+
+      - name: "Environment Information"
+        run: |
+          mamba info -a
+          mamba list
+
+      - name: "Run tests"
+        run: |
+          pytest -n 2 -v --cov=gufe --cov-report=xml
+
+      - name: codecov
+        if: ${{ github.repository == 'OpenFreeEnergy/gufe'
+                && github.event != 'schedule' }}
+        uses: codecov/codecov-action@v2
+        with:
+          file: coverage.xml
+          fail_ci_if_error: True
+          verbose: True
