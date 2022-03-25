@@ -16,12 +16,12 @@ class ChemicalState:
     Attributes
     ----------
     components
-        The molecular representation of the chemical state, including connectivity and
-        coordinates. This is a frozendict with user-defined labels as keys, RDKit
-        molecules as values.
+        The molecular representation of the chemical state, including
+        connectivity and coordinates. This is a frozendict with user-defined
+        labels as keys, RDKit molecules as values.
     box_vectors
-        Numpy array indicating shape and size of unit cell for the system.
-        May be a partial definition to allow for variability on certain dimensions.
+        Numpy array indicating shape and size of unit cell for the system. May
+        be a partial definition to allow for variability on certain dimensions.
     identifier
         Optional identifier for the chemical state; used as part of the
         (hashable) graph node itself when the chemical state is added to an
@@ -40,12 +40,13 @@ class ChemicalState:
         Attributes
         ----------
         components
-            The molecular representation of the chemical state, including connectivity and
-            coordinates. Given as a dict with user-defined labels as keys, RDKit
-            molecules as values.
+            The molecular representation of the chemical state, including
+            connectivity and coordinates. Given as a dict with user-defined
+            labels as keys, RDKit molecules as values.
         box_vectors
             Numpy array indicating shape and size of unit cell for the system.
-            May be a partial definition to allow for variability on certain dimensions.
+            May be a partial definition to allow for variability on certain
+            dimensions.
         identifier
             Optional identifier for the chemical state; used as part of the
             (hashable) graph node itself when the chemical state is added to an
@@ -55,7 +56,6 @@ class ChemicalState:
         self.components = frozendict(components)
         self.box_vectors = box_vectors
         self.identifier = identifier
-
 
     def __hash__(self):
         return hash((self.components, self.identifier))
