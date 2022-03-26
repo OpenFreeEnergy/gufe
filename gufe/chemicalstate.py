@@ -5,10 +5,9 @@ from typing import Dict
 
 import numpy as np
 from frozendict import frozendict
-from openff.toolkit.topology import Molecule, Topology
-from openff.interchange.components.interchange import Interchange
 
 from .custom_typing import RDKitMol
+
 
 class ChemicalState:
     """A node of an alchemical network.
