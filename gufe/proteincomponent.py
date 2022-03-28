@@ -57,7 +57,7 @@ class ProteinComponent(Component):
         raise NotImplementedError()
 
     @classmethod
-    def from_dict(cls):
+    def from_dict(cls, d: dict):
         raise NotImplementedError()
 
     def __hash__(self):

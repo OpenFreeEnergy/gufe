@@ -20,5 +20,5 @@ class Component(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_dict(cls):
+    def from_dict(cls, d: dict):
         pass
