@@ -26,7 +26,8 @@ class SolventComponent:
         if ions is not None:
             # strip and sort so that ('Na', 'Cl-') is equivalent to
             # ('Cl', 'Na+')
-            self._ions = tuple(sorted(i.strip('+-') for i in ions))
+            self._ions = tuple(sorted(i.strip('+-').capitalize()
+                                      for i in ions))
         else:
             self._ions = tuple()
         self._concentration = concentration
@@ -44,10 +45,12 @@ class SolventComponent:
         return self._concentration
 
     def __eq__(self, other):
-        # TODO: Class type check?
-        return (self.smiles == other.smiles and
-                self.ions == other.ions and
-                self.concentration == other.concentration)
+        try:
+            return (self.smiles == other.smiles and
+                    self.ions == other.ions and
+                    self.concentration == other.concentration)
+        except AttributeError:
+            return False
 
     def __hash__(self):
         return hash((self.smiles, self.ions, self.concentration))

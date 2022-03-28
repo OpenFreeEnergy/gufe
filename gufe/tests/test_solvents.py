@@ -1,3 +1,5 @@
+import pytest
+
 from gufe import SolventComponent
 
 
@@ -9,12 +11,22 @@ def test_defaults():
     assert s.concentration is None
 
 
-def test_hash():
-    s1 = SolventComponent(ions=('Cl-', 'Na+'))
-    s2 = SolventComponent(ions=('Na', 'Cl'))
+@pytest.mark.parametrize('other,', [
+    # test: ordering, charge dropping, case sensitivity
+    ('Cl', 'Na'), ('Na+', 'Cl-'), ('cl', 'na'),
+])
+def test_hash(other):
+    s1 = SolventComponent(ions=('Na', 'Cl'))
+    s2 = SolventComponent(ions=other)
 
     assert s1 == s2
     assert hash(s1) == hash(s2)
+
+
+def test_neq():
+    s = SolventComponent(ions=('Na', 'Cl'))
+
+    assert s != 42
 
 
 def test_to_dict():
