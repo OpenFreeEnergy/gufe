@@ -34,6 +34,7 @@ def test_to_dict():
     s = SolventComponent(ions=('Na', 'Cl'))
 
     assert s.to_dict() == {'smiles': 'O', 'ions': ('Cl', 'Na'),
+                           'neutralize': True,
                            'concentration': None}
 
 
