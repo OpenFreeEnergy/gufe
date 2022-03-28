@@ -53,8 +53,12 @@ class ChemicalState:
 
         """
         self._components = frozendict(components)
-        self._box_vectors = box_vectors
         self._identifier = identifier
+
+        if box_vectors is None:
+            self._box_vectors = np.array([np.nan]*9)
+        else:
+            self._box_vectors = box_vectors
 
     def __hash__(self):
         return hash((self._components, self._identifier, self._box_vectors))
