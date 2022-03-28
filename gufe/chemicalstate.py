@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 from frozendict import frozendict
@@ -31,8 +31,8 @@ class ChemicalState:
     def __init__(
             self,
             components: Dict[str, RDKitMol],
-            box_vectors: np.ndarray,
-            identifier: str = None,
+            box_vectors: Optional[np.ndarray] = None,
+            identifier: Optional[str] = None,
             ):
         """Create a node for an alchemical network.
 
@@ -52,25 +52,36 @@ class ChemicalState:
             `AlchemicalNetwork`
 
         """
-        self.components = frozendict(components)
-        self.box_vectors = box_vectors
-        self.identifier = identifier
+        self._components = frozendict(components)
+        self._box_vectors = box_vectors
+        self._identifier = identifier
 
     def __hash__(self):
-        return hash((self.components, self.identifier))
+        return hash((self._components, self._identifier, self._box_vectors))
+
+    @property
+    def components(self):
+        return self._components
+
+    @property
+    def box_vectors(self):
+        return np.array(self._box_vectors)
+
+    @property
+    def identifier(self):
+        return self._identifier
+
+    @classmethod
+    def as_protein_ligand_solvent(cls):
+        """
+
+        """
+        ...
 
 
-class ProteinLigandSolventMicrostate(ChemicalState):
-    """
-
-    """
-    ...
-
-
-class LigandSolvent(ChemicalState):
-    """
-
-    """
-    ...
-
-    pass
+    @classmethod
+    def as_ligand_solvent(cls):
+        """
+    
+        """
+        ...
