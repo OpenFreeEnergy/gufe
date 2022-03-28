@@ -1,6 +1,7 @@
 import pytest
 
 from gufe import SolventComponent
+from openff.units import unit
 
 
 def test_defaults():
@@ -30,7 +31,21 @@ def test_neq():
 
 
 def test_to_dict():
-    s = SolventComponent(ions=['Na', 'Cl'])
+    s = SolventComponent(ions=('Na', 'Cl'))
 
     assert s.to_dict() == {'smiles': 'O', 'ions': ('Cl', 'Na'),
                            'concentration': None}
+
+
+def test_from_dict():
+    s1 = SolventComponent(ions=('Na', 'Cl'),
+                          concentration=1.75 * unit.molar,
+                          neutralize=False)
+
+    assert SolventComponent.from_dict(s1.to_dict()) == s1
+
+
+def test_conc():
+    s = SolventComponent(ions=('Na', 'Cl'), concentration=1.75 * unit.molar)
+
+    assert s.concentration == unit.Quantity('1.75 M')
