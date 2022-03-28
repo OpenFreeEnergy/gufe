@@ -3,9 +3,11 @@
 from typing import Tuple
 from openff.units import unit
 
+from gufe import Component
+
 
 # really wanted to make this a dataclass but then can't sort & strip ion input
-class SolventComponent:
+class SolventComponent(Component):
     """Solvent molecules in a chemical state
 
     This component represents the abstract idea of the solvent and ions present
