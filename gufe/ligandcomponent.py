@@ -10,6 +10,7 @@ import warnings
 from rdkit import Chem
 
 from gufe import __version__
+from gufe import Component
 from gufe.molhashing import hashmol
 from gufe.custom_typing import RDKitMol, OEMol
 
@@ -44,7 +45,7 @@ def _ensure_ofe_version(mol: RDKitMol):
     mol.SetProp("ofe-version", __version__)
 
 
-class LigandComponent:
+class LigandComponent(Component):
     """A molecule wrapper to provide proper hashing and equality.
 
     This class is designed to act as a node on a Network graph.
@@ -107,7 +108,6 @@ class LigandComponent:
     def from_openff(cls, openff: OFFMolecule, name: str = ""):
         raise NotImplementedError
 
-
     @property
     def smiles(self) -> str:
         return self._hash.smiles
@@ -121,6 +121,13 @@ class LigandComponent:
 
     def __eq__(self, other):
         return hash(self) == hash(other)
+
+    def to_dict(self) -> dict:
+        raise NotImplementedError()
+
+    @classmethod
+    def from_dict(cls):
+        raise NotImplementedError()
 
     def to_sdf(self) -> str:
         """Create a string based on SDF.
