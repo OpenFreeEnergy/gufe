@@ -5,4 +5,4 @@ __version__ = _version.get_versions()['version']
 from .ligandcomponent import LigandComponent
 from .proteincomponent import ProteinComponent
 from .solventcomponent import SolventComponent
-from .microstate import Microstate
+from .chemicalstate import ChemicalState
