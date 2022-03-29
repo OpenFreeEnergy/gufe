@@ -13,5 +13,6 @@ dependencies:
   - pytest-cov
   - coverage
   - openff-toolkit
+  - openff-units
   - openeye-toolkits
   - typing-extensions
