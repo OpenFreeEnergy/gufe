@@ -2,10 +2,11 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from rdkit import Chem
 
+from gufe import Component
 from gufe.custom_typing import RDKitMol, OEMol
 
 
-class ProteinComponent:
+class ProteinComponent(Component):
     """Wrapper around a Protein representation
 
     This representation is immutable.  If you want to make any modifications,
@@ -50,6 +51,13 @@ class ProteinComponent:
         raise NotImplementedError()
 
     def to_openeye(self) -> OEMol:
+        raise NotImplementedError()
+
+    def to_dict(self) -> dict:
+        raise NotImplementedError()
+
+    @classmethod
+    def from_dict(cls, d: dict):
         raise NotImplementedError()
 
     def __hash__(self):
