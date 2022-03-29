@@ -51,7 +51,7 @@ class SolventComponent(Component):
         return self._smiles
 
     @property
-    def ions(self) -> Tuple[str]:
+    def ions(self) -> Tuple[str, ...]:
         """The ions in the solvent state"""
         return self._ions
 
