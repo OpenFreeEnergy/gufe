@@ -4,11 +4,12 @@
 from typing import Dict, Optional
 
 import numpy as np
+from openff.toolkit.utils.serialization import Serializable
 
 from .component import Component
 
 
-class ChemicalState:
+class ChemicalState(Serializable):
     """A node of an alchemical network.
 
     Attributes
@@ -62,10 +63,29 @@ class ChemicalState:
     def __hash__(self):
         return hash(
             (
-                tuple(self._components.items()),
+                tuple(sorted(self._components.items())),
                 self._box_vectors,
                 self._identifier,
             )
+        )
+
+    def to_dict(self):
+        return {
+            "components": {
+                key: value.to_dict() for key, value in self.components.items()
+            },
+            "box_vectors": self.box_vectors.tolist(),
+            "identifier": self.identifier,
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            components={
+                key: Component.from_dict(value) for key, value in d["components"]
+            },
+            box_vectors=np.array(d["box_vectors"]),
+            identifier=d["identifier"],
         )
 
     @property
