@@ -1,6 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from typing import Tuple
+import math
 from openff.units import unit
 
 from gufe import Component
@@ -64,6 +65,10 @@ class SolventComponent(Component):
     def concentration(self) -> unit.Quantity:
         """Concentration of ions in the solvent state"""
         return self._concentration
+
+    def formal_charge(self) -> int:
+        """Solvents don't have a formal charge defined so this returns nan"""
+        return math.nan
 
     def __eq__(self, other):
         try:
