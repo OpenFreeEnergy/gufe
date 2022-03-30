@@ -52,7 +52,7 @@ def PDBx_181L_path():
 def benzene_modifications():
     with importlib.resources.path('gufe.tests.data',
                                   'benzene_modifications.sdf') as f:
-        supp = Chem.SDMolSupplier(str(f))
+        supp = Chem.SDMolSupplier(str(f), removeHs=False)
 
         mols = list(supp)
 
