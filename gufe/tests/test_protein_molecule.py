@@ -12,7 +12,8 @@ def PDB_181L_mutant(PDB_181L_path):
     # has a single resname flipped to change the resulting sequence
     rdm = Chem.MolFromPDBFile(PDB_181L_path, removeHs=False)
 
-    at = rdm.GetAtomWithIdx(1)  # important to select the Ca atom
+    # important to select the Ca atom - Ca of residue 2
+    at = rdm.GetAtomWithIdx(7)
     at.GetMonomerInfo().SetResidueName('X')
 
     return ProteinComponent.from_rdkit(rdm)
