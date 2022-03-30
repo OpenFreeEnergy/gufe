@@ -2,7 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import pytest
-from openff.toolkit.topology import Molecule
 import numpy as np
 
 import gufe
@@ -46,7 +45,21 @@ def solvated_ligand(solv_comp, toluene_ligand_comp):
     )
 
 
-def test_construction(prot_comp, solv_comp, toluene_ligand_comp):
+def test_ligand_construction(solv_comp, toluene_ligand_comp):
+    # sanity checks on construction
+
+    state = gufe.ChemicalState(
+        {'solvent': solv_comp,
+         'ligand': toluene_ligand_comp},
+    )
+
+    assert len(state.components) == 2
+
+    assert state.components['solvent'] == solv_comp
+    assert state.components['ligand'] == toluene_ligand_comp
+
+
+def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
     state = gufe.ChemicalState(
