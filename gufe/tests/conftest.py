@@ -7,6 +7,7 @@ from rdkit import Chem
 
 import gufe
 
+
 @pytest.fixture
 def serialization_template():
     def inner(filename):
@@ -16,9 +17,10 @@ def serialization_template():
 
     return inner
 
+
 @pytest.fixture(scope='session')
 def ethane():
-    return gufe.LigandComponent(Chem.MolFromSmiles('CC'))
+    return gufe.SmallMoleculeComponent(Chem.MolFromSmiles('CC'))
 
 
 @pytest.fixture
