@@ -10,7 +10,7 @@ from gufe import ProteinComponent
 @pytest.fixture
 def PDB_181L_mutant(PDB_181L_path):
     # has a single resname flipped to change the resulting sequence
-    rdm = Chem.MolFromPDBFile(PDB_181L_path)
+    rdm = Chem.MolFromPDBFile(PDB_181L_path, removeHs=False)
 
     at = rdm.GetAtomWithIdx(1)  # important to select the Ca atom
     at.GetMonomerInfo().SetResidueName('X')
