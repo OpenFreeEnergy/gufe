@@ -23,7 +23,7 @@ def test_from_pdbfile(PDB_181L_path):
 
     assert isinstance(p, ProteinComponent)
     assert p.name == 'Steve'
-    assert p.to_rdkit().GetNumAtoms() == 1441
+    assert p.to_rdkit().GetNumAtoms() == 2639
 
 
 def test_from_pdbfile_ValueError(PDBx_181L_path):
@@ -32,12 +32,12 @@ def test_from_pdbfile_ValueError(PDBx_181L_path):
 
 
 def test_from_rdkit(PDB_181L_path):
-    m = Chem.MolFromPDBFile(PDB_181L_path)
+    m = Chem.MolFromPDBFile(PDB_181L_path, removeHs=False)
     p = ProteinComponent.from_rdkit(m, 'Steve')
 
     assert isinstance(p, ProteinComponent)
     assert p.name == 'Steve'
-    assert p.to_rdkit().GetNumAtoms() == 1441
+    assert p.to_rdkit().GetNumAtoms() == 2639
 
 
 def test_to_rdkit(PDB_181L_path):
@@ -45,7 +45,7 @@ def test_to_rdkit(PDB_181L_path):
     rdkitmol = pm.to_rdkit()
 
     assert isinstance(rdkitmol, Chem.Mol)
-    assert rdkitmol.GetNumAtoms() == 1441
+    assert rdkitmol.GetNumAtoms() == 2639
 
 
 def test_eq(PDB_181L_path):
