@@ -13,22 +13,22 @@ except ImportError:
     HAS_OECHEM = False
 else:
     HAS_OECHEM = oechem.OEChemIsLicensed()
-from gufe import LigandComponent
-from gufe.ligandcomponent import _ensure_ofe_name, _ensure_ofe_version
+from gufe import SmallMoleculeComponent
+from gufe.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe_version
 import gufe
 from rdkit import Chem
 
 
 @pytest.fixture
 def alt_ethane():
-    return LigandComponent(Chem.MolFromSmiles("CC"))
+    return SmallMoleculeComponent(Chem.MolFromSmiles("CC"))
 
 
 @pytest.fixture
 def named_ethane():
     mol = Chem.MolFromSmiles("CC")
 
-    return LigandComponent(mol, name='ethane')
+    return SmallMoleculeComponent(mol, name='ethane')
 
 
 @pytest.mark.parametrize('internal,rdkit_name,name,expected', [
@@ -53,7 +53,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
         # we should warn if rdkit properties are anything other than 'foo'
         # (expected) or the empty string (not set)
         assert len(recwarn) == 1
-        assert "LigandComponent being renamed" in recwarn[0].message.args[0]
+        assert "SmallMoleculeComponent being renamed" in recwarn[0].message.args[0]
     else:
         assert len(recwarn) == 0
 
@@ -77,7 +77,7 @@ class TestLigandComponent:
     def test_rdkit_independence(self):
         # once we've constructed a Molecule, it is independent from the source
         mol = Chem.MolFromSmiles('CC')
-        our_mol = LigandComponent.from_rdkit(mol)
+        our_mol = SmallMoleculeComponent.from_rdkit(mol)
 
         mol.SetProp('foo', 'bar')  # this is the source molecule, not ours
         with pytest.raises(KeyError):
@@ -87,7 +87,7 @@ class TestLigandComponent:
         # we should copy in any properties that were in the source molecule
         mol = Chem.MolFromSmiles('CC')
         mol.SetProp('foo', 'bar')
-        our_mol = LigandComponent.from_rdkit(mol)
+        our_mol = SmallMoleculeComponent.from_rdkit(mol)
 
         assert our_mol.to_rdkit().GetProp('foo') == 'bar'
 
@@ -111,7 +111,7 @@ class TestLigandComponent:
 
     def test_serialization_cycle(self, named_ethane):
         serialized = named_ethane.to_sdf()
-        deserialized = LigandComponent.from_sdf_string(serialized)
+        deserialized = SmallMoleculeComponent.from_sdf_string(serialized)
         reserialized = deserialized.to_sdf()
 
         assert named_ethane == deserialized
@@ -123,7 +123,7 @@ class TestLigandComponent:
 
     def test_from_sdf_string(self, named_ethane, serialization_template):
         sdf_str = serialization_template("ethane_template.sdf")
-        assert LigandComponent.from_sdf_string(sdf_str) == named_ethane
+        assert SmallMoleculeComponent.from_sdf_string(sdf_str) == named_ethane
 
     def test_from_sdf_file(self, named_ethane, serialization_template,
                            tmpdir):
@@ -131,21 +131,21 @@ class TestLigandComponent:
         with open(tmpdir / "temp.sdf", mode='w') as tmpf:
             tmpf.write(sdf_str)
 
-        assert LigandComponent.from_sdf_file(tmpdir / "temp.sdf") == named_ethane
+        assert SmallMoleculeComponent.from_sdf_file(tmpdir / "temp.sdf") == named_ethane
 
     def test_from_sdf_file_junk(self, toluene_mol2_path):
         with pytest.raises(ValueError):
-            LigandComponent.from_sdf_file(toluene_mol2_path)
+            SmallMoleculeComponent.from_sdf_file(toluene_mol2_path)
 
     def test_from_sdf_string_multiple_molecules(self, multi_molecule_sdf):
         data = open(multi_molecule_sdf, 'r').read()
 
         with pytest.raises(RuntimeError, match="contains more than 1"):
-            LigandComponent.from_sdf_string(data)
+            SmallMoleculeComponent.from_sdf_string(data)
 
     def test_from_rdkit(self, named_ethane):
         rdkit = Chem.MolFromSmiles("CC")
-        mol = LigandComponent.from_rdkit(rdkit, "ethane")
+        mol = SmallMoleculeComponent.from_rdkit(rdkit, "ethane")
         assert mol == named_ethane
         assert mol.to_rdkit() is not rdkit
 
