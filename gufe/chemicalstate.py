@@ -101,9 +101,9 @@ class ChemicalState(Serializable):
         return self._identifier
 
     @property
-    def charge(self):
-        """Total charge for the ChemicalState."""
-        return sum([component.charge for component in self._components.values()])
+    def formal_charge(self):
+        """Formal charge for the ChemicalState."""
+        return sum([component.formal_charge for component in self._components.values()])
 
     @classmethod
     def as_protein_smallmolecule_solvent(cls):

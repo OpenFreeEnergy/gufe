@@ -45,15 +45,15 @@ def _ensure_ofe_version(mol: RDKitMol):
     mol.SetProp("ofe-version", __version__)
 
 
-class LigandComponent(Component):
+class SmallMoleculeComponent(Component):
     """A molecule wrapper to provide proper hashing and equality.
 
-    This class is designed to act as a node on a Network graph.
+    This class is designed to act as a node on an `AlchemicalNetwork` graph.
 
     .. note::
        This class is a read-only representation of a ligand molecule, if you
        want to edit the molecule do this in an appropriate toolkit **before**
-       creating this class.
+       creating an instance from this class.
 
     A ligand molecule can have a name associated with it, which is needed to
     distinguish two molecules with the same SMILES representation, or is
@@ -204,3 +204,7 @@ class LigandComponent(Component):
             raise RuntimeError(f"SDF contains more than 1 molecule")
 
         return cls(rdkit=mol)  # name is obtained automatically
+
+    @property
+    def formal_charge(self):
+        return Chem.GetFormalCharge(self._rdkit)

@@ -22,3 +22,9 @@ class Component(abc.ABC):
     @abc.abstractmethod
     def from_dict(cls, d: dict):
         pass
+
+    @property
+    @abc.abstractmethod
+    def formal_charge(self):
+        """Formal charge for the Component."""
+        ...
