@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+from typing import Union
 
 
 class Component(abc.ABC):
@@ -25,6 +26,6 @@ class Component(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def formal_charge(self):
-        """Formal charge for the Component."""
+    def total_charge(self) -> Union[int, None]:
+        """Net formal charge for the Component if defined"""
         ...

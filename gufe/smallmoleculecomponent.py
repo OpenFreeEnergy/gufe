@@ -207,5 +207,5 @@ class SmallMoleculeComponent(Component):
         return cls(rdkit=mol)  # name is obtained automatically
 
     @property
-    def formal_charge(self):
+    def total_charge(self):
         return Chem.GetFormalCharge(self._rdkit)

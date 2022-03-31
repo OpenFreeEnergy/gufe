@@ -101,9 +101,18 @@ class ChemicalState(Serializable):
         return self._identifier
 
     @property
-    def formal_charge(self):
+    def total_charge(self):
         """Formal charge for the ChemicalState."""
-        return sum([component.formal_charge for component in self._components.values()])
+        # This might evaluate the property twice?
+        #return sum(component.total_charge
+        #           for component in self._components.values()
+        #           if component.total_charge is not None)
+        total_charge = 0
+        for c in self._components.values():
+            fc = c.total_charge
+            if fc is not None:
+                total_charge += fc
+        return total_charge
 
     @classmethod
     def as_protein_smallmolecule_solvent(cls):

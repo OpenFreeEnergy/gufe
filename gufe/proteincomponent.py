@@ -67,5 +67,5 @@ class ProteinComponent(Component):
         return hash(self) == hash(other)
 
     @property
-    def formal_charge(self):
+    def total_charge(self):
         return Chem.GetFormalCharge(self._rdkit)
