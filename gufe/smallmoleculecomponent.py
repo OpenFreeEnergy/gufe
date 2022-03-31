@@ -31,8 +31,8 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
         pass
 
     if name and rdkit_name and rdkit_name != name:
-        warnings.warn(f"LigandComponent being renamed from {rdkit_name} to "
-                      f"{name}.")
+        warnings.warn(f"SmallMoleculeComponent being renamed from {rdkit_name}"
+                      f"to {name}.")
     elif name == "":
         name = rdkit_name
 
@@ -45,17 +45,18 @@ def _ensure_ofe_version(mol: RDKitMol):
     mol.SetProp("ofe-version", __version__)
 
 
-class LigandComponent(Component):
-    """A molecule wrapper to provide proper hashing and equality.
-
-    This class is designed to act as a node on a Network graph.
+class SmallMoleculeComponent(Component):
+    """A molecule wrapper suitable for small molecules
 
     .. note::
-       This class is a read-only representation of a ligand molecule, if you
-       want to edit the molecule do this in an appropriate toolkit **before**
-       creating this class.
+       This class is a read-only representation of a molecule, if you want to
+       edit the molecule do this in an appropriate toolkit **before** creating
+       this class.
 
-    A ligand molecule can have a name associated with it, which is needed to
+    This wrapper uses SMILES as the primary hash, so is best suited to smaller
+    molecules.  It also supports reading/writing to .sdf format, which again
+    is suited to smaller molecules.
+    A small molecule can have a name associated with it, which is needed to
     distinguish two molecules with the same SMILES representation, or is
     simply useful to help identify ligand molecules later.
     The name can be explicitly set by the ``name`` attribute, or implicitly set
@@ -86,7 +87,7 @@ class LigandComponent(Component):
 
     @classmethod
     def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
-        """Create a LigandComponent copying the input from an rdkit Mol"""
+        """Create a SmallMoleculeComponent copying the input from an rdkit Mol"""
         return cls(rdkit=Chem.Mol(rdkit), name=name)
 
     def to_openeye(self) -> OEMol:
@@ -149,7 +150,7 @@ class LigandComponent(Component):
 
     @classmethod
     def from_sdf_string(cls, sdf_str: str):
-        """Create ``LigandComponent`` from SDF-formatted string.
+        """Create ``SmallMoleculeComponent`` from SDF-formatted string.
 
         This is the primary deserialization mechanism for this class.
 
@@ -160,7 +161,7 @@ class LigandComponent(Component):
 
         Returns
         -------
-        :class:`.LigandComponent` :
+        :class:`.SmallMoleculeComponent` :
             the deserialized molecule
         """
         supp = Chem.SDMolSupplier()
@@ -169,7 +170,7 @@ class LigandComponent(Component):
 
     @classmethod
     def from_sdf_file(cls, filename: str):
-        """Create ``LigandComponent`` from SDF file.
+        """Create ``SmallMoleculeComponent`` from SDF file.
 
         Parameters
         ----------
@@ -178,7 +179,7 @@ class LigandComponent(Component):
 
         Returns
         -------
-        :class:`.LigandComponent` :
+        :class:`.SmallMoleculeComponent` :
             the deserialized molecule
         """
         # technically, we allow file-like objects
@@ -192,7 +193,7 @@ class LigandComponent(Component):
         """
         mol = next(supp)
         if mol is None:
-            raise ValueError("Unable to load LigandComponent")
+            raise ValueError("Unable to load SmallMoleculeComponent")
 
         # ensure that there's only one molecule in the file
         try:
