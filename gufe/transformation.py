@@ -7,12 +7,12 @@ from .protocol import Protocol
 class Transformation:
     """An edge of an alchemical network.
 
-    Connects two `ChemicalState`s, with directionality.
+    Connects two `ChemicalSystem`s, with directionality.
 
     Attributes
     ----------
-    start : ChemicalState
-    end : ChemicalState
+    start : ChemicalSystem
+    end : ChemicalSystem
     protocol : Protocol
         The protocol used to perform the transformation.
         Includes all details needed to perform required
@@ -39,7 +39,7 @@ class Transformation:
     @property
     def protocol(self):
         """The protocol for sampling the transformation to derive free energy
-        differences between the `ChemicalState`s on either end.
+        differences between the `ChemicalSystem`s on either end.
 
         """
         return self._protocol

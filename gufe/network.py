@@ -5,12 +5,12 @@ from typing import FrozenSet, Iterable
 
 import networkx as nx
 
-from .chemicalstate import ChemicalState
+from .chemicalstate import ChemicalSystem
 from .transformation import Transformation
 
 
 class AlchemicalNetwork:
-    """A network of `ChemicalState`s as nodes, `Transformation`s as edges.
+    """A network of `ChemicalSystem`s as nodes, `Transformation`s as edges.
 
     Attributes
     ----------
@@ -21,7 +21,7 @@ class AlchemicalNetwork:
     def __init__(
         self,
         transformations: Iterable[Transformation] = None,
-        chemicalstates: Iterable[ChemicalState] = None,
+        chemicalstates: Iterable[ChemicalSystem] = None,
     ):
 
         self._transformations = tuple(transformations) if transformations else tuple()
