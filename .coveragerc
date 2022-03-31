@@ -9,3 +9,4 @@ exclude_lines =
     pragma: no-cover
     -no-cov
     raise NotImplementedError
+    ...
