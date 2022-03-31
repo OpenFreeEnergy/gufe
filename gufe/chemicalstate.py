@@ -60,11 +60,24 @@ class ChemicalState(Serializable):
         else:
             self._box_vectors = box_vectors
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        if self._identifier != other.identifier:
+            return False
+        if not np.array_equal(self._box_vectors, other.box_vectors,
+                              equal_nan=True):  # nan usually compares to false
+            return False
+        if self._components != other.components:
+            return False
+
+        return True
+
     def __hash__(self):
         return hash(
             (
                 tuple(sorted(self._components.items())),
-                self._box_vectors,
+                self._box_vectors.tobytes(),
                 self._identifier,
             )
         )
