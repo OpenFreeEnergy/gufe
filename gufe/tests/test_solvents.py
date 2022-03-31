@@ -25,9 +25,10 @@ def test_hash(other):
 
 
 def test_neq():
-    s = SolventComponent(ions=('Na', 'Cl'))
+    s1 = SolventComponent(ions=('Na', 'Cl'))
+    s2 = SolventComponent(ions=('K', 'Cl'))
 
-    assert s != 42
+    assert s1 != s2
 
 
 def test_to_dict():
