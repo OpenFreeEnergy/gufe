@@ -63,16 +63,13 @@ class ChemicalState(Serializable):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        if self.identifier != other.identifier:
+        if self._identifier != other.identifier:
             return False
-        if not np.array_equal(self.box_vectors, other.box_vectors,
+        if not np.array_equal(self._box_vectors, other.box_vectors,
                               equal_nan=True):  # nan usually compares to false
             return False
-        if self.components.keys() != other.components.keys():
+        if self._components != other.components:
             return False
-        for k in self.components:
-            if self.components[k] != other.components[k]:
-                return False
 
         return True
 
