@@ -9,7 +9,7 @@ from openff.toolkit.utils.serialization import Serializable
 from .component import Component
 
 
-class ChemicalState(Serializable):
+class ChemicalSystem(Serializable):
     """A node of an alchemical network.
 
     Attributes
@@ -60,11 +60,24 @@ class ChemicalState(Serializable):
         else:
             self._box_vectors = box_vectors
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        if self._identifier != other.identifier:
+            return False
+        if not np.array_equal(self._box_vectors, other.box_vectors,
+                              equal_nan=True):  # nan usually compares to false
+            return False
+        if self._components != other.components:
+            return False
+
+        return True
+
     def __hash__(self):
         return hash(
             (
                 tuple(sorted(self._components.items())),
-                self._box_vectors,
+                self._box_vectors.tobytes(),
                 self._identifier,
             )
         )
@@ -101,9 +114,18 @@ class ChemicalState(Serializable):
         return self._identifier
 
     @property
-    def charge(self):
-        """Total charge for the ChemicalState."""
-        return sum([component.charge for component in self._components.values()])
+    def total_charge(self):
+        """Formal charge for the ChemicalSystem."""
+        # This might evaluate the property twice?
+        #return sum(component.total_charge
+        #           for component in self._components.values()
+        #           if component.total_charge is not None)
+        total_charge = 0
+        for c in self._components.values():
+            fc = c.total_charge
+            if fc is not None:
+                total_charge += fc
+        return total_charge
 
     @classmethod
     def as_protein_smallmolecule_solvent(cls):

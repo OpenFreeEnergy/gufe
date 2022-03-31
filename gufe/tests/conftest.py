@@ -46,3 +46,14 @@ def PDB_181L_path():
 def PDBx_181L_path():
     with importlib.resources.path('gufe.tests.data', '181l.cif') as f:
         yield str(f)
+
+
+@pytest.fixture
+def benzene_modifications():
+    with importlib.resources.path('gufe.tests.data',
+                                  'benzene_modifications.sdf') as f:
+        supp = Chem.SDMolSupplier(str(f), removeHs=False)
+
+        mols = list(supp)
+
+    return {m.GetProp('_Name'): m for m in mols}

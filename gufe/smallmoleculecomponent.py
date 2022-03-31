@@ -51,7 +51,7 @@ class SmallMoleculeComponent(Component):
     .. note::
        This class is a read-only representation of a molecule, if you want to
        edit the molecule do this in an appropriate toolkit **before** creating
-       this class.
+       an instance from this class.
 
     This wrapper uses SMILES as the primary hash, so is best suited to smaller
     molecules.  It also supports reading/writing to .sdf format, which again
@@ -205,3 +205,7 @@ class SmallMoleculeComponent(Component):
             raise RuntimeError(f"SDF contains more than 1 molecule")
 
         return cls(rdkit=mol)  # name is obtained automatically
+
+    @property
+    def total_charge(self):
+        return Chem.GetFormalCharge(self._rdkit)

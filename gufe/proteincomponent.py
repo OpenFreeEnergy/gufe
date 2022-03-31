@@ -7,7 +7,7 @@ from gufe.custom_typing import RDKitMol, OEMol
 
 
 class ProteinComponent(Component):
-    """Wrapper around a Protein representation
+    """Wrapper around a Protein representation.
 
     This representation is immutable.  If you want to make any modifications,
     do this in an appropriate toolkit then remake this class.
@@ -22,7 +22,7 @@ class ProteinComponent(Component):
 
     @classmethod
     def from_pdbfile(cls, pdbfile: str, name=""):
-        m = Chem.MolFromPDBFile(pdbfile)
+        m = Chem.MolFromPDBFile(pdbfile, removeHs=False)
         if m is None:
             raise ValueError(f"RDKit failed to produce a molecule from "
                              "{pdbfile}")
@@ -65,3 +65,7 @@ class ProteinComponent(Component):
 
     def __eq__(self, other):
         return hash(self) == hash(other)
+
+    @property
+    def total_charge(self):
+        return Chem.GetFormalCharge(self._rdkit)

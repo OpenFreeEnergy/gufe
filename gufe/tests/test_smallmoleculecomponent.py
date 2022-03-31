@@ -67,7 +67,7 @@ def test_ensure_ofe_version():
     assert rdkit.GetProp("ofe-version") == gufe.__version__
 
 
-class TestLigandComponent:
+class TestSmallMoleculeComponent:
     def test_rdkit_behavior(self, ethane, alt_ethane):
         # Check that fixture setup is correct (we aren't accidentally
         # testing tautologies)
@@ -150,7 +150,7 @@ class TestLigandComponent:
         assert mol.to_rdkit() is not rdkit
 
 
-class TestLigandComponentConversion:
+class TestSmallMoleculeComponentConversion:
     def test_to_off(self, ethane):
         off_ethane = ethane.to_openff()
 
@@ -166,3 +166,12 @@ class TestLigandComponentConversion:
         oec_ethane = ethane.to_openeye()
 
         assert isinstance(oec_ethane, oechem.OEMol)
+
+
+@pytest.mark.parametrize('mol, charge', [
+    ('CC', 0), ('CC[O-]', -1),
+])
+def test_total_charge_neutral(mol, charge):
+    sm = SmallMoleculeComponent.from_rdkit(Chem.MolFromSmiles(mol))
+
+    assert sm.total_charge == charge

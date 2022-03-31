@@ -8,7 +8,7 @@ from .smallmoleculecomponent import SmallMoleculeComponent
 from .proteincomponent import ProteinComponent
 from .solventcomponent import SolventComponent
 
-from .chemicalstate import ChemicalState
+from .chemicalsystem import ChemicalSystem
 
 from .protocol import Protocol
 from .transformation import Transformation
