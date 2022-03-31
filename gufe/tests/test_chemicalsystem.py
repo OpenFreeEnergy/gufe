@@ -57,6 +57,8 @@ def test_ligand_construction(solv_comp, toluene_ligand_comp):
 
     assert state.components['solvent'] == solv_comp
     assert state.components['ligand'] == toluene_ligand_comp
+    assert state['solvent'] == solv_comp
+    assert state['ligand'] == toluene_ligand_comp
 
 
 def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
@@ -73,6 +75,9 @@ def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
     assert state.components['protein'] == prot_comp
     assert state.components['solvent'] == solv_comp
     assert state.components['ligand'] == toluene_ligand_comp
+    assert state['protein'] == prot_comp
+    assert state['solvent'] == solv_comp
+    assert state['ligand'] == toluene_ligand_comp
 
 
 def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):

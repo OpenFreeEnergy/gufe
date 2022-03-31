@@ -127,6 +127,9 @@ class ChemicalSystem(Serializable):
                 total_charge += fc
         return total_charge
 
+    def __getitem__(self, item):
+        return self.components[item]
+
     @classmethod
     def as_protein_smallmolecule_solvent(cls):
         """ """
