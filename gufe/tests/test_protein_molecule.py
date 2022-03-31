@@ -88,3 +88,8 @@ def test_hash_neq_name(PDB_181L_path):
 
     assert hash(m1) != hash(m2)
 
+
+def test_protein_total_charge(PDB_181L_path):
+    m1 = ProteinComponent.from_pdbfile(PDB_181L_path)
+
+    assert m1.total_charge == 22

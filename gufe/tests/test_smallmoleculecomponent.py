@@ -166,3 +166,12 @@ class TestSmallMoleculeComponentConversion:
         oec_ethane = ethane.to_openeye()
 
         assert isinstance(oec_ethane, oechem.OEMol)
+
+
+@pytest.mark.parametrize('mol, charge', [
+    ('CC', 0), ('CC[O-]', -1),
+])
+def test_total_charge_neutral(mol, charge):
+    sm = SmallMoleculeComponent.from_rdkit(Chem.MolFromSmiles(mol))
+
+    assert sm.total_charge == charge

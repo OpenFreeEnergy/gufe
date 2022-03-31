@@ -66,6 +66,7 @@ class SolventComponent(Component):
         """Concentration of ions in the solvent state"""
         return self._concentration
 
+    @property
     def total_charge(self):
         """Solvents don't have a formal charge defined so this returns None"""
         return None

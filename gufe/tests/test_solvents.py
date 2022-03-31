@@ -51,3 +51,9 @@ def test_conc():
     s = SolventComponent(ions=('Na', 'Cl'), concentration=1.75 * unit.molar)
 
     assert s.concentration == unit.Quantity('1.75 M')
+
+
+def test_solvent_charge():
+    s = SolventComponent(ions=('Na', 'Cl'), concentration=1.75 * unit.molar)
+
+    assert s.total_charge is None
