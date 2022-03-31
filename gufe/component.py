@@ -6,7 +6,7 @@ from typing import Union
 
 
 class Component(abc.ABC):
-    """Base class for members of a ChemicalState"""
+    """Base class for members of a ChemicalSystem"""
     @abc.abstractmethod
     def __hash__(self):
         pass

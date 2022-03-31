@@ -9,7 +9,7 @@ from openff.toolkit.utils.serialization import Serializable
 from .component import Component
 
 
-class ChemicalState(Serializable):
+class ChemicalSystem(Serializable):
     """A node of an alchemical network.
 
     Attributes
@@ -115,7 +115,7 @@ class ChemicalState(Serializable):
 
     @property
     def total_charge(self):
-        """Formal charge for the ChemicalState."""
+        """Formal charge for the ChemicalSystem."""
         # This might evaluate the property twice?
         #return sum(component.total_charge
         #           for component in self._components.values()

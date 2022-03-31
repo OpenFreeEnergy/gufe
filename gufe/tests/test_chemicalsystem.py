@@ -31,7 +31,7 @@ def phenol_ligand_comp(benzene_modifications):
 
 @pytest.fixture
 def solvated_complex(prot_comp, solv_comp, toluene_ligand_comp):
-    return gufe.ChemicalState(
+    return gufe.ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
@@ -40,7 +40,7 @@ def solvated_complex(prot_comp, solv_comp, toluene_ligand_comp):
 
 @pytest.fixture
 def solvated_ligand(solv_comp, toluene_ligand_comp):
-    return gufe.ChemicalState(
+    return gufe.ChemicalSystem(
         {'ligand': toluene_ligand_comp, 'solvent': solv_comp},
     )
 
@@ -48,7 +48,7 @@ def solvated_ligand(solv_comp, toluene_ligand_comp):
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
-    state = gufe.ChemicalState(
+    state = gufe.ChemicalSystem(
         {'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
     )
@@ -62,7 +62,7 @@ def test_ligand_construction(solv_comp, toluene_ligand_comp):
 def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
-    state = gufe.ChemicalState(
+    state = gufe.ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
@@ -76,28 +76,28 @@ def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
 
 
 def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
-    c1 = gufe.ChemicalState({'protein': prot_comp,
-                             'solvent': solv_comp,
-                             'ligand': toluene_ligand_comp})
+    c1 = gufe.ChemicalSystem({'protein': prot_comp,
+                              'solvent': solv_comp,
+                              'ligand': toluene_ligand_comp})
 
-    c2 = gufe.ChemicalState({'solvent': solv_comp,
-                             'ligand': toluene_ligand_comp,
-                             'protein': prot_comp})
+    c2 = gufe.ChemicalSystem({'solvent': solv_comp,
+                              'ligand': toluene_ligand_comp,
+                              'protein': prot_comp})
 
     assert c1 == c2
     assert hash(c1) == hash(c2)
 
 
-def test_chemical_state_neq_1(solvated_complex, prot_comp):
+def test_chemical_system_neq_1(solvated_complex, prot_comp):
     # wrong class
     assert solvated_complex != prot_comp
     assert hash(solvated_complex) != hash(prot_comp)
 
 
-def test_chemical_state_neq_2(solvated_complex, prot_comp, solv_comp,
-                              toluene_ligand_comp):
+def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
+                               toluene_ligand_comp):
     # identifiers are different
-    complex2 = gufe.ChemicalState(
+    complex2 = gufe.ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
@@ -108,10 +108,10 @@ def test_chemical_state_neq_2(solvated_complex, prot_comp, solv_comp,
     assert hash(solvated_complex) != hash(complex2)
 
 
-def test_chemical_state_neq_3(solvated_complex, prot_comp, solv_comp,
-                              toluene_ligand_comp):
+def test_chemical_system_neq_3(solvated_complex, prot_comp, solv_comp,
+                               toluene_ligand_comp):
     # different unit cell size
-    complex2 = gufe.ChemicalState(
+    complex2 = gufe.ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
@@ -121,16 +121,16 @@ def test_chemical_state_neq_3(solvated_complex, prot_comp, solv_comp,
     assert hash(solvated_complex) != hash(complex2)
 
 
-def test_chemical_state_neq_4(solvated_complex, solvated_ligand):
+def test_chemical_system_neq_4(solvated_complex, solvated_ligand):
     # different component keys
     assert solvated_complex != solvated_ligand
     assert hash(solvated_complex) != hash(solvated_ligand)
 
 
-def test_chemical_state_neq_5(solvated_complex, prot_comp, solv_comp,
-                              phenol_ligand_comp):
+def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp,
+                               phenol_ligand_comp):
     # same component keys, but different components
-    complex2 = gufe.ChemicalState(
+    complex2 = gufe.ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': phenol_ligand_comp},
