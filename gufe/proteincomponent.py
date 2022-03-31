@@ -22,7 +22,7 @@ class ProteinComponent(Component):
 
     @classmethod
     def from_pdbfile(cls, pdbfile: str, name=""):
-        m = Chem.MolFromPDBFile(pdbfile)
+        m = Chem.MolFromPDBFile(pdbfile, removeHs=False)
         if m is None:
             raise ValueError(f"RDKit failed to produce a molecule from "
                              "{pdbfile}")
