@@ -9,6 +9,8 @@ from .proteincomponent import ProteinComponent
 from .solventcomponent import SolventComponent
 
 from .chemicalstate import ChemicalState
+
+from .protocol import Protocol
 from .transformation import Transformation
 
 from .network import AlchemicalNetwork

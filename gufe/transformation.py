@@ -1,45 +1,39 @@
-from .protocols import Protocol
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
+
+from .protocol import Protocol
 
 
 class Transformation:
     """An edge of an alchemical network.
 
-    Connects two chemical states, with directionality.
+    Connects two `ChemicalState`s, with directionality.
 
     Attributes
     ----------
+    start : ChemicalState
+    end : ChemicalState
     protocol : Protocol
         The protocol used to perform the transformation.
-        Includes all details needed to perform calculation and encodes the
-        alchemical pathway used.
+        Includes all details needed to perform required
+        simulations/calculations and encodes the alchemical pathway used.
 
     """
 
     def __init__(
             self,
+            start,
+            end,
             protocol
             ):
 
         self._protocol = protocol
 
+    def start(self):
+        return self._start
 
-    # these are ambiguous; will need a better way to consider this
-    # these could be expensive operations
-    def dg(self, estimator=None):
-        """Free energy difference of transformation based on given estimator,
-        using only data available for this edge.
-
-        """
-        ...
-
-    def ddg(self, estimator=None):
-        ...
-
-    def chemicalstate_start(self):
-        ...
-
-    def chemicalstate_end(self):
-        ...
+    def end(self):
+        return self._end
 
 
     @property
