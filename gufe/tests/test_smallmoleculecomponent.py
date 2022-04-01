@@ -175,3 +175,11 @@ def test_total_charge_neutral(mol, charge):
     sm = SmallMoleculeComponent.from_rdkit(Chem.MolFromSmiles(mol))
 
     assert sm.total_charge == charge
+
+
+def test_sorting(ethane, alt_ethane):
+    # to check larger containers it's important to be able to sort
+    order1 = [ethane, alt_ethane, ethane]
+    order2 = [alt_ethane, ethane, ethane]
+
+    assert sorted(order1) == sorted(order2)

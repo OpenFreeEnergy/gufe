@@ -146,3 +146,10 @@ def test_complex_system_charge(solvated_complex):
 
 def test_ligand_system_charge(solvated_ligand):
     assert solvated_ligand.total_charge == 0
+
+
+def test_sorting(solvated_complex, solvated_ligand):
+    order1 = [solvated_complex, solvated_ligand, solvated_ligand]
+    order2 = [solvated_ligand, solvated_complex, solvated_ligand]
+
+    assert sorted(order1) == sorted(order2)
