@@ -60,6 +60,9 @@ class ChemicalSystem(Serializable):
         else:
             self._box_vectors = box_vectors
 
+    def __lt__(self, other):
+        return hash(self) < hash(other)
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
