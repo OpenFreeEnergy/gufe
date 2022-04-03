@@ -88,7 +88,7 @@ class SmallMoleculeComponent(Component, Serializable):
 
     @classmethod
     def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
-        """Create a SmallMoleculeComponent copying the input from an rdkit Mol"""
+        """Create a SmallMoleculeComponent, copying from an RDKit Mol"""
         return cls(rdkit=Chem.Mol(rdkit), name=name)
 
     def to_openeye(self) -> OEMol:
@@ -108,7 +108,8 @@ class SmallMoleculeComponent(Component, Serializable):
 
     @classmethod
     def from_openff(cls, openff: OFFMolecule, name: str = ""):
-        return cls.from_rdkit(openff.to_rdkit(), name=name)
+        """Construct from an OpenFF toolkit Molecule"""
+        return cls(openff.to_rdkit(), name=name)
 
     @property
     def smiles(self) -> str:
