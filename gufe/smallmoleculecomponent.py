@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
+from openff.toolkit.utils.serialization import Serializable
 import warnings
 
 from rdkit import Chem
@@ -45,7 +46,7 @@ def _ensure_ofe_version(mol: RDKitMol):
     mol.SetProp("ofe-version", __version__)
 
 
-class SmallMoleculeComponent(Component):
+class SmallMoleculeComponent(Component, Serializable):
     """A molecule wrapper suitable for small molecules
 
     .. note::
@@ -107,7 +108,7 @@ class SmallMoleculeComponent(Component):
 
     @classmethod
     def from_openff(cls, openff: OFFMolecule, name: str = ""):
-        raise NotImplementedError
+        return cls.from_rdkit(openff.to_rdkit(), name=name)
 
     @property
     def smiles(self) -> str:
@@ -124,11 +125,15 @@ class SmallMoleculeComponent(Component):
         return hash(self) == hash(other)
 
     def to_dict(self) -> dict:
-        raise NotImplementedError()
+        """Serialize to dict representation"""
+        d = self.to_openff().to_dict()
+        return d
 
     @classmethod
     def from_dict(cls, d: dict):
-        raise NotImplementedError()
+        """Deserialize from dict representation"""
+        return cls.from_openff(OFFMolecule.from_dict(d),
+                               name=d.get('name', ''))
 
     def to_sdf(self) -> str:
         """Create a string based on SDF.

@@ -57,3 +57,13 @@ def benzene_modifications():
         mols = list(supp)
 
     return {m.GetProp('_Name'): m for m in mols}
+
+
+@pytest.fixture
+def phenol(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['phenol'])
+
+
+@pytest.fixture
+def toluene(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['toluene'])

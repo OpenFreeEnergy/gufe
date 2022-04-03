@@ -16,6 +16,7 @@ else:
 from gufe import SmallMoleculeComponent
 from gufe.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe_version
 import gufe
+import json
 from rdkit import Chem
 
 
@@ -183,3 +184,31 @@ def test_sorting(ethane, alt_ethane):
     order2 = [alt_ethane, ethane, ethane]
 
     assert sorted(order1) == sorted(order2)
+
+
+class TestSmallMoleculeSerialization:
+    def test_to_dict(self, phenol):
+        d = phenol.to_dict()
+
+        assert isinstance(d, dict)
+
+    def test_deserialize_roundtrip(self, toluene, phenol):
+        # TODO: Currently roundtripping via openff adds Hydrogens even when
+        #       they weren't in the original input molecule.
+        roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
+
+        assert roundtrip == phenol
+        assert roundtrip != toluene
+
+    def test_bounce_off_file(self, toluene, tmpdir):
+        fname = str(tmpdir / 'mol.json')
+
+        with open(fname, 'w') as f:
+            f.write(toluene.to_json())
+        with open(fname, 'r') as f:
+            d = json.load(f)
+
+        assert isinstance(d, dict)
+        roundtrip = SmallMoleculeComponent.from_dict(d)
+
+        assert roundtrip == toluene
