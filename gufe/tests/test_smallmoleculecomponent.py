@@ -200,6 +200,14 @@ class TestSmallMoleculeSerialization:
         assert roundtrip == phenol
         assert roundtrip != toluene
 
+        # check the coordinates, these aren't in the hash
+        # but are important to preserve
+        pos1 = phenol.to_openff().conformers
+        pos2 = roundtrip.to_openff().conformers
+        assert len(pos1) == len(pos2)
+        for x, y in zip(pos1, pos2):
+            assert (x == y).all()
+
     def test_bounce_off_file(self, toluene, tmpdir):
         fname = str(tmpdir / 'mol.json')
 
