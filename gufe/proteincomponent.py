@@ -1,6 +1,12 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from rdkit import Chem
+try:
+    import openmm.app
+except ImportError:
+    HAS_OPENMM = False
+else:
+    HAS_OPENMM = True
 
 from gufe import Component
 from gufe.custom_typing import RDKitMol, OEMol
@@ -14,6 +20,7 @@ class ProteinComponent(Component):
     """
     def __init__(self, rdkit: RDKitMol, name=""):
         self._rdkit = rdkit
+        self._openmm_rep = None
         self._name = name
 
     @property
@@ -26,7 +33,13 @@ class ProteinComponent(Component):
         if m is None:
             raise ValueError(f"RDKit failed to produce a molecule from "
                              "{pdbfile}")
-        return cls(rdkit=m, name=name)
+        c = cls(rdkit=m, name=name)
+        if HAS_OPENMM:
+            # if we can build an openmm representation, do that
+            openmm_rep = openmm.app.PDBFile(pdbfile)
+            c._openmm_rep = openmm_rep
+
+        return c
 
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
@@ -38,6 +51,9 @@ class ProteinComponent(Component):
 
     def to_rdkit(self) -> RDKitMol:
         return Chem.Mol(self._rdkit)
+
+    def to_openmm_PDBFile(self):
+        return self._openmm_rep
 
     @classmethod
     def from_openff(cls, offmol, name=""):
