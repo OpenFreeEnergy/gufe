@@ -1,5 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+from __future__ import annotations
+
 from openff.units import unit
 from typing import Optional, Tuple
 
@@ -19,13 +21,15 @@ class SolventComponent(Component):
     by specific MD engine methods.
     """
     _smiles: str
-    _ions: Optional[Tuple[str, str]]
+    _positive_ion: Optional[str]
+    _negative_ion: Optional[str]
     _neutralize: bool
     _ion_concentration: unit.Quantity
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
-                 ions: Tuple[str, str] = None,
+                 positive_ion: Optional[str] = None,
+                 negative_ion: Optional[str] = None,
                  neutralize: bool = True,
                  ion_concentration: unit.Quantity = None):
         """
@@ -33,7 +37,7 @@ class SolventComponent(Component):
         ----------
         smiles : str, optional
           smiles of the solvent, default 'O' (water)
-        ions : tuple of str, optional
+        positive_ion, negative_ion : str, optional
           the pair of ions which is used to neutralize (if neutralize=True) and
           bring the solvent to the required ionic concentration.  Must be a
           positive and negative monoatomic ions, default `None`
@@ -48,34 +52,34 @@ class SolventComponent(Component):
         --------
         To create a sodium chloride solution at 0.2 molar concentration::
 
-          >>> s = SolventComponent(ions=('Na', 'Cl'),
+          >>> s = SolventComponent(position_ion='Na', negative_ion='Cl',
           ...                      ion_concentration=0.2 * unit.molar)
 
         """
         self._smiles = smiles
-        if ions is not None:
-            # normalize: strip, sort and capitalize so that ('Na', 'Cl-') is
-            # equivalent to ('Cl', 'Na+')
-            norm_ions = tuple(sorted(i.strip('+-').capitalize() for i in ions))
-            # check ions make sense
-            if len(norm_ions) != 2:
-                raise ValueError(f"Must specify exactly two ions, got {ions}")
-            n_positive = sum(1 for i in norm_ions if i in _CATIONS)
-            n_negative = sum(1 for i in norm_ions if i in _ANIONS)
-            if n_positive != 1:
-                raise ValueError(f"Must give one positive ion, got {ions}")
-            if n_negative != 1:
-                raise ValueError(f"Must give one negative ion, got {ions}")
-            # mypy gets confused here...
-            self._ions = norm_ions  # type: ignore
-        else:
-            self._ions = None
+        if positive_ion is not None:
+            norm = positive_ion.strip('-+').capitalize()
+            if norm not in _CATIONS:
+                raise ValueError(f"Invalid positive ion, got {positive_ion}")
+            positive_ion = norm
+        self._positive_ion = positive_ion
+        if negative_ion is not None:
+            norm = negative_ion.strip('-+').capitalize()
+            if norm not in _ANIONS:
+                raise ValueError(f"Invalid negative ion, got {negative_ion}")
+            negative_ion = norm
+        self._negative_ion = negative_ion
+
         self._neutralize = neutralize
         if ion_concentration is not None:
             if (not isinstance(ion_concentration, unit.Quantity) or
                not ion_concentration.is_compatible_with(unit.molar)):
                 raise ValueError(f"ion_concentration must be given in units of"
                                  f" concentration, got {ion_concentration}")
+            # concentration requires both ions be given
+            if ion_concentration > 0:
+                if self._negative_ion is None or self._positive_ion is None:
+                    raise ValueError("Ions must be given for concentration")
         self._ion_concentration = ion_concentration
 
     @property
@@ -84,9 +88,14 @@ class SolventComponent(Component):
         return self._smiles
 
     @property
-    def ions(self) -> Optional[Tuple[str, str]]:
-        """The ions in the solvent state"""
-        return self._ions
+    def positive_ion(self) -> Optional[str]:
+        """The cation in the solvent state"""
+        return self._positive_ion
+
+    @property
+    def negative_ion(self) -> Optional[str]:
+        """The anion in the solvent state"""
+        return self._negative_ion
 
     @property
     def neutralize(self) -> bool:
@@ -103,16 +112,18 @@ class SolventComponent(Component):
         """Solvents don't have a formal charge defined so this returns None"""
         return None
 
-    def __eq__(self, other):
+    def __eq__(self, other: SolventComponent):
         try:
             return (self.smiles == other.smiles and
-                    self.ions == other.ions and
+                    self.positive_ion == other.positive_ion and
+                    self.negative_ion == other.negative_ion and
                     self.ion_concentration == other.ion_concentration)
         except AttributeError:
             return False
 
     def __hash__(self):
-        return hash((self.smiles, self.ions, self.ion_concentration))
+        return hash((self.smiles, self.positive_ion, self.negative_ion,
+                     self.ion_concentration))
 
     @classmethod
     def from_dict(cls, d):
@@ -121,6 +132,7 @@ class SolventComponent(Component):
 
     def to_dict(self):
         """For serialization"""
-        return {'smiles': self.smiles, 'ions': self.ions,
+        return {'smiles': self.smiles, 'positive_ion': self.positive_ion,
+                'negative_ion': self.negative_ion,
                 'ion_concentration': self.ion_concentration,
                 'neutralize': self._neutralize}
