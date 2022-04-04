@@ -7,6 +7,7 @@ except ImportError:
     HAS_OPENMM = False
 else:
     HAS_OPENMM = True
+from typing import Optional
 
 from gufe import Component
 from gufe.custom_typing import RDKitMol, OEMol
@@ -18,10 +19,13 @@ class ProteinComponent(Component):
     This representation is immutable.  If you want to make any modifications,
     do this in an appropriate toolkit then remake this class.
     """
-    def __init__(self, rdkit: RDKitMol, name=""):
+    def __init__(self, *,
+                 rdkit: Optional[RDKitMol] = None,
+                 openmm_top_and_pos: Optional[tuple] = None,
+                 name=""):
         self._rdkit = rdkit
-        self._openmm_top = None
-        self._openmm_pos = None
+        # yes this is fragile and silly, but it'll do for now
+        self._openmm_top, self._openmm_pos = openmm
         self._name = name
 
     @property
@@ -30,18 +34,7 @@ class ProteinComponent(Component):
 
     @classmethod
     def from_pdbfile(cls, pdbfile: str, name=""):
-        m = Chem.MolFromPDBFile(pdbfile, removeHs=False)
-        if m is None:
-            raise ValueError(f"RDKit failed to produce a molecule from "
-                             "{pdbfile}")
-        c = cls(rdkit=m, name=name)
-        if HAS_OPENMM:
-            # if we can build an openmm representation, do that
-            p = openmm.app.PDBFile(pdbfile)
-            c._openmm_top = p.topology
-            c._openmm_pos = p.positions
-
-        return c
+        raise NotImplementedError()
 
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
@@ -53,6 +46,11 @@ class ProteinComponent(Component):
 
     def to_rdkit(self) -> RDKitMol:
         return Chem.Mol(self._rdkit)
+
+    @classmethod
+    def from_openmm_topology_and_positions(cls, top, pos, name=""):
+        """Create from OpenMM topology and positions"""
+        return cls(openmm_top_and_pos=(top, pos), name=name)
 
     def to_openmm_topology_and_positions(self):
         # can't convert from rdkit (presumably what's there) to openmm yet
