@@ -139,6 +139,7 @@ def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp,
     assert hash(solvated_complex) != hash(complex2)
 
 
+@pytest.mark.xfail
 def test_complex_system_charge(solvated_complex):
     # protein = 22, ligand = 0, solvent = 0
     assert solvated_complex.total_charge == 22
