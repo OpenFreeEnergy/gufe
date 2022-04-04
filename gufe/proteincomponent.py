@@ -86,4 +86,4 @@ class ProteinComponent(Component):
 
     @property
     def total_charge(self):
-        return 0
+        return None
