@@ -23,7 +23,8 @@ def test_hash(pos, neg):
 
     assert s1 == s2
     assert hash(s1) == hash(s2)
-
+    assert s2.positive_ion == 'Na+'
+    assert s2.negative_ion == 'Cl-'
 
 def test_neq():
     s1 = SolventComponent(positive_ion='Na', negative_ion='Cl')
@@ -36,8 +37,8 @@ def test_to_dict():
     s = SolventComponent(positive_ion='Na', negative_ion='Cl')
 
     assert s.to_dict() == {'smiles': 'O',
-                           'positive_ion': 'Na',
-                           'negative_ion': 'Cl',
+                           'positive_ion': 'Na+',
+                           'negative_ion': 'Cl-',
                            'neutralize': True,
                            'ion_concentration': None}
 

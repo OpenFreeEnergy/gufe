@@ -61,13 +61,13 @@ class SolventComponent(Component):
             norm = positive_ion.strip('-+').capitalize()
             if norm not in _CATIONS:
                 raise ValueError(f"Invalid positive ion, got {positive_ion}")
-            positive_ion = norm
+            positive_ion = norm + '+'
         self._positive_ion = positive_ion
         if negative_ion is not None:
             norm = negative_ion.strip('-+').capitalize()
             if norm not in _ANIONS:
                 raise ValueError(f"Invalid negative ion, got {negative_ion}")
-            negative_ion = norm
+            negative_ion = norm + '-'
         self._negative_ion = negative_ion
 
         self._neutralize = neutralize
