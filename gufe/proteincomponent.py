@@ -20,7 +20,8 @@ class ProteinComponent(Component):
     """
     def __init__(self, rdkit: RDKitMol, name=""):
         self._rdkit = rdkit
-        self._openmm_rep = None
+        self._openmm_top = None
+        self._openmm_pos = None
         self._name = name
 
     @property
@@ -36,8 +37,9 @@ class ProteinComponent(Component):
         c = cls(rdkit=m, name=name)
         if HAS_OPENMM:
             # if we can build an openmm representation, do that
-            openmm_rep = openmm.app.PDBFile(pdbfile)
-            c._openmm_rep = openmm_rep
+            p = openmm.app.PDBFile(pdbfile)
+            c._openmm_top = p.topology
+            c._openmm_pos = p.positions
 
         return c
 
@@ -52,8 +54,11 @@ class ProteinComponent(Component):
     def to_rdkit(self) -> RDKitMol:
         return Chem.Mol(self._rdkit)
 
-    def to_openmm_PDBFile(self):
-        return self._openmm_rep
+    def to_openmm_topology_and_positions(self):
+        # can't convert from rdkit (presumably what's there) to openmm yet
+        if self._openmm_top is None:
+            raise AttributeError("OpenMM Topology conversion not possible")
+        return self._openmm_top, self._openmm_pos
 
     @classmethod
     def from_openff(cls, offmol, name=""):
