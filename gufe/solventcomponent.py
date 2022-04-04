@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from openff.units import unit
-from typing import Optional
+from typing import Optional, Tuple
 
 from gufe import Component
 
@@ -19,13 +19,13 @@ class SolventComponent(Component):
     by specific MD engine methods.
     """
     _smiles: str
-    _ions: Optional[tuple[str, str]]
+    _ions: Optional[Tuple[str, str]]
     _neutralize: bool
     _ion_concentration: unit.Quantity
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
-                 ions: tuple[str, str] = None,
+                 ions: Tuple[str, str] = None,
                  neutralize: bool = True,
                  ion_concentration: unit.Quantity = None):
         """
@@ -84,7 +84,7 @@ class SolventComponent(Component):
         return self._smiles
 
     @property
-    def ions(self) -> Optional[tuple[str, str]]:
+    def ions(self) -> Optional[Tuple[str, str]]:
         """The ions in the solvent state"""
         return self._ions
 
