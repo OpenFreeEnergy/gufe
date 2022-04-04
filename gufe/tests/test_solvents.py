@@ -8,8 +8,8 @@ def test_defaults():
     s = SolventComponent()
 
     assert s.smiles == 'O'
-    assert s.ions == tuple()
-    assert s.concentration is None
+    assert s.ions is None
+    assert s.ion_concentration is None
 
 
 @pytest.mark.parametrize('other,', [
@@ -36,24 +36,45 @@ def test_to_dict():
 
     assert s.to_dict() == {'smiles': 'O', 'ions': ('Cl', 'Na'),
                            'neutralize': True,
-                           'concentration': None}
+                           'ion_concentration': None}
 
 
 def test_from_dict():
     s1 = SolventComponent(ions=('Na', 'Cl'),
-                          concentration=1.75 * unit.molar,
+                          ion_concentration=1.75 * unit.molar,
                           neutralize=False)
 
     assert SolventComponent.from_dict(s1.to_dict()) == s1
 
 
 def test_conc():
-    s = SolventComponent(ions=('Na', 'Cl'), concentration=1.75 * unit.molar)
+    s = SolventComponent(ions=('Na', 'Cl'),
+                         ion_concentration=1.75 * unit.molar)
 
-    assert s.concentration == unit.Quantity('1.75 M')
+    assert s.ion_concentration == unit.Quantity('1.75 M')
+
+
+@pytest.mark.parametrize('conc,',
+                         [1.22,  # no units, 1.22 what?
+                          1.5 * unit.kg])  # probably a tad much salt
+def test_bad_conc(conc):
+    with pytest.raises(ValueError):
+        _ = SolventComponent(ions=('Na', 'Cl'), ion_concentration=conc)
 
 
 def test_solvent_charge():
-    s = SolventComponent(ions=('Na', 'Cl'), concentration=1.75 * unit.molar)
+    s = SolventComponent(ions=('Na', 'Cl'),
+                         ion_concentration=1.75 * unit.molar)
 
     assert s.total_charge is None
+
+
+@pytest.mark.parametrize('ions,', [
+    ('Na',),
+    ('Cl', 'Cl'),
+    ('F', 'I')
+])
+def test_bad_inputs(ions):
+    print(ions)
+    with pytest.raises(ValueError):
+        _ = SolventComponent(ions=ions)
