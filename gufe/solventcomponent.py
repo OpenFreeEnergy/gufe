@@ -112,14 +112,13 @@ class SolventComponent(Component):
         """Solvents don't have a formal charge defined so this returns None"""
         return None
 
-    def __eq__(self, other: SolventComponent):
-        try:
-            return (self.smiles == other.smiles and
-                    self.positive_ion == other.positive_ion and
-                    self.negative_ion == other.negative_ion and
-                    self.ion_concentration == other.ion_concentration)
-        except AttributeError:
-            return False
+    def __eq__(self, other):
+        if not isinstance(other, SolventComponent):
+            return NotImplemented
+        return (self.smiles == other.smiles and
+                self.positive_ion == other.positive_ion and
+                self.negative_ion == other.negative_ion and
+                self.ion_concentration == other.ion_concentration)
 
     def __hash__(self):
         return hash((self.smiles, self.positive_ion, self.negative_ion,
