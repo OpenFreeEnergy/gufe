@@ -14,7 +14,7 @@ def prot_comp(PDB_181L_path):
 
 @pytest.fixture
 def solv_comp():
-    yield gufe.SolventComponent(ions=('K', 'Cl'))
+    yield gufe.SolventComponent(positive_ion='K', negative_ion='Cl')
 
 
 @pytest.fixture
