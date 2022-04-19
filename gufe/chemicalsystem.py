@@ -60,6 +60,9 @@ class ChemicalSystem(Serializable):
         else:
             self._box_vectors = box_vectors
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(identifier={self.identifier}, components={self.components})"
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
@@ -82,6 +85,8 @@ class ChemicalSystem(Serializable):
             )
         )
 
+    # TODO: broken without a `Component` registry of some kind
+    # should then be changed to use the registry
     def to_dict(self):
         return {
             "components": {
@@ -91,6 +96,8 @@ class ChemicalSystem(Serializable):
             "identifier": self.identifier,
         }
 
+    # TODO: broken without a `Component` registry of some kind
+    # should then be changed to use the registry
     @classmethod
     def from_dict(cls, d):
         return cls(

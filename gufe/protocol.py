@@ -12,13 +12,20 @@ class Protocol:
 
     def __init__(
             self,
-            chemicalstate_start,
-            chemicalstate_end,
+            transformation,
             settings=None):
         """
 
         """
         ...
+
+    def to_dict(self) -> dict:
+        ...
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        ...
+
 
 
 class LigandSolventAtomMappedProtocol(Protocol):

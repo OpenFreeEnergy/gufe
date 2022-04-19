@@ -1,10 +1,15 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+from typing import Optional
+
+from openff.toolkit.utils.serialization import Serializable
+
+from .chemicalsystem import ChemicalSystem
 from .protocol import Protocol
 
 
-class Transformation:
+class Transformation(Serializable):
     """An edge of an alchemical network.
 
     Connects two `ChemicalSystem`s, with directionality.
@@ -20,12 +25,20 @@ class Transformation:
 
     """
 
-    def __init__(self, start, end, protocol):
+    def __init__(
+            self, 
+            start: ChemicalSystem,
+            end: ChemicalSystem,
+            protocol: Optional[Protocol] = None
+        ):
 
         self._start = start
         self._end = end
 
         self._protocol = protocol
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(start={self.start}, end={self.end}, protocol={self.protocol})"
 
     @property
     def start(self):
@@ -43,10 +56,30 @@ class Transformation:
         """
         return self._protocol
 
+    # TODO: broken without a `Protocol` registry of some kind
+    # should then be changed to use the registry
+    def to_dict(self) -> dict:
+        return {
+            "start": self.start.to_dict(),
+            "end": self.end.to_dict(),
+            "protocol": self.protocol.to_dict(),
+        }
 
-class NonTransformation:
+    # TODO: broken without a `Protocol` registry of some kind
+    # should then be changed to use the registry
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(
+                start=ChemicalSystem.from_dict(d['start']),
+                end=ChemicalSystem.from_dict(d['end']),
+                protocol=Protocol.from_dict(d['protocol'])
+                )
+
+# we subclass `Transformation` here for typing simplicity
+class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
 
+    A "transformation" that performs no transformation at all.
     Technically a self-loop, or an edge with the same `ChemicalSystem` at either end.
 
     Functionally used for applying a dynamics protocol to a `ChemicalSystem`
@@ -63,7 +96,11 @@ class NonTransformation:
 
     """
 
-    def __init__(self, chemicalsystem, protocol):
+    def __init__(
+            self,
+            chemicalsystem: ChemicalSystem,
+            protocol: Optional[Protocol] = None
+        ):
 
         self._chemicalsystem = chemicalsystem
         self._protocol = protocol
@@ -84,3 +121,20 @@ class NonTransformation:
     def protocol(self):
         """The protocol for sampling dynamics of the `ChemicalSystem`."""
         return self._protocol
+
+    # TODO: broken without a `Protocol` registry of some kind
+    # should then be changed to use the registry
+    def to_dict(self) -> dict:
+        return {
+            "chemicalsystem": self.chemicalsystem.to_dict(),
+            "protocol": self.protocol.to_dict(),
+        }
+
+    # TODO: broken without a `Protocol` registry of some kind
+    # should then be changed to use the registry
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(
+                chemicalsystem=ChemicalSystem.from_dict(d['chemicalsystem']),
+                protocol=Protocol.from_dict(d['protocol'])
+                )

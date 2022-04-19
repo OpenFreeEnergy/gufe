@@ -47,6 +47,10 @@ class SolventComponent(Component):
         self._concentration = concentration
 
     @property
+    def name(self) -> str:
+        return f"{self.smiles} + {','.join(self.ions)}"
+
+    @property
     def smiles(self) -> str:
         """SMILES representation of the solvent molecules"""
         return self._smiles
