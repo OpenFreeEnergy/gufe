@@ -14,7 +14,7 @@ def prot_comp(PDB_181L_path):
 
 @pytest.fixture
 def solv_comp():
-    yield gufe.SolventComponent(ions=('K', 'Cl'))
+    yield gufe.SolventComponent(positive_ion='K', negative_ion='Cl')
 
 
 @pytest.fixture
@@ -54,9 +54,14 @@ def test_ligand_construction(solv_comp, toluene_ligand_comp):
     )
 
     assert len(state.components) == 2
+    assert len(state) == 2
+
+    assert list(state) == ['solvent', 'ligand']
 
     assert state.components['solvent'] == solv_comp
     assert state.components['ligand'] == toluene_ligand_comp
+    assert state['solvent'] == solv_comp
+    assert state['ligand'] == toluene_ligand_comp
 
 
 def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
@@ -69,10 +74,16 @@ def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
     )
 
     assert len(state.components) == 3
+    assert len(state) == 3
+
+    assert list(state) == ['protein', 'solvent', 'ligand']
 
     assert state.components['protein'] == prot_comp
     assert state.components['solvent'] == solv_comp
     assert state.components['ligand'] == toluene_ligand_comp
+    assert state['protein'] == prot_comp
+    assert state['solvent'] == solv_comp
+    assert state['ligand'] == toluene_ligand_comp
 
 
 def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
@@ -139,6 +150,7 @@ def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp,
     assert hash(solvated_complex) != hash(complex2)
 
 
+@pytest.mark.xfail
 def test_complex_system_charge(solvated_complex):
     # protein = 22, ligand = 0, solvent = 0
     assert solvated_complex.total_charge == 22
@@ -146,3 +158,10 @@ def test_complex_system_charge(solvated_complex):
 
 def test_ligand_system_charge(solvated_ligand):
     assert solvated_ligand.total_charge == 0
+
+
+def test_sorting(solvated_complex, solvated_ligand):
+    order1 = [solvated_complex, solvated_ligand, solvated_ligand]
+    order2 = [solvated_ligand, solvated_complex, solvated_ligand]
+
+    assert sorted(order1) == sorted(order2)

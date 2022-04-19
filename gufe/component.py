@@ -15,6 +15,9 @@ class Component(abc.ABC):
     def __hash__(self):
         pass
 
+    def __lt__(self, other):
+        return hash(self) < hash(other)
+
     @abc.abstractmethod
     def __eq__(self, other):
         pass

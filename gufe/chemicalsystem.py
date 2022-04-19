@@ -1,6 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+from collections import abc
 from typing import Dict, Optional
 
 import numpy as np
@@ -9,7 +10,7 @@ from openff.toolkit.utils.serialization import Serializable
 from .component import Component
 
 
-class ChemicalSystem(Serializable):
+class ChemicalSystem(Serializable, abc.Mapping):
     """A node of an alchemical network.
 
     Attributes
@@ -62,6 +63,9 @@ class ChemicalSystem(Serializable):
 
     def __repr__(self):
         return f"{self.__class__.__name__}(identifier={self.identifier}, components={self.components})"
+
+    def __lt__(self, other):
+        return hash(self) < hash(other)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -133,6 +137,15 @@ class ChemicalSystem(Serializable):
             if fc is not None:
                 total_charge += fc
         return total_charge
+
+    def __getitem__(self, item):
+        return self.components[item]
+
+    def __iter__(self):
+        return iter(self.components)
+
+    def __len__(self):
+        return len(self.components)
 
     @classmethod
     def as_protein_smallmolecule_solvent(cls):
