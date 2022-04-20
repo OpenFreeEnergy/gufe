@@ -6,7 +6,8 @@ from typing import Optional
 from openff.toolkit.utils.serialization import Serializable
 
 from .chemicalsystem import ChemicalSystem
-from .protocol import Protocol
+from .protocols import Protocol
+from .mapping import AtomMapping
 
 
 class Transformation(Serializable):
@@ -29,11 +30,13 @@ class Transformation(Serializable):
             self, 
             start: ChemicalSystem,
             end: ChemicalSystem,
+            mapping: Optional[AtomMapping] = None,
             protocol: Optional[Protocol] = None
         ):
 
         self._start = start
         self._end = end
+        self._mapping = mapping
 
         self._protocol = protocol
 
@@ -56,6 +59,22 @@ class Transformation(Serializable):
         """
         return self._protocol
 
+    @property
+    def mapping(self):
+        """The mapping 
+
+        """
+        return self._protocol
+
+    def __hash__(self):
+        return hash(
+            (
+                tuple(sorted(self._components.items())),
+                self._box_vectors.tobytes(),
+                self._identifier,
+            )
+        )
+
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
     def to_dict(self) -> dict:
@@ -74,6 +93,13 @@ class Transformation(Serializable):
                 end=ChemicalSystem.from_dict(d['end']),
                 protocol=Protocol.from_dict(d['protocol'])
                 )
+
+    def run(self):
+        return self.protocol.run(
+                                 start=self.start, 
+                                 end=self.end,
+                                 mapping=self.mapping
+                                )
 
 # we subclass `Transformation` here for typing simplicity
 class NonTransformation(Transformation):

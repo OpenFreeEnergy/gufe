@@ -84,7 +84,7 @@ class SolventComponent(Component):
 
     @property
     def name(self) -> str:
-        return f"{self.smiles} + {','.join(self.ions)}"
+        return f"{self.smiles}, {self.positive_ion}, {self.negative_ion}"
 
     @property
     def smiles(self) -> str:
