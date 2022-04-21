@@ -4,6 +4,12 @@ from pydantic import BaseModel, validator
 from openff.units import unit
 
 
+# define a timestep
+# this isn't convertible to time (e.g ps) and is used to not confuse these two
+# definitions of "duration" within a simulation
+unit.define('timestep = [timestep] = _ = timesteps')
+
+
 class SystemSettings(BaseModel):
     """Settings describing the simulation system settings.
 
@@ -124,6 +130,7 @@ class EngineSettings(BaseModel):
     * In the future make precision and deterministic forces user defined too.
     """
     precision: Optional[float] = None
+
 
 class OpenMMEngineSettings(BaseModel):
     """OpenMM MD engine settings

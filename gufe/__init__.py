@@ -10,7 +10,8 @@ from .solventcomponent import SolventComponent
 
 from .chemicalsystem import ChemicalSystem
 
-from .protocol import Protocol
-from .transformation import Transformation
+from .protocols import Protocol
+from .mapping import AtomMapping
+from .transformation import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork

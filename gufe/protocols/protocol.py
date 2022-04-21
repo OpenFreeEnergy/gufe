@@ -12,13 +12,13 @@ from ..mapping import AtomMapping
 from .protocol_settings import ProtocolSettings
 
 
-class Protocol(abc.ABC, Serializable):
+class Protocol(Serializable, abc.ABC):
     """A protocol that implements an alchemical transformation.
 
     Takes a `ProtocolSettings` object specific to the protocol on init.
     This configures the protocol for repeated execution on `ChemicalSystem`s.
 
-    The `run` method takes the `start` and `end` `ChemicalSystem`,
+    The `run` method takes the `initial` and `final` `ChemicalSystem`,
     the `AtomMapping`, and any additional keywords specific to the `Protocol`.
 
     Attributes
@@ -30,7 +30,6 @@ class Protocol(abc.ABC, Serializable):
 
     def __init__(
             self,
-            *,
             settings: ProtocolSettings = None
         ):
         """
@@ -44,6 +43,13 @@ class Protocol(abc.ABC, Serializable):
     @classmethod
     def from_dict(cls, d: dict):
         ...
+
+    def __hash__(self):
+        return hash(
+            (
+                self._settings
+            )
+        )
 
     @classmethod
     @abc.abstractmethod
@@ -62,13 +68,12 @@ class Protocol(abc.ABC, Serializable):
 
     @abc.abstractmethod
     def run(self, 
-            start: ChemicalSystem, 
-            end: ChemicalSystem,
+            initial: ChemicalSystem, 
+            final: ChemicalSystem,
             mapping: AtomMapping = None,
             **kwargs
         ) -> bool:
         """Perform this method, returning success.
-
 
         """
         ...

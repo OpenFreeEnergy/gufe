@@ -17,60 +17,89 @@ class Transformation(Serializable):
 
     Attributes
     ----------
-    start : ChemicalSystem
-    end : ChemicalSystem
+    initial : ChemicalSystem
+    final : ChemicalSystem
     protocol : Protocol
         The protocol used to perform the transformation.
         Includes all details needed to perform required
         simulations/calculations and encodes the alchemical pathway used.
+    identifier
+        Optional identifier for the transformation; set this to a unique value
+        if adding multiple, otherwise identical transformations to the same
+        `AlchemicalNetwork` to avoid deduplication
 
     """
 
     def __init__(
             self, 
-            start: ChemicalSystem,
-            end: ChemicalSystem,
+            initial: ChemicalSystem,
+            final: ChemicalSystem,
             mapping: Optional[AtomMapping] = None,
-            protocol: Optional[Protocol] = None
+            protocol: Optional[Protocol] = None,
+            identifier: Optional[str] = None,
         ):
 
-        self._start = start
-        self._end = end
+        self._initial = initial
+        self._final = final
         self._mapping = mapping
+        self._identifier = identifier
 
         self._protocol = protocol
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(start={self.start}, end={self.end}, protocol={self.protocol})"
+        return f"{self.__class__.__name__}(initial={self.initial}, final={self.final}, protocol={self.protocol})"
 
     @property
-    def start(self):
-        return self._start
+    def initial(self):
+        return self._initial
 
     @property
-    def end(self):
-        return self._end
+    def final(self):
+        return self._final
 
     @property
     def protocol(self):
         """The protocol for sampling the transformation to derive free energy
-        differences between the `ChemicalSystem`s on either end.
+        differences between `initial` and `final` `ChemicalSystem`s.
 
         """
         return self._protocol
 
     @property
     def mapping(self):
-        """The mapping 
+        """The mapping between atoms in `initial` to `final` `ChemicalSystem`s for
+        the transformation.
 
         """
-        return self._protocol
+        return self._mapping
+
+    @property
+    def identifier(self):
+        return self._identifier
+
+    def __lt__(self, other):
+        return hash(self) < hash(other)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        if self._identifier != other.identifier:
+            return False
+        if self._mapping != other.mapping:
+            return False
+        if self._final != other.final:
+            return False
+        if self._initial != other.initial:
+            return False
+
+        return True
 
     def __hash__(self):
         return hash(
             (
-                tuple(sorted(self._components.items())),
-                self._box_vectors.tobytes(),
+                self._initial,
+                self._final,
+                self._mapping,
                 self._identifier,
             )
         )
@@ -79,8 +108,8 @@ class Transformation(Serializable):
     # should then be changed to use the registry
     def to_dict(self) -> dict:
         return {
-            "start": self.start.to_dict(),
-            "end": self.end.to_dict(),
+            "initial": self.initial.to_dict(),
+            "final": self.final.to_dict(),
             "protocol": self.protocol.to_dict(),
         }
 
@@ -89,24 +118,25 @@ class Transformation(Serializable):
     @classmethod
     def from_dict(cls, d: dict):
         return cls(
-                start=ChemicalSystem.from_dict(d['start']),
-                end=ChemicalSystem.from_dict(d['end']),
+                initial=ChemicalSystem.from_dict(d['initial']),
+                final=ChemicalSystem.from_dict(d['final']),
                 protocol=Protocol.from_dict(d['protocol'])
                 )
 
     def run(self):
         return self.protocol.run(
-                                 start=self.start, 
-                                 end=self.end,
+                                 initial=self.initial, 
+                                 final=self.final,
                                  mapping=self.mapping
                                 )
+
 
 # we subclass `Transformation` here for typing simplicity
 class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.
-    Technically a self-loop, or an edge with the same `ChemicalSystem` at either end.
+    Technically a self-loop, or an edge with the same `ChemicalSystem` at either final.
 
     Functionally used for applying a dynamics protocol to a `ChemicalSystem`
     that performs no alchemical transformation at all. This allows e.g.
@@ -132,11 +162,11 @@ class NonTransformation(Transformation):
         self._protocol = protocol
 
     @property
-    def start(self):
+    def initial(self):
         return self._chemicalsystem
 
     @property
-    def end(self):
+    def final(self):
         return self._chemicalsystem
 
     @property
