@@ -9,7 +9,6 @@ from openff.toolkit.utils.serialization import Serializable
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import AtomMapping
-from .protocol_settings import ProtocolSettings
 
 
 class Protocol(Serializable, abc.ABC):
@@ -18,19 +17,20 @@ class Protocol(Serializable, abc.ABC):
     Takes a `ProtocolSettings` object specific to the protocol on init.
     This configures the protocol for repeated execution on `ChemicalSystem`s.
 
-    The `run` method takes the `initial` and `final` `ChemicalSystem`,
-    the `AtomMapping`, and any additional keywords specific to the `Protocol`.
+    T
+
 
     Attributes
     ----------
-    settings : 
+    settings : ProtocolSettings
+        THIS MAY BE PROMOTED INTO THE PROTOCOL ITSELF
 
     """
     ...
 
     def __init__(
             self,
-            settings: ProtocolSettings = None
+            settings: "ProtocolSettings" = None
         ):
         """
 
@@ -67,28 +67,18 @@ class Protocol(Serializable, abc.ABC):
         ...
 
     @abc.abstractmethod
-    def run(self, 
+    def prepare(self, 
             initial: ChemicalSystem, 
             final: ChemicalSystem,
             mapping: AtomMapping = None,
             **kwargs
-        ) -> bool:
-        """Perform this method, returning success.
+        ) -> Transformation:
+        """Prepare a Transformation with all information required for
+        execution.
+
+        A Transformation is the computation required for an edge; may map to
+        one or more simulations depending on the protocol.
 
         """
         ...
 
-
-class LigandSolventAtomMappedProtocol(Protocol):
-    ...
-
-
-class LigandComplexAtomMappedProtocol(Protocol):
-    ...
-
-
-
-# want a variant of the above based on engine, probably
-# e.g. OpenMM, Gromacs
-# since settings will be very different
-# not exactly sure how to avoid long names here

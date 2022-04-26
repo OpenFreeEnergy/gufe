@@ -28,7 +28,7 @@ class Component(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def name(self) -> str:
+    def identifier(self) -> str:
         pass
 
     @classmethod

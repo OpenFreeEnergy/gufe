@@ -10,7 +10,7 @@ from .protocols import Protocol
 from .mapping import AtomMapping
 
 
-class Transformation(Serializable):
+class Edge(Serializable):
     """An edge of an alchemical network.
 
     Connects two `ChemicalSystem`s, with directionality.
@@ -23,6 +23,7 @@ class Transformation(Serializable):
         The protocol used to perform the transformation.
         Includes all details needed to perform required
         simulations/calculations and encodes the alchemical pathway used.
+        May also correspond to an experimental result.
     identifier
         Optional identifier for the transformation; set this to a unique value
         if adding multiple, otherwise identical transformations to the same
@@ -34,8 +35,8 @@ class Transformation(Serializable):
             self, 
             initial: ChemicalSystem,
             final: ChemicalSystem,
+            protocol: Protocol,
             mapping: Optional[AtomMapping] = None,
-            protocol: Optional[Protocol] = None,
             identifier: Optional[str] = None,
         ):
 
@@ -123,16 +124,19 @@ class Transformation(Serializable):
                 protocol=Protocol.from_dict(d['protocol'])
                 )
 
-    def run(self):
-        return self.protocol.run(
+    def suggest_work(self) -> "Transformation":
+        return self.protocol.prepare(
                                  initial=self.initial, 
                                  final=self.final,
                                  mapping=self.mapping
                                 )
 
+    def estimate(self) -> Result:
+        ...
+
 
 # we subclass `Transformation` here for typing simplicity
-class NonTransformation(Transformation):
+class SelfEdge(Edge):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.
