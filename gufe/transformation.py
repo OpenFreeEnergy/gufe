@@ -10,7 +10,7 @@ from .protocols import Protocol
 from .mapping import AtomMapping
 
 
-class Edge(Serializable):
+class Transformation(Serializable):
     """An edge of an alchemical network.
 
     Connects two `ChemicalSystem`s, with directionality.
@@ -124,19 +124,36 @@ class Edge(Serializable):
                 protocol=Protocol.from_dict(d['protocol'])
                 )
 
-    def suggest_work(self) -> "Transformation":
+    def generate_work(
+            self, 
+            settings: Optional["ProtocolSettings"] = None) -> Iterable["WorkUnit"]:
+        """Returns a generator of WorkUnits.
+
+        Parameters
+        ----------
+        settings
+            Override level 3 settings with a ProtocolSettings.
+
+        """
+        # TODO: need an update path for level-3 settings overrides
+        if settings is not None:
+            self.protocol.__class__(settings=settings)
         return self.protocol.prepare(
                                  initial=self.initial, 
                                  final=self.final,
                                  mapping=self.mapping
                                 )
 
+    @property
+    def results(self):
+        return self._results
+
     def estimate(self) -> Result:
         ...
 
 
 # we subclass `Transformation` here for typing simplicity
-class SelfEdge(Edge):
+class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.

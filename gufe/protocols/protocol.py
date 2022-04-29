@@ -17,9 +17,6 @@ class Protocol(Serializable, abc.ABC):
     Takes a `ProtocolSettings` object specific to the protocol on init.
     This configures the protocol for repeated execution on `ChemicalSystem`s.
 
-    T
-
-
     Attributes
     ----------
     settings : ProtocolSettings
@@ -72,12 +69,12 @@ class Protocol(Serializable, abc.ABC):
             final: ChemicalSystem,
             mapping: AtomMapping = None,
             **kwargs
-        ) -> Transformation:
-        """Prepare a Transformation with all information required for
+        ) -> Iterable[WorkUnit]:
+        """Prepare an iterable of WorkUnits with all information required for
         execution.
 
-        A Transformation is the computation required for an edge; may map to
-        one or more simulations depending on the protocol.
+        A WorkUnit is the computation required for a Transformation; may map
+        to one or more simulations depending on the protocol.
 
         """
         ...
