@@ -2,13 +2,15 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from typing import Optional
+from typing import Optional, Iterable
 
 from pydantic import BaseModel, validator
 from openff.toolkit.utils.serialization import Serializable
 
 from ..chemicalsystem import ChemicalSystem
-from ..mapping import AtomMapping
+from ..mapping import Mapping
+
+from .workunit import WorkUnit
 
 
 class Protocol(Serializable, abc.ABC):
@@ -59,23 +61,20 @@ class Protocol(Serializable, abc.ABC):
         ...
 
     @abc.abstractmethod
-    def is_complete(self) -> bool:
-        """Check if the results of this workload already exist"""
-        ...
-
-    @abc.abstractmethod
     def prepare(self, 
             initial: ChemicalSystem, 
             final: ChemicalSystem,
-            mapping: AtomMapping = None,
+            mapping: Mapping = None,
             **kwargs
         ) -> Iterable[WorkUnit]:
         """Prepare an iterable of WorkUnits with all information required for
         execution.
 
-        A WorkUnit is the computation required for a Transformation; may map
+        A WorkUnit is a computation required for a Transformation. 
+        A given Protocol may generate one or more WorkUnit
+        
+        may map
         to one or more simulations depending on the protocol.
 
         """
         ...
-

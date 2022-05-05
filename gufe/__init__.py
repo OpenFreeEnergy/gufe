@@ -11,7 +11,7 @@ from .solventcomponent import SolventComponent
 from .chemicalsystem import ChemicalSystem
 
 from .protocols import Protocol
-from .mapping import AtomMapping
-from .transformation import Transformation, NonTransformation
+from .mapping import Mapping
+from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork

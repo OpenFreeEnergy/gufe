@@ -1,3 +1,6 @@
 
-class AtomMapping:
+class Mapping:
+    """
+
+    """
     ...

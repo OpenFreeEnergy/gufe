@@ -1,5 +1,13 @@
 
-class Result:
+class ProtocolResult:
     """
-    
+
     """
+    ...
+
+
+class WorkUnitResult:
+    """
+
+    """
+    ...

@@ -1,8 +1,10 @@
 import abc
 from typing import List
 
+from .results import WorkUnitResult
+
 class WorkUnit(abc.ABC):
-    """A unit of work, gives status of units.
+    """A unit of work computable by
 
     """
 
@@ -14,7 +16,7 @@ class WorkUnit(abc.ABC):
     def execute(self):
         ...
 
-    def estimate(self) -> Result:
+    def estimate(self) -> WorkUnitResult:
         ...
 
     def status(self):

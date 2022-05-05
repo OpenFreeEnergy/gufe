@@ -7,7 +7,9 @@ import networkx as nx
 from openff.toolkit.utils.serialization import Serializable
 
 from .chemicalsystem import ChemicalSystem
-from .transformation import Transformation
+from .transformations import Transformation
+
+from .executors.results import ResultsStore
 
 
 class AlchemicalNetwork(Serializable):
@@ -15,7 +17,11 @@ class AlchemicalNetwork(Serializable):
 
     Attributes
     ----------
-    chemicalstates :
+    edges : FrozenSet[Transformation]
+        
+    nodes : FrozenSet[ChemicalSystem]
+
+    results : ResultsStore
 
     """
 
@@ -23,8 +29,8 @@ class AlchemicalNetwork(Serializable):
         self,
         edges: Iterable[Transformation] = None,
         nodes: Iterable[ChemicalSystem] = None,
+        results: ResultsStore = None
     ):
-
         self._edges = frozenset(edges) if edges else frozenset()
 
         # possible to get more nodes via edges above,
@@ -36,11 +42,13 @@ class AlchemicalNetwork(Serializable):
 
         self._nodes = (
                        self._nodes | 
-                       frozenset(e.start for e in self._edges) |
-                       frozenset(e.end for e in self._edges)
+                       frozenset(e.initial for e in self._edges) |
+                       frozenset(e.final for e in self._edges)
                       )
 
         self._graph = None
+
+        self._results = results
 
     def __eq__(self, other):
         return self.nodes == other.nodes and self.edges == other.edges
@@ -50,7 +58,7 @@ class AlchemicalNetwork(Serializable):
         g = nx.MultiDiGraph()
 
         for transformation in edges:
-            g.add_edge(transformation.start, transformation.end, object=transformation)
+            g.add_edge(transformation.initial, transformation.final, object=transformation)
 
         g.add_nodes_from(nodes)
 
@@ -76,3 +84,12 @@ class AlchemicalNetwork(Serializable):
     @classmethod
     def from_dict(cls, d: dict):
         ...
+
+    @property
+    def results(self):
+        return self._results
+
+    @results.setter
+    def results(self, results: ResultsStore):
+        # TODO add validation checks
+        self._results = results

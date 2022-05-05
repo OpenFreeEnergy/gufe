@@ -1,13 +1,16 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Optional
+import abc
+from typing import Optional, Iterable
 
 from openff.toolkit.utils.serialization import Serializable
 
-from .chemicalsystem import ChemicalSystem
-from .protocols import Protocol
-from .mapping import AtomMapping
+from ..chemicalsystem import ChemicalSystem
+from ..protocols import Protocol
+from ..mapping import Mapping
+
+from .results import TransformationResult
 
 
 class Transformation(Serializable):
@@ -24,7 +27,7 @@ class Transformation(Serializable):
         Includes all details needed to perform required
         simulations/calculations and encodes the alchemical pathway used.
         May also correspond to an experimental result.
-    identifier
+    name
         Optional identifier for the transformation; set this to a unique value
         if adding multiple, otherwise identical transformations to the same
         `AlchemicalNetwork` to avoid deduplication
@@ -36,14 +39,14 @@ class Transformation(Serializable):
             initial: ChemicalSystem,
             final: ChemicalSystem,
             protocol: Protocol,
-            mapping: Optional[AtomMapping] = None,
-            identifier: Optional[str] = None,
+            mapping: Optional[Mapping] = None,
+            name: Optional[str] = None,
         ):
 
         self._initial = initial
         self._final = final
         self._mapping = mapping
-        self._identifier = identifier
+        self._name = name
 
         self._protocol = protocol
 
@@ -75,8 +78,8 @@ class Transformation(Serializable):
         return self._mapping
 
     @property
-    def identifier(self):
-        return self._identifier
+    def name(self):
+        return self._name
 
     def __lt__(self, other):
         return hash(self) < hash(other)
@@ -84,7 +87,7 @@ class Transformation(Serializable):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        if self._identifier != other.identifier:
+        if self._name != other.name:
             return False
         if self._mapping != other.mapping:
             return False
@@ -101,7 +104,7 @@ class Transformation(Serializable):
                 self._initial,
                 self._final,
                 self._mapping,
-                self._identifier,
+                self._name,
             )
         )
 
@@ -145,10 +148,16 @@ class Transformation(Serializable):
                                 )
 
     @property
-    def results(self):
+    def results(self) -> TransformationResult:
         return self._results
 
-    def estimate(self) -> Result:
+    def get_estimate(self):
+        ...
+
+    def get_uncertainty(self):
+        ...
+
+    def get_rate_of_convergence(self):
         ...
 
 
