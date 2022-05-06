@@ -7,10 +7,8 @@ from typing import Optional, Iterable, Tuple
 from openff.toolkit.utils.serialization import Serializable
 
 from ..chemicalsystem import ChemicalSystem
-from ..protocols import Protocol, ProtocolResult, ProtocolDAG
+from ..protocols import Protocol, ProtocolDAG
 from ..mapping import Mapping
-
-from ..executors.client import Client
 
 
 class Transformation(Serializable):
@@ -140,131 +138,15 @@ class Transformation(Serializable):
                 protocol=Protocol.from_dict(d['protocol'])
                 )
 
-    def create(
-            self, 
-            settings: Optional["ProtocolSettings"] = None) -> ProtocolDAG:
-        """Returns a generator of WorkUnits.
-
-        Parameters
-        ----------
-        settings
-            Override level 3 settings with a ProtocolSettings.
+    def create(self) -> ProtocolDAG:
+        """Returns a `ProtocolDAG` executing this `Transformation.protocol`.
 
         """
-        # TODO: need an update path for level-3 settings overrides
-        if settings is not None:
-            self.protocol.__class__(settings=settings)
-        return self.protocol.prepare(
+        return self.protocol.create(
                                  initial=self.initial, 
                                  final=self.final,
                                  mapping=self.mapping
                                 )
-
-    @property
-    def results(self) -> ProtocolResult:
-        return self._results
-
-    def estimate(self, client: Client) -> Tuple[float, float, float]:
-        """Get free energy estimate, uncertaintie, and rate of convergence for
-        this transformation.
-
-        Requires a `Client` to connect to an `Executor`, which may have results
-        for this transformation.
-
-        Parameters
-        ----------
-        client : Client
-            A client instance connected to an `Executor`.
-
-        Returns
-        -------
-        dG : float
-            Free energy estimate for this transformation.
-        ddG : float
-            Uncertainties in dG for this transformation.
-        rate_of_convergence : float
-            Rate of convergence for dG for this transformation.
-        """
-        ...
-
-    def estimate_dG(self, client: Client) -> Tuple[float]:
-        """Get free energy estimate for this transformation.
-
-        Requires a `Client` to connect to an `Executor`, which may have results
-        for this transformation.
-
-        Parameters
-        ----------
-        client : Client
-            A client instance connected to an `Executor`.
-
-        Returns
-        -------
-        dG : float
-            Free energy estimate for this transformation.
-        ddG : float
-            Uncertainties in dG for this transformation.
-        rate_of_convergence : float
-            Rate of convergence for dG for this transformation.
-        """
-        ...
-
-    def estimate_uncertainty(self, client: Client) -> Tuple[float]:
-        """Get free energy uncertainty for this transformation.
-
-        Requires a `Client` to connect to an `Executor`, which may have results
-        for this transformation.
-
-        Parameters
-        ----------
-        client : Client
-            A client instance connected to an `Executor`.
-
-        Returns
-        -------
-        dG : float
-            Free energy estimate for this transformation.
-        ddG : float
-            Uncertainties in dG for this transformation.
-        rate_of_convergence : float
-            Rate of convergence for dG for this transformation.
-        """
-        ...
-
-    def estimate_rate_of_convergence(self, client: Client) -> Tuple[float]:
-        """Get free energy rate of convergence for this transformation.
-
-        Requires a `Client` to connect to an `Executor`, which may have results
-        for this transformation.
-
-        Parameters
-        ----------
-        client : Client
-            A client instance connected to an `Executor`.
-
-        Returns
-        -------
-        dG : float
-            Free energy estimate for this transformation.
-        ddG : float
-            Uncertainties in dG for this transformation.
-        rate_of_convergence : float
-            Rate of convergence for dG for this transformation.
-        """
-        ...
-
-    def create(self) -> ProtocolDAG:
-        """
-
-        """
-        return self.protocol.create(
-                    initial=self._initial,
-                    final=self._final,
-                    mapping=self._mapping)
-        ...
-
-    def extend(self, protocol_result: ProtocolResult) -> ProtocolDAG:
-        ...
 
 
 # we subclass `Transformation` here for typing simplicity

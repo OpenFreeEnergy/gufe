@@ -1,2 +1,3 @@
 from .executor import Executor
-from .results import ResultStore
+from .client import Client
+from .results import ResultStoreClient

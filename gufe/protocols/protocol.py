@@ -11,6 +11,7 @@ from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
 from .protocolunit import ProtocolUnit, ProtocolDAG
+from .results import ProtocolResult
 
 
 class Protocol(Serializable, abc.ABC):
@@ -64,7 +65,8 @@ class Protocol(Serializable, abc.ABC):
             initial: ChemicalSystem, 
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
-            **kwargs
+            protocol_result: Optional[ProtocolResult] = None,
+            settings: Optional["ProtocolSettings"] = None
         ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -85,17 +87,18 @@ class Protocol(Serializable, abc.ABC):
             The ending `ChemicalSystem` for the transformation.
         mapping : Optional[Mapping]
             Mapping of e.g. atoms between the `initial` and `final` `ChemicalSystem`s.
+        protocol_result : Optional[ProtocolResult]
+            If provided, then the `ProtocolDAG` produced will start from the
+            end state of the given `ProtocolResult`. This allows for extension
+            from a previously-run `ProtocolDAG`.
+        settings : Optional[ProtocolSettings]
+            Overrides for e.g. Level 3 settings to change sampling approach from
+            the given `Protocol.settings`.
 
         Returns
         -------
         ProtocolDAG
             A directed, acyclic graph that can be executed by a `Scheduler`.
-
-        """
-        ...
-
-    def extend(self) -> ProtocolDAG:
-        """
 
         """
         ...

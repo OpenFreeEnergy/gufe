@@ -1,7 +1,7 @@
 import datetime
 from typing import Iterable, Union
 
-from .results import ResultStore
+from .results import ResultStoreClient
 
 
 class Executor:
@@ -17,7 +17,7 @@ class Executor:
 
     Attributes
     ----------
-    results : ResultStore
+    results : ResultStoreClient
         Client interface to storage resource for all depositing and retrieving
         all `ProtocolResult`s for submitted `AlchemicalNetwork`s.
     state : str
@@ -28,7 +28,7 @@ class Executor:
 
     """
     def __init__(self,
-            results: ResultStore,
+            results: ResultStoreClient,
             state: str,
             ):
         ...
