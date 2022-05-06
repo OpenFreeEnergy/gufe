@@ -63,17 +63,39 @@ class Protocol(Serializable, abc.ABC):
     def create(self, 
             initial: ChemicalSystem, 
             final: ChemicalSystem,
-            mapping: Mapping = None,
+            mapping: Optional[Mapping] = None,
             **kwargs
         ) -> ProtocolDAG:
-        """Prepare an `ProtocolDAG` with all information required for
-        execution.
+        """Prepare a `ProtocolDAG` with all information required for execution.
 
-        A `ProtocolDAG` is composed of `ProtocolUnit`s, with dependencies on
-        
+        A `ProtocolDAG` is composed of `ProtocolUnit`s, with dependencies
+        established between them. These form a directed, acyclic graph,
+        and each `ProtocolUnit` can be executed once its dependencies have
+        completed.
+
+        A `ProtocolDAG` can be passed to a `Scheduler` for execution on its
+        resources. A `ProtocolResult` can be retrieved from the `Scheduler` upon
+        completion of all `ProtocolUnit`s in the `ProtocolDAG`.
+
+        Parameters
+        ----------
+        initial : ChemicalSystem
+            The starting `ChemicalSystem` for the transformation.
+        final : ChemicalSystem
+            The ending `ChemicalSystem` for the transformation.
+        mapping : Optional[Mapping]
+            Mapping of e.g. atoms between the `initial` and `final` `ChemicalSystem`s.
+
+        Returns
+        -------
+        ProtocolDAG
+            A directed, acyclic graph that can be executed by a `Scheduler`.
 
         """
         ...
 
     def extend(self) -> ProtocolDAG:
+        """
+
+        """
         ...

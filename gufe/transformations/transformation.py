@@ -21,7 +21,9 @@ class Transformation(Serializable):
     Attributes
     ----------
     initial : ChemicalSystem
+        The starting `ChemicalSystem` for the transformation.
     final : ChemicalSystem
+        The ending `ChemicalSystem` for the transformation.
     protocol : Protocol
         The protocol used to perform the transformation.
         Includes all details needed to perform required
@@ -255,6 +257,10 @@ class Transformation(Serializable):
         """
 
         """
+        return self.protocol.create(
+                    initial=self._initial,
+                    final=self._final,
+                    mapping=self._mapping)
         ...
 
     def extend(self, protocol_result: ProtocolResult) -> ProtocolDAG:
