@@ -10,7 +10,7 @@ from openff.toolkit.utils.serialization import Serializable
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
-from .workunit import WorkUnit
+from .protocolunit import ProtocolUnit, ProtocolDAG
 
 
 class Protocol(Serializable, abc.ABC):
@@ -22,7 +22,6 @@ class Protocol(Serializable, abc.ABC):
     Attributes
     ----------
     settings : ProtocolSettings
-        THIS MAY BE PROMOTED INTO THE PROTOCOL ITSELF
 
     """
     ...
@@ -61,20 +60,20 @@ class Protocol(Serializable, abc.ABC):
         ...
 
     @abc.abstractmethod
-    def prepare(self, 
+    def create(self, 
             initial: ChemicalSystem, 
             final: ChemicalSystem,
             mapping: Mapping = None,
             **kwargs
-        ) -> Iterable[WorkUnit]:
-        """Prepare an iterable of WorkUnits with all information required for
+        ) -> ProtocolDAG:
+        """Prepare an `ProtocolDAG` with all information required for
         execution.
 
-        A WorkUnit is a computation required for a Transformation. 
-        A given Protocol may generate one or more WorkUnit
+        A `ProtocolDAG` is composed of `ProtocolUnit`s, with dependencies on
         
-        may map
-        to one or more simulations depending on the protocol.
 
         """
+        ...
+
+    def extend(self) -> ProtocolDAG:
         ...

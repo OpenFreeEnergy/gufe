@@ -6,7 +6,7 @@ class ProtocolResult:
     ...
 
 
-class WorkUnitResult:
+class ProtocolUnitResult:
     """
 
     """

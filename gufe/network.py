@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import FrozenSet, Iterable, Union
+from typing import FrozenSet, Iterable, Optional, Tuple
 
 import networkx as nx
 from openff.toolkit.utils.serialization import Serializable
@@ -9,7 +9,7 @@ from openff.toolkit.utils.serialization import Serializable
 from .chemicalsystem import ChemicalSystem
 from .transformations import Transformation
 
-from .executors.results import ResultsStore
+from .executors.client import Client
 
 
 class AlchemicalNetwork(Serializable):
@@ -18,10 +18,12 @@ class AlchemicalNetwork(Serializable):
     Attributes
     ----------
     edges : FrozenSet[Transformation]
-        
+        The edges of the network, given as a `frozenset` of `Transformation`s.
     nodes : FrozenSet[ChemicalSystem]
-
-    results : ResultsStore
+        The nodes of the network, given as a `frozenset` of `ChemicalSystem`s.
+    client : Optional[Client]
+        A `Client`, which exposes results of evaluating `Transformation`s
+        defined on the network via an `Executor`.
 
     """
 
@@ -29,7 +31,7 @@ class AlchemicalNetwork(Serializable):
         self,
         edges: Iterable[Transformation] = None,
         nodes: Iterable[ChemicalSystem] = None,
-        results: ResultsStore = None
+        client: Optional[Client] = None
     ):
         self._edges = frozenset(edges) if edges else frozenset()
 
@@ -48,7 +50,7 @@ class AlchemicalNetwork(Serializable):
 
         self._graph = None
 
-        self._results = results
+        self._client = client
 
     def __eq__(self, other):
         return self.nodes == other.nodes and self.edges == other.edges
@@ -86,10 +88,95 @@ class AlchemicalNetwork(Serializable):
         ...
 
     @property
-    def results(self):
-        return self._results
+    def client(self) -> Client:
+        return self._client
 
-    @results.setter
-    def results(self, results: ResultsStore):
+    @client.setter
+    def client(self, client: Client):
         # TODO add validation checks
-        self._results = results
+        self._client = client
+
+    def estimate(self, transformations: Iterable[Transformation], estimator: str = None) -> Tuple[Tuple[float],Tuple[float],Tuple[float]]:
+        """Get free energy estimates, uncertainties, and rates of convergence
+        for the given transformations.
+
+        Requires `client` to be defined on this `AlchemicalNetwork`.
+
+        Paramters
+        ---------
+        transformations : Iterable[Transformation]
+            Transformations to retrieve estimates for.
+        estimator : str
+            Estimator to use in deriving transformation estimates using all
+            other included transformations.
+
+        Returns
+        -------
+        dG : Iterable[float]
+            Free energy estimates for the given transformations, in order.
+        ddG : Iterable[float]
+            Uncertainties in dG for the given transformations, in order.
+        rate_of_convergence : Iterable[float]
+            Rate of convergence for dG for the given transformations, in order.
+        """
+        ...
+
+    def estimate_dG(self, transformations: Iterable[Transformation], estimator: str = None) -> Tuple[float]:
+        """Get free energy estimates for the given transformations.
+
+        Requires `client` to be defined on this `AlchemicalNetwork`.
+
+        Paramters
+        ---------
+        transformations : Iterable[Transformation]
+            Transformations to retrieve estimates for.
+        estimator : str
+            Estimator to use in deriving transformation estimates using all
+            other included transformations.
+
+        Returns
+        -------
+        dG : Iterable[float]
+            Free energy estimates for the given transformations, in order.
+        """
+        ...
+
+    def estimate_uncertainty(self, transformations: Iterable[Transformation], estimator: str = None) -> Tuple[float]:
+        """Get free energy estimates for the given transformations.
+
+        Requires `client` to be defined on this `AlchemicalNetwork`.
+
+        Paramters
+        ---------
+        transformations : Iterable[Transformation]
+            Transformations to retrieve estimates for.
+        estimator : str
+            Estimator to use in deriving transformation estimates using all
+            other included transformations.
+
+        Returns
+        -------
+        ddG : Iterable[float]
+            Uncertainties in dG for the given transformations, in order.
+        """
+        ...
+
+    def estimate_rate_of_convergence(self, transformations: Iterable[Transformation], estimator: str = None) -> Tuple[float]:
+        """Get free energy estimates for the given transformations.
+
+        Requires `client` to be defined on this `AlchemicalNetwork`.
+
+        Paramters
+        ---------
+        transformations : Iterable[Transformation]
+            Transformations to retrieve estimates for.
+        estimator : str
+            Estimator to use in deriving transformation estimates using all
+            other included transformations.
+
+        Returns
+        -------
+        rate_of_convergence : Iterable[float]
+            Rate of convergence for dG for the given transformations, in order.
+        """
+        ...

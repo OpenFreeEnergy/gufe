@@ -2,15 +2,15 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Tuple
 
 from openff.toolkit.utils.serialization import Serializable
 
 from ..chemicalsystem import ChemicalSystem
-from ..protocols import Protocol
+from ..protocols import Protocol, ProtocolResult, ProtocolDAG
 from ..mapping import Mapping
 
-from .results import TransformationResult
+from ..executors.client import Client
 
 
 class Transformation(Serializable):
@@ -27,7 +27,9 @@ class Transformation(Serializable):
         Includes all details needed to perform required
         simulations/calculations and encodes the alchemical pathway used.
         May also correspond to an experimental result.
-    name
+    mapping : Optional[Mapping]
+        Mapping of e.g. atoms between the `initial` and `final` `ChemicalSystem`s.
+    name : Optional[str]
         Optional identifier for the transformation; set this to a unique value
         if adding multiple, otherwise identical transformations to the same
         `AlchemicalNetwork` to avoid deduplication
@@ -55,10 +57,16 @@ class Transformation(Serializable):
 
     @property
     def initial(self):
+        """The starting `ChemicalSystem` for the transformation.
+
+        """
         return self._initial
 
     @property
     def final(self):
+        """The ending `ChemicalSystem` for the transformation.
+
+        """
         return self._final
 
     @property
@@ -79,6 +87,9 @@ class Transformation(Serializable):
 
     @property
     def name(self):
+        """User-specified for the transformation; used as part of its hash.
+
+        """
         return self._name
 
     def __lt__(self, other):
@@ -127,9 +138,9 @@ class Transformation(Serializable):
                 protocol=Protocol.from_dict(d['protocol'])
                 )
 
-    def generate_work(
+    def create(
             self, 
-            settings: Optional["ProtocolSettings"] = None) -> Iterable["WorkUnit"]:
+            settings: Optional["ProtocolSettings"] = None) -> ProtocolDAG:
         """Returns a generator of WorkUnits.
 
         Parameters
@@ -148,16 +159,105 @@ class Transformation(Serializable):
                                 )
 
     @property
-    def results(self) -> TransformationResult:
+    def results(self) -> ProtocolResult:
         return self._results
 
-    def get_estimate(self):
+    def estimate(self, client: Client) -> Tuple[float, float, float]:
+        """Get free energy estimate, uncertaintie, and rate of convergence for
+        this transformation.
+
+        Requires a `Client` to connect to an `Executor`, which may have results
+        for this transformation.
+
+        Parameters
+        ----------
+        client : Client
+            A client instance connected to an `Executor`.
+
+        Returns
+        -------
+        dG : float
+            Free energy estimate for this transformation.
+        ddG : float
+            Uncertainties in dG for this transformation.
+        rate_of_convergence : float
+            Rate of convergence for dG for this transformation.
+        """
         ...
 
-    def get_uncertainty(self):
+    def estimate_dG(self, client: Client) -> Tuple[float]:
+        """Get free energy estimate for this transformation.
+
+        Requires a `Client` to connect to an `Executor`, which may have results
+        for this transformation.
+
+        Parameters
+        ----------
+        client : Client
+            A client instance connected to an `Executor`.
+
+        Returns
+        -------
+        dG : float
+            Free energy estimate for this transformation.
+        ddG : float
+            Uncertainties in dG for this transformation.
+        rate_of_convergence : float
+            Rate of convergence for dG for this transformation.
+        """
         ...
 
-    def get_rate_of_convergence(self):
+    def estimate_uncertainty(self, client: Client) -> Tuple[float]:
+        """Get free energy uncertainty for this transformation.
+
+        Requires a `Client` to connect to an `Executor`, which may have results
+        for this transformation.
+
+        Parameters
+        ----------
+        client : Client
+            A client instance connected to an `Executor`.
+
+        Returns
+        -------
+        dG : float
+            Free energy estimate for this transformation.
+        ddG : float
+            Uncertainties in dG for this transformation.
+        rate_of_convergence : float
+            Rate of convergence for dG for this transformation.
+        """
+        ...
+
+    def estimate_rate_of_convergence(self, client: Client) -> Tuple[float]:
+        """Get free energy rate of convergence for this transformation.
+
+        Requires a `Client` to connect to an `Executor`, which may have results
+        for this transformation.
+
+        Parameters
+        ----------
+        client : Client
+            A client instance connected to an `Executor`.
+
+        Returns
+        -------
+        dG : float
+            Free energy estimate for this transformation.
+        ddG : float
+            Uncertainties in dG for this transformation.
+        rate_of_convergence : float
+            Rate of convergence for dG for this transformation.
+        """
+        ...
+
+    def create(self) -> ProtocolDAG:
+        """
+
+        """
+        ...
+
+    def extend(self, protocol_result: ProtocolResult) -> ProtocolDAG:
         ...
 
 
