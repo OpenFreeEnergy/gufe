@@ -73,9 +73,24 @@ class AlchemicalNetwork(Serializable):
         return self._nodes
 
     def to_dict(self) -> dict:
+        """
+
+        """
         ...
 
     @classmethod
     def from_dict(cls, d: dict):
         ...
+
+
+    def to_graphml(self) -> str:
+        """
+
+        """
+
+    @classmethod
+    def from_graphml(self, str):
+        """
+
+        """
 

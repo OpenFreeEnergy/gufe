@@ -1,7 +1,11 @@
-import abc
-from typing import Iterable, List
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 
-from .results import ProtocolUnitResult, ProtocolResult
+import abc
+from pathlib import Path
+from typing import Iterable, List, Dict
+
+from .results import ProtocolUnitResult, ProtocolDAGResult
 
 
 class ProtocolUnit(abc.ABC):
@@ -13,14 +17,24 @@ class ProtocolUnit(abc.ABC):
             self,
             settings: "ProtocolSettings",
             *dependencies: Iterable["ProtocolUnit"],
+            **kwargs
         ):
 
         self._settings = settings
         self._dependencies = dependencies
-        self._status = "WAITING"
 
+        if self._dependencies:
+            self._status = "WAITING"
+        else:
+            self._status = "READY"
 
-    def execute(self, block=True):
+        self._kwargs = kwargs
+
+    @property
+    def settings(self):
+        return self._settings
+
+    def execute(self, block=True) -> ProtocolUnitResult:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
@@ -30,30 +44,45 @@ class ProtocolUnit(abc.ABC):
 
         """
         if block:
-            dep_results = [dep.estimate() for dep in self._dependencies]
+            dep_results = [dep.results() for dep in self._dependencies]
 
             self._status = "RUNNING"
-            self._execute(dep_results)
+            out = self._execute(dep_results)
             self._status = "COMPLETE"
 
         else:
             #TODO: wrap in a thread; update status
             ...
 
+        return out
 
 
     @abc.abstractmethod
-    def _execute(self, dependency_results: List[ProtocolUnitResult]):
+    def _execute(self, dependency_results: List[ProtocolUnitResult]) -> ProtocolUnitResult:
         ...
+
+    def results(self) -> ProtocolUnitResult:
+        """Return `ProtocolUnitResult` for this `ProtocolUnit`.
+
+        Requires `status` == "COMPLETE"; exception raised otherwise.
+
+        """
+        return self._results()
 
     @abc.abstractmethod
-    def estimate(self) -> ProtocolUnitResult:
+    def _results(self) -> ProtocolUnitResult:
         ...
 
+    @property
     def status(self):
-        ...
+        if self._status == "WAITING":
+            # check dependencies; if all COMPLETE, change to READY
+            if set(dep.status for dep in self._dependencies) == {"COMPLETE"}:
+                self._status = 'READY'
 
-    def get_artifacts(self) -> bytes:
+        return self._status
+
+    def get_artifacts(self) -> Dict[str, Path]:
         ...
 
 
@@ -70,7 +99,7 @@ class ProtocolDAG:
             self,
             protocol_units: Iterable[ProtocolUnit]
                 ):
-            ...
+            self._protocol_units = tuple(protocol_units)
 
     def to_dask(self):
         """Produce a `dask`-executable DAG from this `ProtocolDAG` as a `dask.Delayed` object.
@@ -78,8 +107,15 @@ class ProtocolDAG:
         """
         ...
 
-    def execute(self) -> ProtocolResult:
+    def execute(self) -> ProtocolDAGResult:
         """Execute the full DAG in-serial, in process.
 
         """
-        ...
+        completed = []
+        while len(completed) != len(self._protocol_units):
+            for pu in self._protocol_units:
+                if pu.status == 'READY':
+                    pu.execute()
+                    completed.append(pu)
+
+        return ProtocolDAGResult

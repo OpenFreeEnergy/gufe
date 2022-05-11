@@ -8,6 +8,8 @@ from rdkit import Chem
 import gufe
 
 
+## data file paths
+
 @pytest.fixture
 def serialization_template():
     def inner(filename):
@@ -16,11 +18,6 @@ def serialization_template():
         return tmpl.format(OFE_VERSION=gufe.__version__)
 
     return inner
-
-
-@pytest.fixture(scope='session')
-def ethane():
-    return gufe.SmallMoleculeComponent(Chem.MolFromSmiles('CC'))
 
 
 @pytest.fixture
@@ -48,6 +45,8 @@ def PDBx_181L_path():
         yield str(f)
 
 
+## RDKit molecules
+
 @pytest.fixture
 def benzene_modifications():
     with importlib.resources.path('gufe.tests.data',
@@ -59,6 +58,8 @@ def benzene_modifications():
     return {m.GetProp('_Name'): m for m in mols}
 
 
+## Components
+
 @pytest.fixture
 def phenol(benzene_modifications):
     return gufe.SmallMoleculeComponent(benzene_modifications['phenol'])
@@ -67,3 +68,49 @@ def phenol(benzene_modifications):
 @pytest.fixture
 def toluene(benzene_modifications):
     return gufe.SmallMoleculeComponent(benzene_modifications['toluene'])
+
+
+@pytest.fixture(scope='session')
+def ethane():
+    return gufe.SmallMoleculeComponent(Chem.MolFromSmiles('CC'))
+
+
+@pytest.fixture
+def prot_comp(PDB_181L_path):
+    yield gufe.ProteinComponent.from_pdbfile(PDB_181L_path)
+
+
+@pytest.fixture
+def solv_comp():
+    yield gufe.SolventComponent(positive_ion='K', negative_ion='Cl')
+
+
+@pytest.fixture
+def toluene_ligand_comp(benzene_modifications):
+    yield gufe.SmallMoleculeComponent.from_rdkit(
+        benzene_modifications['toluene'])
+
+
+@pytest.fixture
+def phenol_ligand_comp(benzene_modifications):
+    yield gufe.SmallMoleculeComponent.from_rdkit(
+        benzene_modifications['phenol'])
+
+
+## ChemicalSystems
+
+@pytest.fixture
+def solvated_complex(prot_comp, solv_comp, toluene_ligand_comp):
+    return gufe.ChemicalSystem(
+        {'protein': prot_comp,
+         'solvent': solv_comp,
+         'ligand': toluene_ligand_comp},
+    )
+
+
+@pytest.fixture
+def solvated_ligand(solv_comp, toluene_ligand_comp):
+    return gufe.ChemicalSystem(
+        {'ligand': toluene_ligand_comp, 'solvent': solv_comp},
+    )
+

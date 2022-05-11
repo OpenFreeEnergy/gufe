@@ -7,44 +7,6 @@ import numpy as np
 import gufe
 
 
-@pytest.fixture
-def prot_comp(PDB_181L_path):
-    yield gufe.ProteinComponent.from_pdbfile(PDB_181L_path)
-
-
-@pytest.fixture
-def solv_comp():
-    yield gufe.SolventComponent(positive_ion='K', negative_ion='Cl')
-
-
-@pytest.fixture
-def toluene_ligand_comp(benzene_modifications):
-    yield gufe.SmallMoleculeComponent.from_rdkit(
-        benzene_modifications['toluene'])
-
-
-@pytest.fixture
-def phenol_ligand_comp(benzene_modifications):
-    yield gufe.SmallMoleculeComponent.from_rdkit(
-        benzene_modifications['phenol'])
-
-
-@pytest.fixture
-def solvated_complex(prot_comp, solv_comp, toluene_ligand_comp):
-    return gufe.ChemicalSystem(
-        {'protein': prot_comp,
-         'solvent': solv_comp,
-         'ligand': toluene_ligand_comp},
-    )
-
-
-@pytest.fixture
-def solvated_ligand(solv_comp, toluene_ligand_comp):
-    return gufe.ChemicalSystem(
-        {'ligand': toluene_ligand_comp, 'solvent': solv_comp},
-    )
-
-
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
@@ -107,12 +69,12 @@ def test_chemical_system_neq_1(solvated_complex, prot_comp):
 
 def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
                                toluene_ligand_comp):
-    # identifiers are different
+    # names are different
     complex2 = gufe.ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
-        identifier='Not quite the same'
+        name='Not quite the same'
     )
 
     assert solvated_complex != complex2

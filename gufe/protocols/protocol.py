@@ -11,7 +11,7 @@ from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
 from .protocolunit import ProtocolUnit, ProtocolDAG
-from .results import ProtocolResult
+from .results import ProtocolDAGResult, ProtocolResult
 
 
 class Protocol(Serializable, abc.ABC):
@@ -35,6 +35,10 @@ class Protocol(Serializable, abc.ABC):
 
         """
         self._settings = settings
+
+    @property
+    def settings(self):
+        return self._settings
 
     def to_dict(self) -> dict:
         ...
@@ -61,11 +65,20 @@ class Protocol(Serializable, abc.ABC):
         ...
 
     @abc.abstractmethod
+    def _create(self, 
+            initial: ChemicalSystem, 
+            final: ChemicalSystem,
+            mapping: Optional[Mapping] = None,
+            protocol_result: Optional[ProtocolDAGResult] = None,
+            settings: Optional["ProtocolSettings"] = None
+        ) -> ProtocolDAG:
+        ...
+
     def create(self, 
             initial: ChemicalSystem, 
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
-            protocol_result: Optional[ProtocolResult] = None,
+            extend_from: Optional[ProtocolDAGResult] = None,
             settings: Optional["ProtocolSettings"] = None
         ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
@@ -87,9 +100,9 @@ class Protocol(Serializable, abc.ABC):
             The ending `ChemicalSystem` for the transformation.
         mapping : Optional[Mapping]
             Mapping of e.g. atoms between the `initial` and `final` `ChemicalSystem`s.
-        protocol_result : Optional[ProtocolResult]
+        extend_from : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
-            end state of the given `ProtocolResult`. This allows for extension
+            end state of the given `ProtocolDAGResult`. This allows for extension
             from a previously-run `ProtocolDAG`.
         settings : Optional[ProtocolSettings]
             Overrides for e.g. Level 3 settings to change sampling approach from
@@ -101,4 +114,19 @@ class Protocol(Serializable, abc.ABC):
             A directed, acyclic graph that can be executed by a `Scheduler`.
 
         """
+        return self._create(
+                initial=initial,
+                final=final,
+                mapping=mapping,
+                extend_from=extend_from,
+                settings=settings)
+
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+        """
+
+        """
+        return self._gather(protocol_dag_results)
+
+    @abc.abstractmethod
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         ...

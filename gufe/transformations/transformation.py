@@ -116,6 +116,7 @@ class Transformation(Serializable):
                 self._final,
                 self._mapping,
                 self._name,
+                self._protocol,
             )
         )
 
@@ -126,6 +127,7 @@ class Transformation(Serializable):
             "initial": self.initial.to_dict(),
             "final": self.final.to_dict(),
             "protocol": self.protocol.to_dict(),
+            "mapping": self.mapping.to_dict()
         }
 
     # TODO: broken without a `Protocol` registry of some kind
@@ -135,7 +137,8 @@ class Transformation(Serializable):
         return cls(
                 initial=ChemicalSystem.from_dict(d['initial']),
                 final=ChemicalSystem.from_dict(d['final']),
-                protocol=Protocol.from_dict(d['protocol'])
+                protocol=Protocol.from_dict(d['protocol']),
+                mapping=Mapping.from_dict()
                 )
 
     def create(self) -> ProtocolDAG:
