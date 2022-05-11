@@ -14,7 +14,9 @@ class InitializeUnit(ProtocolUnit):
     def _execute(self, dependency_results):
 
         self._result = ProtocolUnitResult(
-                output="initialized",)
+                output="initialized",
+                name=self.__class__.__name__
+                )
         return self._result
 
     def _results(self):
@@ -26,9 +28,13 @@ class SimulationUnit(ProtocolUnit):
     def _execute(self, dependency_results):
 
         output = "\n".join([r.output for r in dependency_results])
-        output += "\nrunning_md"
+        output += "\nrunning_md_{}".format(self._kwargs['window'])
 
-        self._result = ProtocolUnitResult(output=output, window=self._kwargs['window'])
+        self._result = ProtocolUnitResult(
+                output=output,
+                window=self._kwargs['window'],
+                name=self.__class__.__name__
+                )
 
     def _results(self):
         return self._result
@@ -41,7 +47,10 @@ class FinishUnit(ProtocolUnit):
         output = "\n".join([r.output for r in dependency_results])
         output += "\nassembling_results"
 
-        self._result = ProtocolUnitResult(output=output)
+        self._result = ProtocolUnitResult(
+                output=output,
+                name=self.__class__.__name__
+                )
 
     def _results(self):
         return self._result
@@ -73,9 +82,16 @@ class DummyProtocol(Protocol):
 
         return ProtocolDAG([alpha, omega] + simulations)
 
-    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]):
-        ...
-        
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+
+        outputs = []
+        for pdr in protocol_dag_results:
+            for pu in pdr.units:
+                if pu.name == "FinishUnit":
+                    outputs.append(pu.output)
+
+        return ProtocolResult(outputs=outputs)
+
 
 
 class TestProtocol:
@@ -94,4 +110,7 @@ class TestProtocol:
 
         assert len(dagresult.units) == 22
 
-        protocol.gather([dagresult])
+        protocolresult = protocol.gather([dagresult])
+
+        assert len(protocolresult.outputs) == 1
+        assert len(protocolresult.outputs[0].split("\n")) == 20*2 + 1
