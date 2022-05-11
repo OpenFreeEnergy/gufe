@@ -44,7 +44,7 @@ class ProtocolUnit(abc.ABC):
 
         """
         if block:
-            dep_results = [dep.results() for dep in self._dependencies]
+            dep_results = [dep.results for dep in self._dependencies]
 
             self._status = "RUNNING"
             out = self._execute(dep_results)
@@ -61,6 +61,7 @@ class ProtocolUnit(abc.ABC):
     def _execute(self, dependency_results: List[ProtocolUnitResult]) -> ProtocolUnitResult:
         ...
 
+    @property
     def results(self) -> ProtocolUnitResult:
         """Return `ProtocolUnitResult` for this `ProtocolUnit`.
 
@@ -118,4 +119,4 @@ class ProtocolDAG:
                     pu.execute()
                     completed.append(pu)
 
-        return ProtocolDAGResult
+        return ProtocolDAGResult(units=[pu.results for pu in completed])

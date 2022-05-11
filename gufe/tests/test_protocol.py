@@ -13,7 +13,8 @@ class InitializeUnit(ProtocolUnit):
 
     def _execute(self, dependency_results):
 
-        self._result = ProtocolUnitResult(output="initialized")
+        self._result = ProtocolUnitResult(
+                output="initialized",)
         return self._result
 
     def _results(self):
@@ -24,29 +25,26 @@ class SimulationUnit(ProtocolUnit):
 
     def _execute(self, dependency_results):
 
-        import pdb
-        pdb.set_trace()
+        output = "\n".join([r.output for r in dependency_results])
+        output += "\nrunning_md"
 
-        self._output = "\n".join([r.output for r in dependency_results])
-        self._output += "\nrunning_md"
-
-        return self._output
+        self._result = ProtocolUnitResult(output=output, window=self._kwargs['window'])
 
     def _results(self):
-        return ProtocolUnitResult(output=self._output)
+        return self._result
 
 
 class FinishUnit(ProtocolUnit):
 
     def _execute(self, dependency_results):
 
-        self._output = "\n".join([r.output for r in dependency_results])
-        self._output += "\nassembling_results"
+        output = "\n".join([r.output for r in dependency_results])
+        output += "\nassembling_results"
 
-        return self._output
+        self._result = ProtocolUnitResult(output=output)
 
     def _results(self):
-        return ProtocolUnitResult(output=self._output)
+        return self._result
 
 
 class DummyProtocol(Protocol):
@@ -94,4 +92,6 @@ class TestProtocol:
         dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
         dagresult = dag.execute()
 
-        protocol.gather(dagresult)
+        assert len(dagresult.units) == 22
+
+        protocol.gather([dagresult])

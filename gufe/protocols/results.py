@@ -1,6 +1,9 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+import abc
+from typing import List
+
 from pydantic import BaseModel
 
 
@@ -9,7 +12,8 @@ class ProtocolUnitResult(BaseModel):
 
     """
     class Config:
-        extra: "allow"
+        extra = "allow"
+
 
 class ProtocolDAGResult(BaseModel):
     """Result for a single `ProtocolDAG` execution.
@@ -17,10 +21,11 @@ class ProtocolDAGResult(BaseModel):
     There may be many of these in a given `ResultStore` for a given `Transformation.protocol`.
 
     """
-    ...
+    units: List[ProtocolUnitResult]
+    
 
 
-class ProtocolResult:
+class ProtocolResult(abc.ABC):
     """Container for all `ProtocolDAGResult`s for a given `Transformation.protocol`.
 
     There will be exactly one of these in a given `ResultStore` for a given `Transformation.protocol`.
