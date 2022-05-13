@@ -85,9 +85,18 @@ class Protocol(Serializable, abc.ABC):
     def from_dict(cls, d: dict):
         ...
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        if self._settings != other.settings:
+            return False
+
+        return True
+
     def __hash__(self):
         return hash(
             (
+                self.__class__.__name__,
                 self._settings
             )
         )

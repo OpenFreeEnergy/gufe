@@ -10,7 +10,7 @@ from .solventcomponent import SolventComponent
 
 from .chemicalsystem import ChemicalSystem
 
-from .protocols import Protocol
+from .protocols import Protocol, ProtocolResult, ProtocolDAG, ProtocolUnit
 from .mapping import Mapping
 from .transformations import Transformation, NonTransformation
 

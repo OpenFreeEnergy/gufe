@@ -3,21 +3,101 @@
 
 import pytest
 
-import gufe
+from gufe.transformations import Transformation, NonTransformation
+
+from .test_protocol import DummyProtocol, DummyProtocolResult
 
 
 @pytest.fixture
 def absolute_transformation(solvated_ligand, solvated_complex):
-    return gufe.Transformation(
+    return Transformation(
             solvated_ligand, 
             solvated_complex, 
-            mapping=None,
-            protocol=None)
+            protocol=DummyProtocol(settings=None),
+            mapping=None)
+
+@pytest.fixture
+def complex_equilibrium(solvated_complex):
+    return NonTransformation(
+            solvated_complex, 
+            protocol=DummyProtocol(settings=None))
 
 
 class TestTransformation:
-    ...
+    
+    def test_init(self, absolute_transformation, solvated_ligand, solvated_complex):
+        tnf = absolute_transformation
+
+        assert tnf.initial is solvated_ligand
+        assert tnf.final is solvated_complex
+
+    def test_protocol(self, absolute_transformation):
+        tnf = absolute_transformation
+
+        assert isinstance(tnf.protocol, DummyProtocol)
+
+        protocoldag = tnf.create()
+        protocoldagresult = protocoldag.execute()
+
+        protocolresult = tnf.gather([protocoldagresult])
+
+        assert isinstance(protocolresult, DummyProtocolResult)
+
+        len(protocolresult.data) == 1
+
+
+    def test_equality(self, absolute_transformation, solvated_ligand, solvated_complex):
+
+        opposite = Transformation(solvated_complex, solvated_ligand, protocol=DummyProtocol(settings=None))
+        assert absolute_transformation != opposite
+
+        different_protocol_settings = Transformation(solvated_ligand, solvated_complex, protocol=DummyProtocol(settings={'lol': True}))
+        assert absolute_transformation != different_protocol_settings
+
+        identical = Transformation(solvated_ligand, solvated_complex, protocol=DummyProtocol(settings=None), mapping=None)
+        assert absolute_transformation == identical
+
+
+    def test_dict_roundtrip(self):
+        # TODO: need registration of `Protocol`s for this to work
+        ...
 
 
 class TestNonTransformation:
-    ...
+
+    def test_init(self, complex_equilibrium, solvated_complex):
+
+        ntnf = complex_equilibrium
+
+        assert ntnf.chemicalsystem is solvated_complex
+
+    def test_protocol(self, complex_equilibrium):
+        ntnf = absolute_transformation
+
+        assert isinstance(ntnf.protocol, DummyProtocol)
+
+        protocoldag = ntnf.create()
+        protocoldagresult = protocoldag.execute()
+
+        protocolresult = ntnf.gather([protocoldagresult])
+
+        assert isinstance(protocolresult, DummyProtocolResult)
+
+        len(protocolresult.data) == 1
+
+
+    def test_equality(self, absolute_transformation, solvated_ligand, solvated_complex):
+
+        opposite = Transformation(solvated_complex, solvated_ligand, protocol=DummyProtocol(settings=None))
+        assert absolute_transformation != opposite
+
+        different_protocol_settings = Transformation(solvated_ligand, solvated_complex, protocol=DummyProtocol(settings={'lol': True}))
+        assert absolute_transformation != different_protocol_settings
+
+        identical = Transformation(solvated_ligand, solvated_complex, protocol=DummyProtocol(settings=None), mapping=None)
+        assert absolute_transformation == identical
+
+
+    def test_dict_roundtrip(self):
+        # TODO: need registration of `Protocol`s for this to work
+        ...

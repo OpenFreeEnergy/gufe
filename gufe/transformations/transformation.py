@@ -7,7 +7,7 @@ from typing import Optional, Iterable, Tuple
 from openff.toolkit.utils.serialization import Serializable
 
 from ..chemicalsystem import ChemicalSystem
-from ..protocols import Protocol, ProtocolDAG
+from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import Mapping
 
 
@@ -100,6 +100,8 @@ class Transformation(Serializable):
             return False
         if self._name != other.name:
             return False
+        if self._protocol != other.protocol:
+            return False
         if self._mapping != other.mapping:
             return False
         if self._final != other.final:
@@ -150,6 +152,22 @@ class Transformation(Serializable):
                                  final=self.final,
                                  mapping=self.mapping
                                 )
+
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+        """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
+
+        Parameters
+        ----------
+        protocol_dag_results : Iterable[ProtocolDAGResult]
+            The `ProtocolDAGResult`s to assemble aggregate quantities from.
+            
+        Returns
+        -------
+        ProtocolResult
+            Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
+            
+        """
+        return self.protocol.gather(protocol_dag_results=protocol_dag_results)
 
 
 # we subclass `Transformation` here for typing simplicity
@@ -215,3 +233,13 @@ class NonTransformation(Transformation):
                 chemicalsystem=ChemicalSystem.from_dict(d['chemicalsystem']),
                 protocol=Protocol.from_dict(d['protocol'])
                 )
+
+    def create(self) -> ProtocolDAG:
+        """Returns a `ProtocolDAG` executing this `Transformation.protocol`.
+
+        """
+        return self.protocol.create(
+                                 chemicalsystem=self.chemicalsystem,
+                                 mapping=self.mapping
+                                )
+
