@@ -50,7 +50,7 @@ class ExternalStorage:
         # we'd like to not need to include the as_filename method, but for
         # now some consumers of this may not work with filelike
         self.validate(location, sha2)
-        return self._as_filename(self.location)
+        return self._as_filename(location)
 
     def as_filelike(self, location, sha2, bytes_mode: bool = True):
         self.validate(location, sha2)

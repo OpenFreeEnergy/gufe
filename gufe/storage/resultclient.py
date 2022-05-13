@@ -1,6 +1,7 @@
 import json
 from collections import abc
 
+
 class JSONMetadataStore(abc.Mapping):
     # Using JSON for now because it is easy to write this class and doesn't
     # require any external dependencies. It is NOT the right way to go in
