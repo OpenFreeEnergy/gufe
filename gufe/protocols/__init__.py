@@ -1,3 +1,4 @@
-from .protocol import Protocol
-from .results import ProtocolUnitResult, ProtocolDAGResult, ProtocolResult
-from .protocolunit import ProtocolDAG, ProtocolUnit
+from .protocol import Protocol, ProtocolResult
+from .results import ProtocolUnitResult, ProtocolDAGResult
+from .protocoldag import ProtocolDAG
+from .protocolunit import ProtocolUnit

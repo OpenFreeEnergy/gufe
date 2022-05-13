@@ -1,8 +1,13 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+"""Classes in this module must be subclassed by protocol authors.
+
+"""
+
 import abc
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Any, List, Dict
+from pathlib import Path
 
 from pydantic import BaseModel, validator
 from openff.toolkit.utils.serialization import Serializable
@@ -10,8 +15,41 @@ from openff.toolkit.utils.serialization import Serializable
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
-from .protocolunit import ProtocolUnit, ProtocolDAG
-from .results import ProtocolDAGResult, ProtocolResult
+from .protocolunit import ProtocolUnit
+from .protocoldag import ProtocolDAG
+from .results import ProtocolUnitResult, ProtocolDAGResult
+
+
+
+class ProtocolResult(Serializable, abc.ABC):
+    """Container for all `ProtocolDAGResult`s for a given `Transformation`.
+
+    """
+    def __init__(self, data, **kwargs):
+        self._data = data
+
+    @property
+    def data(self):
+        return self._data
+
+    def to_dict(self) -> dict:
+        ...
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        ...
+
+    @abc.abstractmethod
+    def get_estimate(self):
+        ...
+
+    @abc.abstractmethod
+    def get_uncertainty(self):
+        ...
+
+    @abc.abstractmethod
+    def get_rate_of_convergence(self):
+        ...
 
 
 class Protocol(Serializable, abc.ABC):
@@ -25,7 +63,7 @@ class Protocol(Serializable, abc.ABC):
     settings : ProtocolSettings
 
     """
-    ...
+    _results_cls = ProtocolResult
 
     def __init__(
             self,
@@ -122,10 +160,22 @@ class Protocol(Serializable, abc.ABC):
                 settings=settings)
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
-        """
+        """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
 
+        A 
+
+        Parameters
+        ----------
+        protocol_dag_results : Iterable[ProtocolDAGResult]
+            
+
+        Returns
+        -------
+        ProtocolResult
+            Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
+            
         """
-        return self._gather(protocol_dag_results)
+        return self._results_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:

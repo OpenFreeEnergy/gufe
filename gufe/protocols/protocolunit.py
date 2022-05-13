@@ -1,11 +1,16 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import abc
-from pathlib import Path
-from typing import Iterable, List, Dict
+"""The `ProtocolUnit` class should be subclassed for all units to be used as
+part of a `ProtocolDAG`.
 
-from .results import ProtocolUnitResult, ProtocolDAGResult
+"""
+
+import abc
+from typing import Iterable, List, Dict
+from pathlib import Path
+
+from .results import ProtocolUnitResult
 
 
 class ProtocolUnit(abc.ABC):
@@ -44,17 +49,21 @@ class ProtocolUnit(abc.ABC):
 
         """
         if block:
-            dep_results = [dep.results for dep in self._dependencies]
+            dep_results = [dep.result for dep in self._dependencies]
 
             self._status = "RUNNING"
             out = self._execute(dep_results)
             self._status = "COMPLETE"
+            self._result = ProtocolUnitResult(
+                                name=self.__class__.__name__,
+                                dependencies=dep_results, 
+                                **out)
 
         else:
             #TODO: wrap in a thread; update status
             ...
 
-        return out
+        return self._result
 
 
     @abc.abstractmethod
@@ -62,17 +71,13 @@ class ProtocolUnit(abc.ABC):
         ...
 
     @property
-    def results(self) -> ProtocolUnitResult:
+    def result(self) -> ProtocolUnitResult:
         """Return `ProtocolUnitResult` for this `ProtocolUnit`.
 
         Requires `status` == "COMPLETE"; exception raised otherwise.
 
         """
-        return self._results()
-
-    @abc.abstractmethod
-    def _results(self) -> ProtocolUnitResult:
-        ...
+        return self._result
 
     @property
     def status(self):
@@ -87,36 +92,3 @@ class ProtocolUnit(abc.ABC):
         ...
 
 
-class ProtocolDAG:
-    """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`s
-    with dependencies specified.
-
-    This is the unit of execution passed to an alchemical `Scheduler`.
-    A `ProtocolDAG` yields a `ProtocolResult`, which can be placed in a `ResultStore`.
-
-    """
-
-    def __init__(
-            self,
-            protocol_units: Iterable[ProtocolUnit]
-                ):
-            self._protocol_units = tuple(protocol_units)
-
-    def to_dask(self):
-        """Produce a `dask`-executable DAG from this `ProtocolDAG` as a `dask.Delayed` object.
-
-        """
-        ...
-
-    def execute(self) -> ProtocolDAGResult:
-        """Execute the full DAG in-serial, in process.
-
-        """
-        completed = []
-        while len(completed) != len(self._protocol_units):
-            for pu in self._protocol_units:
-                if pu.status == 'READY':
-                    pu.execute()
-                    completed.append(pu)
-
-        return ProtocolDAGResult(units=[pu.results for pu in completed])

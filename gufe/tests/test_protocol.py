@@ -5,58 +5,59 @@ from typing import Optional, Iterable
 
 import pytest
 
-from gufe.protocols import Protocol, ProtocolDAG, ProtocolUnit
-from gufe.protocols.results import ProtocolResult, ProtocolDAGResult, ProtocolUnitResult
+from gufe.protocols import (Protocol, ProtocolDAG, ProtocolUnit, ProtocolResult,
+ ProtocolDAGResult, ProtocolUnitResult)
 
 
 class InitializeUnit(ProtocolUnit):
 
     def _execute(self, dependency_results):
 
-        self._result = ProtocolUnitResult(
-                output="initialized",
-                name=self.__class__.__name__
+        return dict(
+                data="initialized",
                 )
-        return self._result
-
-    def _results(self):
-        return self._result
 
 
 class SimulationUnit(ProtocolUnit):
 
     def _execute(self, dependency_results):
 
-        output = "\n".join([r.output for r in dependency_results])
-        output += "\nrunning_md_{}".format(self._kwargs['window'])
+        output = [r.data for r in dependency_results]
+        output.append("running_md_{}".format(self._kwargs['window']))
 
-        self._result = ProtocolUnitResult(
-                output=output,
-                window=self._kwargs['window'],
-                name=self.__class__.__name__
+        return dict(
+                data=output,
+                window=self._kwargs['window'], # extra attributes allowed
                 )
-
-    def _results(self):
-        return self._result
 
 
 class FinishUnit(ProtocolUnit):
 
     def _execute(self, dependency_results):
 
-        output = "\n".join([r.output for r in dependency_results])
-        output += "\nassembling_results"
+        output = [r.data for r in dependency_results]
+        output.append("assembling_results")
 
-        self._result = ProtocolUnitResult(
-                output=output,
-                name=self.__class__.__name__
+        return dict(
+                data=output,
                 )
 
-    def _results(self):
-        return self._result
+
+class DummyProtocolResult(ProtocolResult):
+
+    def get_estimate(self):
+        ...
+
+    def get_uncertainty(self):
+        ...
+
+    def get_rate_of_convergence(self):
+        ...
 
 
 class DummyProtocol(Protocol):
+
+    _results_cls = DummyProtocolResult
 
     @classmethod
     def get_default_settings(cls):
@@ -88,10 +89,9 @@ class DummyProtocol(Protocol):
         for pdr in protocol_dag_results:
             for pu in pdr.units:
                 if pu.name == "FinishUnit":
-                    outputs.append(pu.output)
+                    outputs.append(pu.data)
 
-        return ProtocolResult(outputs=outputs)
-
+        return dict(data=outputs)
 
 
 class TestProtocol:
@@ -103,7 +103,7 @@ class TestProtocol:
         protocol = DummyProtocol(settings={})
         dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
 
-    def test_create_execute(self, solvated_ligand, solvated_complex):
+    def test_create_execute_gather(self, solvated_ligand, solvated_complex):
         protocol = DummyProtocol(settings={})
         dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
         dagresult = dag.execute()
@@ -112,5 +112,5 @@ class TestProtocol:
 
         protocolresult = protocol.gather([dagresult])
 
-        assert len(protocolresult.outputs) == 1
-        assert len(protocolresult.outputs[0].split("\n")) == 20*2 + 1
+        assert len(protocolresult.data) == 1
+        assert len(protocolresult.data[0]) == 20 + 1
