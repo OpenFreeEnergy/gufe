@@ -79,13 +79,13 @@ class FileStorage(ExternalStorage):
 
     def create(self, location, byte_data):
         path = self._as_path(location)
-        directory = path.directory
+        directory = path.parent
         filename = path.name
-        os.makedir(directory, existsok=True)
+        directory.mkdir(parents=True, exist_ok=True)
         with open(path, mode='wb') as f:
             f.write(byte_data)
 
-        return (str(path), cls.get_sha2(path))
+        return (str(path), self.get_sha2(path))
 
     def _as_path(self, location):
         return self.root_dir / pathlib.Path(location)
@@ -102,3 +102,12 @@ class FileStorage(ExternalStorage):
             return open(self._as_path(location), mode)
         except OSError as e:
             raise MissingExternalResourceError(str(e))
+
+
+class MemoryStorage(ExternalStorage):
+    """Not for production use, but potentially useful in testing"""
+    def exists(self, location):
+        pass
+
+    def create(self, location):
+        pass
