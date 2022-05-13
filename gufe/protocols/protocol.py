@@ -109,7 +109,7 @@ class Protocol(Serializable, abc.ABC):
             mapping: Optional[Mapping] = None,
             protocol_result: Optional[ProtocolDAGResult] = None,
             settings: Optional["ProtocolSettings"] = None
-        ) -> ProtocolDAG:
+        ) -> List[ProtocolUnit]:
         ...
 
     def create(self, 
@@ -152,23 +152,24 @@ class Protocol(Serializable, abc.ABC):
             A directed, acyclic graph that can be executed by a `Scheduler`.
 
         """
-        return self._create(
-                initial=initial,
-                final=final,
-                mapping=mapping,
-                extend_from=extend_from,
-                settings=settings)
+        return ProtocolDAG(
+                name=self.__class__.__name__,
+                protocol_units=self._create(
+                    initial=initial,
+                    final=final,
+                    mapping=mapping,
+                    extend_from=extend_from,
+                    settings=settings)
+                )
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
 
-        A 
-
         Parameters
         ----------
         protocol_dag_results : Iterable[ProtocolDAGResult]
+            The `ProtocolDAGResult`s to assemble aggregate quantities from.
             
-
         Returns
         -------
         ProtocolResult
@@ -178,5 +179,5 @@ class Protocol(Serializable, abc.ABC):
         return self._results_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
-    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> Dict[str, Any]:
         ...

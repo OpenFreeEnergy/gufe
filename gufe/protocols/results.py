@@ -24,15 +24,13 @@ class ProtocolUnitResult(BaseModel):
     def __init__(self, 
             dependencies: Optional[List["ProtocolUnitResult"]] = None,
             **data):
-        """
-
-        """
-        dep_uuids = [dep._uuid for dep in dependencies]
-
-        data.update({'_dependencies': dep_uuids})
 
         super().__init__(**data)
-        self._uuid = uuid.uuid4()
+
+        self._uuid = str(uuid.uuid4())
+
+        dep_uuids = [dep._uuid for dep in dependencies]
+        self._dependencies = dep_uuids
 
 
 class ProtocolDAGResult(BaseModel):
@@ -44,4 +42,5 @@ class ProtocolDAGResult(BaseModel):
 
     """
     units: List[ProtocolUnitResult]
+    name: str  # name of the `Protocol` that produced this `ProtocolDAGResult`
     

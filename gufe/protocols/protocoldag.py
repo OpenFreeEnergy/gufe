@@ -19,9 +19,25 @@ class ProtocolDAG:
 
     def __init__(
             self,
+            name: str,
             protocol_units: Iterable[ProtocolUnit]
-                ):
-            self._protocol_units = tuple(protocol_units)
+        ):
+        """Create a new `ProtocolDAG`.
+
+        Parameters
+        ----------
+        name : str
+            Name of the `Protocol` that generated this `ProtocolDAG`.
+        protocol_units : Iterable[ProtocolUnit]
+            The `ProtocolUnit`s, with dependencies set, to include in the `ProtocolDAG`.
+
+        """
+        self._name = name
+        self._protocol_units = tuple(protocol_units)
+
+    @property
+    def name(self):
+        return self._name
 
     def to_dask(self):
         """Produce a `dask`-executable DAG from this `ProtocolDAG` as a `dask.Delayed` object.
@@ -40,4 +56,4 @@ class ProtocolDAG:
                     pu.execute()
                     completed.append(pu)
 
-        return ProtocolDAGResult(units=[pu.result for pu in completed])
+        return ProtocolDAGResult(name=self._name, units=[pu.result for pu in completed])

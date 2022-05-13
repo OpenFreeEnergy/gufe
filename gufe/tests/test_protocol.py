@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
-from typing import Optional, Iterable
+from typing import Optional, Iterable, List, Dict, Any
 
 import pytest
 
@@ -69,7 +69,7 @@ class DummyProtocol(Protocol):
             mapping: Optional["Mapping"] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
             settings: Optional["ProtocolSettings"] = None
-        ) -> "ProtocolDAG":
+        ) -> List[ProtocolUnit]:
 
         if settings is None:
             settings = self.settings
@@ -81,9 +81,9 @@ class DummyProtocol(Protocol):
 
         omega = FinishUnit(self.settings, *simulations)
 
-        return ProtocolDAG([alpha, omega] + simulations)
+        return [alpha, omega] + simulations
 
-    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> Dict[str, Any]:
 
         outputs = []
         for pdr in protocol_dag_results:
@@ -108,8 +108,16 @@ class TestProtocol:
         dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
         dagresult = dag.execute()
 
+        finishresult = [u for u in dagresult.units if u.name == 'FinishUnit'][0]
+        simulationresults = [u for u in dagresult.units if u.name == 'SimulationUnit']
+
+        # check that we have dependency information in results
+        assert set(finishresult._dependencies) == {u._uuid for u in simulationresults}
+
+        # check that we have as many units as we expect in results
         assert len(dagresult.units) == 22
 
+        # gather aggregated results of interest
         protocolresult = protocol.gather([dagresult])
 
         assert len(protocolresult.data) == 1

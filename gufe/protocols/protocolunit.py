@@ -7,7 +7,7 @@ part of a `ProtocolDAG`.
 """
 
 import abc
-from typing import Iterable, List, Dict
+from typing import Iterable, List, Dict, Any
 from pathlib import Path
 
 from .results import ProtocolUnitResult
@@ -67,7 +67,7 @@ class ProtocolUnit(abc.ABC):
 
 
     @abc.abstractmethod
-    def _execute(self, dependency_results: List[ProtocolUnitResult]) -> ProtocolUnitResult:
+    def _execute(self, dependency_results: List[ProtocolUnitResult]) -> Dict[str, Any]:
         ...
 
     @property
