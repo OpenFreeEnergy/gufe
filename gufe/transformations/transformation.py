@@ -188,34 +188,52 @@ class NonTransformation(Transformation):
     protocol : Protocol
         The protocol used to perform the dynamics. Includes all details needed
         to perform required simulations/calculations.
+    name : Optional[str]
+        Optional identifier for the nontransformation; set this to a unique
+        value if adding multiple, otherwise identical transformations to the
+        same `AlchemicalNetwork` to avoid deduplication
 
     """
 
     def __init__(
             self,
-            chemicalsystem: ChemicalSystem,
-            protocol: Optional[Protocol] = None
+            system: ChemicalSystem,
+            protocol: Optional[Protocol] = None,
+            name: Optional[str] = None,
         ):
 
-        self._chemicalsystem = chemicalsystem
+        self._system = system
+        self._name = name
         self._protocol = protocol
 
     @property
     def initial(self):
-        return self._chemicalsystem
+        return self._system
 
     @property
     def final(self):
-        return self._chemicalsystem
+        return self._system
 
     @property
     def system(self):
-        return self._chemicalsystem
+        return self._system
 
     @property
     def protocol(self):
         """The protocol for sampling dynamics of the `ChemicalSystem`."""
         return self._protocol
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        if self._name != other.name:
+            return False
+        if self._protocol != other.protocol:
+            return False
+        if self._system != other.system:
+            return False
+
+        return True
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
@@ -239,7 +257,7 @@ class NonTransformation(Transformation):
 
         """
         return self.protocol.create(
-                                 chemicalsystem=self.chemicalsystem,
-                                 mapping=self.mapping
+                                 initial=self.system, 
+                                 final=self.system,
                                 )
 
