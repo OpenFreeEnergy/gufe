@@ -3,7 +3,11 @@
 
 import pytest
 
-import gufe
+from gufe.network import AlchemicalNetwork
+
+@pytest.fixture
+def benzene_star_map():
+    ...
 
 
 class TestAlchemicalNetwork:
