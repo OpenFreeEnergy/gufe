@@ -61,13 +61,38 @@ def benzene_modifications():
 ## Components
 
 @pytest.fixture
-def phenol(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['phenol'])
+def benzene(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['benzene'])
 
 
 @pytest.fixture
 def toluene(benzene_modifications):
     return gufe.SmallMoleculeComponent(benzene_modifications['toluene'])
+
+
+@pytest.fixture
+def phenol(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['phenol'])
+
+
+@pytest.fixture
+def benzonitrile(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['benzonitrile'])
+
+
+@pytest.fixture
+def anisole(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['anisole'])
+
+
+@pytest.fixture
+def benzaldehyde(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['benzaldehyde'])
+
+
+@pytest.fixture
+def styrene(benzene_modifications):
+    return gufe.SmallMoleculeComponent(benzene_modifications['styrene'])
 
 
 @pytest.fixture(scope='session')
