@@ -7,8 +7,8 @@ part of a `ProtocolDAG`.
 """
 
 import abc
+from os import PathLike
 from typing import Iterable, List, Dict, Any
-from pathlib import Path
 
 from .results import ProtocolUnitResult
 
@@ -88,5 +88,5 @@ class ProtocolUnit(abc.ABC):
 
         return self._status
 
-    def get_artifacts(self) -> Dict[str, Path]:
+    def get_artifacts(self) -> Dict[str, PathLike]:
         ...

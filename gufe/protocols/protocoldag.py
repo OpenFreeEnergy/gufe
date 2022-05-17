@@ -39,12 +39,6 @@ class ProtocolDAG:
     def name(self):
         return self._name
 
-    def to_dask(self):
-        """Produce a `dask`-executable DAG from this `ProtocolDAG` as a `dask.Delayed` object.
-
-        """
-        ...
-
     def execute(self) -> ProtocolDAGResult:
         """Execute the full DAG in-serial, in process.
 

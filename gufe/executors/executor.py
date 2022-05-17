@@ -7,8 +7,9 @@ from .results import ResultStoreClient
 class Executor:
     """Destination for `AlchemicalNetwork` submission and result requests via `Client`.
     
-    The `Executor` exposes a RESTful API for incoming `Client` requests.
-    It also coordinates all activity between `ResultStore` and connected `Scheduler`s.
+    The `Executor` exposes a RESTful API (or a Python API for a local `Executor`)
+    for incoming `Client` requests. It also coordinates all activity between
+    `ResultStore` and connected `Scheduler`s.
 
     Submitted `AlchemicalNetwork`s and `Strategy` are applied to produce
     `ProtocolDAG`s, which are made available for retrieval by connected `Scheduler`s.
