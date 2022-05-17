@@ -34,8 +34,8 @@ class Executor:
         ...
 
 
-    def export_state(datetime: datetime.datetime):
-        """Export complete state as it was at given `datetime`.
+    def export_state(self, timestamp: datetime.datetime):
+        """Export complete state as it was at given `timestamp`.
 
         This method is useful for checkpointing the `Executor` state for off-site backup.
 

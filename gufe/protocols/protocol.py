@@ -67,7 +67,7 @@ class Protocol(Serializable, abc.ABC):
 
     def __init__(
             self,
-            settings: "ProtocolSettings" = None
+            settings: "ProtocolSettings" = None   # type: ignore
         ):
         """
 
@@ -116,8 +116,8 @@ class Protocol(Serializable, abc.ABC):
             initial: ChemicalSystem, 
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
-            protocol_result: Optional[ProtocolDAGResult] = None,
-            settings: Optional["ProtocolSettings"] = None
+            extend_from: Optional[ProtocolDAGResult] = None,
+            settings: Optional["ProtocolSettings"] = None    # type: ignore
         ) -> List[ProtocolUnit]:
         ...
 
@@ -126,7 +126,7 @@ class Protocol(Serializable, abc.ABC):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-            settings: Optional["ProtocolSettings"] = None
+            settings: Optional["ProtocolSettings"] = None     # type: ignore
         ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 

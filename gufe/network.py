@@ -28,6 +28,7 @@ class AlchemicalNetwork(Serializable):
         nodes: Iterable[ChemicalSystem] = None,
     ):
         self._edges = frozenset(edges) if edges else frozenset()
+        self._nodes: FrozenSet[Transformation] 
 
         # possible to get more nodes via edges above,
         # so we merge these together

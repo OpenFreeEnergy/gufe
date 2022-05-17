@@ -5,6 +5,8 @@ from typing import Optional, Iterable, List, Dict, Any
 
 import pytest
 
+from gufe.chemicalsystem import ChemicalSystem
+from gufe.mapping import Mapping
 from gufe.protocols import (Protocol, ProtocolDAG, ProtocolUnit, ProtocolResult,
  ProtocolDAGResult, ProtocolUnitResult)
 
@@ -64,11 +66,11 @@ class DummyProtocol(Protocol):
         return {}
 
     def _create(self,
-            initial: "ChemicalSystem", 
-            final: "ChemicalSystem",
-            mapping: Optional["Mapping"] = None,
+            initial: ChemicalSystem, 
+            final: ChemicalSystem,
+            mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-            settings: Optional["ProtocolSettings"] = None
+            settings: Optional["ProtocolSettings"] = None      # type: ignore
         ) -> List[ProtocolUnit]:
 
         if settings is None:
@@ -77,7 +79,7 @@ class DummyProtocol(Protocol):
         alpha = InitializeUnit(
                 self.settings, initial=initial, final=final, mapping=mapping, start=extend_from)
 
-        simulations = [SimulationUnit(self.settings, alpha, window=i)  for i in range(20)]
+        simulations: List[ProtocolUnit] = [SimulationUnit(self.settings, alpha, window=i)  for i in range(20)]
 
         omega = FinishUnit(self.settings, *simulations)
 

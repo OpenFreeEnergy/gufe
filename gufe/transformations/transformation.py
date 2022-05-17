@@ -140,7 +140,7 @@ class Transformation(Serializable):
                 initial=ChemicalSystem.from_dict(d['initial']),
                 final=ChemicalSystem.from_dict(d['final']),
                 protocol=Protocol.from_dict(d['protocol']),
-                mapping=Mapping.from_dict()
+                mapping=Mapping.from_dict(d['mapping'])
                 )
 
     def create(self) -> ProtocolDAG:
@@ -198,7 +198,7 @@ class NonTransformation(Transformation):
     def __init__(
             self,
             system: ChemicalSystem,
-            protocol: Optional[Protocol] = None,
+            protocol: Protocol,
             name: Optional[str] = None,
         ):
 
@@ -239,7 +239,7 @@ class NonTransformation(Transformation):
     # should then be changed to use the registry
     def to_dict(self) -> dict:
         return {
-            "chemicalsystem": self.chemicalsystem.to_dict(),
+            "system": self.system.to_dict(),
             "protocol": self.protocol.to_dict(),
         }
 
@@ -248,7 +248,7 @@ class NonTransformation(Transformation):
     @classmethod
     def from_dict(cls, d: dict):
         return cls(
-                chemicalsystem=ChemicalSystem.from_dict(d['chemicalsystem']),
+                system=ChemicalSystem.from_dict(d['system']),
                 protocol=Protocol.from_dict(d['protocol'])
                 )
 

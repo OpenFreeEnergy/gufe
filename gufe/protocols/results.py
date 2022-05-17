@@ -25,6 +25,9 @@ class ProtocolUnitResult(BaseModel):
             dependencies: Optional[List["ProtocolUnitResult"]] = None,
             **data):
 
+        if dependencies is None:
+            dependencies = []
+
         super().__init__(**data)
 
         self._uuid = str(uuid.uuid4())

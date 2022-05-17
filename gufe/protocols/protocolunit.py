@@ -20,8 +20,8 @@ class ProtocolUnit(abc.ABC):
 
     def __init__(
             self,
-            settings: "ProtocolSettings",
-            *dependencies: Iterable["ProtocolUnit"],
+            settings: "ProtocolSettings", # type: ignore
+            *dependencies: "ProtocolUnit",
             **kwargs
         ):
 
@@ -49,7 +49,7 @@ class ProtocolUnit(abc.ABC):
 
         """
         if block:
-            dep_results = [dep.result for dep in self._dependencies]
+            dep_results = [dep.result for dep in self._dependencies]  # type: ignore
 
             self._status = "RUNNING"
             out = self._execute(dep_results)
@@ -90,5 +90,3 @@ class ProtocolUnit(abc.ABC):
 
     def get_artifacts(self) -> Dict[str, Path]:
         ...
-
-

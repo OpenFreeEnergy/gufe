@@ -49,7 +49,7 @@ class ProtocolDAG:
         """Execute the full DAG in-serial, in process.
 
         """
-        completed = []
+        completed: List[ProtocolUnit] = []
         while len(completed) != len(self._protocol_units):
             for pu in self._protocol_units:
                 if pu.status == 'READY':
