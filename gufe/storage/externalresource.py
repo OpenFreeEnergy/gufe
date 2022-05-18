@@ -4,19 +4,9 @@ import pathlib
 
 from typing import ClassVar
 
-
-class ExternalResourceError(Exception):
-    """Base class for errors due to problems with external resources"""
-    # TODO: is it necessary to have a base class here? Would you ever have
-    # one catch that handles both subclass errors?
-
-
-class MissingExternalResourceError(ExternalResourceError):
-    """Error when the external resource could not be loaded"""
-
-
-class ChangedExternalResourceError(ExternalResourceError):
-    """Error when there's a SHA256 mismatch with an external resource"""
+from gufe.storage.errors import (
+    MissingExternalResourceError, ChangedExternalResourceError
+)
 
 
 class ExternalStorage:
@@ -56,10 +46,13 @@ class ExternalStorage:
         self.validate(location, sha2)
         return self._as_filelike(location, bytes_mode)
 
-    def create(self, location, byte_data):
+    def store(self, location, byte_data):
         raise NotImplementedError()
 
     def exists(self, location):
+        raise NotImplementedError()
+
+    def delete(self, location):
         raise NotImplementedError()
 
     def _as_filename(self, location):
@@ -77,7 +70,7 @@ class FileStorage(ExternalStorage):
     def exists(self, location):
         return self._as_path(location).exists()
 
-    def create(self, location, byte_data):
+    def store(self, location, byte_data):
         path = self._as_path(location)
         directory = path.parent
         filename = path.name
@@ -86,6 +79,15 @@ class FileStorage(ExternalStorage):
             f.write(byte_data)
 
         return (str(path), self.get_sha2(path))
+
+    def delete(self, location):
+        path = self._as_path(location)
+        if self.exists(location):
+            path.unlink()
+        else:
+            raise MissingExternalResourceError(
+                f"Unable to delete f{str(path)}: File does not exist"
+            )
 
     def _as_path(self, location):
         return self.root_dir / pathlib.Path(location)
@@ -106,8 +108,29 @@ class FileStorage(ExternalStorage):
 
 class MemoryStorage(ExternalStorage):
     """Not for production use, but potentially useful in testing"""
+    def __init__(self):
+        self._data = {}
+
     def exists(self, location):
+        return location in self._data
+
+    def store(self, location, byte_data):
+        sha2 = hashlib.sha256()
+        sha2.update(byte_data)
+        self._data[location] = byte_data
+        return location, sha2.hexdigest()
+
+    def _as_filename(self, location):
+        # TODO: how to get this to work? how to manage tempfile? maybe a
+        # __del__ here?
         pass
 
-    def create(self, location):
-        pass
+    def _as_filelike(self, location, bytes_mode: bool = True):
+        byte_data = self._data[location]
+        if bytes_mode:
+            stream = io.BytesIO(byte_data)
+        else:
+            # I guess we just have to assume UTF in this case
+            stream = io.StringIO(byte_data.encode('utf-8'))
+
+        return stream
