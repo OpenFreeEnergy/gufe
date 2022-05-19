@@ -70,11 +70,7 @@ class DummyProtocol(Protocol):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-            settings: Optional["ProtocolSettings"] = None      # type: ignore
         ) -> List[ProtocolUnit]:
-
-        if settings is None:
-            settings = self.settings
 
         alpha = InitializeUnit(
                 self.settings, initial=initial, final=final, mapping=mapping, start=extend_from)

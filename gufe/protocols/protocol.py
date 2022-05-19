@@ -117,7 +117,6 @@ class Protocol(Serializable, abc.ABC):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-            settings: Optional["ProtocolSettings"] = None    # type: ignore
         ) -> List[ProtocolUnit]:
         ...
 
@@ -126,7 +125,6 @@ class Protocol(Serializable, abc.ABC):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-            settings: Optional["ProtocolSettings"] = None     # type: ignore
         ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -151,9 +149,6 @@ class Protocol(Serializable, abc.ABC):
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for extension
             from a previously-run `ProtocolDAG`.
-        settings : Optional[ProtocolSettings]
-            Overrides for e.g. Level 3 settings to change sampling approach from
-            the given `Protocol.settings`.
 
         Returns
         -------
@@ -168,7 +163,7 @@ class Protocol(Serializable, abc.ABC):
                     final=final,
                     mapping=mapping,
                     extend_from=extend_from,
-                    settings=settings)
+                    )
                 )
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
