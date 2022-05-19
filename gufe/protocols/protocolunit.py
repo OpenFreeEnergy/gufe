@@ -89,4 +89,8 @@ class ProtocolUnit(abc.ABC):
         return self._status
 
     def get_artifacts(self) -> Dict[str, PathLike]:
+        """Return a dict of file-like artifacts produced by this
+        `ProtocolUnit`.
+
+        """
         ...
