@@ -150,7 +150,8 @@ class Transformation(Serializable):
         return self.protocol.create(
                                  initial=self.initial, 
                                  final=self.final,
-                                 mapping=self.mapping
+                                 mapping=self.mapping,
+                                 name=str(self.__hash__())
                                 )
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
@@ -259,5 +260,6 @@ class NonTransformation(Transformation):
         return self.protocol.create(
                                  initial=self.system, 
                                  final=self.system,
-                                )
+                                 name=str(self.__hash__())
+                                 )
 

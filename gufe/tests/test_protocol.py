@@ -4,6 +4,7 @@
 from typing import Optional, Iterable, List, Dict, Any
 
 import pytest
+import networkx as nx
 
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import Mapping
@@ -70,16 +71,21 @@ class DummyProtocol(Protocol):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-        ) -> List[ProtocolUnit]:
+        ) -> nx.DiGraph:
 
         alpha = InitializeUnit(
                 self.settings, initial=initial, final=final, mapping=mapping, start=extend_from)
 
-        simulations: List[ProtocolUnit] = [SimulationUnit(self.settings, alpha, window=i)  for i in range(20)]
+        simulations: List[ProtocolUnit] = [SimulationUnit(self.settings, window=i)  for i in range(20)]
 
-        omega = FinishUnit(self.settings, *simulations)
+        omega = FinishUnit(self.settings)
 
-        return [alpha, omega] + simulations
+        dag = nx.DiGraph()
+        for sim in simulations:
+            dag.add_edge(alpha, sim)
+            dag.add_edge(sim, omega)
+
+        return dag
 
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> Dict[str, Any]:
 

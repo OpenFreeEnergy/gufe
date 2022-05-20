@@ -21,25 +21,20 @@ class ProtocolUnit(abc.ABC):
     def __init__(
             self,
             settings: "ProtocolSettings", # type: ignore
-            *dependencies: "ProtocolUnit",
             **kwargs
         ):
 
         self._settings = settings
-        self._dependencies = dependencies
-
-        if self._dependencies:
-            self._status = "WAITING"
-        else:
-            self._status = "READY"
-
         self._kwargs = kwargs
+
+    def __hash__(self):
+        ...
 
     @property
     def settings(self):
         return self._settings
 
-    def execute(self, block=True) -> ProtocolUnitResult:
+    def execute(self, dependency_results, block=True) -> ProtocolUnitResult:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
@@ -49,21 +44,17 @@ class ProtocolUnit(abc.ABC):
 
         """
         if block:
-            dep_results = [dep.result for dep in self._dependencies]  # type: ignore
-
-            self._status = "RUNNING"
-            out = self._execute(dep_results)
-            self._status = "COMPLETE"
-            self._result = ProtocolUnitResult(
+            out = self._execute(dependency_results)
+            result = ProtocolUnitResult(
                                 name=self.__class__.__name__,
-                                dependencies=dep_results, 
+                                dependencies=dependency_results, 
                                 **out)
 
         else:
             #TODO: wrap in a thread; update status
             ...
 
-        return self._result
+        return result
 
 
     @abc.abstractmethod
@@ -78,15 +69,6 @@ class ProtocolUnit(abc.ABC):
 
         """
         return self._result
-
-    @property
-    def status(self):
-        if self._status == "WAITING":
-            # check dependencies; if all COMPLETE, change to READY
-            if set(dep.status for dep in self._dependencies) == {"COMPLETE"}:
-                self._status = 'READY'
-
-        return self._status
 
     def get_artifacts(self) -> Dict[str, PathLike]:
         """Return a dict of file-like artifacts produced by this

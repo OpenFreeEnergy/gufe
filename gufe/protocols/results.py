@@ -5,6 +5,8 @@ import abc
 import uuid
 from typing import List, Optional, Any
 
+import networkx as nx
+
 from pydantic import BaseModel, PrivateAttr
 
 
@@ -43,7 +45,15 @@ class ProtocolDAGResult(BaseModel):
     Data elements from these objects are combined by `Protocol.gather` into a
     `ProtocolResult`.
 
+    Attributes
+    ----------
+    name : str
+        Unique identifier for this `ProtocolDAGResult`.
+    graph : nx.DiGraph
+        The `ProtocolUnit`s, with dependencies set, as a networkx `DiGraph`.
+        Each `ProtocolUnit` features its `ProtocolUnitResult` as a `result` attribute.
+
     """
-    units: List[ProtocolUnitResult]
-    name: str  # name of the `Protocol` that produced this `ProtocolDAGResult`
+    name: str  
+    graph: nx.DiGraph
     

@@ -4,6 +4,8 @@
 import abc
 from typing import Iterable, List, Dict
 
+import networkx as nx
+
 from .protocolunit import ProtocolUnit
 from .results import ProtocolDAGResult
 
@@ -20,29 +22,34 @@ class ProtocolDAG:
     def __init__(
             self,
             name: str,
-            protocol_units: Iterable[ProtocolUnit]
+            graph: nx.DiGraph
         ):
         """Create a new `ProtocolDAG`.
 
         Parameters
         ----------
         name : str
-            Name of the `Protocol` that generated this `ProtocolDAG`.
-        protocol_units : Iterable[ProtocolUnit]
-            The `ProtocolUnit`s, with dependencies set, to include in the `ProtocolDAG`.
+            Unique identifier for this `ProtocolDAG`.
+        graph : nx.DiGraph
+            The `ProtocolUnit`s, with dependencies set, as a networkx `DiGraph`.
 
         """
         self._name = name
-        self._protocol_units = tuple(protocol_units)
+        self._graph = graph
 
     @property
     def name(self):
         return self._name
 
+    @property
+    def graph(self):
+        return self._graph
+
     def execute(self) -> ProtocolDAGResult:
         """Execute the full DAG in-serial, in process.
 
         """
+        # TODO: rewrite to operate on networkx graph instead
         completed: List[ProtocolUnit] = []
         while len(completed) != len(self._protocol_units):
             for pu in self._protocol_units:

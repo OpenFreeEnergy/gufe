@@ -11,6 +11,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, validator
 from openff.toolkit.utils.serialization import Serializable
+import networkx as nx
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
@@ -117,7 +118,7 @@ class Protocol(Serializable, abc.ABC):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
-        ) -> List[ProtocolUnit]:
+        ) -> nx.DiGraph:
         ...
 
     def create(self, 
@@ -125,6 +126,7 @@ class Protocol(Serializable, abc.ABC):
             final: ChemicalSystem,
             mapping: Optional[Mapping] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
+            name: str = None,
         ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -157,8 +159,8 @@ class Protocol(Serializable, abc.ABC):
 
         """
         return ProtocolDAG(
-                name=self.__class__.__name__,
-                protocol_units=self._create(
+                name=name,
+                graph=self._create(
                     initial=initial,
                     final=final,
                     mapping=mapping,
