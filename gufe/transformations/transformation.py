@@ -236,6 +236,15 @@ class NonTransformation(Transformation):
 
         return True
 
+    def __hash__(self):
+        return hash(
+            (
+                self._name,
+                self._protocol,
+                self._system,
+            )
+        )
+
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
     def to_dict(self) -> dict:
@@ -262,4 +271,3 @@ class NonTransformation(Transformation):
                                  final=self.system,
                                  name=str(self.__hash__())
                                  )
-

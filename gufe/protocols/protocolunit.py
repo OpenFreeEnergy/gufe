@@ -8,7 +8,7 @@ part of a `ProtocolDAG`.
 
 import abc
 from os import PathLike
-from typing import Iterable, List, Dict, Any
+from typing import Iterable, List, Dict, Any, Optional
 
 from .results import ProtocolUnitResult
 
@@ -20,33 +20,46 @@ class ProtocolUnit(abc.ABC):
 
     def __init__(
             self,
-            settings: "ProtocolSettings", # type: ignore
+            settings: Optional["ProtocolSettings"] = None, # type: ignore
+            name: Optional[str] = None,
             **kwargs
         ):
 
         self._settings = settings
         self._kwargs = kwargs
+        self._name = name
 
     def __hash__(self):
-        ...
+        return hash(
+            (
+                self.__class__.__name__,
+                self._settings,
+                frozenset(self._kwargs.items())
+            )
+        )
 
     @property
     def settings(self):
         return self._settings
 
-    def execute(self, dependency_results, block=True) -> ProtocolUnitResult:
+    @property
+    def name(self):
+        return self._name
+
+    def execute(self, dependency_results: Iterable[ProtocolUnitResult], block=True) -> ProtocolUnitResult:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
+        dependency_results : 
 
         """
         if block:
             out = self._execute(dependency_results)
             result = ProtocolUnitResult(
-                                name=self.__class__.__name__,
+                                name=self._name,
                                 dependencies=dependency_results, 
                                 **out)
 
@@ -58,7 +71,7 @@ class ProtocolUnit(abc.ABC):
 
 
     @abc.abstractmethod
-    def _execute(self, dependency_results: List[ProtocolUnitResult]) -> Dict[str, Any]:
+    def _execute(self, dependency_results: Iterable[ProtocolUnitResult]) -> Dict[str, Any]:
         ...
 
     @property

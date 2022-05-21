@@ -13,14 +13,17 @@ from pydantic import BaseModel, PrivateAttr
 class ProtocolUnitResult(BaseModel):
     """Result for a single `ProtocolUnit` execution.
 
+    Immutable upon creation.
+
     """
     class Config:
         extra = "allow"
+        allow_mutation = False
         
     _dependencies: List[str] = PrivateAttr()
     _uuid: str = PrivateAttr()
 
-    name: str  # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    name: Optional[str]  # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
     data: Any  # should likely be fleshed out, currently a free-for-all
 
     def __init__(self, 
@@ -54,6 +57,16 @@ class ProtocolDAGResult(BaseModel):
         Each `ProtocolUnit` features its `ProtocolUnitResult` as a `result` attribute.
 
     """
-    name: str  
+    class Config:
+        arbitrary_types_allowed = True
+
     graph: nx.DiGraph
+    name: Optional[str]
     
+    @property
+    def protocol_units(self):
+        return [pu for pu in self.graph.nodes]
+
+    @property
+    def protocol_unit_results(self):
+        return list(nx.get_node_attributes(self.graph, 'result').values())

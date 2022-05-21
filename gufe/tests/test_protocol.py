@@ -78,12 +78,12 @@ class DummyProtocol(Protocol):
 
         simulations: List[ProtocolUnit] = [SimulationUnit(self.settings, window=i)  for i in range(20)]
 
-        omega = FinishUnit(self.settings)
+        omega = FinishUnit(self.settings, name="the end")
 
         dag = nx.DiGraph()
         for sim in simulations:
-            dag.add_edge(alpha, sim)
-            dag.add_edge(sim, omega)
+            dag.add_edge(sim, alpha)
+            dag.add_edge(omega, sim)
 
         return dag
 
@@ -91,9 +91,9 @@ class DummyProtocol(Protocol):
 
         outputs = []
         for pdr in protocol_dag_results:
-            for pu in pdr.units:
-                if pu.name == "FinishUnit":
-                    outputs.append(pu.data)
+            for pur in pdr.protocol_unit_results:
+                if pur.name == "the end":
+                    outputs.append(pur.data)
 
         return dict(data=outputs)
 
@@ -101,25 +101,25 @@ class DummyProtocol(Protocol):
 class TestProtocol:
 
     def test_init(self):
-        protocol = DummyProtocol(settings={})
+        protocol = DummyProtocol(settings=None)
 
     def test_create(self, solvated_ligand, solvated_complex):
-        protocol = DummyProtocol(settings={})
+        protocol = DummyProtocol(settings=None)
         dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
 
     def test_create_execute_gather(self, solvated_ligand, solvated_complex):
-        protocol = DummyProtocol(settings={})
-        dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
+        protocol = DummyProtocol(settings=None)
+        dag = protocol.create(initial=solvated_ligand, final=solvated_complex, name="a dummy run")
         dagresult = dag.execute()
 
-        finishresult = [u for u in dagresult.units if u.name == 'FinishUnit'][0]
-        simulationresults = [u for u in dagresult.units if u.name == 'SimulationUnit']
+        finishresult = [dagresult.graph.nodes[u]['result'] for u in dagresult.graph.nodes if u.__class__.__name__ == 'FinishUnit'][0]
+        simulationresults = [dagresult.graph.nodes[u]['result'] for u in dagresult.graph.nodes if u.__class__.__name__ == 'SimulationUnit']
 
         # check that we have dependency information in results
         assert set(finishresult._dependencies) == {u._uuid for u in simulationresults}
 
-        # check that we have as many units as we expect in results
-        assert len(dagresult.units) == 22
+        # check that we have as many units as we expect in resulting graph
+        assert len(dagresult.graph) == 22
 
         # gather aggregated results of interest
         protocolresult = protocol.gather([dagresult])
