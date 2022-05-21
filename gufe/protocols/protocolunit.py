@@ -74,15 +74,6 @@ class ProtocolUnit(abc.ABC):
     def _execute(self, dependency_results: Iterable[ProtocolUnitResult]) -> Dict[str, Any]:
         ...
 
-    @property
-    def result(self) -> ProtocolUnitResult:
-        """Return `ProtocolUnitResult` for this `ProtocolUnit`.
-
-        Requires `status` == "COMPLETE"; exception raised otherwise.
-
-        """
-        return self._result
-
     def get_artifacts(self) -> Dict[str, PathLike]:
         """Return a dict of file-like artifacts produced by this
         `ProtocolUnit`.

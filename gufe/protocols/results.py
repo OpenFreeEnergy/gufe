@@ -3,7 +3,7 @@
 
 import abc
 import uuid
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Iterable
 
 import networkx as nx
 
@@ -27,7 +27,7 @@ class ProtocolUnitResult(BaseModel):
     data: Any  # should likely be fleshed out, currently a free-for-all
 
     def __init__(self, 
-            dependencies: Optional[List["ProtocolUnitResult"]] = None,
+            dependencies: Optional[Iterable["ProtocolUnitResult"]] = None,
             **data):
 
         if dependencies is None:
