@@ -9,6 +9,7 @@ class Mapping(Serializable):
     Some, but not all, transformation protocols require a mapping to execute.
 
     """
+
     def to_dict(self) -> dict:
         ...
 

@@ -21,11 +21,9 @@ from .protocoldag import ProtocolDAG
 from .results import ProtocolUnitResult, ProtocolDAGResult
 
 
-
 class ProtocolResult(Serializable, abc.ABC):
-    """Container for all `ProtocolDAGResult`s for a given `Transformation`.
+    """Container for all `ProtocolDAGResult`s for a given `Transformation`."""
 
-    """
     def __init__(self, data, **kwargs):
         self._data = data
 
@@ -64,15 +62,11 @@ class Protocol(Serializable, abc.ABC):
     settings : ProtocolSettings
 
     """
+
     _results_cls = ProtocolResult
 
-    def __init__(
-            self,
-            settings: "ProtocolSettings" = None   # type: ignore
-        ):
-        """
-
-        """
+    def __init__(self, settings: "ProtocolSettings" = None):  # type: ignore
+        """ """
         self._settings = settings
 
     @property
@@ -95,12 +89,7 @@ class Protocol(Serializable, abc.ABC):
         return True
 
     def __hash__(self):
-        return hash(
-            (
-                self.__class__.__name__,
-                self._settings
-            )
-        )
+        return hash((self.__class__.__name__, self._settings))
 
     @classmethod
     @abc.abstractmethod
@@ -113,21 +102,23 @@ class Protocol(Serializable, abc.ABC):
         ...
 
     @abc.abstractmethod
-    def _create(self, 
-            initial: ChemicalSystem, 
-            final: ChemicalSystem,
-            mapping: Optional[Mapping] = None,
-            extend_from: Optional[ProtocolDAGResult] = None,
-        ) -> nx.DiGraph:
+    def _create(
+        self,
+        initial: ChemicalSystem,
+        final: ChemicalSystem,
+        mapping: Optional[Mapping] = None,
+        extend_from: Optional[ProtocolDAGResult] = None,
+    ) -> nx.DiGraph:
         ...
 
-    def create(self, 
-            initial: ChemicalSystem, 
-            final: ChemicalSystem,
-            mapping: Optional[Mapping] = None,
-            extend_from: Optional[ProtocolDAGResult] = None,
-            name: str = None,
-        ) -> ProtocolDAG:
+    def create(
+        self,
+        initial: ChemicalSystem,
+        final: ChemicalSystem,
+        mapping: Optional[Mapping] = None,
+        extend_from: Optional[ProtocolDAGResult] = None,
+        name: str = None,
+    ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
         A `ProtocolDAG` is composed of `ProtocolUnit`s, with dependencies
@@ -159,31 +150,35 @@ class Protocol(Serializable, abc.ABC):
 
         """
         return ProtocolDAG(
-                name=name,
-                graph=self._create(
-                    initial=initial,
-                    final=final,
-                    mapping=mapping,
-                    extend_from=extend_from,
-                    )
-                )
+            name=name,
+            graph=self._create(
+                initial=initial,
+                final=final,
+                mapping=mapping,
+                extend_from=extend_from,
+            ),
+        )
 
-    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+    def gather(
+        self, protocol_dag_results: Iterable[ProtocolDAGResult]
+    ) -> ProtocolResult:
         """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
 
         Parameters
         ----------
         protocol_dag_results : Iterable[ProtocolDAGResult]
             The `ProtocolDAGResult`s to assemble aggregate quantities from.
-            
+
         Returns
         -------
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
-            
+
         """
         return self._results_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
-    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> Dict[str, Any]:
+    def _gather(
+        self, protocol_dag_results: Iterable[ProtocolDAGResult]
+    ) -> Dict[str, Any]:
         ...

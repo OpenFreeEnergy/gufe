@@ -8,46 +8,48 @@ import networkx as nx
 
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import Mapping
-from gufe.protocols import (Protocol, ProtocolDAG, ProtocolUnit, ProtocolResult,
- ProtocolDAGResult, ProtocolUnitResult)
+from gufe.protocols import (
+    Protocol,
+    ProtocolDAG,
+    ProtocolUnit,
+    ProtocolResult,
+    ProtocolDAGResult,
+    ProtocolUnitResult,
+)
 
 
 class InitializeUnit(ProtocolUnit):
-
     def _execute(self, dependency_results):
 
         return dict(
-                data="initialized",
-                )
+            data="initialized",
+        )
 
 
 class SimulationUnit(ProtocolUnit):
-
     def _execute(self, dependency_results):
 
         output = [r.data for r in dependency_results]
-        output.append("running_md_{}".format(self._kwargs['window']))
+        output.append("running_md_{}".format(self._kwargs["window"]))
 
         return dict(
-                data=output,
-                window=self._kwargs['window'], # extra attributes allowed
-                )
+            data=output,
+            window=self._kwargs["window"],  # extra attributes allowed
+        )
 
 
 class FinishUnit(ProtocolUnit):
-
     def _execute(self, dependency_results):
 
         output = [r.data for r in dependency_results]
         output.append("assembling_results")
 
         return dict(
-                data=output,
-                )
+            data=output,
+        )
 
 
 class DummyProtocolResult(ProtocolResult):
-
     def get_estimate(self):
         ...
 
@@ -66,17 +68,25 @@ class DummyProtocol(Protocol):
     def get_default_settings(cls):
         return {}
 
-    def _create(self,
-            initial: ChemicalSystem, 
-            final: ChemicalSystem,
-            mapping: Optional[Mapping] = None,
-            extend_from: Optional[ProtocolDAGResult] = None,
-        ) -> nx.DiGraph:
+    def _create(
+        self,
+        initial: ChemicalSystem,
+        final: ChemicalSystem,
+        mapping: Optional[Mapping] = None,
+        extend_from: Optional[ProtocolDAGResult] = None,
+    ) -> nx.DiGraph:
 
         alpha = InitializeUnit(
-                self.settings, initial=initial, final=final, mapping=mapping, start=extend_from)
+            self.settings,
+            initial=initial,
+            final=final,
+            mapping=mapping,
+            start=extend_from,
+        )
 
-        simulations: List[ProtocolUnit] = [SimulationUnit(self.settings, window=i)  for i in range(20)]
+        simulations: List[ProtocolUnit] = [
+            SimulationUnit(self.settings, window=i) for i in range(20)
+        ]
 
         omega = FinishUnit(self.settings, name="the end")
 
@@ -87,7 +97,9 @@ class DummyProtocol(Protocol):
 
         return dag
 
-    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> Dict[str, Any]:
+    def _gather(
+        self, protocol_dag_results: Iterable[ProtocolDAGResult]
+    ) -> Dict[str, Any]:
 
         outputs = []
         for pdr in protocol_dag_results:
@@ -99,7 +111,6 @@ class DummyProtocol(Protocol):
 
 
 class TestProtocol:
-
     def test_init(self):
         protocol = DummyProtocol(settings=None)
 
@@ -109,11 +120,21 @@ class TestProtocol:
 
     def test_create_execute_gather(self, solvated_ligand, solvated_complex):
         protocol = DummyProtocol(settings=None)
-        dag = protocol.create(initial=solvated_ligand, final=solvated_complex, name="a dummy run")
+        dag = protocol.create(
+            initial=solvated_ligand, final=solvated_complex, name="a dummy run"
+        )
         dagresult = dag.execute()
 
-        finishresult = [dagresult.graph.nodes[u]['result'] for u in dagresult.graph.nodes if u.__class__.__name__ == 'FinishUnit'][0]
-        simulationresults = [dagresult.graph.nodes[u]['result'] for u in dagresult.graph.nodes if u.__class__.__name__ == 'SimulationUnit']
+        finishresult = [
+            dagresult.graph.nodes[u]["result"]
+            for u in dagresult.graph.nodes
+            if u.__class__.__name__ == "FinishUnit"
+        ][0]
+        simulationresults = [
+            dagresult.graph.nodes[u]["result"]
+            for u in dagresult.graph.nodes
+            if u.__class__.__name__ == "SimulationUnit"
+        ]
 
         # check that we have dependency information in results
         assert set(finishresult._dependencies) == {u._uuid for u in simulationresults}

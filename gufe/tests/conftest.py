@@ -10,6 +10,7 @@ import gufe
 
 ## data file paths
 
+
 @pytest.fixture
 def serialization_template():
     def inner(filename):
@@ -60,14 +61,15 @@ def benzene_modifications():
 
 ## Components
 
+
 @pytest.fixture
 def benzene(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['benzene'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["benzene"])
 
 
 @pytest.fixture
 def toluene(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['toluene'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["toluene"])
 
 
 @pytest.fixture
@@ -77,27 +79,27 @@ def phenol(benzene_modifications):
 
 @pytest.fixture
 def benzonitrile(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['benzonitrile'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["benzonitrile"])
 
 
 @pytest.fixture
 def anisole(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['anisole'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["anisole"])
 
 
 @pytest.fixture
 def benzaldehyde(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['benzaldehyde'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["benzaldehyde"])
 
 
 @pytest.fixture
 def styrene(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['styrene'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["styrene"])
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def ethane():
-    return gufe.SmallMoleculeComponent(Chem.MolFromSmiles('CC'))
+    return gufe.SmallMoleculeComponent(Chem.MolFromSmiles("CC"))
 
 
 @pytest.fixture
@@ -107,35 +109,31 @@ def prot_comp(PDB_181L_path):
 
 @pytest.fixture
 def solv_comp():
-    yield gufe.SolventComponent(positive_ion='K', negative_ion='Cl')
+    yield gufe.SolventComponent(positive_ion="K", negative_ion="Cl")
 
 
 @pytest.fixture
 def toluene_ligand_comp(benzene_modifications):
-    yield gufe.SmallMoleculeComponent.from_rdkit(
-        benzene_modifications['toluene'])
+    yield gufe.SmallMoleculeComponent.from_rdkit(benzene_modifications["toluene"])
 
 
 @pytest.fixture
 def phenol_ligand_comp(benzene_modifications):
-    yield gufe.SmallMoleculeComponent.from_rdkit(
-        benzene_modifications['phenol'])
+    yield gufe.SmallMoleculeComponent.from_rdkit(benzene_modifications["phenol"])
 
 
 ## ChemicalSystems
 
+
 @pytest.fixture
 def solvated_complex(prot_comp, solv_comp, toluene_ligand_comp):
     return gufe.ChemicalSystem(
-        {'protein': prot_comp,
-         'solvent': solv_comp,
-         'ligand': toluene_ligand_comp},
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp},
     )
 
 
 @pytest.fixture
 def solvated_ligand(solv_comp, toluene_ligand_comp):
     return gufe.ChemicalSystem(
-        {'ligand': toluene_ligand_comp, 'solvent': solv_comp},
+        {"ligand": toluene_ligand_comp, "solvent": solv_comp},
     )
-

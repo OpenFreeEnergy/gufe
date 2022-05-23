@@ -71,10 +71,8 @@ def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
                                toluene_ligand_comp):
     # names are different
     complex2 = gufe.ChemicalSystem(
-        {'protein': prot_comp,
-         'solvent': solv_comp,
-         'ligand': toluene_ligand_comp},
-        name='Not quite the same'
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp},
+        name="Not quite the same",
     )
 
     assert solvated_complex != complex2

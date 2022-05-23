@@ -8,8 +8,19 @@ from gufe import AlchemicalNetwork, ChemicalSystem, Transformation
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
 
+
 @pytest.fixture
-def benzene_variants_star_map(benzene, toluene, phenol, benzonitrile, anisole, benzaldehyde, styrene, prot_comp, solv_comp):
+def benzene_variants_star_map(
+    benzene,
+    toluene,
+    phenol,
+    benzonitrile,
+    anisole,
+    benzaldehyde,
+    styrene,
+    prot_comp,
+    solv_comp,
+):
 
     variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde, styrene]
 
@@ -17,35 +28,49 @@ def benzene_variants_star_map(benzene, toluene, phenol, benzonitrile, anisole, b
     solvated_ligands = {}
     solvated_ligand_transformtions = {}
 
-    solvated_ligands['benzene'] = ChemicalSystem({'solvent': solv_comp, 'ligand': benzene}, name='benzene-solvent')
+    solvated_ligands["benzene"] = ChemicalSystem(
+        {"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent"
+    )
 
     for ligand in variants:
-        solvated_ligands[ligand.name] = ChemicalSystem({'solvent': solv_comp, 'ligand': ligand}, name=f'{ligand.name}-solvnet')
-        solvated_ligand_transformtions[('benzene', ligand.name)] = Transformation(
-                solvated_ligands['benzene'], 
-                solvated_ligands[ligand.name],
-                protocol=DummyProtocol(settings=None),
-                mapping=None)
+        solvated_ligands[ligand.name] = ChemicalSystem(
+            {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvnet"
+        )
+        solvated_ligand_transformtions[("benzene", ligand.name)] = Transformation(
+            solvated_ligands["benzene"],
+            solvated_ligands[ligand.name],
+            protocol=DummyProtocol(settings=None),
+            mapping=None,
+        )
 
     # define the complex chemical systems and transformations between benzene and the others
     solvated_complexes = {}
     solvated_complex_transformtions = {}
 
-    solvated_complexes['benzene'] = ChemicalSystem({'protein': prot_comp, 'solvent': solv_comp, 'ligand': benzene}, name='benzene-complex')
+    solvated_complexes["benzene"] = ChemicalSystem(
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": benzene},
+        name="benzene-complex",
+    )
 
     for ligand in variants:
-        solvated_complexes[ligand.name] = ChemicalSystem({'protein': prot_comp, 'solvent': solv_comp, 'ligand': ligand}, name=f'{ligand.name}-complex')
-        solvated_complex_transformtions[('benzene', ligand.name)] = Transformation(
-                solvated_complexes['benzene'], 
-                solvated_complexes[ligand.name],
-                protocol=DummyProtocol(settings=None),
-                mapping=None)
+        solvated_complexes[ligand.name] = ChemicalSystem(
+            {"protein": prot_comp, "solvent": solv_comp, "ligand": ligand},
+            name=f"{ligand.name}-complex",
+        )
+        solvated_complex_transformtions[("benzene", ligand.name)] = Transformation(
+            solvated_complexes["benzene"],
+            solvated_complexes[ligand.name],
+            protocol=DummyProtocol(settings=None),
+            mapping=None,
+        )
 
+    return AlchemicalNetwork(
+        list(solvated_ligand_transformtions.values())
+        + list(solvated_complex_transformtions.values())
+    )
 
-    return AlchemicalNetwork(list(solvated_ligand_transformtions.values()) + list(solvated_complex_transformtions.values()))
 
 class TestAlchemicalNetwork:
-
     def test_init(self, benzene_variants_star_map):
         alnet = benzene_variants_star_map
 
@@ -62,10 +87,10 @@ class TestAlchemicalNetwork:
 
         # test connectivity from benzene nodes
         for node in alnet.nodes:
-            if node.name == 'benzene-solvent':
+            if node.name == "benzene-solvent":
                 edges = alnet.graph.edges(node)
                 assert len(edges) == 6
-            elif node.name == 'benzene-complex':
+            elif node.name == "benzene-complex":
                 edges = alnet.graph.edges(node)
                 assert len(edges) == 6
             else:

@@ -14,16 +14,14 @@ from .results import ProtocolUnitResult
 
 
 class ProtocolUnit(abc.ABC):
-    """A unit of work computable by
-
-    """
+    """A unit of work computable by"""
 
     def __init__(
-            self,
-            settings: Optional["ProtocolSettings"] = None, # type: ignore
-            name: Optional[str] = None,
-            **kwargs
-        ):
+        self,
+        settings: Optional["ProtocolSettings"] = None,  # type: ignore
+        name: Optional[str] = None,
+        **kwargs
+    ):
 
         self._settings = settings
         self._kwargs = kwargs
@@ -31,11 +29,7 @@ class ProtocolUnit(abc.ABC):
 
     def __hash__(self):
         return hash(
-            (
-                self.__class__.__name__,
-                self._settings,
-                frozenset(self._kwargs.items())
-            )
+            (self.__class__.__name__, self._settings, frozenset(self._kwargs.items()))
         )
 
     @property
@@ -46,32 +40,34 @@ class ProtocolUnit(abc.ABC):
     def name(self):
         return self._name
 
-    def execute(self, dependency_results: Iterable[ProtocolUnitResult], block=True) -> ProtocolUnitResult:
+    def execute(
+        self, dependency_results: Iterable[ProtocolUnitResult], block=True
+    ) -> ProtocolUnitResult:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
-        dependency_results : 
+        dependency_results :
 
         """
         if block:
             out = self._execute(dependency_results)
             result = ProtocolUnitResult(
-                                name=self._name,
-                                dependencies=dependency_results, 
-                                **out)
+                name=self._name, dependencies=dependency_results, **out
+            )
 
         else:
-            #TODO: wrap in a thread; update status
+            # TODO: wrap in a thread; update status
             ...
 
         return result
 
-
     @abc.abstractmethod
-    def _execute(self, dependency_results: Iterable[ProtocolUnitResult]) -> Dict[str, Any]:
+    def _execute(
+        self, dependency_results: Iterable[ProtocolUnitResult]
+    ) -> Dict[str, Any]:
         ...
 
     def get_artifacts(self) -> Dict[str, PathLike]:

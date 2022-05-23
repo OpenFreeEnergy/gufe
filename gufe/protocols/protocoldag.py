@@ -20,10 +20,10 @@ class ProtocolDAG:
     """
 
     def __init__(
-            self,
-            graph: nx.DiGraph,
-            name: Optional[str] = None,
-        ):
+        self,
+        graph: nx.DiGraph,
+        name: Optional[str] = None,
+    ):
         """Create a new `ProtocolDAG`.
 
         Parameters
@@ -46,9 +46,7 @@ class ProtocolDAG:
         return self._graph
 
     def execute(self) -> ProtocolDAGResult:
-        """Execute the full DAG in-serial, in process.
-
-        """
+        """Execute the full DAG in-serial, in process."""
 
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
@@ -64,11 +62,21 @@ class ProtocolDAG:
                 dependency_edges = graph.edges(pu)
 
                 # if all dependencies are completed, execute
-                if all((dependency_edge[1] in completed for dependency_edge in dependency_edges)):
-                    pur = pu.execute(dependency_results=[graph.nodes[dependency_edge[1]]['result'] for dependency_edge in dependency_edges])
+                if all(
+                    (
+                        dependency_edge[1] in completed
+                        for dependency_edge in dependency_edges
+                    )
+                ):
+                    pur = pu.execute(
+                        dependency_results=[
+                            graph.nodes[dependency_edge[1]]["result"]
+                            for dependency_edge in dependency_edges
+                        ]
+                    )
 
                     # attach results, add to completed list
-                    graph.nodes[pu]['result'] = pur
+                    graph.nodes[pu]["result"] = pur
                     completed.add(pu)
 
         return ProtocolDAGResult(name=self._name, graph=graph)

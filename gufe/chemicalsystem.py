@@ -62,7 +62,9 @@ class ChemicalSystem(Serializable, abc.Mapping):
             self._box_vectors = box_vectors
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(name={self.name}, components={self.components})"
+        return (
+            f"{self.__class__.__name__}(name={self.name}, components={self.components})"
+        )
 
     def __lt__(self, other):
         return hash(self) < hash(other)

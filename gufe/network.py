@@ -28,7 +28,7 @@ class AlchemicalNetwork(Serializable):
         nodes: Iterable[ChemicalSystem] = None,
     ):
         self._edges = frozenset(edges) if edges else frozenset()
-        self._nodes: FrozenSet[Transformation] 
+        self._nodes: FrozenSet[Transformation]
 
         # possible to get more nodes via edges above,
         # so we merge these together
@@ -38,10 +38,10 @@ class AlchemicalNetwork(Serializable):
             self._nodes = frozenset(nodes)
 
         self._nodes = (
-                       self._nodes | 
-                       frozenset(e.initial for e in self._edges) |
-                       frozenset(e.final for e in self._edges)
-                      )
+            self._nodes
+            | frozenset(e.initial for e in self._edges)
+            | frozenset(e.final for e in self._edges)
+        )
 
         self._graph = None
 
@@ -53,7 +53,9 @@ class AlchemicalNetwork(Serializable):
         g = nx.MultiDiGraph()
 
         for transformation in edges:
-            g.add_edge(transformation.initial, transformation.final, object=transformation)
+            g.add_edge(
+                transformation.initial, transformation.final, object=transformation
+            )
 
         g.add_nodes_from(nodes)
 
@@ -74,24 +76,16 @@ class AlchemicalNetwork(Serializable):
         return self._nodes
 
     def to_dict(self) -> dict:
-        """
-
-        """
+        """ """
         ...
 
     @classmethod
     def from_dict(cls, d: dict):
         ...
 
-
     def to_graphml(self) -> str:
-        """
-
-        """
+        """ """
 
     @classmethod
     def from_graphml(self, str):
-        """
-
-        """
-
+        """ """

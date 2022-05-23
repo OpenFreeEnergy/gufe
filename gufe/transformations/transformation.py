@@ -37,13 +37,13 @@ class Transformation(Serializable):
     """
 
     def __init__(
-            self, 
-            initial: ChemicalSystem,
-            final: ChemicalSystem,
-            protocol: Protocol,
-            mapping: Optional[Mapping] = None,
-            name: Optional[str] = None,
-        ):
+        self,
+        initial: ChemicalSystem,
+        final: ChemicalSystem,
+        protocol: Protocol,
+        mapping: Optional[Mapping] = None,
+        name: Optional[str] = None,
+    ):
 
         self._initial = initial
         self._final = final
@@ -57,16 +57,12 @@ class Transformation(Serializable):
 
     @property
     def initial(self):
-        """The starting `ChemicalSystem` for the transformation.
-
-        """
+        """The starting `ChemicalSystem` for the transformation."""
         return self._initial
 
     @property
     def final(self):
-        """The ending `ChemicalSystem` for the transformation.
-
-        """
+        """The ending `ChemicalSystem` for the transformation."""
         return self._final
 
     @property
@@ -87,9 +83,7 @@ class Transformation(Serializable):
 
     @property
     def name(self):
-        """User-specified for the transformation; used as part of its hash.
-
-        """
+        """User-specified for the transformation; used as part of its hash."""
         return self._name
 
     def __lt__(self, other):
@@ -129,7 +123,7 @@ class Transformation(Serializable):
             "initial": self.initial.to_dict(),
             "final": self.final.to_dict(),
             "protocol": self.protocol.to_dict(),
-            "mapping": self.mapping.to_dict()
+            "mapping": self.mapping.to_dict(),
         }
 
     # TODO: broken without a `Protocol` registry of some kind
@@ -137,36 +131,36 @@ class Transformation(Serializable):
     @classmethod
     def from_dict(cls, d: dict):
         return cls(
-                initial=ChemicalSystem.from_dict(d['initial']),
-                final=ChemicalSystem.from_dict(d['final']),
-                protocol=Protocol.from_dict(d['protocol']),
-                mapping=Mapping.from_dict(d['mapping'])
-                )
+            initial=ChemicalSystem.from_dict(d["initial"]),
+            final=ChemicalSystem.from_dict(d["final"]),
+            protocol=Protocol.from_dict(d["protocol"]),
+            mapping=Mapping.from_dict(d["mapping"]),
+        )
 
     def create(self) -> ProtocolDAG:
-        """Returns a `ProtocolDAG` executing this `Transformation.protocol`.
-
-        """
+        """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
         return self.protocol.create(
-                                 initial=self.initial, 
-                                 final=self.final,
-                                 mapping=self.mapping,
-                                 name=str(self.__hash__())
-                                )
+            initial=self.initial,
+            final=self.final,
+            mapping=self.mapping,
+            name=str(self.__hash__()),
+        )
 
-    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+    def gather(
+        self, protocol_dag_results: Iterable[ProtocolDAGResult]
+    ) -> ProtocolResult:
         """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
 
         Parameters
         ----------
         protocol_dag_results : Iterable[ProtocolDAGResult]
             The `ProtocolDAGResult`s to assemble aggregate quantities from.
-            
+
         Returns
         -------
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
-            
+
         """
         return self.protocol.gather(protocol_dag_results=protocol_dag_results)
 
@@ -197,11 +191,11 @@ class NonTransformation(Transformation):
     """
 
     def __init__(
-            self,
-            system: ChemicalSystem,
-            protocol: Protocol,
-            name: Optional[str] = None,
-        ):
+        self,
+        system: ChemicalSystem,
+        protocol: Protocol,
+        name: Optional[str] = None,
+    ):
 
         self._system = system
         self._name = name
@@ -258,16 +252,12 @@ class NonTransformation(Transformation):
     @classmethod
     def from_dict(cls, d: dict):
         return cls(
-                system=ChemicalSystem.from_dict(d['system']),
-                protocol=Protocol.from_dict(d['protocol'])
-                )
+            system=ChemicalSystem.from_dict(d["system"]),
+            protocol=Protocol.from_dict(d["protocol"]),
+        )
 
     def create(self) -> ProtocolDAG:
-        """Returns a `ProtocolDAG` executing this `Transformation.protocol`.
-
-        """
+        """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
         return self.protocol.create(
-                                 initial=self.system, 
-                                 final=self.system,
-                                 name=str(self.__hash__())
-                                 )
+            initial=self.system, final=self.system, name=str(self.__hash__())
+        )
