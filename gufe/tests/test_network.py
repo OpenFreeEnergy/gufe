@@ -26,7 +26,7 @@ def benzene_variants_star_map(
 
     # define the solvent chemical systems and transformations between benzene and the others
     solvated_ligands = {}
-    solvated_ligand_transformtions = {}
+    solvated_ligand_transformations = {}
 
     solvated_ligands["benzene"] = ChemicalSystem(
         {"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent"
@@ -36,7 +36,7 @@ def benzene_variants_star_map(
         solvated_ligands[ligand.name] = ChemicalSystem(
             {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvnet"
         )
-        solvated_ligand_transformtions[("benzene", ligand.name)] = Transformation(
+        solvated_ligand_transformations[("benzene", ligand.name)] = Transformation(
             solvated_ligands["benzene"],
             solvated_ligands[ligand.name],
             protocol=DummyProtocol(settings=None),
@@ -45,7 +45,7 @@ def benzene_variants_star_map(
 
     # define the complex chemical systems and transformations between benzene and the others
     solvated_complexes = {}
-    solvated_complex_transformtions = {}
+    solvated_complex_transformations = {}
 
     solvated_complexes["benzene"] = ChemicalSystem(
         {"protein": prot_comp, "solvent": solv_comp, "ligand": benzene},
@@ -57,7 +57,7 @@ def benzene_variants_star_map(
             {"protein": prot_comp, "solvent": solv_comp, "ligand": ligand},
             name=f"{ligand.name}-complex",
         )
-        solvated_complex_transformtions[("benzene", ligand.name)] = Transformation(
+        solvated_complex_transformations[("benzene", ligand.name)] = Transformation(
             solvated_complexes["benzene"],
             solvated_complexes[ligand.name],
             protocol=DummyProtocol(settings=None),
@@ -65,8 +65,8 @@ def benzene_variants_star_map(
         )
 
     return AlchemicalNetwork(
-        list(solvated_ligand_transformtions.values())
-        + list(solvated_complex_transformtions.values())
+        list(solvated_ligand_transformations.values())
+        + list(solvated_complex_transformations.values())
     )
 
 
