@@ -55,7 +55,7 @@ class ProtocolDAG:
             result = unit.execute(
                 dependency_results=[
                     graph.nodes[d]["result"]
-                    for d in nx.descendants(self._graph, unit)
+                    for d in nx.ancestors(self._graph, unit)
                 ]
             )
             # attach results
