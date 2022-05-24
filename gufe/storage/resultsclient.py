@@ -1,14 +1,65 @@
-from gufe.storage.resultstore import ResultContainer
+from gufe.storage.resultstore import ResultStore
 from gufe.storage.metadatastore import JSONMetadataStore
 
 
-class ResultsClient(ResultContainer):
+class _ResultContainer:
+    """
+    Abstract class, represents all data under some level of the heirarchy.
+    """
+    def __init__(self, parent, path_component):
+        self.parent = parent
+        self._path_component = self._to_path_component(path_component)
+        self._cache = {}
+
+    @staticmethod
+    def _to_path_component(item):
+        if isinstance(item, str):
+            return item
+        return str(hash(item))
+
+    def __getitem__(self, item):
+        hash_item = self._to_path_component(item)
+
+        if hash_item not in self._cache:
+            self._cache[hash_item] = self._load(item)
+
+        return self._cache[hash_item]
+
+    def __truediv__(self, item):
+        return self[item]
+
+    def _load(self, item):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        for loc in self.result_store:
+            if loc.startswith(self.path):
+                yield loc
+
+    def load_stream(self, location):
+        return self.result_store.load_stream(location)
+
+    @property
+    def path(self):
+        return self.parent.path + "/" + self._path_component
+
+    @property
+    def result_store(self):
+        return self.parent.result_store
+
+    def __repr__(self):
+        # probably should include repr of external store, too
+        return f"{self.__class__.__name__}({self.path})"
+
+
+
+class ResultsClient(_ResultContainer):
     def __init__(self, external_store):
         # default client is using JSONMetadataStore with the given external
         # result store; users could easily write a subblass that behaves
         # differently
         metadata_store = JSONMetadataStore(external_store)
-        self._result_store = _ResultStore(external_store, metadata_store)
+        self._result_store = ResultStore(external_store, metadata_store)
         super().__init__(parent=self, path_component=None)
 
     def store_protocol_dag_result(self, result):

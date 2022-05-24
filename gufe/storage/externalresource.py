@@ -1,6 +1,7 @@
 import hashlib
 import warnings
 import pathlib
+import io
 
 from typing import ClassVar
 
@@ -15,7 +16,7 @@ class ExternalStorage:
     allow_changed: ClassVar[bool] = False
 
     def validate(self, location, sha2):
-        if not self.get_sha2(location) == sha2:
+        if not self.get_metadata(location) == sha2:
             msg = (f"Hash mismatch for {location}: this object "
                    "may have changed.")
             if not self.allow_changed:
@@ -29,22 +30,22 @@ class ExternalStorage:
             else:
                 warnings.warn(msg)
 
-    def get_sha2(self, location: str):
-        filelike = self._as_filelike(location, bytes_mode=True)
+    def get_metadata(self, location: str):
+        filelike = self._load_stream(location, bytes_mode=True)
         sha2 = hashlib.sha256()
         # TODO: this can be probably be improved by chunking
         sha2.update(filelike.read())
         return sha2.hexdigest()
 
-    def as_filename(self, location, sha2) -> str:
-        # we'd like to not need to include the as_filename method, but for
+    def get_filename(self, location, metadata) -> str:
+        # we'd like to not need to include the get_filename method, but for
         # now some consumers of this may not work with filelike
-        self.validate(location, sha2)
-        return self._as_filename(location)
+        self.validate(location, metadata)
+        return self._get_filename(location)
 
-    def as_filelike(self, location, sha2, bytes_mode: bool = True):
-        self.validate(location, sha2)
-        return self._as_filelike(location, bytes_mode)
+    def load_stream(self, location, metadata, bytes_mode: bool = True):
+        self.validate(location, metadata)
+        return self._load_stream(location, bytes_mode)
 
     def store(self, location, byte_data):
         raise NotImplementedError()
@@ -55,10 +56,10 @@ class ExternalStorage:
     def delete(self, location):
         raise NotImplementedError()
 
-    def _as_filename(self, location):
+    def _get_filename(self, location):
         raise NotImplementedError()
 
-    def _as_filelike(self, location, bytes_mode: bool = True):
+    def _load_stream(self, location, bytes_mode: bool = True):
         raise NotImplementedError()
 
 
@@ -78,7 +79,7 @@ class FileStorage(ExternalStorage):
         with open(path, mode='wb') as f:
             f.write(byte_data)
 
-        return (str(path), self.get_sha2(path))
+        return (str(path), self.get_metadata(path))
 
     def delete(self, location):
         path = self._as_path(location)
@@ -92,10 +93,10 @@ class FileStorage(ExternalStorage):
     def _as_path(self, location):
         return self.root_dir / pathlib.Path(location)
 
-    def _as_filename(self, location):
+    def _get_filename(self, location):
         return str(self._as_path(location))
 
-    def _as_filelike(self, location, bytes_mode: bool = True):
+    def _load_stream(self, location, bytes_mode: bool = True):
         mode = 'r'
         if bytes_mode:
             mode += 'b'
@@ -120,12 +121,12 @@ class MemoryStorage(ExternalStorage):
         self._data[location] = byte_data
         return location, sha2.hexdigest()
 
-    def _as_filename(self, location):
+    def _get_filename(self, location):
         # TODO: how to get this to work? how to manage tempfile? maybe a
         # __del__ here?
         pass
 
-    def _as_filelike(self, location, bytes_mode: bool = True):
+    def _load_stream(self, location, bytes_mode: bool = True):
         byte_data = self._data[location]
         if bytes_mode:
             stream = io.BytesIO(byte_data)

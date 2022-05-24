@@ -14,6 +14,7 @@ BAR_HASH = hashlib.sha256("bar".encode('utf-8')).hexdigest()
 # NOTE: Tests for the abstract base are just part of the tests of its
 # subclasses
 
+
 @pytest.fixture
 def file_storage(tmp_path):
     """Create some files and a FileStorage object.
@@ -81,14 +82,14 @@ class TestFileStorage:
                            match="does not exist"):
             file_storage.delete("baz.txt")
 
-    def test_as_filename(self, file_storage):
+    def test_get_filename(self, file_storage):
         expected = file_storage.root_dir / "foo.txt"
-        filename = file_storage.as_filename("foo.txt", BAR_HASH)
+        filename = file_storage.get_filename("foo.txt", BAR_HASH)
         assert filename == str(expected)
 
     @pytest.mark.parametrize('as_bytes', [True, False])
-    def test_as_filelike(self, file_storage, as_bytes):
-        file = file_storage.as_filelike("foo.txt", BAR_HASH, as_bytes)
+    def test_load_stream(self, file_storage, as_bytes):
+        file = file_storage.load_stream("foo.txt", BAR_HASH, as_bytes)
         assert not file.closed
         with file:
             results = file.read()
@@ -99,20 +100,20 @@ class TestFileStorage:
 
         assert file.closed
 
-    def test_as_filelike_error_missing(self, file_storage):
+    def test_load_stream_error_missing(self, file_storage):
         with pytest.raises(MissingExternalResourceError):
-            file_storage.as_filelike("baz.txt", "1badc0de")
+            file_storage.load_stream("baz.txt", "1badc0de")
 
-    def test_as_filelike_error_bad_hash(self, file_storage):
+    def test_load_stream_error_bad_hash(self, file_storage):
         # for the test, instead of changing the contents, we change the hash
         with pytest.raises(ChangedExternalResourceError):
-            file_storage.as_filelike("foo.txt", "1badc0de")
+            file_storage.load_stream("foo.txt", "1badc0de")
 
-    def test_as_filelike_allow_bad_hash(self, file_storage):
+    def test_load_stream_allow_bad_hash(self, file_storage):
         allow_changed = file_storage.allow_changed
         file_storage.allow_changed = True
         with pytest.warns(UserWarning, match="Hash mismatch"):
-            file = file_storage.as_filelike("foo.txt", "1badc0de")
+            file = file_storage.load_stream("foo.txt", "1badc0de")
 
         with file:
             assert file.read().decode("utf-8") == "bar"

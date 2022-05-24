@@ -36,6 +36,3 @@ class JSONMetadataStore(abc.Mapping):
         except KeyError:
             raise MissingExternalResourceError(f"Hash for '{key}' not "
                                                "found")
-
-
-
