@@ -51,11 +51,11 @@ class ProtocolDAG:
         graph = self._graph.copy(as_view=False)
 
         # iterate in DAG order
-        for unit in nx.topological_sort(self._graph):
+        for unit in reversed(list(nx.topological_sort(self._graph))):
             result = unit.execute(
                 dependency_results=[
                     graph.nodes[d]["result"]
-                    for d in nx.ancestors(self._graph, unit)
+                    for d in nx.descendants(self._graph, unit)
                 ]
             )
             # attach results
