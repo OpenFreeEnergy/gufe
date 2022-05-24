@@ -1,8 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import abc
-from typing import Optional, Iterable, Tuple
+from typing import Optional, Iterable
 
 from openff.toolkit.utils.serialization import Serializable
 
@@ -18,9 +17,9 @@ class Transformation(Serializable):
 
     Attributes
     ----------
-    initial : ChemicalSystem
+    stateA : ChemicalSystem
         The starting `ChemicalSystem` for the transformation.
-    final : ChemicalSystem
+    stateB : ChemicalSystem
         The ending `ChemicalSystem` for the transformation.
     protocol : Protocol
         The protocol used to perform the transformation.
@@ -28,7 +27,8 @@ class Transformation(Serializable):
         simulations/calculations and encodes the alchemical pathway used.
         May also correspond to an experimental result.
     mapping : Optional[Mapping]
-        Mapping of e.g. atoms between the `initial` and `final` `ChemicalSystem`s.
+        Mapping of e.g. atoms between the `stateA` and `stateB`
+        `ChemicalSystem`s.
     name : Optional[str]
         Optional identifier for the transformation; set this to a unique value
         if adding multiple, otherwise identical transformations to the same
@@ -38,47 +38,45 @@ class Transformation(Serializable):
 
     def __init__(
         self,
-        initial: ChemicalSystem,
-        final: ChemicalSystem,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
         protocol: Protocol,
         mapping: Optional[Mapping] = None,
         name: Optional[str] = None,
     ):
 
-        self._initial = initial
-        self._final = final
+        self._stateA = stateA
+        self._stateB = stateB
         self._mapping = mapping
         self._name = name
 
         self._protocol = protocol
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(initial={self.initial}, final={self.final}, protocol={self.protocol})"
+        return f"{self.__class__.__name__}(stateA={self.stateA}, "\
+               f"stateB={self.stateB}, protocol={self.protocol})"
 
     @property
-    def initial(self):
+    def stateA(self):
         """The starting `ChemicalSystem` for the transformation."""
-        return self._initial
+        return self._stateA
 
     @property
-    def final(self):
+    def stateB(self):
         """The ending `ChemicalSystem` for the transformation."""
-        return self._final
+        return self._stateB
 
     @property
     def protocol(self):
         """The protocol for sampling the transformation to derive free energy
-        differences between `initial` and `final` `ChemicalSystem`s.
+        differences between `stateA` and `stateB` `ChemicalSystem`s.
 
         """
         return self._protocol
 
     @property
     def mapping(self):
-        """The mapping between atoms in `initial` to `final` `ChemicalSystem`s for
-        the transformation.
-
-        """
+        """The mapping between atoms in `stateA` to `stateB`"""
         return self._mapping
 
     @property
@@ -98,9 +96,9 @@ class Transformation(Serializable):
             return False
         if self._mapping != other.mapping:
             return False
-        if self._final != other.final:
+        if self._stateB != other.stateB:
             return False
-        if self._initial != other.initial:
+        if self._stateA != other.stateA:
             return False
 
         return True
@@ -108,8 +106,8 @@ class Transformation(Serializable):
     def __hash__(self):
         return hash(
             (
-                self._initial,
-                self._final,
+                self._stateA,
+                self._stateB,
                 self._mapping,
                 self._name,
                 self._protocol,
@@ -120,8 +118,8 @@ class Transformation(Serializable):
     # should then be changed to use the registry
     def to_dict(self) -> dict:
         return {
-            "initial": self.initial.to_dict(),
-            "final": self.final.to_dict(),
+            "stateA": self.stateA.to_dict(),
+            "stateB": self.stateB.to_dict(),
             "protocol": self.protocol.to_dict(),
             "mapping": self.mapping.to_dict(),
         }
@@ -131,8 +129,8 @@ class Transformation(Serializable):
     @classmethod
     def from_dict(cls, d: dict):
         return cls(
-            initial=ChemicalSystem.from_dict(d["initial"]),
-            final=ChemicalSystem.from_dict(d["final"]),
+            stateA=ChemicalSystem.from_dict(d["stateA"]),
+            stateB=ChemicalSystem.from_dict(d["stateB"]),
             protocol=Protocol.from_dict(d["protocol"]),
             mapping=Mapping.from_dict(d["mapping"]),
         )
@@ -140,8 +138,8 @@ class Transformation(Serializable):
     def create(self) -> ProtocolDAG:
         """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
         return self.protocol.create(
-            initial=self.initial,
-            final=self.final,
+            stateA=self.stateA,
+            stateB=self.stateB,
             mapping=self.mapping,
             name=str(self.__hash__()),
         )
@@ -170,7 +168,8 @@ class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.
-    Technically a self-loop, or an edge with the same `ChemicalSystem` at either final.
+    Technically a self-loop, or an edge with the same `ChemicalSystem` at
+    either end.
 
     Functionally used for applying a dynamics protocol to a `ChemicalSystem`
     that performs no alchemical transformation at all. This allows e.g.
@@ -202,11 +201,11 @@ class NonTransformation(Transformation):
         self._protocol = protocol
 
     @property
-    def initial(self):
+    def stateA(self):
         return self._system
 
     @property
-    def final(self):
+    def stateB(self):
         return self._system
 
     @property
@@ -259,5 +258,5 @@ class NonTransformation(Transformation):
     def create(self) -> ProtocolDAG:
         """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
         return self.protocol.create(
-            initial=self.system, final=self.system, name=str(self.__hash__())
+            stateA=self.system, stateB=self.system, name=str(self.__hash__())
         )

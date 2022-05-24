@@ -6,19 +6,16 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, List, Dict
-from pathlib import Path
+from typing import Optional, Iterable, Any, Dict
 
-from pydantic import BaseModel, validator
 from openff.toolkit.utils.serialization import Serializable
 import networkx as nx
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
-from .protocolunit import ProtocolUnit
 from .protocoldag import ProtocolDAG
-from .results import ProtocolUnitResult, ProtocolDAGResult
+from .results import ProtocolDAGResult
 
 
 class ProtocolResult(Serializable, abc.ABC):
@@ -104,8 +101,8 @@ class Protocol(Serializable, abc.ABC):
     @abc.abstractmethod
     def _create(
         self,
-        initial: ChemicalSystem,
-        final: ChemicalSystem,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
@@ -113,8 +110,8 @@ class Protocol(Serializable, abc.ABC):
 
     def create(
         self,
-        initial: ChemicalSystem,
-        final: ChemicalSystem,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
         name: str = None,
@@ -127,21 +124,24 @@ class Protocol(Serializable, abc.ABC):
         completed.
 
         A `ProtocolDAG` can be passed to a `Scheduler` for execution on its
-        resources. A `ProtocolResult` can be retrieved from the `Scheduler` upon
-        completion of all `ProtocolUnit`s in the `ProtocolDAG`.
+        resources. A `ProtocolResult` can be retrieved from the `Scheduler`
+        upon completion of all `ProtocolUnit`s in the `ProtocolDAG`.
 
         Parameters
         ----------
-        initial : ChemicalSystem
+        stateA : ChemicalSystem
             The starting `ChemicalSystem` for the transformation.
-        final : ChemicalSystem
+        stateB : ChemicalSystem
             The ending `ChemicalSystem` for the transformation.
         mapping : Optional[Mapping]
-            Mapping of e.g. atoms between the `initial` and `final` `ChemicalSystem`s.
+            Mapping of e.g. atoms between the `stateA` and `stateB`
+            `ChemicalSystem`s.
         extend_from : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
-            end state of the given `ProtocolDAGResult`. This allows for extension
-            from a previously-run `ProtocolDAG`.
+            end state of the given `ProtocolDAGResult`. This allows for
+            extension from a previously-run `ProtocolDAG`.
+        name : Optional[str]
+            A user supplied identifier for the resulting DAG
 
         Returns
         -------
@@ -152,8 +152,8 @@ class Protocol(Serializable, abc.ABC):
         return ProtocolDAG(
             name=name,
             graph=self._create(
-                initial=initial,
-                final=final,
+                stateA=stateA,
+                stateB=stateB,
                 mapping=mapping,
                 extend_from=extend_from,
             ),
