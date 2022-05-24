@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
+import json
 from openff.units import unit
 from typing import Optional, Tuple
 
@@ -82,6 +83,8 @@ class SolventComponent(Component):
                     raise ValueError("Ions must be given for concentration")
         self._ion_concentration = ion_concentration
 
+    __hash__ = Component.__hash__
+
     @property
     def smiles(self) -> str:
         """SMILES representation of the solvent molecules"""
@@ -120,9 +123,8 @@ class SolventComponent(Component):
                 self.negative_ion == other.negative_ion and
                 self.ion_concentration == other.ion_concentration)
 
-    def __hash__(self):
-        return hash((self.smiles, self.positive_ion, self.negative_ion,
-                     self.ion_concentration))
+    def __str__(self):
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_dict(cls, d):

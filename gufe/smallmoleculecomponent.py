@@ -82,6 +82,9 @@ class SmallMoleculeComponent(Component, Serializable):
         self._rdkit = rdkit
         self._hash = hashmol(self._rdkit, name=name)
 
+    def __str__(self):
+        return self.to_sdf()
+
     def to_rdkit(self) -> RDKitMol:
         """Return an RDKit copied representation of this molecule"""
         return Chem.Mol(self._rdkit)
@@ -119,11 +122,10 @@ class SmallMoleculeComponent(Component, Serializable):
     def name(self) -> str:
         return self._hash.name
 
-    def __hash__(self):
-        return hash(self._hash)
+    __hash__ = Component.__hash__
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return str(self) == str(other)
 
     def to_dict(self) -> dict:
         """Serialize to dict representation"""

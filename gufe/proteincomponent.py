@@ -34,6 +34,10 @@ class ProteinComponent(Component):
         self._openmm_pos = openmm_pos
         self._name = name
 
+    def __str__(self):
+        # TODO
+        return self._name
+
     @property
     def name(self):
         return self._name
@@ -78,11 +82,10 @@ class ProteinComponent(Component):
     def from_dict(cls, d: dict):
         raise NotImplementedError()
 
-    def __hash__(self):
-        return hash(self.name)
+    __hash__ = Component.__hash__
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return str(self) == str(other)
 
     @property
     def total_charge(self):
