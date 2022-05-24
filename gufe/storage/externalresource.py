@@ -2,12 +2,30 @@ import hashlib
 import warnings
 import pathlib
 import io
+import contextlib
+import functools
 
 from typing import ClassVar
 
 from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
+
+
+class _ForceContext:
+    """Wrapper that forces objects to only be used a context managers.
+
+    Filelike objects can often be used with explicit open/close. This
+    requires the returned filelike to be consumed as a context manager.
+    """
+    def __init__(self, context):
+        self._context = context
+
+    def __enter__(self):
+        return self._context.__enter__()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._context.__exit__(exc_type, exc_value, traceback)
 
 
 class ExternalStorage:
@@ -43,9 +61,10 @@ class ExternalStorage:
         self.validate(location, metadata)
         return self._get_filename(location)
 
+    # @force_context
     def load_stream(self, location, metadata, bytes_mode: bool = True):
         self.validate(location, metadata)
-        return self._load_stream(location, bytes_mode)
+        return _ForceContext(self._load_stream(location, bytes_mode))
 
     def store(self, location, byte_data):
         raise NotImplementedError()

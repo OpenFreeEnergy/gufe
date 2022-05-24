@@ -89,16 +89,12 @@ class TestFileStorage:
 
     @pytest.mark.parametrize('as_bytes', [True, False])
     def test_load_stream(self, file_storage, as_bytes):
-        file = file_storage.load_stream("foo.txt", BAR_HASH, as_bytes)
-        assert not file.closed
-        with file:
-            results = file.read()
+        with file_storage.load_stream("foo.txt", BAR_HASH, as_bytes) as f:
+            results = f.read()
             if as_bytes:
                 results = results.decode('utf-8')
 
             assert results == "bar"
-
-        assert file.closed
 
     def test_load_stream_error_missing(self, file_storage):
         with pytest.raises(MissingExternalResourceError):
@@ -115,5 +111,5 @@ class TestFileStorage:
         with pytest.warns(UserWarning, match="Hash mismatch"):
             file = file_storage.load_stream("foo.txt", "1badc0de")
 
-        with file:
-            assert file.read().decode("utf-8") == "bar"
+        with file as f:
+            assert f.read().decode("utf-8") == "bar"
