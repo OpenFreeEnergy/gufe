@@ -27,8 +27,8 @@ class TestTransformation:
     def test_init(self, absolute_transformation, solvated_ligand, solvated_complex):
         tnf = absolute_transformation
 
-        assert tnf.initial is solvated_ligand
-        assert tnf.final is solvated_complex
+        assert tnf.stateA is solvated_ligand
+        assert tnf.stateB is solvated_complex
 
     def test_protocol(self, absolute_transformation):
         tnf = absolute_transformation

@@ -70,16 +70,16 @@ class DummyProtocol(Protocol):
 
     def _create(
         self,
-        initial: ChemicalSystem,
-        final: ChemicalSystem,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
 
         alpha = InitializeUnit(
             self.settings,
-            initial=initial,
-            final=final,
+            stateA=stateA,
+            stateB=stateB,
             mapping=mapping,
             start=extend_from,
         )
@@ -116,12 +116,12 @@ class TestProtocol:
 
     def test_create(self, solvated_ligand, solvated_complex):
         protocol = DummyProtocol(settings=None)
-        dag = protocol.create(initial=solvated_ligand, final=solvated_complex)
+        dag = protocol.create(stateA=solvated_ligand, stateB=solvated_complex)
 
     def test_create_execute_gather(self, solvated_ligand, solvated_complex):
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(
-            initial=solvated_ligand, final=solvated_complex, name="a dummy run"
+            stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
         )
         dagresult = dag.execute()
 
