@@ -39,8 +39,8 @@ class AlchemicalNetwork(Serializable):
 
         self._nodes = (
             self._nodes
-            | frozenset(e.initial for e in self._edges)
-            | frozenset(e.final for e in self._edges)
+            | frozenset(e.stateA for e in self._edges)
+            | frozenset(e.stateB for e in self._edges)
         )
 
         self._graph = None
@@ -54,7 +54,7 @@ class AlchemicalNetwork(Serializable):
 
         for transformation in edges:
             g.add_edge(
-                transformation.initial, transformation.final, object=transformation
+                transformation.stateA, transformation.stateB, object=transformation
             )
 
         g.add_nodes_from(nodes)
