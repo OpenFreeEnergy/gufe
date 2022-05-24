@@ -47,36 +47,18 @@ class ProtocolDAG:
 
     def execute(self) -> ProtocolDAGResult:
         """Execute the full DAG in-serial, in process."""
-
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
 
-        completed: Set[ProtocolUnit] = set()
-
-        while len(completed) != len(self._graph.nodes):
-            for pu in graph.nodes:
-                # skip if we already completed this one
-                if pu in completed:
-                    continue
-
-                dependency_edges = graph.edges(pu)
-
-                # if all dependencies are completed, execute
-                if all(
-                    (
-                        dependency_edge[1] in completed
-                        for dependency_edge in dependency_edges
-                    )
-                ):
-                    pur = pu.execute(
-                        dependency_results=[
-                            graph.nodes[dependency_edge[1]]["result"]
-                            for dependency_edge in dependency_edges
-                        ]
-                    )
-
-                    # attach results, add to completed list
-                    graph.nodes[pu]["result"] = pur
-                    completed.add(pu)
+        # iterate in DAG order
+        for unit in nx.topological_sort(self._graph):
+            result = unit.execute(
+                dependency_results=[
+                    graph.nodes[d]["result"]
+                    for d in nx.descendants(self._graph, unit)
+                ]
+            )
+            # attach results
+            graph.nodes[unit]["result"] = result
 
         return ProtocolDAGResult(name=self._name, graph=graph)
