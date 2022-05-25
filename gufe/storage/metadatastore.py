@@ -36,8 +36,4 @@ class JSONMetadataStore(abc.Mapping):
         return len(self._metadata_cache)
 
     def __getitem__(self, key):
-        try:
-            return self._metadata_cache[key]
-        except KeyError:
-            raise MissingExternalResourceError(f"Hash for '{key}' not "
-                                               "found")
+        return self._metadata_cache[key]

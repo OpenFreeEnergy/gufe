@@ -50,7 +50,3 @@ class TestJSONMetadataStore:
 
     def test_getitem(self, json_metadata):
         assert json_metadata["path/to/foo.txt"] == "bar"
-
-    def test_getitem_error(self, json_metadata):
-        with pytest.raises(MissingExternalResourceError, match="not found"):
-            json_metadata["path/does/not/exist.txt"]

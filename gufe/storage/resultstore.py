@@ -1,3 +1,6 @@
+from gufe.storage.errors import MissingExternalResourceError
+
+
 class ResultStore:
     """Class to manage communication between metadata and data storage.
 
@@ -9,8 +12,8 @@ class ResultStore:
         self.metadata_store = metadata_store
 
     def store(self, location, byte_data):
-        loc, metadata = self.external_store.create(location, byte_data)
-        self.metadata_store.store_metadata(loc, metadata)
+        _, metadata = self.external_store.store(location, byte_data)
+        self.metadata_store.store_metadata(location, metadata)
 
     def __iter__(self):
         return iter(self.metadata_store)
@@ -20,5 +23,10 @@ class ResultStore:
         return [f for f in self if not self.external_store.exists(f)]
 
     def load_stream(self, location):
-        metadata = self.metadata_store[location]
-        return self.external_store.as_filelike(location, metadata)
+        try:
+            metadata = self.metadata_store[location]
+        except KeyError:
+            raise MissingExternalResourceError(f"Hash for '{location}' not "
+                                               "found")
+
+        return self.external_store.load_stream(location, metadata)
