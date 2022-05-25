@@ -22,7 +22,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
     box_vectors
         Numpy array indicating shape and size of unit cell for the system. May
         be a partial definition to allow for variability on certain dimensions.
-    identifier
+    name
         Optional identifier for the chemical state; used as part of the
         (hashable) graph node itself when the chemical state is added to an
         `AlchemicalNetwork`.
@@ -33,7 +33,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
         self,
         components: Dict[str, Component],
         box_vectors: Optional[np.ndarray] = None,
-        identifier: Optional[str] = None,
+        name: Optional[str] = None,
     ):
         """Create a node for an alchemical network.
 
@@ -47,19 +47,24 @@ class ChemicalSystem(Serializable, abc.Mapping):
             Optional `numpy` array indicating shape and size of unit cell for
             the system. May be a partial definition to allow for variability on
             certain dimensions.
-        identifier
+        name
             Optional identifier for the chemical state; included with the other
             attributes as part of the (hashable) graph node itself when the
             chemical state is added to an `AlchemicalNetwork`.
 
         """
         self._components = components
-        self._identifier = identifier
+        self._name = name
 
         if box_vectors is None:
             self._box_vectors = np.array([np.nan] * 9)
         else:
             self._box_vectors = box_vectors
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(name={self.name}, components={self.components})"
+        )
 
     def __lt__(self, other):
         return hash(self) < hash(other)
@@ -67,7 +72,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        if self._identifier != other.identifier:
+        if self._name != other.name:
             return False
         if not np.array_equal(self._box_vectors, other.box_vectors,
                               equal_nan=True):  # nan usually compares to false
@@ -82,19 +87,23 @@ class ChemicalSystem(Serializable, abc.Mapping):
             (
                 tuple(sorted(self._components.items())),
                 self._box_vectors.tobytes(),
-                self._identifier,
+                self._name,
             )
         )
 
+    # TODO: broken without a `Component` registry of some kind
+    # should then be changed to use the registry
     def to_dict(self):
         return {
             "components": {
                 key: value.to_dict() for key, value in self.components.items()
             },
             "box_vectors": self.box_vectors.tolist(),
-            "identifier": self.identifier,
+            "name": self.name,
         }
 
+    # TODO: broken without a `Component` registry of some kind
+    # should then be changed to use the registry
     @classmethod
     def from_dict(cls, d):
         return cls(
@@ -102,7 +111,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
                 key: Component.from_dict(value) for key, value in d["components"]
             },
             box_vectors=np.array(d["box_vectors"]),
-            identifier=d["identifier"],
+            name=d["name"],
         )
 
     @property
@@ -114,8 +123,8 @@ class ChemicalSystem(Serializable, abc.Mapping):
         return np.array(self._box_vectors)
 
     @property
-    def identifier(self):
-        return self._identifier
+    def name(self):
+        return self._name
 
     @property
     def total_charge(self):

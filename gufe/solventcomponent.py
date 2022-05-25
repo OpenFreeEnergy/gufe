@@ -83,6 +83,10 @@ class SolventComponent(Component):
         self._ion_concentration = ion_concentration
 
     @property
+    def name(self) -> str:
+        return f"{self.smiles}, {self.positive_ion}, {self.negative_ion}"
+
+    @property
     def smiles(self) -> str:
         """SMILES representation of the solvent molecules"""
         return self._smiles

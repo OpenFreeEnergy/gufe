@@ -7,4 +7,11 @@ from .component import Component
 from .smallmoleculecomponent import SmallMoleculeComponent
 from .proteincomponent import ProteinComponent
 from .solventcomponent import SolventComponent
+
 from .chemicalsystem import ChemicalSystem
+
+from .protocols import Protocol, ProtocolResult, ProtocolDAG, ProtocolUnit
+from .mapping import Mapping
+from .transformations import Transformation, NonTransformation
+
+from .network import AlchemicalNetwork
