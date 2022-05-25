@@ -151,6 +151,6 @@ class MemoryStorage(ExternalStorage):
             stream = io.BytesIO(byte_data)
         else:
             # I guess we just have to assume UTF in this case
-            stream = io.StringIO(byte_data.encode('utf-8'))
+            stream = io.StringIO(byte_data.decode('utf-8'))
 
         return stream

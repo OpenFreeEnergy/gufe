@@ -35,11 +35,6 @@ def file_storage(tmp_path):
 
 
 class TestFileStorage:
-    def _assert_file_with_contents(self, filename, contents):
-        assert pathlib.Path(filename).exists()
-        with open(filename, mode='rb') as f:
-            assert f.read() == contents.encode('utf-8')
-
     @pytest.mark.parametrize('filename', [
         'foo.txt', 'notexisting.txt', 'with/directory.txt'
     ])
@@ -113,3 +108,36 @@ class TestFileStorage:
 
         with file as f:
             assert f.read().decode("utf-8") == "bar"
+
+
+class TestMemoryStorage:
+    def setup(self):
+        self.contents = {'path/to/foo.txt': 'bar'.encode('utf-8')}
+        self.storage = MemoryStorage()
+        self.storage._data = dict(self.contents)
+
+    @pytest.mark.parametrize('expected', [True, False])
+    def test_exists(self, expected):
+        path = "path/to/foo.txt" if expected else "path/to/bar.txt"
+        assert self.storage.exists(path) is expected
+
+    def test_store(self):
+        storage = MemoryStorage()
+        for loc, byte_data in self.contents.items():
+            storage.store(location, byte_data)
+
+        assert len(storage) == 1
+        assert storage._data == self.contents  # internal implementation
+
+    def test_get_filename(self):
+        pytest.skip("Not implemented yet")
+
+    @pytest.mark.parametrize('as_bytes', [True, False])
+    def test_load_stream(self, as_bytes):
+        path = "path/to/foo.txt"
+        with self.storage.load_stream(path, BAR_HASH, as_bytes) as f:
+            results = f.read()
+            if as_bytes:
+                results = results.decode('utf-8')
+
+            assert results == "bar"

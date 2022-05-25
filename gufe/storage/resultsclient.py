@@ -52,7 +52,6 @@ class _ResultContainer:
         return f"{self.__class__.__name__}({self.path})"
 
 
-
 class ResultsClient(_ResultContainer):
     def __init__(self, external_store):
         # default client is using JSONMetadataStore with the given external
