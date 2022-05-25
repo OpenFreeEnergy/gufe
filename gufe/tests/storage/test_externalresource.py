@@ -124,9 +124,8 @@ class TestMemoryStorage:
     def test_store(self):
         storage = MemoryStorage()
         for loc, byte_data in self.contents.items():
-            storage.store(location, byte_data)
+            storage.store(loc, byte_data)
 
-        assert len(storage) == 1
         assert storage._data == self.contents  # internal implementation
 
     def test_get_filename(self):

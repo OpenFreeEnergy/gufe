@@ -1,5 +1,8 @@
 class ResultStore:
-    """Facade class to abstract out saving/loading data.
+    """Class to manage communication between metadata and data storage.
+
+    At this level, we provide an abstraction where client code no longer
+    needs to be aware of the nature of the metadata, or even that it exists.
     """
     def __init__(self, external_store, metadata_store):
         self.external_store = external_store

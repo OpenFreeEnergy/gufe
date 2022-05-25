@@ -1,5 +1,6 @@
 import json
 from collections import abc
+from gufe.storage.errors import MissingExternalResourceError
 
 
 class JSONMetadataStore(abc.Mapping):
@@ -10,8 +11,8 @@ class JSONMetadataStore(abc.Mapping):
         self.external_store = external_store
         self._metadata_cache = self.load_all_metadata()
 
-    def store_metadata(self, location, sha2):
-        self._metadata_cache[location] = sha2
+    def store_metadata(self, location, metadata):
+        self._metadata_cache[location] = metadata
         metadata_bytes = json.dumps(self._metadata_cache).encode('utf-8')
         _ = self.external_store.create('metadata.json', metadata_bytes)
 
@@ -19,10 +20,11 @@ class JSONMetadataStore(abc.Mapping):
         if not self.external_store.exists('metadata.json'):
             return {}
 
-        sha2 = self.external_store.get_sha2('metadata.json')
-        json_f = self.external_store.as_filelike('metadata.json', sha2)
-        metadata = json.loads(json_f.read().decode('utf-8'))
-        return metadata
+        metadata = self.external_store.get_metadata('metadata.json')
+        with self.external_store.load_stream('metadata.json',
+                                             metadata) as json_f:
+            all_metadata = json.loads(json_f.read().decode('utf-8'))
+        return all_metadata
 
     def __iter__(self):
         return iter(self._metadata_cache)
