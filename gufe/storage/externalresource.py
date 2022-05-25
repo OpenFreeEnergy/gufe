@@ -5,7 +5,7 @@ import io
 import contextlib
 import functools
 
-from typing import ClassVar
+from typing import ClassVar, Union
 
 from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
@@ -84,7 +84,7 @@ class ExternalStorage:
 
 # TODO: this should use pydantic to check init inputs
 class FileStorage(ExternalStorage):
-    def __init__(self, root_dir):
+    def __init__(self, root_dir: Union[pathlib.Path, str]):
         self.root_dir = pathlib.Path(root_dir)
 
     def exists(self, location):

@@ -18,7 +18,16 @@ def json_metadata(tmpdir):
 
 class TestJSONMetadataStore:
     def test_store_metadata(self, json_metadata):
-        pytest.skip()
+        json_metadata.store_metadata("path/to/other.txt", "other")
+        base_path = json_metadata.external_store.root_dir
+        metadata_json = base_path / 'metadata.json'
+        assert metadata_json.exists()
+        with open(metadata_json, mode='r') as f:
+            metadata = json.load(f)
+
+        assert len(metadata) == 2
+        assert metadata == json_metadata._metadata_cache
+        assert json_metadata['path/to/other.txt'] == "other"
 
     def test_load_all_metadata(self, json_metadata):
         expected = {'path/to/foo.txt': 'bar'}

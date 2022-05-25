@@ -9,8 +9,8 @@ class ResultStore:
         self.metadata_store = metadata_store
 
     def store(self, location, byte_data):
-        loc, sha2 = self.external_store.create(location, byte_data)
-        self.metadata_store.store_metadata(loc, sha2)
+        loc, metadata = self.external_store.create(location, byte_data)
+        self.metadata_store.store_metadata(loc, metadata)
 
     def __iter__(self):
         return iter(self.metadata_store)
@@ -20,5 +20,5 @@ class ResultStore:
         return [f for f in self if not self.external_store.exists(f)]
 
     def load_stream(self, location):
-        sha2 = self.metadata_store[location]
-        return self.external_store.as_filelike(location, sha2)
+        metadata = self.metadata_store[location]
+        return self.external_store.as_filelike(location, metadata)

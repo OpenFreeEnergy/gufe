@@ -1,5 +1,8 @@
 import json
 from collections import abc
+
+from typing import Tuple
+
 from gufe.storage.errors import MissingExternalResourceError
 
 
@@ -11,10 +14,10 @@ class JSONMetadataStore(abc.Mapping):
         self.external_store = external_store
         self._metadata_cache = self.load_all_metadata()
 
-    def store_metadata(self, location, metadata):
+    def store_metadata(self, location: str, metadata: str):
         self._metadata_cache[location] = metadata
         metadata_bytes = json.dumps(self._metadata_cache).encode('utf-8')
-        _ = self.external_store.create('metadata.json', metadata_bytes)
+        _ = self.external_store.store('metadata.json', metadata_bytes)
 
     def load_all_metadata(self):
         if not self.external_store.exists('metadata.json'):
