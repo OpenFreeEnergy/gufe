@@ -129,5 +129,4 @@ class ExtensionResults(_ResultContainer):
         return self._load_next_level(filename)
 
     def _load_next_level(self, filename):
-        return self.result_store.load_stream(self.path + "/"
-                                             + self.filename)
+        return self.result_store.load_stream(self.path + "/" + filename)

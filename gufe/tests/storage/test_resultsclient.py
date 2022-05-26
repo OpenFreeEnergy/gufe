@@ -187,6 +187,30 @@ class TestExtensionResults(_ResultContainerTest):
             extension=0
         )
 
-    # TODO: testing getitem and div need to be handled differently here
-    def _getitem_object(self, container):
-        pytest.skip("This needs special treatment")
+    def _get_key(self, as_object, container):
+        if self.as_object:  # no-cov
+            raise RuntimeError("TestExtensionResults does not support "
+                               "as_object=True")
+        path = "transformations/MAIN_TRANS/0/0/"
+        fname = "file.txt"
+        return fname, container.result_store.load_stream(path + fname)
+
+    # things involving div and getitem need custom treatment
+    def test_div(self, results_client):
+        container = self.get_container(results_client)
+        with container / "file.txt" as f:
+            assert f.read().decode('utf-8') == "foo"
+
+    def test_getitem(self, results_client):
+        container = self.get_container(results_client)
+        with container["file.txt"] as f:
+            assert f.read().decode('utf-8') == "foo"
+
+    def test_caching(self, results_client):
+        # this one does not cache results; the cache should remain empty
+        container = self.get_container(results_client)
+        assert container._cache == {}
+        from_div = container / "file.txt"
+        assert container._cache == {}
+        from_getitem = container["file.txt"]
+        assert container._cache == {}
