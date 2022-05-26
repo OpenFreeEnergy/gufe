@@ -8,6 +8,7 @@ dependencies:
   - networkx
   - rdkit
   - pip
+  - pydantic
   - pytest
   - pytest-xdist
   - pytest-cov

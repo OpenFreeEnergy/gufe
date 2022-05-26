@@ -86,6 +86,10 @@ class SolventComponent(Component):
     __hash__ = Component.__hash__
 
     @property
+    def name(self) -> str:
+        return f"{self.smiles}, {self.positive_ion}, {self.negative_ion}"
+
+    @property
     def smiles(self) -> str:
         """SMILES representation of the solvent molecules"""
         return self._smiles

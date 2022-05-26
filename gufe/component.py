@@ -11,6 +11,9 @@ class Component(abc.ABC):
 
     # defining this here doesn't actually allow subclasses to inherit, see:
     #  see https://bugs.python.org/issue1549
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self.name})"
+
     def __hash__(self):
         # in python hash(str) isn't deterministic (by design)
         # to provide a stable hash across sessions:
@@ -39,6 +42,11 @@ class Component(abc.ABC):
 
     @abc.abstractmethod
     def to_dict(self) -> dict:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
         pass
 
     @classmethod
