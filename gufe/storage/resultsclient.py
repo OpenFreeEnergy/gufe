@@ -1,3 +1,5 @@
+from typing import Any
+
 from gufe.storage.resultstore import ResultStore
 from gufe.storage.metadatastore import JSONMetadataStore
 
@@ -11,24 +13,35 @@ class _ResultContainer:
         self._path_component = self._to_path_component(path_component)
         self._cache = {}
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and self.path == other.path
+        )
+
     @staticmethod
-    def _to_path_component(item):
+    def _to_path_component(item: Any) -> str:
+        """Convert input (object or string) to path string"""
         if isinstance(item, str):
             return item
+
+        # TODO: instead of str(hash(...)), this should return the digest
+        # that is being introduced in another PR; Python hash is not stable
+        # across sessions
         return str(hash(item))
 
     def __getitem__(self, item):
         hash_item = self._to_path_component(item)
 
         if hash_item not in self._cache:
-            self._cache[hash_item] = self._load(item)
+            self._cache[hash_item] = self._load_next_level(item)
 
         return self._cache[hash_item]
 
     def __truediv__(self, item):
         return self[item]
 
-    def _load(self, item):
+    def _load_next_level(self, item):
         raise NotImplementedError()
 
     def __iter__(self):
@@ -66,7 +79,7 @@ class ResultsClient(_ResultContainer):
         # results
         self.result_store.store(...)
 
-    def _load(self, transformation):
+    def _load_next_level(self, transformation):
         return TransformationResults(self, transformation)
 
     # override these two inherited properies since this is always the end of
@@ -85,7 +98,7 @@ class TransformationResults(_ResultContainer):
         super().__init__(parent, transformation)
         self.transformation = transformation
 
-    def _load(self, clone):
+    def _load_next_level(self, clone):
         return CloneResults(self, clone)
 
 
@@ -98,7 +111,7 @@ class CloneResults(_ResultContainer):
     def _to_path_component(item):
         return str(item)
 
-    def _load(self, extension):
+    def _load_next_level(self, extension):
         return ExtensionResults(self, extension)
 
 
@@ -113,8 +126,8 @@ class ExtensionResults(_ResultContainer):
 
     def __getitem__(self, filename):
         # different here -- we don't cache the actual file objects
-        return self._load(filename)
+        return self._load_next_level(filename)
 
-    def _load(self, filename):
+    def _load_next_level(self, filename):
         return self.result_store.load_stream(self.path + "/"
                                              + self.filename)
