@@ -33,8 +33,8 @@ class ExternalStorage:
 
     allow_changed: ClassVar[bool] = False
 
-    def validate(self, location, sha2):
-        if not self.get_metadata(location) == sha2:
+    def validate(self, location, metadata):
+        if not self.get_metadata(location) == metadata:
             msg = (f"Hash mismatch for {location}: this object "
                    "may have changed.")
             if not self.allow_changed:
@@ -48,12 +48,16 @@ class ExternalStorage:
             else:
                 warnings.warn(msg)
 
+
     def get_metadata(self, location: str):
-        filelike = self._load_stream(location, bytes_mode=True)
-        sha2 = hashlib.sha256()
-        # TODO: this can be probably be improved by chunking
-        sha2.update(filelike.read())
-        return sha2.hexdigest()
+        with self._load_stream(location, bytes_mode=True) as filelike:
+            hasher = hashlib.md5()
+            # TODO: chunking may give better performance
+            hasher.update(filelike.read())
+            digest =  hasher.hexdigest()
+
+        return digest
+
 
     def get_filename(self, location, metadata) -> str:
         # we'd like to not need to include the get_filename method, but for
@@ -98,7 +102,7 @@ class FileStorage(ExternalStorage):
         with open(path, mode='wb') as f:
             f.write(byte_data)
 
-        return (str(path), self.get_metadata(path))
+        return str(path), self.get_metadata(path)
 
     def delete(self, location):
         path = self._as_path(location)
@@ -135,10 +139,8 @@ class MemoryStorage(ExternalStorage):
         return location in self._data
 
     def store(self, location, byte_data):
-        sha2 = hashlib.sha256()
-        sha2.update(byte_data)
         self._data[location] = byte_data
-        return location, sha2.hexdigest()
+        return location, self.get_metadata(location)
 
     def _get_filename(self, location):
         # TODO: how to get this to work? how to manage tempfile? maybe a

@@ -9,7 +9,7 @@ from gufe.storage.errors import (
 )
 
 # input for use with file_storage fixture
-BAR_HASH = hashlib.sha256("bar".encode('utf-8')).hexdigest()
+BAR_HASH = hashlib.md5("bar".encode('utf-8')).hexdigest()
 
 # NOTE: Tests for the abstract base are just part of the tests of its
 # subclasses
@@ -57,11 +57,11 @@ class TestFileStorage:
                 hexdigest=mock.Mock(return_value="deadbeef")
             )
         )
-        with mock.patch('hashlib.sha256', mock_hash):
-            loc, sha = file_storage.store("bar.txt", as_bytes)
+        with mock.patch('hashlib.md5', mock_hash):
+            loc, metadata = file_storage.store("bar.txt", as_bytes)
 
         assert loc == str(fileloc)
-        assert sha == "deadbeef"
+        assert metadata == "deadbeef"
         assert fileloc.exists()
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
