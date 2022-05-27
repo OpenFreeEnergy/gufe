@@ -7,6 +7,10 @@ from typing import Union
 
 class Component(abc.ABC):
     """Base class for members of a ChemicalSystem"""
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self.name})"
+
     @abc.abstractmethod
     def __hash__(self):
         pass
@@ -20,6 +24,11 @@ class Component(abc.ABC):
 
     @abc.abstractmethod
     def to_dict(self) -> dict:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
         pass
 
     @classmethod
