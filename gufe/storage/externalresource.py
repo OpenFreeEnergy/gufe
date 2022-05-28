@@ -1,3 +1,4 @@
+import abc
 import hashlib
 import warnings
 import pathlib
@@ -28,7 +29,7 @@ class _ForceContext:
         self._context.__exit__(exc_type, exc_value, traceback)
 
 
-class ExternalStorage:
+class ExternalStorage(abc.ABC):
     """Abstract base for external storage."""
 
     allow_changed: ClassVar[bool] = False
@@ -70,18 +71,23 @@ class ExternalStorage:
         self.validate(location, metadata)
         return _ForceContext(self._load_stream(location, bytes_mode))
 
+    @abc.abstractmethod
     def store(self, location, byte_data):
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def exists(self, location):
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def delete(self, location):
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def _get_filename(self, location):
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def _load_stream(self, location, bytes_mode: bool = True):
         raise NotImplementedError()
 
