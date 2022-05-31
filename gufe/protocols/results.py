@@ -10,13 +10,12 @@ import networkx as nx
 from pydantic import BaseModel, PrivateAttr
 
 
-class ProtocolUnitResult(BaseModel):
+class ProtocolUnitResult(BaseModel, abc.ABC):
     """Result for a single `ProtocolUnit` execution.
 
     Immutable upon creation.
 
     """
-
     class Config:
         extra = "allow"
         allow_mutation = False
@@ -30,8 +29,17 @@ class ProtocolUnitResult(BaseModel):
     data: Any  # should likely be fleshed out, currently a free-for-all
 
     def __init__(
-        self, dependencies: Optional[Iterable["ProtocolUnitResult"]] = None, **data
+        self, dependencies: Optional[Iterable["ProtocolUnitResult"]] = None,
+            **data
     ):
+        """
+        Parameters
+        ----------
+        dependencies : list, optional
+          the predecessors of the creating ProtocolUnit
+        data : dict, optional
+          all other kwargs get stored as the output of a ProtocolUnit
+        """
 
         if dependencies is None:
             dependencies = []
@@ -42,6 +50,20 @@ class ProtocolUnitResult(BaseModel):
 
         dep_uuids = [dep._uuid for dep in dependencies]
         self._dependencies = dep_uuids
+
+    @abc.abstractmethod
+    def ok(self) -> bool:
+        ...
+
+
+class ProtocolUnitCompletion(ProtocolUnitResult):
+    def ok(self) -> bool:
+        return True
+
+
+class ProtocolUnitFailure(ProtocolUnitResult):
+    def ok(self) -> bool:
+        return False
 
 
 class ProtocolDAGResult(BaseModel):
@@ -57,7 +79,7 @@ class ProtocolDAGResult(BaseModel):
         Unique identifier for this `ProtocolDAGResult`.
     graph : nx.DiGraph
         The `ProtocolUnit`s, with dependencies set, as a networkx `DiGraph`.
-        Each `ProtocolUnit` features its `ProtocolUnitResult` as a `result` attribute.
+        Each `ProtocolUnit` features its `ProtocolUnitCompletion` as a `result` attribute.
 
     """
 

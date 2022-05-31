@@ -10,7 +10,9 @@ import abc
 from os import PathLike
 from typing import Iterable, List, Dict, Any, Optional
 
-from .results import ProtocolUnitResult
+from .results import (
+    ProtocolUnitResult, ProtocolUnitCompletion, ProtocolUnitFailure,
+)
 
 
 class ProtocolUnit(abc.ABC):
@@ -50,14 +52,20 @@ class ProtocolUnit(abc.ABC):
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
         dependency_results :
-
+            the
         """
         if block:
-            out = self._execute(dependency_results)
-            result = ProtocolUnitResult(
-                name=self._name, dependencies=dependency_results, **out
-            )
-
+            try:
+                out = self._execute(dependency_results)
+                result = ProtocolUnitResult(
+                    name=self._name, dependencies=dependency_results, **out
+                )
+            except Exception as e:
+                result = ProtocolUnitFailure(
+                    name=self._name,
+                    depedencies=dependency_results,
+                    exception=e,
+                )
         else:
             # TODO: wrap in a thread; update status
             ...

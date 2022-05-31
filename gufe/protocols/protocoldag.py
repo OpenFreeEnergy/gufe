@@ -58,6 +58,8 @@ class ProtocolDAG:
                     for d in self._graph.successors(unit)
                 ]
             )
+            if not result.ok():
+                raise RuntimeError("Unit failed to execute")
             # attach results
             graph.nodes[unit]["result"] = result
 
