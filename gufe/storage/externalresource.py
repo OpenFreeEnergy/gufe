@@ -49,16 +49,14 @@ class ExternalStorage(abc.ABC):
             else:
                 warnings.warn(msg)
 
-
     def get_metadata(self, location: str):
         with self._load_stream(location, bytes_mode=True) as filelike:
             hasher = hashlib.md5()
             # TODO: chunking may give better performance
             hasher.update(filelike.read())
-            digest =  hasher.hexdigest()
+            digest = hasher.hexdigest()
 
         return digest
-
 
     def get_filename(self, location, metadata) -> str:
         # we'd like to not need to include the get_filename method, but for
@@ -116,7 +114,7 @@ class FileStorage(ExternalStorage):
             path.unlink()
         else:
             raise MissingExternalResourceError(
-                f"Unable to delete f{str(path)}: File does not exist"
+                f"Unable to delete '{str(path)}': File does not exist"
             )
 
     def _as_path(self, location):
@@ -143,6 +141,14 @@ class MemoryStorage(ExternalStorage):
 
     def exists(self, location):
         return location in self._data
+
+    def delete(self, location):
+        try:
+            del self._data[location]
+        except KeyError:
+            raise MissingExternalResourceError(
+                f"Unable to delete '{location}': key does not exist"
+            )
 
     def store(self, location, byte_data):
         self._data[location] = byte_data

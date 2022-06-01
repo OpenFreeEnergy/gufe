@@ -6,6 +6,7 @@ from gufe.storage.resultsclient import (
     ResultsClient, TransformationResults, CloneResults, ExtensionResults
 )
 
+
 @pytest.fixture
 def results_client(tmpdir):
     external = MemoryStorage()
@@ -89,7 +90,7 @@ class _ResultContainerTest:
         assert loaded is not obj
         reloaded_div = container / key
         reloaded_getitem = container[key]
-        
+
         assert loaded is reloaded_div
         assert reloaded_div is reloaded_getitem
 

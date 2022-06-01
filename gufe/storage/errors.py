@@ -9,4 +9,4 @@ class MissingExternalResourceError(ExternalResourceError):
 
 
 class ChangedExternalResourceError(ExternalResourceError):
-    """Error when there's a SHA256 mismatch with an external resource"""
+    """Error when there's a metadata  mismatch with an external resource"""

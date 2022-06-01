@@ -54,4 +54,3 @@ class TestResultStore:
     def test_load_stream_missing(self, result_store):
         with pytest.raises(MissingExternalResourceError, match="not found"):
             result_store.load_stream("path/does/not/exist.txt")
-
