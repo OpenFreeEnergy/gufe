@@ -74,6 +74,9 @@ class ResultsClient(_ResultContainer):
         self._result_store = ResultStore(external_store, metadata_store)
         super().__init__(parent=self, path_component=None)
 
+    def delete(self, location):
+        self._result_store.delete(location)
+
     def store_protocol_dag_result(self, result):
         # I don't know how we get the path information for the protocol dag
         # results
