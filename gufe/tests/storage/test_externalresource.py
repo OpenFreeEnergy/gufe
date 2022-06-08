@@ -121,6 +121,17 @@ class TestMemoryStorage:
         path = "path/to/foo.txt" if expected else "path/to/bar.txt"
         assert self.storage.exists(path) is expected
 
+    def test_delete(self):
+        # checks internal state
+        assert 'path/to/foo.txt' in self.storage._data
+        self.storage.delete('path/to/foo.txt')
+        assert not 'path/to/foo.txt' in self.storage._data
+
+    def test_delete_error_not_existing(self):
+        with pytest.raises(MissingExternalResourceError,
+                           match="Unable to delete"):
+            self.storage.delete('does/not/exist.txt')
+
     def test_store(self):
         storage = MemoryStorage()
         for loc, byte_data in self.contents.items():

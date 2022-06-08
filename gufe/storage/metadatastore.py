@@ -14,10 +14,13 @@ class JSONMetadataStore(abc.Mapping):
         self.external_store = external_store
         self._metadata_cache = self.load_all_metadata()
 
-    def store_metadata(self, location: str, metadata: str):
-        self._metadata_cache[location] = metadata
+    def _dump_file(self):
         metadata_bytes = json.dumps(self._metadata_cache).encode('utf-8')
         _ = self.external_store.store('metadata.json', metadata_bytes)
+
+    def store_metadata(self, location: str, metadata: str):
+        self._metadata_cache[location] = metadata
+        self._dump_file()
 
     def load_all_metadata(self):
         if not self.external_store.exists('metadata.json'):
@@ -28,6 +31,10 @@ class JSONMetadataStore(abc.Mapping):
                                              metadata) as json_f:
             all_metadata = json.loads(json_f.read().decode('utf-8'))
         return all_metadata
+
+    def __delitem__(self, location):
+        del self._metadata_cache[location]
+        self._dump_file()
 
     def __iter__(self):
         return iter(self._metadata_cache)

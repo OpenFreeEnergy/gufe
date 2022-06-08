@@ -42,6 +42,10 @@ class TestJSONMetadataStore:
         # but we also call explicitly
         assert json_metadata.load_all_metadata() == {}
 
+    def test_delete(self, json_metadata):
+        ...
+        pytest.skip()
+
     def test_iter(self, json_metadata):
         assert list(json_metadata) == ["path/to/foo.txt"]
 

@@ -15,6 +15,10 @@ class ResultStore:
         _, metadata = self.external_store.store(location, byte_data)
         self.metadata_store.store_metadata(location, metadata)
 
+    def delete(self, location):
+        del self.metadata_store[location]
+        self.external_store.delete(location)
+
     def __iter__(self):
         return iter(self.metadata_store)
 
