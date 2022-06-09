@@ -50,7 +50,7 @@ class ExternalStorage(abc.ABC):
                 warnings.warn(msg)
 
     def get_metadata(self, location: str):
-        with self._load_stream(location, bytes_mode=True) as filelike:
+        with self._load_stream(location) as filelike:
             hasher = hashlib.md5()
             # TODO: chunking may give better performance
             hasher.update(filelike.read())
@@ -65,9 +65,9 @@ class ExternalStorage(abc.ABC):
         return self._get_filename(location)
 
     # @force_context
-    def load_stream(self, location, metadata, bytes_mode: bool = True):
+    def load_stream(self, location, metadata):
         self.validate(location, metadata)
-        return _ForceContext(self._load_stream(location, bytes_mode))
+        return _ForceContext(self._load_stream(location))
 
     @abc.abstractmethod
     def store(self, location, byte_data):
@@ -86,7 +86,7 @@ class ExternalStorage(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _load_stream(self, location, bytes_mode: bool = True):
+    def _load_stream(self, location):
         raise NotImplementedError()
 
 
@@ -123,13 +123,9 @@ class FileStorage(ExternalStorage):
     def _get_filename(self, location):
         return str(self._as_path(location))
 
-    def _load_stream(self, location, bytes_mode: bool = True):
-        mode = 'r'
-        if bytes_mode:
-            mode += 'b'
-
+    def _load_stream(self, location):
         try:
-            return open(self._as_path(location), mode)
+            return open(self._as_path(location), 'rb')
         except OSError as e:
             raise MissingExternalResourceError(str(e))
 
@@ -159,12 +155,7 @@ class MemoryStorage(ExternalStorage):
         # __del__ here?
         pass
 
-    def _load_stream(self, location, bytes_mode: bool = True):
+    def _load_stream(self, location):
         byte_data = self._data[location]
-        if bytes_mode:
-            stream = io.BytesIO(byte_data)
-        else:
-            # I guess we just have to assume UTF in this case
-            stream = io.StringIO(byte_data.decode('utf-8'))
-
+        stream = io.BytesIO(byte_data)
         return stream

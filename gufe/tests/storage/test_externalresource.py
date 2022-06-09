@@ -82,12 +82,9 @@ class TestFileStorage:
         filename = file_storage.get_filename("foo.txt", BAR_HASH)
         assert filename == str(expected)
 
-    @pytest.mark.parametrize('as_bytes', [True, False])
-    def test_load_stream(self, file_storage, as_bytes):
-        with file_storage.load_stream("foo.txt", BAR_HASH, as_bytes) as f:
-            results = f.read()
-            if as_bytes:
-                results = results.decode('utf-8')
+    def test_load_stream(self, file_storage):
+        with file_storage.load_stream("foo.txt", BAR_HASH) as f:
+            results = f.read().decode('utf-8')
 
             assert results == "bar"
 
@@ -125,7 +122,7 @@ class TestMemoryStorage:
         # checks internal state
         assert 'path/to/foo.txt' in self.storage._data
         self.storage.delete('path/to/foo.txt')
-        assert not 'path/to/foo.txt' in self.storage._data
+        assert 'path/to/foo.txt' not in self.storage._data
 
     def test_delete_error_not_existing(self):
         with pytest.raises(MissingExternalResourceError,
@@ -142,12 +139,9 @@ class TestMemoryStorage:
     def test_get_filename(self):
         pytest.skip("Not implemented yet")
 
-    @pytest.mark.parametrize('as_bytes', [True, False])
-    def test_load_stream(self, as_bytes):
+    def test_load_stream(self):
         path = "path/to/foo.txt"
-        with self.storage.load_stream(path, BAR_HASH, as_bytes) as f:
-            results = f.read()
-            if as_bytes:
-                results = results.decode('utf-8')
+        with self.storage.load_stream(path, BAR_HASH) as f:
+            results = f.read().decode('utf-8')
 
-            assert results == "bar"
+        assert results == "bar"
