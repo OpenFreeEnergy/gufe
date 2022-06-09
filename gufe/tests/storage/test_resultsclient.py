@@ -132,6 +132,13 @@ class TestResultsClient(_ResultContainerTest):
     def test_store_protocol_dag_result(self):
         pytest.skip("Not implemented yet")
 
+    def test_delete(self, results_client):
+        file_to_delete = self.expected_files[0]
+        storage = results_client.result_store.external_store
+        assert storage.exists(file_to_delete)
+        results_client.delete(file_to_delete)
+        assert not storage.exists(file_to_delete)
+
 
 class TestTransformationResults(_ResultContainerTest):
     expected_files = [

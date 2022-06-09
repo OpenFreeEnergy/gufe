@@ -43,8 +43,11 @@ class TestJSONMetadataStore:
         assert json_metadata.load_all_metadata() == {}
 
     def test_delete(self, json_metadata):
-        ...
-        pytest.skip()
+        assert 'path/to/foo.txt' in json_metadata
+        assert len(json_metadata) == 1
+        del json_metadata['path/to/foo.txt']
+        assert 'path/to/foo.txt' not in json_metadata
+        assert len(json_metadata) == 0
 
     def test_iter(self, json_metadata):
         assert list(json_metadata) == ["path/to/foo.txt"]

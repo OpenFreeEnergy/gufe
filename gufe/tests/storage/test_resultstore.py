@@ -1,5 +1,7 @@
 import pytest
 
+import pathlib
+
 from gufe.storage.resultstore import ResultStore
 
 from gufe.storage.externalresource import FileStorage
@@ -50,6 +52,15 @@ class TestResultStore:
             contents = f.read()
 
         assert contents.decode('utf-8') == "foo"
+
+    def test_delete(self, result_store, tmpdir):
+        location = "path/to/foo.txt"
+        path = tmpdir / pathlib.Path(location)
+        assert path.exists()
+        assert location in result_store.metadata_store
+        result_store.delete(location)
+        assert not path.exists()
+        assert location not in result_store.metadata_store
 
     def test_load_stream_missing(self, result_store):
         with pytest.raises(MissingExternalResourceError, match="not found"):
