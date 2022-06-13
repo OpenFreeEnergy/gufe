@@ -35,16 +35,12 @@ def file_storage(tmp_path):
 
 
 class TestFileStorage:
-    @pytest.mark.parametrize('filename', [
-        'foo.txt', 'notexisting.txt', 'with/directory.txt'
+    @pytest.mark.parametrize('filename, expected', [
+        ('foo.txt', True),
+        ('notexisting.txt', False),
+        ('with/directory.txt', True),
     ])
-    def test_exists(self, filename, file_storage):
-        expected = {
-            'foo.txt': True,
-            'notexisting.txt': False,
-            'with/directory.txt': True
-        }[filename]
-
+    def test_exists(self, filename, expected, file_storage):
         assert file_storage.exists(filename) == expected
 
     def test_store(self, file_storage):
