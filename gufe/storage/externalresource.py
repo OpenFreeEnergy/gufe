@@ -26,7 +26,7 @@ class _ForceContext:
         return self._context.__enter__()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._context.__exit__(exc_type, exc_value, traceback)
+        return self._context.__exit__(exc_type, exc_value, traceback)
 
 
 class ExternalStorage(abc.ABC):
@@ -66,19 +66,91 @@ class ExternalStorage(abc.ABC):
 
     # @force_context
     def load_stream(self, location, metadata):
+        """
+        Load data for the given chunk in a context manager.
+
+        This returns a ``_ForceContext``, which requires that the returned
+        object be used as a context manager. That ``_ForcedContext`` should
+        wrap a filelike objet.
+
+        Subclasses should implement ``_load_stream``.
+
+        Parameters
+        ----------
+        location : str
+            the label for the data to load
+        metadata : str
+            metadata to validate that the loaded data is still valid
+
+        Returns
+        _ForceContext :
+            Wrapper around the filelike
+        """
         self.validate(location, metadata)
         return _ForceContext(self._load_stream(location))
 
-    @abc.abstractmethod
-    def store(self, location, byte_data):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def exists(self, location):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def delete(self, location):
+        """
+        Delete an existing data chunk from the backend.
+
+        Subclasses should implement ``_delete``.
+
+        Parameters
+        ----------
+        location : str
+            label for the data to delete
+
+        Raises
+        ------
+        MissingExternalResourceError
+            If the resource to be deleted does not exist
+        """
+        return self._delete(location)
+
+    def store(self, location, byte_data):
+        """
+        Store given data in the backend.
+
+        Subclasses should implement ``_store``.
+
+        Parameters
+        ----------
+        location : str
+            label associated with the data to store
+        byte_data : bytes
+            bytes to store
+        """
+        return self._store(location, byte_data)
+
+    def exists(self, location):
+        """
+        Check whether a given label has already been used.
+
+        Subclasses should implement ``_exists``.
+
+        Parameters
+        ----------
+        location : str
+            the label to check for
+
+        Return
+        ------
+        bool
+            True if this label has associated data in the backend, False if
+            not
+        """
+        return self._exists(location)
+
+    @abc.abstractmethod
+    def _store(self, location, byte_data):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def _exists(self, location):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def _delete(self, location):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -95,10 +167,10 @@ class FileStorage(ExternalStorage):
     def __init__(self, root_dir: Union[pathlib.Path, str]):
         self.root_dir = pathlib.Path(root_dir)
 
-    def exists(self, location):
+    def _exists(self, location):
         return self._as_path(location).exists()
 
-    def store(self, location, byte_data):
+    def _store(self, location, byte_data):
         path = self._as_path(location)
         directory = path.parent
         filename = path.name
@@ -108,7 +180,7 @@ class FileStorage(ExternalStorage):
 
         return str(path), self.get_metadata(path)
 
-    def delete(self, location):
+    def _delete(self, location):
         path = self._as_path(location)
         if self.exists(location):
             path.unlink()
@@ -135,10 +207,10 @@ class MemoryStorage(ExternalStorage):
     def __init__(self):
         self._data = {}
 
-    def exists(self, location):
+    def _exists(self, location):
         return location in self._data
 
-    def delete(self, location):
+    def _delete(self, location):
         try:
             del self._data[location]
         except KeyError:
@@ -146,7 +218,7 @@ class MemoryStorage(ExternalStorage):
                 f"Unable to delete '{location}': key does not exist"
             )
 
-    def store(self, location, byte_data):
+    def _store(self, location, byte_data):
         self._data[location] = byte_data
         return location, self.get_metadata(location)
 
