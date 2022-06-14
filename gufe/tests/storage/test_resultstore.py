@@ -1,4 +1,5 @@
 import pytest
+from unittest import mock
 
 import pathlib
 
@@ -6,7 +7,9 @@ from gufe.storage.resultstore import ResultStore
 
 from gufe.storage.externalresource import FileStorage
 from gufe.storage.metadatastore import JSONMetadataStore
-from gufe.storage.errors import MissingExternalResourceError
+from gufe.storage.errors import (
+    MissingExternalResourceError, ChangedExternalResourceError
+)
 
 
 @pytest.fixture
@@ -28,14 +31,21 @@ class TestResultStore:
         assert result_store.external_store.exists(foo_loc)
 
         # also explicitly test storing here
+        mock_hash = mock.Mock(
+            return_value=mock.Mock(
+                hexdigest=mock.Mock(return_value="deadbeef")
+            )
+        )
         bar_loc = "path/to/bar.txt"
-        result_store.store(bar_loc, "bar".encode('utf-8'))
+        with mock.patch('hashlib.md5', mock_hash):
+            result_store.store(bar_loc, "bar".encode('utf-8'))
+
         assert len(metadata_store) == 2
         assert bar_loc in metadata_store
         assert result_store.external_store.exists(bar_loc)
-        bar_hash = metadata_store[bar_loc]
+        assert metadata_store[bar_loc] == "deadbeef"
         external = result_store.external_store
-        with external.load_stream(bar_loc, bar_hash) as f:
+        with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
 
     def test_iter(self, result_store):
@@ -65,3 +75,21 @@ class TestResultStore:
     def test_load_stream_missing(self, result_store):
         with pytest.raises(MissingExternalResourceError, match="not found"):
             result_store.load_stream("path/does/not/exist.txt")
+
+    def test_load_stream_error_bad_hash(self, result_store):
+        result_store.metadata_store.store_metadata('path/to/foo.txt',
+                                                   '1badc0de')
+        with pytest.raises(ChangedExternalResourceError):
+            result_store.load_stream('path/to/foo.txt')
+
+    def test_load_stream_allow_bad_hash(self, result_store):
+        result_store.metadata_store.store_metadata('path/to/foo.txt',
+                                                   '1badc0de')
+        with pytest.warns(UserWarning, match="Hash mismatch"):
+            file = result_store.load_stream("path/to/foo.txt",
+                                            allow_changed=True)
+
+        with file as f:
+            assert f.read().decode("utf-8") == "foo"
+
+

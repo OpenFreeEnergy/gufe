@@ -6,7 +6,7 @@ import io
 import contextlib
 import functools
 
-from typing import ClassVar, Union
+from typing import Union
 
 from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
@@ -17,7 +17,7 @@ class _ForceContext:
     """Wrapper that forces objects to only be used a context managers.
 
     Filelike objects can often be used with explicit open/close. This
-    requires the returned filelike to be consumed as a context manager.
+    requires the returned byteslike to be consumed as a context manager.
     """
     def __init__(self, context):
         self._context = context
@@ -32,32 +32,15 @@ class _ForceContext:
 class ExternalStorage(abc.ABC):
     """Abstract base for external storage."""
 
-    allow_changed: ClassVar[bool] = False
-
-    def validate(self, location, metadata):
-        if not self.get_metadata(location) == metadata:
-            msg = (f"Hash mismatch for {location}: this object "
-                   "may have changed.")
-            if not self.allow_changed:
-                # NOTE: having it here instead of in a DataLoader means that
-                # you can only change it for the whole system, instead of
-                # for a specific object
-                raise ChangedExternalResourceError(
-                    msg + " To allow this, set ExternalStorage."
-                    "allow_changed = True"
-                )
-            else:
-                warnings.warn(msg)
-
     def _get_hexdigest(self, location):
         """Default method for getting the md5 hexdigest.
 
         Subclasses may implement faster approaches.
         """
-        with self._load_stream(location) as filelike:
+        with self._load_stream(location) as byteslike:
             hasher = hashlib.md5()
             # TODO: chunking may give better performance
-            hasher.update(filelike.read())
+            hasher.update(byteslike.read())
             digest = hasher.hexdigest()
 
         return digest
@@ -84,20 +67,18 @@ class ExternalStorage(abc.ABC):
         # Subclasses would implement private methods to get each field.
         return self._get_hexdigest(location)
 
-    def get_filename(self, location, metadata) -> str:
+    def get_filename(self, location) -> str:
         # we'd like to not need to include the get_filename method, but for
-        # now some consumers of this may not work with filelike
-        self.validate(location, metadata)
+        # now some consumers of this may not work with byteslike
         return self._get_filename(location)
 
-    # @force_context
-    def load_stream(self, location, metadata):
+    def load_stream(self, location):
         """
         Load data for the given chunk in a context manager.
 
         This returns a ``_ForceContext``, which requires that the returned
         object be used as a context manager. That ``_ForcedContext`` should
-        wrap a filelike objet.
+        wrap a byteslike objet.
 
         Subclasses should implement ``_load_stream``.
 
@@ -110,9 +91,8 @@ class ExternalStorage(abc.ABC):
 
         Returns
         _ForceContext :
-            Wrapper around the filelike
+            Wrapper around the byteslike
         """
-        self.validate(location, metadata)
         return _ForceContext(self._load_stream(location))
 
     def delete(self, location):

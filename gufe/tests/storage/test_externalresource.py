@@ -79,32 +79,18 @@ class TestFileStorage:
 
     def test_get_filename(self, file_storage):
         expected = file_storage.root_dir / "foo.txt"
-        filename = file_storage.get_filename("foo.txt", BAR_HASH)
+        filename = file_storage.get_filename("foo.txt")
         assert filename == str(expected)
 
     def test_load_stream(self, file_storage):
-        with file_storage.load_stream("foo.txt", BAR_HASH) as f:
+        with file_storage.load_stream("foo.txt") as f:
             results = f.read().decode('utf-8')
 
-            assert results == "bar"
+        assert results == "bar"
 
     def test_load_stream_error_missing(self, file_storage):
         with pytest.raises(MissingExternalResourceError):
-            file_storage.load_stream("baz.txt", "1badc0de")
-
-    def test_load_stream_error_bad_hash(self, file_storage):
-        # for the test, instead of changing the contents, we change the hash
-        with pytest.raises(ChangedExternalResourceError):
-            file_storage.load_stream("foo.txt", "1badc0de")
-
-    def test_load_stream_allow_bad_hash(self, file_storage):
-        allow_changed = file_storage.allow_changed
-        file_storage.allow_changed = True
-        with pytest.warns(UserWarning, match="Hash mismatch"):
-            file = file_storage.load_stream("foo.txt", "1badc0de")
-
-        with file as f:
-            assert f.read().decode("utf-8") == "bar"
+            file_storage.load_stream("baz.txt")
 
 
 class TestMemoryStorage:
@@ -141,7 +127,7 @@ class TestMemoryStorage:
 
     def test_load_stream(self):
         path = "path/to/foo.txt"
-        with self.storage.load_stream(path, BAR_HASH) as f:
+        with self.storage.load_stream(path) as f:
             results = f.read().decode('utf-8')
 
         assert results == "bar"

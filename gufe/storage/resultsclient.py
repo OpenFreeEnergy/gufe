@@ -49,8 +49,8 @@ class _ResultContainer:
             if loc.startswith(self.path):
                 yield loc
 
-    def load_stream(self, location):
-        return self.result_store.load_stream(location)
+    def load_stream(self, location, *, allow_changed=False):
+        return self.result_store.load_stream(location, allow_changed)
 
     @property
     def path(self):

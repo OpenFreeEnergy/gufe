@@ -26,9 +26,7 @@ class JSONMetadataStore(abc.Mapping):
         if not self.external_store.exists('metadata.json'):
             return {}
 
-        metadata = self.external_store.get_metadata('metadata.json')
-        with self.external_store.load_stream('metadata.json',
-                                             metadata) as json_f:
+        with self.external_store.load_stream('metadata.json') as json_f:
             all_metadata = json.loads(json_f.read().decode('utf-8'))
         return all_metadata
 
