@@ -6,7 +6,7 @@ import io
 import contextlib
 import functools
 
-from typing import ClassVar, Union
+from typing import ClassVar, Union, Tuple, ContextManager
 
 from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
@@ -49,7 +49,7 @@ class ExternalStorage(abc.ABC):
             else:
                 warnings.warn(msg)
 
-    def _get_hexdigest(self, location):
+    def _get_hexdigest(self, location) -> str:
         """Default method for getting the md5 hexdigest.
 
         Subclasses may implement faster approaches.
@@ -91,7 +91,7 @@ class ExternalStorage(abc.ABC):
         return self._get_filename(location)
 
     # @force_context
-    def load_stream(self, location, metadata):
+    def load_stream(self, location, metadata) -> ContextManager:
         """
         Load data for the given chunk in a context manager.
 
@@ -109,7 +109,8 @@ class ExternalStorage(abc.ABC):
             metadata to validate that the loaded data is still valid
 
         Returns
-        _ForceContext :
+        -------
+        _ForceContext : ContextManager
             Wrapper around the filelike
         """
         self.validate(location, metadata)
@@ -133,7 +134,7 @@ class ExternalStorage(abc.ABC):
         """
         return self._delete(location)
 
-    def store(self, location, byte_data):
+    def store(self, location, byte_data) -> Tuple[str, str]:
         """
         Store given data in the backend.
 
@@ -145,10 +146,17 @@ class ExternalStorage(abc.ABC):
             label associated with the data to store
         byte_data : bytes
             bytes to store
+
+        Returns
+        -------
+        location : str
+            the label as input?
+        metadata : str
+            the resulting metadata from storing this
         """
         return self._store(location, byte_data)
 
-    def exists(self, location):
+    def exists(self, location) -> bool:
         """
         Check whether a given label has already been used.
 
@@ -176,7 +184,7 @@ class ExternalStorage(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _exists(self, location):
+    def _exists(self, location) -> bool:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -209,7 +217,7 @@ class FileStorage(ExternalStorage):
         with open(path, mode='wb') as f:
             f.write(byte_data)
 
-        return str(path), self.get_metadata(path)
+        return str(path), self.get_metadata(str(path))
 
     def _delete(self, location):
         path = self._as_path(location)
