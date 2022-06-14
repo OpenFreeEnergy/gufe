@@ -83,7 +83,7 @@ class _ResultContainerTest:
             loaded = container / key
         elif load_with == 'getitem':
             loaded = container[key]
-        else:  # no-cov
+        else:  # -no-cov-
             raise RuntimeError(f"Bad input: can't load with '{load_with}'")
 
         assert loaded == obj
@@ -196,7 +196,7 @@ class TestExtensionResults(_ResultContainerTest):
         )
 
     def _get_key(self, as_object, container):
-        if self.as_object:  # no-cov
+        if self.as_object:  # -no-cov-
             raise RuntimeError("TestExtensionResults does not support "
                                "as_object=True")
         path = "transformations/MAIN_TRANS/0/0/"

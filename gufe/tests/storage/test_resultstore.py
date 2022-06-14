@@ -91,5 +91,3 @@ class TestResultStore:
 
         with file as f:
             assert f.read().decode("utf-8") == "foo"
-
-
