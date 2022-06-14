@@ -49,7 +49,11 @@ class ExternalStorage(abc.ABC):
             else:
                 warnings.warn(msg)
 
-    def get_metadata(self, location: str):
+    def _get_hexdigest(self, location):
+        """Default method for getting the md5 hexdigest.
+
+        Subclasses may implement faster approaches.
+        """
         with self._load_stream(location) as filelike:
             hasher = hashlib.md5()
             # TODO: chunking may give better performance
@@ -57,6 +61,28 @@ class ExternalStorage(abc.ABC):
             digest = hasher.hexdigest()
 
         return digest
+
+    def get_metadata(self, location: str) -> str:
+        """
+        Obtain the metadata associated with the actual stored data.
+
+        We always and only obtain the metadata *after* the data has been
+        stored. This is because some potential metadata fields, such as
+        last-modified timestamps, may not be known until the data is stored.
+
+        Parameters
+        ----------
+        location : str
+            the label to obtain the metadata about
+
+        Returns
+        -------
+        str :
+            hexdigest of the md5 hash of the data
+        """
+        # NOTE: in the future, this may become a (named)tuple of metadata.
+        # Subclasses would implement private methods to get each field.
+        return self._get_hexdigest(location)
 
     def get_filename(self, location, metadata) -> str:
         # we'd like to not need to include the get_filename method, but for
@@ -143,6 +169,10 @@ class ExternalStorage(abc.ABC):
 
     @abc.abstractmethod
     def _store(self, location, byte_data):
+        """
+        For implementers: This should be blocking, even if the storage
+        backend allows asynchronous storage.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -174,6 +204,7 @@ class FileStorage(ExternalStorage):
         path = self._as_path(location)
         directory = path.parent
         filename = path.name
+        # TODO: add some stuff here to catch permissions-based errors
         directory.mkdir(parents=True, exist_ok=True)
         with open(path, mode='wb') as f:
             f.write(byte_data)
