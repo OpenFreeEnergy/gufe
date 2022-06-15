@@ -17,12 +17,12 @@ def result_store(tmpdir):
     external = FileStorage(tmpdir)
     metadata = JSONMetadataStore(external)
     result_store = ResultStore(external, metadata)
-    result_store.store("path/to/foo.txt", "foo".encode('utf-8'))
+    result_store.store_bytes("path/to/foo.txt", "foo".encode('utf-8'))
     return result_store
 
 
 class TestResultStore:
-    def test_store(self, result_store):
+    def test_store_bytes(self, result_store):
         # first check the thing stored during the fixture
         metadata_store = result_store.metadata_store
         foo_loc = "path/to/foo.txt"
@@ -38,7 +38,7 @@ class TestResultStore:
         )
         bar_loc = "path/to/bar.txt"
         with mock.patch('hashlib.md5', mock_hash):
-            result_store.store(bar_loc, "bar".encode('utf-8'))
+            result_store.store_bytes(bar_loc, "bar".encode('utf-8'))
 
         assert len(metadata_store) == 2
         assert bar_loc in metadata_store

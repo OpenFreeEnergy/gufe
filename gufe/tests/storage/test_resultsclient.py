@@ -13,7 +13,7 @@ def results_client(tmpdir):
     results_client = ResultsClient(external)
 
     # store one file with contents "foo"
-    results_client.result_store.store(
+    results_client.result_store.store_bytes(
         "transformations/MAIN_TRANS/0/0/file.txt",
         "foo".encode('utf-8')
     )
@@ -28,7 +28,7 @@ def results_client(tmpdir):
     ]
 
     for file in empty_files:
-        results_client.result_store.store(file, b"")  # empty bytestring
+        results_client.result_store.store_bytes(file, b"")  # empty
 
     return results_client
 

@@ -16,7 +16,7 @@ class JSONMetadataStore(abc.Mapping):
 
     def _dump_file(self):
         metadata_bytes = json.dumps(self._metadata_cache).encode('utf-8')
-        _ = self.external_store.store('metadata.json', metadata_bytes)
+        _ = self.external_store.store_bytes('metadata.json', metadata_bytes)
 
     def store_metadata(self, location: str, metadata: str):
         self._metadata_cache[location] = metadata

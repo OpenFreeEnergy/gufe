@@ -1,10 +1,8 @@
 import abc
 import hashlib
-import warnings
 import pathlib
+import shutil
 import io
-import contextlib
-import functools
 
 from typing import Union, Tuple, ContextManager
 
@@ -113,7 +111,7 @@ class ExternalStorage(abc.ABC):
         """
         return self._delete(location)
 
-    def store(self, location, byte_data) -> Tuple[str, str]:
+    def store_bytes(self, location, byte_data):
         """
         Store given data in the backend.
 
@@ -125,15 +123,12 @@ class ExternalStorage(abc.ABC):
             label associated with the data to store
         byte_data : bytes
             bytes to store
-
-        Returns
-        -------
-        location : str
-            the label as input?
-        metadata : str
-            the resulting metadata from storing this
         """
-        return self._store(location, byte_data)
+        return self._store_bytes(location, byte_data)
+
+    def store_path(self, location, path_bytes: bytes):
+        path = pathlib.Path(path_bytes.decode('utf-8'))
+        self._store_path(location, path)
 
     def exists(self, location) -> bool:
         """
@@ -155,11 +150,15 @@ class ExternalStorage(abc.ABC):
         return self._exists(location)
 
     @abc.abstractmethod
-    def _store(self, location, byte_data):
+    def _store_bytes(self, location, byte_data):
         """
         For implementers: This should be blocking, even if the storage
         backend allows asynchronous storage.
         """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def _store_path(self, location, path):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -187,7 +186,7 @@ class FileStorage(ExternalStorage):
     def _exists(self, location):
         return self._as_path(location).exists()
 
-    def _store(self, location, byte_data):
+    def _store_bytes(self, location, byte_data):
         path = self._as_path(location)
         directory = path.parent
         filename = path.name
@@ -196,7 +195,10 @@ class FileStorage(ExternalStorage):
         with open(path, mode='wb') as f:
             f.write(byte_data)
 
-        return str(path), self.get_metadata(str(path))
+    def _store_path(self, location, path):
+        my_path = self._as_path(location)
+        if path.resolve() != my_path.resolve():
+            shutil.copyfile(path, my_path)
 
     def _delete(self, location):
         path = self._as_path(location)
@@ -236,9 +238,15 @@ class MemoryStorage(ExternalStorage):
                 f"Unable to delete '{location}': key does not exist"
             )
 
-    def _store(self, location, byte_data):
+    def _store_bytes(self, location, byte_data):
         self._data[location] = byte_data
         return location, self.get_metadata(location)
+
+    def _store_path(self, location, path):
+        with open(path, 'rb') as f:
+            byte_data = f.read()
+
+        return self._store_bytes(location, byte_data)
 
     def _get_filename(self, location):
         # TODO: how to get this to work? how to manage tempfile? maybe a

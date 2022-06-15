@@ -43,21 +43,30 @@ class TestFileStorage:
     def test_exists(self, filename, expected, file_storage):
         assert file_storage.exists(filename) == expected
 
-    def test_store(self, file_storage):
+    def test_store_bytes(self, file_storage):
         fileloc = file_storage.root_dir / "bar.txt"
         assert not fileloc.exists()
         as_bytes = "This is bar".encode('utf-8')
-        # mock out the metadata (hash)
-        mock_hash = mock.Mock(
-            return_value=mock.Mock(
-                hexdigest=mock.Mock(return_value="deadbeef")
-            )
-        )
-        with mock.patch('hashlib.md5', mock_hash):
-            loc, metadata = file_storage.store("bar.txt", as_bytes)
 
-        assert loc == str(fileloc)
-        assert metadata == "deadbeef"
+        file_storage.store_bytes("bar.txt", as_bytes)
+
+        assert fileloc.exists()
+        with open(fileloc, 'rb') as f:
+            assert as_bytes == f.read()
+
+    def test_store_path(self, file_storage):
+        orig_file = file_storage.root_dir / ".hidden" / "bar.txt"
+        orig_file.parent.mkdir()
+        as_bytes = "This is bar".encode('utf-8')
+        with open(orig_file, 'wb') as f:
+            f.write(as_bytes)
+
+        fileloc = file_storage.root_dir / "bar.txt"
+        assert not fileloc.exists()
+        path_bytes = str(orig_file).encode('utf-8')
+
+        file_storage.store_path(fileloc, path_bytes)
+
         assert fileloc.exists()
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
@@ -111,12 +120,24 @@ class TestMemoryStorage:
                            match="Unable to delete"):
             self.storage.delete('does/not/exist.txt')
 
-    def test_store(self):
+    def test_store_bytes(self):
         storage = MemoryStorage()
         for loc, byte_data in self.contents.items():
-            storage.store(loc, byte_data)
+            storage.store_bytes(loc, byte_data)
 
         assert storage._data == self.contents  # internal implementation
+
+    def test_store_path(self, tmp_path):
+        storage = MemoryStorage()
+        for label, data in self.contents.items():
+            path = tmp_path / label
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, mode='wb') as f:
+                f.write(data)
+
+            storage.store_path(label, str(path).encode('utf-8'))
+
+        assert storage._data == self.contents
 
     def test_get_filename(self):
         pytest.skip("Not implemented yet")
