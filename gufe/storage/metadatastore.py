@@ -1,22 +1,46 @@
 import json
-from collections import abc
+import abc
+import collections
 
 from typing import Tuple
 
 from gufe.storage.errors import MissingExternalResourceError
 
 
-class JSONMetadataStore(abc.Mapping):
-    # Using JSON for now because it is easy to write this class and doesn't
-    # require any external dependencies. It is NOT the right way to go in
-    # the long term. API will probably stay the same, though.
+class MetadataStore(collections.abc.Mapping):
     def __init__(self, external_store):
         self.external_store = external_store
         self._metadata_cache = self.load_all_metadata()
 
+    @abc.abstractmethod
+    def store_metadata(self, location: str, metadata: str):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def load_all_metadata(self):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def __delitem__(self, location):
+        raise NotImplementedError()
+
+    def __getitem__(self, location):
+        return self._metadata_cache[location]
+
+    def __iter__(self):
+        return iter(self._metadata_cache)
+
+    def __len__(self):
+        return len(self._metadata_cache)
+
+
+class JSONMetadataStore(MetadataStore):
+    # Using JSON for now because it is easy to write this class and doesn't
+    # require any external dependencies. It is NOT the right way to go in
+    # the long term. API will probably stay the same, though.
     def _dump_file(self):
         metadata_bytes = json.dumps(self._metadata_cache).encode('utf-8')
-        _ = self.external_store.store_bytes('metadata.json', metadata_bytes)
+        self.external_store.store_bytes('metadata.json', metadata_bytes)
 
     def store_metadata(self, location: str, metadata: str):
         self._metadata_cache[location] = metadata
@@ -34,11 +58,21 @@ class JSONMetadataStore(abc.Mapping):
         del self._metadata_cache[location]
         self._dump_file()
 
-    def __iter__(self):
-        return iter(self._metadata_cache)
 
-    def __len__(self):
-        return len(self._metadata_cache)
+class PerFileJSONMetadataStore(MetadataStore):
+    @staticmethod
+    def _metadata_path(location):
+        return "metadata/" + location + ".json"
 
-    def __getitem__(self, key):
-        return self._metadata_cache[key]
+    def store_metadata(self, location: str, metadata: str):
+        self._metadata_cache[location] = metadata
+        path = self._metadata_path(location)
+        metadata_bytes = json.dumps({'md5': metadata}).encode('utf-8')
+        self.external_store.store_bytes(path, metadata_bytes)
+
+    def load_all_metadata(self):
+        ...
+
+    def __delitem__(self, location):
+        del self._metadata_cache[location]
+        self.external_store.delete(self._metadata_path(location))

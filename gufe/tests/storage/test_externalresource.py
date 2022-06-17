@@ -8,9 +8,6 @@ from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
-# input for use with file_storage fixture
-BAR_HASH = hashlib.md5("bar".encode('utf-8')).hexdigest()
-
 # NOTE: Tests for the abstract base are just part of the tests of its
 # subclasses
 
@@ -63,9 +60,8 @@ class TestFileStorage:
 
         fileloc = file_storage.root_dir / "bar.txt"
         assert not fileloc.exists()
-        path_bytes = str(orig_file).encode('utf-8')
 
-        file_storage.store_path(fileloc, path_bytes)
+        file_storage.store_path(fileloc, orig_file)
 
         assert fileloc.exists()
         with open(fileloc, 'rb') as f:
@@ -76,6 +72,25 @@ class TestFileStorage:
         assert path.exists()
         file_storage.delete("foo.txt")
         assert not path.exists()
+
+    @pytest.mark.parametrize('prefix,expected', [
+    ])
+    def test_iter_contents(self, tmp_path, prefix, expected):
+        files = [
+            'foo.txt',
+            'foo_dir/a.txt',
+            'foo_dir/b.txt',
+        ]
+        for file in files:
+            path = tmp_path / file
+            os.mkdir(path.parent, parents=True, exist_ok=True)
+            assert not path.exists()
+            with open(path, 'wb') as f:
+                f.write(b"")
+
+            ...
+
+        pytest.skip()
 
     def test_delete_error_not_existing(self, file_storage):
         with pytest.raises(MissingExternalResourceError,
@@ -135,7 +150,7 @@ class TestMemoryStorage:
             with open(path, mode='wb') as f:
                 f.write(data)
 
-            storage.store_path(label, str(path).encode('utf-8'))
+            storage.store_path(label, path)
 
         assert storage._data == self.contents
 

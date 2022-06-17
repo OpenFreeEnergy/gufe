@@ -25,9 +25,9 @@ class TestJSONMetadataStore:
         with open(metadata_json, mode='r') as f:
             metadata = json.load(f)
 
-        assert len(metadata) == 2
         assert metadata == json_metadata._metadata_cache
         assert json_metadata['path/to/other.txt'] == "other"
+        assert len(metadata) == 2
 
     def test_load_all_metadata(self, json_metadata):
         expected = {'path/to/foo.txt': 'bar'}

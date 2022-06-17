@@ -3,6 +3,7 @@ import hashlib
 import pathlib
 import shutil
 import io
+import glob
 
 from typing import Union, Tuple, ContextManager
 
@@ -126,8 +127,7 @@ class ExternalStorage(abc.ABC):
         """
         return self._store_bytes(location, byte_data)
 
-    def store_path(self, location, path_bytes: bytes):
-        path = pathlib.Path(path_bytes.decode('utf-8'))
+    def store_path(self, location, path: pathlib.Path):
         self._store_path(location, path)
 
     def exists(self, location) -> bool:
@@ -148,6 +148,23 @@ class ExternalStorage(abc.ABC):
             not
         """
         return self._exists(location)
+
+    @abc.abstractmethod
+    def iter_contents(self, prefix=""):
+        """Iterate over the labels in this storage.
+
+        Parameters
+        ----------
+        prefix : str
+            Only iterate over paths that start with the given prefix.
+
+        Returns
+        -------
+        Iterator[str] :
+            Contents of this storage, which may include items without
+            metadata.
+        """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def _store_bytes(self, location, byte_data):
@@ -200,6 +217,15 @@ class FileStorage(ExternalStorage):
         if path.resolve() != my_path.resolve():
             shutil.copyfile(path, my_path)
 
+    def iter_contents(self, prefix):
+        as_directory = f"{self.root_dir}/{prefix}*/**"
+        as_file = f"{self.root_dir}/{prefix}**"
+        results = glob.glob(as_directory, recursive=True)
+        if len(results) == 0:
+            results = glob.glob(as_file, recursive=True)
+
+        return iter(results)
+
     def _delete(self, location):
         path = self._as_path(location)
         if self.exists(location):
@@ -247,6 +273,11 @@ class MemoryStorage(ExternalStorage):
             byte_data = f.read()
 
         return self._store_bytes(location, byte_data)
+
+    def iter_contents(self, prefix):
+        for label in self._data:
+            if label.startswith(prefix):
+                yield label
 
     def _get_filename(self, location):
         # TODO: how to get this to work? how to manage tempfile? maybe a
