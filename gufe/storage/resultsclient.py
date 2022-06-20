@@ -52,6 +52,12 @@ class _ResultContainer:
     def load_stream(self, location, *, allow_changed=False):
         return self.result_store.load_stream(location, allow_changed)
 
+    def load_bytes(self, location, *, allow_changed=False):
+        with self.load_stream(location, allow_changed=allow_changed) as f:
+            byte_data = f.read()
+
+        return byte_data
+
     @property
     def path(self):
         return self.parent.path + "/" + self._path_component
