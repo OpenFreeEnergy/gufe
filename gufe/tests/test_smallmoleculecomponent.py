@@ -5,6 +5,7 @@ import importlib
 import importlib.resources
 import openff.toolkit.topology
 import os
+import hashlib
 import pytest
 
 try:
@@ -149,6 +150,41 @@ class TestSmallMoleculeComponent:
         mol = SmallMoleculeComponent.from_rdkit(rdkit, "ethane")
         assert mol == named_ethane
         assert mol.to_rdkit() is not rdkit
+
+    def test_to_storage_ready(self, named_ethane, serialization_template):
+        as_str = serialization_template("ethane_template.sdf")
+        bytes_data = as_str.encode("utf-8")
+        md5 = hashlib.md5(bytes_data).hexdigest()
+        qualname = "gufe.smallmoleculecomponent.SmallMoleculeComponent"
+        expected_metadata = {
+            ":path:": f"setup/components/{md5}.sdf",
+            ":md5:": md5,
+            ":class:": qualname,
+        }
+        expected = {
+            named_ethane: gufe.storage.utils.SerializationInfo(
+                bytes_data=bytes_data,
+                metadata=expected_metadata
+            )
+        }
+        results = named_ethane.to_storage_ready()
+        # simple tests so we get errors to tell us what went wrong
+        assert len(results) == 1
+        assert set(results) == {named_ethane}
+        metadata = results[named_ethane].metadata
+        assert metadata == expected_metadata
+        # full test to ensure that we haven't added fields
+        assert results == expected
+
+    def test_from_storage_bytes(self, named_ethane, serialization_template):
+        as_str = serialization_template("ethane_template.sdf")
+        bytes_data = as_str.encode("utf-8")
+        recreated = SmallMoleculeComponent.from_storage_bytes(
+            bytes_data,
+            load_func=lambda x: None  # no loading required
+        )
+        assert recreated == named_ethane
+
 
 
 class TestSmallMoleculeComponentConversion:
