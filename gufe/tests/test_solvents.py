@@ -43,7 +43,7 @@ def test_to_dict():
                            'ion_concentration': None}
 
 
-@pytest.mark.parametrize(conc, [None, 1.75 * unit.molar])
+@pytest.mark.parametrize('conc', [None, 1.75 * unit.molar])
 def test_from_dict(conc):
     s1 = SolventComponent(positive_ion='Na', negative_ion='Cl',
                           ion_concentration=conc,
