@@ -57,22 +57,3 @@ class JSONMetadataStore(MetadataStore):
     def __delitem__(self, location):
         del self._metadata_cache[location]
         self._dump_file()
-
-
-class PerFileJSONMetadataStore(MetadataStore):
-    @staticmethod
-    def _metadata_path(location):
-        return "metadata/" + location + ".json"
-
-    def store_metadata(self, location: str, metadata: str):
-        self._metadata_cache[location] = metadata
-        path = self._metadata_path(location)
-        metadata_bytes = json.dumps({'md5': metadata}).encode('utf-8')
-        self.external_store.store_bytes(path, metadata_bytes)
-
-    def load_all_metadata(self):
-        ...
-
-    def __delitem__(self, location):
-        del self._metadata_cache[location]
-        self.external_store.delete(self._metadata_path(location))

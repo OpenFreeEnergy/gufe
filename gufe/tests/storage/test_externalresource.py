@@ -179,7 +179,6 @@ class TestMemoryStorage:
 
         assert set(storage.iter_contents(prefix)) == expected
 
-
     def test_get_filename(self):
         pytest.skip("Not implemented yet")
 
