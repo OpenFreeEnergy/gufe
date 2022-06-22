@@ -49,7 +49,7 @@ class SerializationInfo(NamedTuple):
             ":path:": path_pattern.format(md5=md5[:10]),
             ":md5:": md5,
             ":class:": cls.__qualname__,
-            ":module": cls.__module__,
+            ":module:": cls.__module__,
         }
 
 

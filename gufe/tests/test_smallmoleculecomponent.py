@@ -155,11 +155,11 @@ class TestSmallMoleculeComponent:
         as_str = serialization_template("ethane_template.sdf")
         bytes_data = as_str.encode("utf-8")
         md5 = hashlib.md5(bytes_data).hexdigest()
-        qualname = "gufe.smallmoleculecomponent.SmallMoleculeComponent"
         expected_metadata = {
-            ":path:": f"setup/components/{md5}.sdf",
+            ":path:": f"setup/components/{md5[:10]}.sdf",
             ":md5:": md5,
-            ":class:": qualname,
+            ":class:": "SmallMoleculeComponent",
+            ":module:": "gufe.smallmoleculecomponent",
         }
         expected = {
             named_ethane: gufe.storage.utils.SerializationInfo(
