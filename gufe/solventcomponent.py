@@ -6,6 +6,9 @@ from openff.units import unit
 from typing import Optional, Tuple
 
 from gufe import Component
+from gufe.storage.generics import (generic_to_storage_ready,
+                                   generic_from_storage_bytes)
+from gufe.storage.utils import get_defaults_from_init
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
@@ -25,6 +28,8 @@ class SolventComponent(Component):
     _negative_ion: Optional[str]
     _neutralize: bool
     _ion_concentration: unit.Quantity
+
+    _storage_path = "setup/components/{md5}.json"
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
@@ -139,3 +144,12 @@ class SolventComponent(Component):
                 'negative_ion': self.negative_ion,
                 'ion_concentration': self.ion_concentration,
                 'neutralize': self._neutralize}
+
+    def to_storage_ready(self):
+        default_keys = get_defaults_from_init(self, self.to_dict())
+        return generic_to_storage_ready(self, self._storage_path,
+                                        default_keys)
+
+    @classmethod
+    def from_storage_bytes(cls, serialized_bytes, load_func):
+        return generic_from_storage_bytes(serialized_bytes, load_func)

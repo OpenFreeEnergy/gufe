@@ -58,7 +58,7 @@ def test_conc():
     assert s.ion_concentration == unit.Quantity('1.75 M')
 
 
-@pytest.mark.parametrize('conc,',
+@pytest.mark.parametrize('conc',
                          [1.22,  # no units, 1.22 what?
                           1.5 * unit.kg])  # probably a tad much salt
 def test_bad_conc(conc):
@@ -82,6 +82,13 @@ def test_bad_inputs(pos, neg):
     with pytest.raises(ValueError):
         _ = SolventComponent(positive_ion=pos, negative_ion=neg)
 
+
+def test_to_storage_ready():
+    s = SolventComponent(positive_ion='Na', negative_ion='Cl',
+                         ion_concentration=1.75 * unit.molar)
+    results = s.to_storage_ready()
+    assert len(results) == 1
+    assert set(results) == {s}
 
 @pytest.mark.parametrize('pos, neg', [
     ('Na', None), (None, 'Cl'), (None, None),
