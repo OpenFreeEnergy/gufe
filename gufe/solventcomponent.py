@@ -136,13 +136,21 @@ class SolventComponent(Component):
     @classmethod
     def from_dict(cls, d):
         """Deserialize from dict representation"""
+        ion_conc = d['ion_concentration']
+        if ion_conc:
+            d['ion_concentration'] = unit.Quantity.from_tuple(ion_conc)
+
         return cls(**d)
 
     def to_dict(self):
         """For serialization"""
+        ion_conc = self.ion_concentration
+        if ion_conc:
+            ion_conc = ion_conc.to_tuple()
+
         return {'smiles': self.smiles, 'positive_ion': self.positive_ion,
                 'negative_ion': self.negative_ion,
-                'ion_concentration': self.ion_concentration,
+                'ion_concentration': ion_conc,
                 'neutralize': self._neutralize}
 
     def to_storage_ready(self):
