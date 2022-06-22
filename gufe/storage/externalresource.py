@@ -3,6 +3,7 @@ import hashlib
 import pathlib
 import shutil
 import io
+import os
 import glob
 
 from typing import Union, Tuple, ContextManager
@@ -176,6 +177,10 @@ class ExternalStorage(abc.ABC):
 
     @abc.abstractmethod
     def _store_path(self, location, path):
+        """
+        For implementers: This should be blocking, even if the storage
+        backend allows asynchronous storage.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -218,13 +223,13 @@ class FileStorage(ExternalStorage):
             shutil.copyfile(path, my_path)
 
     def iter_contents(self, prefix):
-        as_directory = f"{self.root_dir}/{prefix}*/**"
-        as_file = f"{self.root_dir}/{prefix}**"
-        results = glob.glob(as_directory, recursive=True)
-        if len(results) == 0:
-            results = glob.glob(as_file, recursive=True)
-
-        return iter(results)
+        start_dir = (self.root_dir / pathlib.Path(prefix).parent).resolve()
+        for dirpath, _, filenames in os.walk(start_dir):
+            for filename in filenames:
+                path = pathlib.Path(dirpath) / filename
+                location = self._get_location(path)
+                if location.startswith(prefix):
+                    yield location
 
     def _delete(self, location):
         path = self._as_path(location)
@@ -237,6 +242,12 @@ class FileStorage(ExternalStorage):
 
     def _as_path(self, location):
         return self.root_dir / pathlib.Path(location)
+
+    def _get_location(self, path: Union[str, pathlib.Path]) -> str:
+        # this is essentially the reverse behavior of _as_path
+        path = pathlib.Path(path)
+        relpath = path.relative_to(self.root_dir.resolve())
+        return str(relpath)
 
     def _get_filename(self, location):
         return str(self._as_path(location))

@@ -48,6 +48,32 @@ class TestResultStore:
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
 
+    def test_store_path(self, result_store, tmp_path):
+        orig_file = tmp_path / ".hidden" / "bar.txt"
+        orig_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(orig_file, mode='wb') as f:
+            f.write("bar".encode('utf-8'))
+
+        mock_hash = mock.Mock(
+            return_value=mock.Mock(
+                hexdigest=mock.Mock(return_value="deadcode")
+            )
+        )
+        bar_loc = "path/to/bar.txt"
+
+        assert len(result_store.metadata_store) == 1
+        assert bar_loc not in result_store.metadata_store
+
+        with mock.patch('hashlib.md5', mock_hash):
+            result_store.store_path(bar_loc, orig_file)
+
+        assert len(result_store.metadata_store) == 2
+        assert bar_loc in result_store.metadata_store
+        assert result_store.metadata_store[bar_loc] == "deadcode"
+        external = result_store.external_store
+        with external.load_stream(bar_loc) as f:
+            assert f.read().decode('utf-8') == "bar"
+
     def test_iter(self, result_store):
         assert list(result_store) == ["path/to/foo.txt"]
 

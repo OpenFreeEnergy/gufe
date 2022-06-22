@@ -100,6 +100,12 @@ class _ResultContainerTest:
         with container.load_stream(loc) as f:
             assert f.read().decode('utf-8') == "foo"
 
+    def test_load_bytes(self, results_client):
+        container = self.get_container(results_client)
+        loc = "transformations/MAIN_TRANS/0/0/file.txt"
+        assert container.load_bytes(loc).decode('utf-8') == "foo"
+
+
     def test_path(self, results_client):
         container = self.get_container(results_client)
         assert container.path == self.expected_path
