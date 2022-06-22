@@ -28,8 +28,8 @@ class SolventComponent(Component):
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
-                 positive_ion: Optional[str] = None,
-                 negative_ion: Optional[str] = None,
+                 positive_ion: Optional[str] = 'Na+',
+                 negative_ion: Optional[str] = 'Cl-',
                  neutralize: bool = True,
                  ion_concentration: unit.Quantity = None):
         """
@@ -40,7 +40,7 @@ class SolventComponent(Component):
         positive_ion, negative_ion : str, optional
           the pair of ions which is used to neutralize (if neutralize=True) and
           bring the solvent to the required ionic concentration.  Must be a
-          positive and negative monoatomic ions, default `None`
+          positive and negative monoatomic ions, defaults "Na+", "Cl-"
         neutralize : bool, optional
           if the net charge on the chemical state is neutralized by the ions in
           this solvent component.  Default `True`

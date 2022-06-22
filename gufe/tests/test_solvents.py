@@ -8,8 +8,8 @@ def test_defaults():
     s = SolventComponent()
 
     assert s.smiles == 'O'
-    assert s.positive_ion is None
-    assert s.negative_ion is None
+    assert s.positive_ion == "Na+"
+    assert s.negative_ion == "Cl-"
     assert s.ion_concentration is None
 
 
