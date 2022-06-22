@@ -28,8 +28,8 @@ class SolventComponent(Component):
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
-                 positive_ion: Optional[str] = 'Na+',
-                 negative_ion: Optional[str] = 'Cl-',
+                 positive_ion: str = 'Na+',
+                 negative_ion: str = 'Cl-',
                  neutralize: bool = True,
                  ion_concentration: unit.Quantity = None):
         """
@@ -37,7 +37,7 @@ class SolventComponent(Component):
         ----------
         smiles : str, optional
           smiles of the solvent, default 'O' (water)
-        positive_ion, negative_ion : str, optional
+        positive_ion, negative_ion : str
           the pair of ions which is used to neutralize (if neutralize=True) and
           bring the solvent to the required ionic concentration.  Must be a
           positive and negative monoatomic ions, defaults "Na+", "Cl-"
@@ -57,17 +57,15 @@ class SolventComponent(Component):
 
         """
         self._smiles = smiles
-        if positive_ion is not None:
-            norm = positive_ion.strip('-+').capitalize()
-            if norm not in _CATIONS:
-                raise ValueError(f"Invalid positive ion, got {positive_ion}")
-            positive_ion = norm + '+'
+        norm = positive_ion.strip('-+').capitalize()
+        if norm not in _CATIONS:
+            raise ValueError(f"Invalid positive ion, got {positive_ion}")
+        positive_ion = norm + '+'
         self._positive_ion = positive_ion
-        if negative_ion is not None:
-            norm = negative_ion.strip('-+').capitalize()
-            if norm not in _ANIONS:
-                raise ValueError(f"Invalid negative ion, got {negative_ion}")
-            negative_ion = norm + '-'
+        norm = negative_ion.strip('-+').capitalize()
+        if norm not in _ANIONS:
+            raise ValueError(f"Invalid negative ion, got {negative_ion}")
+        negative_ion = norm + '-'
         self._negative_ion = negative_ion
 
         self._neutralize = neutralize

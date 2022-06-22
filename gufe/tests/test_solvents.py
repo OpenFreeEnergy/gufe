@@ -81,13 +81,3 @@ def test_solvent_charge():
 def test_bad_inputs(pos, neg):
     with pytest.raises(ValueError):
         _ = SolventComponent(positive_ion=pos, negative_ion=neg)
-
-
-@pytest.mark.parametrize('pos, neg', [
-    ('Na', None), (None, 'Cl'), (None, None),
-])
-def test_conc_no_ions(pos, neg):
-    # if you specify concentration you must also give ions
-    with pytest.raises(ValueError):
-        _ = SolventComponent(positive_ion=pos, negative_ion=neg,
-                             ion_concentration=1.5 * unit.molar)
