@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 
 from gufe import Component
 from gufe.storage.generics import (generic_to_storage_ready,
-                                   generic_from_storage_bytes)
+                                   storage_bytes_to_dict)
 from gufe.storage.utils import get_defaults_from_init
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
@@ -136,6 +136,7 @@ class SolventComponent(Component):
     @classmethod
     def from_dict(cls, d):
         """Deserialize from dict representation"""
+        d = d.copy()  # local copy since we modify it
         ion_conc = d['ion_concentration']
         if ion_conc:
             d['ion_concentration'] = unit.Quantity.from_tuple(ion_conc)
@@ -160,4 +161,5 @@ class SolventComponent(Component):
 
     @classmethod
     def from_storage_bytes(cls, serialized_bytes, load_func):
-        return generic_from_storage_bytes(serialized_bytes, load_func)
+        dct = storage_bytes_to_dict(serialized_bytes, load_func)
+        return cls.from_dict(dct)

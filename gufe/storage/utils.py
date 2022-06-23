@@ -1,4 +1,4 @@
-from typing import NamedTuple, Dict
+from typing import NamedTuple, Dict, Tuple
 
 import hashlib
 
@@ -6,7 +6,7 @@ import importlib
 import inspect
 
 
-REMAPPED_CLASSES = {}
+REMAPPED_CLASSES: Dict[Tuple[str, str], Tuple[str, str]] = {}
 """Mapping of old module/class names to new ones. Backward compatibility.
 
 This should be a mapping of the Tuple[str, str] giving (old_module,
@@ -67,9 +67,11 @@ def import_qualname(modname, qualname, remappings):
 
 def get_defaults_from_init(obj, dct):
     sig = inspect.signature(obj.__init__)
-    defaultable = [param for param in sig.parameters.values()
-                   if param.default is not inspect.Parameter.empty]
-    defaults = [param.name for param in defaultable
-                if param.default is dct[param.name]]
+    defaults = {
+        param.name: param.default for param in sig.parameters.values()
+        if param.default is not inspect.Parameter.empty
+    }
+    # defaults = [name for name, default if defaults.items()
+    #             if default == dct[name]]
     return defaults
 

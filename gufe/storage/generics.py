@@ -1,5 +1,7 @@
 import json
-from gufe.storage.utils import import_qualname, SerializationInfo
+from gufe.storage.utils import (
+    import_qualname, SerializationInfo, REMAPPED_CLASSES
+)
 
 
 def _is_saved_metadata(dct):
@@ -8,7 +10,7 @@ def _is_saved_metadata(dct):
         and set(dct) == {":path:", ":md5:", ":module:", ":class:"}
     )
 
-def generic_to_storage_ready(obj, path_pattern, default_keys, *,
+def generic_to_storage_ready(obj, path_pattern, defaults, *,
                              keys_to_replace=None, dict_rep_modifier=None,
                              key_to_attr=None):
     """
@@ -55,10 +57,8 @@ def generic_to_storage_ready(obj, path_pattern, default_keys, *,
 
     bytes_data = json.dumps(dict_rep, sort_keys=True).encode("utf-8")
 
-    # create the metadata, using only the keys that are not using default
-    # values
     dict_for_hash = {key: val for key, val in dict_rep.items()
-                     if key not in default_keys}
+                     if val != defaults[key]}
 
     hash_bytes = json.dumps(dict_for_hash, sort_keys=True).encode("utf-8")
     metadata = SerializationInfo.create_metadata(obj, hash_bytes,
@@ -69,8 +69,7 @@ def generic_to_storage_ready(obj, path_pattern, default_keys, *,
     return storage_ready
 
 
-def generic_from_storage_bytes(cls, serialized_bytes, load_func, *,
-                               dict_rep_modifier=None):
+def storage_bytes_to_dict(serialized_bytes, load_func):
     """
     Parameters
     ----------
@@ -81,7 +80,7 @@ def generic_from_storage_bytes(cls, serialized_bytes, load_func, *,
         function to load a given path; this is typically
         ResultsClient.load_bytes
     """
-    dct = json.loads(serialization_bytes.decode('utf-8'))
+    dct = json.loads(serialized_bytes.decode('utf-8'))
     for attr, val in dct.items():
         if _is_saved_metadata(val):
             val_cls = import_qualname(val[":module:"], val[":class:"],
@@ -89,7 +88,4 @@ def generic_from_storage_bytes(cls, serialized_bytes, load_func, *,
             val_bytes = load_func(val[":path:"])
             dct[attr] = val_cls.from_serialization_bytes(val_bytes)
 
-    if dict_rep_modifier:
-        dct = dict_rep_modifier(dct)
-
-    return cls.from_dict(dct)
+    return dct
