@@ -7,7 +7,9 @@ import collections
 from typing import Tuple, Dict
 from .externalresource.base import Metadata
 
-from .errors import MissingExternalResourceError
+from .errors import (
+    MissingExternalResourceError, ChangedExternalResourceError
+)
 
 
 class MetadataStore(collections.abc.Mapping):
@@ -94,7 +96,7 @@ class PerFileJSONMetadataStore(MetadataStore):
 
                 if set(dct) != {"path", "md5"}:
                     raise ChangedExternalResourceError("Bad metadata file: "
-                                                       f"'{filename}'")
+                                                       f"'{location}'")
                 metadata_cache[dct['path']] = dct['md5']
 
         return metadata_cache
