@@ -7,7 +7,9 @@ from gufe.storage.metadatastore import (
 )
 from gufe.storage.externalresource import FileStorage
 from gufe.storage.externalresource.base import Metadata
-from gufe.storage.errors import MissingExternalResourceError
+from gufe.storage.errors import (
+    MissingExternalResourceError, ChangedExternalResourceError
+)
 
 
 @pytest.fixture
@@ -138,3 +140,18 @@ class TestPerFileJSONMetadataStore(MetadataTests):
 
     def test_getitem(self, per_file_metadata):
         self._test_getitem(per_file_metadata)
+
+    def test_bad_metadata_contents(self, tmp_path):
+        loc = tmp_path / "metadata/foo.txt.json"
+        loc.parent.mkdir(parents=True, exist_ok=True)
+        bad_dict = {'foo': 'bar'}
+        with open(loc, mode='wb') as f:
+            f.write(json.dumps(bad_dict).encode('utf-8'))
+
+        with pytest.raises(ChangedExternalResourceError,
+                           match="Bad metadata"):
+            PerFileJSONMetadataStore(FileStorage(tmp_path))
+
+
+
+
