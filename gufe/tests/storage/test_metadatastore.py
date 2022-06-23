@@ -134,4 +134,3 @@ class TestPerFileJSONMetadataStore:
 
     def test_getitem(self, per_file_metadata):
         self._test_getitem(per_file_metadata)
-
