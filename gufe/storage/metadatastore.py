@@ -4,7 +4,9 @@ import collections
 
 from typing import Tuple
 
-from gufe.storage.errors import MissingExternalResourceError
+from gufe.storage.errors import (
+    MissingExternalResourceError, ChangedExternalResourceError
+)
 
 
 class MetadataStore(collections.abc.Mapping):
@@ -85,7 +87,7 @@ class PerFileJSONMetadataStore(MetadataStore):
 
                 if set(dct) != {"path", "md5"}:
                     raise ChangedExternalResourceError("Bad metadata file: "
-                                                       f"'{filename}'")
+                                                       f"'{location}'")
                 metadata_cache[dct['path']] = dct['md5']
 
         return metadata_cache
