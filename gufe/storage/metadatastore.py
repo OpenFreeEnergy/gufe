@@ -87,9 +87,11 @@ class PerFileJSONMetadataStore(MetadataStore):
     def load_all_metadata(self):
         metadata_cache = {}
         prefix = self._metadata_prefix
-        for filename in self.external_store.iter_contents(prefix=prefix):
-            if filename.endswith(".json"):
-                dct = json.load(filename)
+        for location in self.external_store.iter_contents(prefix=prefix):
+            if location.endswith(".json"):
+                with self.external_store.load_stream(location) as f:
+                    dct = json.loads(f.read().decode('utf-8'))
+
                 if set(dct) != {"path", "md5"}:
                     raise ChangedExternalResourceError("Bad metadata file: "
                                                        f"'{filename}'")
