@@ -151,7 +151,3 @@ class TestPerFileJSONMetadataStore(MetadataTests):
         with pytest.raises(ChangedExternalResourceError,
                            match="Bad metadata"):
             PerFileJSONMetadataStore(FileStorage(tmp_path))
-
-
-
-
