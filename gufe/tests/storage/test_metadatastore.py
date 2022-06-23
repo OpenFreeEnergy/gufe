@@ -25,12 +25,13 @@ def per_file_metadata(tmp_path):
     metadata_dict = {'path': 'path/to/foo.txt',
                      'md5': 'bar'}
     external_store = FileStorage(str(tmp_path))
-    metadata_path = pathlib.Path('metadata/path/to/foo.txt.json')
+    metadata_loc = 'metadata/path/to/foo.txt.json'
+    metadata_path = tmp_path / pathlib.Path(metadata_loc)
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
     with open(metadata_path, mode='wb') as f:
         f.write(json.dumps(metadata_dict).encode('utf-8'))
 
-    per_file_metadata = PerFileJSONMetadata(external_store)
+    per_file_metadata = PerFileJSONMetadataStore(external_store)
     return per_file_metadata
 
 
@@ -109,17 +110,20 @@ class TestJSONMetadataStore(MetadataTests):
         self._test_getitem(json_metadata)
 
 
-class TestPerFileJSONMetadataStore:
+class TestPerFileJSONMetadataStore(MetadataTests):
     def test_store_metadata(self, per_file_metadata):
-        expected_path = pathlib.Path("metadata/path/to/other.txt.json")
+        expected_loc = "metadata/path/to/other.txt.json"
+        root = per_file_metadata.external_store.root_dir
+        expected_path = root / expected_loc
         assert not expected_path.exists()
         per_file_metadata.store_metadata("path/to/other.txt", "other")
         assert expected_path.exists()
         expected = {'path': "path/to/other.txt",
                     'md5': "other"}
-        assert json.load(expected_path) == expected
+        with open(expected_path, mode='r')as f:
+            assert json.load(f) == expected
 
-    def test_load_all_metdata(self, per_file_metadata):
+    def test_load_all_metadata(self, per_file_metadata):
         self._test_load_all_metadata(per_file_metadata)
 
     def test_delete(self, per_file_metadata):
