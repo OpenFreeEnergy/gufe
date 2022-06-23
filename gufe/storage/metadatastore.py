@@ -66,3 +66,37 @@ class JSONMetadataStore(MetadataStore):
     def __delitem__(self, location):
         del self._metadata_cache[location]
         self._dump_file()
+
+
+class PerFileJSONMetadataStore(MetadataStore):
+    _metadata_prefix = "metadata/"
+
+    def _metadata_path(self, location):
+        return self._metadata_prefix + location + ".json"
+
+    def store_metadata(self, location: str, metadata: str):
+        self._metadata_cache[location] = metadata
+        path = self._metadata_path(location)
+        dct = {
+            'path': location,
+            'md5': metadata,
+        }
+        metadata_bytes = json.dumps(dct).encode('utf-8')
+        self.external_store.store_bytes(path, metadata_bytes)
+
+    def load_all_metadata(self):
+        metadata_cache = {}
+        prefix = self._metadata_prefix
+        for filename in self.external_store.iter_contents(prefix=prefix):
+            if filename.endswith(".json"):
+                dct = json.load(filename)
+                if set(dct) != {"path", "md5"}:
+                    raise ChangedExternalResourceError("Bad metadata file: "
+                                                       f"'{filename}'")
+                metadata_cache[dct['path']] = dct['md5']
+
+        return metadata_cache
+
+    def __delitem__(self, location):
+        del self._metadata_cache[location]
+        self.external_store.delete(self._metadata_path(location))
