@@ -6,7 +6,7 @@ import collections
 
 from typing import Tuple
 
-from gufe.storage.errors import MissingExternalResourceError
+from .errors import MissingExternalResourceError
 
 
 class MetadataStore(collections.abc.Mapping):
