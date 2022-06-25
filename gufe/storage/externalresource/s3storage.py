@@ -17,10 +17,9 @@ class S3Storage(ExternalStorage):
         self.session = session
 
         self.resource = self.session.resource('s3')
-        self.bucket = s3.Bucket(bucket)
+        self.bucket = self.resource.Bucket(bucket)
 
-        # we don't want to keep any leading or trailing delimiters
-        self.prefix = prefix.strip('/')
+        self.prefix = prefix
 
     def iter_contents(self, prefix=""):
         """Iterate over the labels in this storage.
@@ -43,7 +42,7 @@ class S3Storage(ExternalStorage):
         For implementers: This should be blocking, even if the storage
         backend allows asynchronous storage.
         """
-        key = "/".join([self.prefix, location])
+        key = self.prefix + location
 
         self.bucket.put_object(Key=key, Body=byte_data)
 
@@ -56,7 +55,7 @@ class S3Storage(ExternalStorage):
         For implementers: This should be blocking, even if the storage
         backend allows asynchronous storage.
         """
-        key = "/".join([self.prefix, location])
+        key = self.prefix + location
 
         with open(path, 'rb') as f:
             self.bucket.upload_fileobj(f, key)
@@ -64,7 +63,7 @@ class S3Storage(ExternalStorage):
     def _exists(self, location) -> bool:
         from botocore.exceptions import ClientError
 
-        key = "/".join([self.prefix, location])
+        key = self.prefix + location
 
         # we do a metadata load as our existence check
         # appears to be most recommended approach
@@ -75,7 +74,7 @@ class S3Storage(ExternalStorage):
             return False
 
     def _delete(self, location):
-        key = "/".join([self.prefix, location])
+        key = self.prefix + location
 
         if self._exists(location):
             self.bucket.Object(key).delete()
@@ -85,7 +84,7 @@ class S3Storage(ExternalStorage):
             )
 
     def _get_filename(self, location):
-        key = "/".join([self.prefix, location])
+        key = self.prefix + location
 
         object = self.bucket.Object(key)
 
@@ -100,7 +99,7 @@ class S3Storage(ExternalStorage):
         return url
 
     def _load_stream(self, location):
-        key = "/".join([self.prefix, location])
+        key = self.prefix + location
 
         try:
             return self.bucket.Object(key).get()['Body']
