@@ -1,5 +1,6 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+import socket
 import pathlib
 import shutil
 import os
@@ -31,6 +32,8 @@ class FileStorage(ExternalStorage):
     def _store_path(self, location, path):
         my_path = self._as_path(location)
         if path.resolve() != my_path.resolve():
+            # TODO: add some stuff here to catch permissions-based errors
+            my_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, my_path)
 
     def iter_contents(self, prefix):
@@ -60,8 +63,9 @@ class FileStorage(ExternalStorage):
         relpath = path.relative_to(self.root_dir.resolve())
         return str(relpath)
 
-    def _get_filename(self, location):
-        return str(self._as_path(location))
+    def _get_uri(self, location):
+        hostname = socket.gethostname()
+        return f"file://{hostname}" + str(self._as_path(location).absolute())
 
     def _load_stream(self, location):
         try:

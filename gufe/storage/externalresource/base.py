@@ -68,10 +68,10 @@ class ExternalStorage(abc.ABC):
         # Subclasses would implement private methods to get each field.
         return self._get_hexdigest(location)
 
-    def get_filename(self, location) -> str:
+    def get_uri(self, location) -> str:
         # we'd like to not need to include the get_filename method, but for
         # now some consumers of this may not work with byteslike
-        return self._get_filename(location)
+        return self._get_uri(location)
 
     def load_stream(self, location) -> ContextManager:
         """
@@ -193,7 +193,7 @@ class ExternalStorage(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _get_filename(self, location):
+    def _get_uri(self, location):
         raise NotImplementedError()
 
     @abc.abstractmethod
