@@ -1,3 +1,5 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 from typing import Any
 
 from gufe.storage.resultstore import ResultStore
@@ -71,7 +73,7 @@ class _ResultContainer:
         return f"{self.__class__.__name__}({self.path})"
 
 
-class ResultsClient(_ResultContainer):
+class ResultClient(_ResultContainer):
     def __init__(self, external_store):
         # default client is using JSONMetadataStore with the given external
         # result store; users could easily write a subblass that behaves
@@ -89,7 +91,7 @@ class ResultsClient(_ResultContainer):
         self.result_store.store(...)
 
     def _load_next_level(self, transformation):
-        return TransformationResults(self, transformation)
+        return TransformationResult(self, transformation)
 
     # override these two inherited properies since this is always the end of
     # the recursive chain
@@ -102,16 +104,16 @@ class ResultsClient(_ResultContainer):
         return self._result_store
 
 
-class TransformationResults(_ResultContainer):
+class TransformationResult(_ResultContainer):
     def __init__(self, parent, transformation):
         super().__init__(parent, transformation)
         self.transformation = transformation
 
     def _load_next_level(self, clone):
-        return CloneResults(self, clone)
+        return CloneResult(self, clone)
 
 
-class CloneResults(_ResultContainer):
+class CloneResult(_ResultContainer):
     def __init__(self, parent, clone):
         super().__init__(parent, clone)
         self.clone = clone
@@ -121,10 +123,10 @@ class CloneResults(_ResultContainer):
         return str(item)
 
     def _load_next_level(self, extension):
-        return ExtensionResults(self, extension)
+        return ExtensionResult(self, extension)
 
 
-class ExtensionResults(_ResultContainer):
+class ExtensionResult(_ResultContainer):
     def __init__(self, parent, extension):
         super().__init__(parent, str(extension))
         self.extension = extension
