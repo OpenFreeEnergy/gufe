@@ -1,12 +1,13 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+import abc
 from typing import Any
 
-from gufe.storage.resultstore import ResultStore
-from gufe.storage.metadatastore import JSONMetadataStore
+from .resultstore import ResultStore
+from .metadatastore import JSONMetadataStore
 
 
-class _ResultContainer:
+class _ResultContainer(abc.ABC):
     """
     Abstract class, represents all data under some level of the heirarchy.
     """
@@ -43,6 +44,7 @@ class _ResultContainer:
     def __truediv__(self, item):
         return self[item]
 
+    @abc.abstractmethod
     def _load_next_level(self, item):
         raise NotImplementedError()
 
