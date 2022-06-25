@@ -43,7 +43,7 @@ class TestResultStore:
         assert len(metadata_store) == 2
         assert bar_loc in metadata_store
         assert result_store.external_store.exists(bar_loc)
-        assert metadata_store[bar_loc] == "deadbeef"
+        assert metadata_store[bar_loc] == {"hash": "deadbeef"}
         external = result_store.external_store
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
@@ -69,7 +69,7 @@ class TestResultStore:
 
         assert len(result_store.metadata_store) == 2
         assert bar_loc in result_store.metadata_store
-        assert result_store.metadata_store[bar_loc] == "deadcode"
+        assert result_store.metadata_store[bar_loc] == {"hash": "deadcode"}
         external = result_store.external_store
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
@@ -111,7 +111,7 @@ class TestResultStore:
     def test_load_stream_allow_bad_hash(self, result_store):
         result_store.metadata_store.store_metadata('path/to/foo.txt',
                                                    '1badc0de')
-        with pytest.warns(UserWarning, match="Hash mismatch"):
+        with pytest.warns(UserWarning, match="Metadata mismatch"):
             file = result_store.load_stream("path/to/foo.txt",
                                             allow_changed=True)
 

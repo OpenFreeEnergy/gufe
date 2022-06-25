@@ -9,7 +9,7 @@ import os
 import glob
 from typing import Union, Tuple, ContextManager
 
-from gufe.storage.errors import (
+from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
@@ -66,7 +66,7 @@ class ExternalStorage(abc.ABC):
         """
         # NOTE: in the future, this may become a (named)tuple of metadata.
         # Subclasses would implement private methods to get each field.
-        return self._get_hexdigest(location)
+        return {'hash': self._get_hexdigest(location)}
 
     def get_uri(self, location) -> str:
         # we'd like to not need to include the get_filename method, but for
