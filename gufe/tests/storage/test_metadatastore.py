@@ -25,7 +25,7 @@ def json_metadata(tmpdir):
 @pytest.fixture
 def per_file_metadata(tmp_path):
     metadata_dict = {'path': 'path/to/foo.txt',
-                     'md5': 'bar'}
+                     'metadata': {'md5': 'bar'}}
     external_store = FileStorage(str(tmp_path))
     metadata_loc = 'metadata/path/to/foo.txt.json'
     metadata_path = tmp_path / pathlib.Path(metadata_loc)
@@ -118,10 +118,11 @@ class TestPerFileJSONMetadataStore(MetadataTests):
         root = per_file_metadata.external_store.root_dir
         expected_path = root / expected_loc
         assert not expected_path.exists()
-        per_file_metadata.store_metadata("path/to/other.txt", "other")
+        meta = Metadata(md5="other")
+        per_file_metadata.store_metadata("path/to/other.txt", meta)
         assert expected_path.exists()
         expected = {'path': "path/to/other.txt",
-                    'md5': "other"}
+                    'metadata': {"md5": "other"}}
         with open(expected_path, mode='r')as f:
             assert json.load(f) == expected
 
