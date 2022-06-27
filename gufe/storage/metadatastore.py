@@ -4,7 +4,8 @@ import json
 import abc
 import collections
 
-from typing import Tuple
+from typing import Tuple, Dict
+from .externalresource.base import Metadata
 
 from .errors import MissingExternalResourceError
 
@@ -15,11 +16,11 @@ class MetadataStore(collections.abc.Mapping):
         self._metadata_cache = self.load_all_metadata()
 
     @abc.abstractmethod
-    def store_metadata(self, location: str, metadata: str):
+    def store_metadata(self, location: str, metadata: Metadata):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_all_metadata(self):
+    def load_all_metadata(self) -> Dict[str, Metadata]:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -41,10 +42,12 @@ class JSONMetadataStore(MetadataStore):
     # require any external dependencies. It is NOT the right way to go in
     # the long term. API will probably stay the same, though.
     def _dump_file(self):
-        metadata_bytes = json.dumps(self._metadata_cache).encode('utf-8')
+        metadata_dict = {key: val.to_dict()
+                         for key, val in self._metadata_cache.items()}
+        metadata_bytes = json.dumps(metadata_dict).encode('utf-8')
         self.external_store.store_bytes('metadata.json', metadata_bytes)
 
-    def store_metadata(self, location: str, metadata: str):
+    def store_metadata(self, location: str, metadata: Metadata):
         self._metadata_cache[location] = metadata
         self._dump_file()
 
@@ -53,7 +56,11 @@ class JSONMetadataStore(MetadataStore):
             return {}
 
         with self.external_store.load_stream('metadata.json') as json_f:
-            all_metadata = json.loads(json_f.read().decode('utf-8'))
+            all_metadata_dict = json.loads(json_f.read().decode('utf-8'))
+
+        all_metadata = {key: Metadata(**val)
+                        for key, val in all_metadata_dict.items()}
+
         return all_metadata
 
     def __delitem__(self, location):

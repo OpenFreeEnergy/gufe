@@ -4,6 +4,7 @@ from unittest import mock
 import pathlib
 
 from gufe.storage.resultserver import ResultServer
+from gufe.storage.externalresource.base import Metadata
 
 from gufe.storage.externalresource import FileStorage
 from gufe.storage.metadatastore import JSONMetadataStore
@@ -43,7 +44,7 @@ class TestResultServer:
         assert len(metadata_store) == 2
         assert bar_loc in metadata_store
         assert result_server.external_store.exists(bar_loc)
-        assert metadata_store[bar_loc] == {"hash": "deadbeef"}
+        assert metadata_store[bar_loc].to_dict() == {"md5": "deadbeef"}
         external = result_server.external_store
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
@@ -56,7 +57,7 @@ class TestResultServer:
 
         mock_hash = mock.Mock(
             return_value=mock.Mock(
-                hexdigest=mock.Mock(return_value="deadcode")
+                hexdigest=mock.Mock(return_value="deadc0de")
             )
         )
         bar_loc = "path/to/bar.txt"
@@ -69,7 +70,8 @@ class TestResultServer:
 
         assert len(result_server.metadata_store) == 2
         assert bar_loc in result_server.metadata_store
-        assert result_server.metadata_store[bar_loc] == {"hash": "deadcode"}
+        metadata_dict = result_server.metadata_store[bar_loc].to_dict()
+        assert metadata_dict == {"md5": "deadc0de"}
         external = result_server.external_store
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
@@ -78,8 +80,8 @@ class TestResultServer:
         assert list(result_server) == ["path/to/foo.txt"]
 
     def test_find_missing_files(self, result_server):
-        result_server.metadata_store.store_metadata("fake/file.txt",
-                                                   "1badc0de")
+        meta = Metadata(md5="1badc0de")
+        result_server.metadata_store.store_metadata("fake/file.txt", meta)
 
         assert result_server.find_missing_files() == ["fake/file.txt"]
 
@@ -103,17 +105,17 @@ class TestResultServer:
             result_server.load_stream("path/does/not/exist.txt")
 
     def test_load_stream_error_bad_hash(self, result_server):
-        result_server.metadata_store.store_metadata('path/to/foo.txt',
-                                                   '1badc0de')
+        meta = Metadata(md5='1badc0de')
+        result_server.metadata_store.store_metadata('path/to/foo.txt', meta)
         with pytest.raises(ChangedExternalResourceError):
             result_server.load_stream('path/to/foo.txt')
 
     def test_load_stream_allow_bad_hash(self, result_server):
-        result_server.metadata_store.store_metadata('path/to/foo.txt',
-                                                   '1badc0de')
+        meta = Metadata(md5='1badc0de')
+        result_server.metadata_store.store_metadata('path/to/foo.txt', meta)
         with pytest.warns(UserWarning, match="Metadata mismatch"):
             file = result_server.load_stream("path/to/foo.txt",
-                                            allow_changed=True)
+                                             allow_changed=True)
 
         with file as f:
             assert f.read().decode("utf-8") == "foo"
