@@ -1,4 +1,5 @@
 import pytest
+import socket
 import pathlib
 import hashlib
 import os
@@ -59,7 +60,7 @@ class TestFileStorage:
         with open(orig_file, 'wb') as f:
             f.write(as_bytes)
 
-        fileloc = file_storage.root_dir / "bar.txt"
+        fileloc = file_storage.root_dir / "inner" / "bar.txt"
         assert not fileloc.exists()
 
         file_storage.store_path(fileloc, orig_file)
@@ -104,10 +105,12 @@ class TestFileStorage:
                            match="does not exist"):
             file_storage.delete("baz.txt")
 
-    def test_get_filename(self, file_storage):
+    def test_get_uri(self, file_storage):
         expected = file_storage.root_dir / "foo.txt"
-        filename = file_storage.get_filename("foo.txt")
-        assert filename == str(expected)
+        filename = file_storage.get_uri("foo.txt")
+
+        hostname = socket.gethostname()
+        assert filename == f"file://{hostname}" + str(expected)
 
     def test_load_stream(self, file_storage):
         with file_storage.load_stream("foo.txt") as f:
@@ -179,7 +182,7 @@ class TestMemoryStorage:
 
         assert set(storage.iter_contents(prefix)) == expected
 
-    def test_get_filename(self):
+    def test_get_uri(self):
         pytest.skip("Not implemented yet")
 
     def test_load_stream(self):

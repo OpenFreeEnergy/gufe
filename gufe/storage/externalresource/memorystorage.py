@@ -40,10 +40,10 @@ class MemoryStorage(ExternalStorage):
             if label.startswith(prefix):
                 yield label
 
-    def _get_filename(self, location):
+    def _get_uri(self, location):
         # TODO: how to get this to work? how to manage tempfile? maybe a
         # __del__ here?
-        pass
+        raise NotImplementedError()
 
     def _load_stream(self, location):
         byte_data = self._data[location]
