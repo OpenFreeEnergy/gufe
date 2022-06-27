@@ -39,6 +39,12 @@ def _make_mock_transformation(hash_str):
     )
 
 
+def test_load_file(result_client):
+    file_handler = result_client / "MAIN_TRANS" / "0" / 0 / "file.txt"
+    with file_handler as f:
+        assert f.read().decode('utf-8') == "foo"
+
+
 class _ResultContainerTest:
     @staticmethod
     def get_container(result_client):

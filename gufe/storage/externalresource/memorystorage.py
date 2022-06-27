@@ -9,6 +9,7 @@ from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
+
 class MemoryStorage(ExternalStorage):
     """Not for production use, but potentially useful in testing"""
     def __init__(self):

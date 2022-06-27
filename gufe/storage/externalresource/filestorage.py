@@ -11,6 +11,7 @@ from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
+
 # TODO: this should use pydantic to check init inputs
 class FileStorage(ExternalStorage):
     def __init__(self, root_dir: Union[pathlib.Path, str]):
@@ -68,4 +69,3 @@ class FileStorage(ExternalStorage):
             return open(self._as_path(location), 'rb')
         except OSError as e:
             raise MissingExternalResourceError(str(e))
-

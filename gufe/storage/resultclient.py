@@ -34,6 +34,11 @@ class _ResultContainer(abc.ABC):
         return str(hash(item))
 
     def __getitem__(self, item):
+        # code for the case this is a file
+        if item in self.result_server:
+            return self.result_server.load_stream(item)
+
+        # code for the case this is a "directory"
         hash_item = self._to_path_component(item)
 
         if hash_item not in self._cache:
