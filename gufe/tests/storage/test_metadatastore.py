@@ -6,6 +6,7 @@ from gufe.storage.metadatastore import (
     JSONMetadataStore, PerFileJSONMetadataStore
 )
 from gufe.storage.externalresource import FileStorage
+from gufe.storage.externalresource.base import Metadata
 from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
@@ -13,10 +14,10 @@ from gufe.storage.errors import (
 
 @pytest.fixture
 def json_metadata(tmpdir):
-    metadata = {'path/to/foo.txt': 'bar'}
+    metadata_dict = {'path/to/foo.txt': {'md5': 'bar'}}
     external_store = FileStorage(str(tmpdir))
     with open(tmpdir / 'metadata.json', mode='wb') as f:
-        f.write(json.dumps(metadata).encode('utf-8'))
+        f.write(json.dumps(metadata_dict).encode('utf-8'))
     json_metadata = JSONMetadataStore(external_store)
     return json_metadata
 
@@ -49,7 +50,7 @@ class MetadataTests:
         raise NotImplementedError("This should call self._test_delete")
 
     def _test_load_all_metadata(self, metadata):
-        expected = {'path/to/foo.txt': 'bar'}
+        expected = {'path/to/foo.txt': Metadata(md5='bar')}
         metadata._metadata_cache = {}
         loaded = metadata.load_all_metadata()
         assert loaded == expected
@@ -68,20 +69,24 @@ class MetadataTests:
         assert len(metadata) == 1
 
     def _test_getitem(self, metadata):
-        assert metadata["path/to/foo.txt"] == "bar"
+        assert metadata["path/to/foo.txt"] == Metadata(md5="bar")
 
 
 class TestJSONMetadataStore(MetadataTests):
     def test_store_metadata(self, json_metadata):
-        json_metadata.store_metadata("path/to/other.txt", "other")
+        meta = Metadata(md5="other")
+        json_metadata.store_metadata("path/to/other.txt", meta)
         base_path = json_metadata.external_store.root_dir
         metadata_json = base_path / 'metadata.json'
         assert metadata_json.exists()
         with open(metadata_json, mode='r') as f:
-            metadata = json.load(f)
+            metadata_dict = json.load(f)
+
+        metadata = {key: Metadata(**val)
+                    for key, val in metadata_dict.items()}
 
         assert metadata == json_metadata._metadata_cache
-        assert json_metadata['path/to/other.txt'] == "other"
+        assert json_metadata['path/to/other.txt'] == meta
         assert len(metadata) == 2
 
     def test_load_all_metadata(self, json_metadata):
