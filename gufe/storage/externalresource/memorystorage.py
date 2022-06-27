@@ -35,7 +35,7 @@ class MemoryStorage(ExternalStorage):
 
         return self._store_bytes(location, byte_data)
 
-    def iter_contents(self, prefix):
+    def _iter_contents(self, prefix):
         for label in self._data:
             if label.startswith(prefix):
                 yield label

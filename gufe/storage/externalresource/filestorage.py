@@ -36,7 +36,7 @@ class FileStorage(ExternalStorage):
             my_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, my_path)
 
-    def iter_contents(self, prefix):
+    def _iter_contents(self, prefix):
         start_dir = (self.root_dir / pathlib.Path(prefix).parent).resolve()
         for dirpath, _, filenames in os.walk(start_dir):
             for filename in filenames:

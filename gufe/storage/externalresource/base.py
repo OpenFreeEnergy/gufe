@@ -151,7 +151,6 @@ class ExternalStorage(abc.ABC):
         """
         return self._exists(location)
 
-    @abc.abstractmethod
     def iter_contents(self, prefix=""):
         """Iterate over the labels in this storage.
 
@@ -166,6 +165,10 @@ class ExternalStorage(abc.ABC):
             Contents of this storage, which may include items without
             metadata.
         """
+        return self._iter_contents(prefix)
+
+    @abc.abstractmethod
+    def _iter_contents(self, prefix=""):
         raise NotImplementedError()
 
     @abc.abstractmethod
