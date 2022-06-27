@@ -3,7 +3,7 @@
 import abc
 from typing import Any
 
-from .resultstore import ResultStore
+from .resultserver import ResultServer
 from .metadatastore import JSONMetadataStore
 
 
@@ -49,12 +49,12 @@ class _ResultContainer(abc.ABC):
         raise NotImplementedError()
 
     def __iter__(self):
-        for loc in self.result_store:
+        for loc in self.result_server:
             if loc.startswith(self.path):
                 yield loc
 
     def load_stream(self, location, *, allow_changed=False):
-        return self.result_store.load_stream(location, allow_changed)
+        return self.result_server.load_stream(location, allow_changed)
 
     def load_bytes(self, location, *, allow_changed=False):
         with self.load_stream(location, allow_changed=allow_changed) as f:
@@ -67,8 +67,8 @@ class _ResultContainer(abc.ABC):
         return self.parent.path + "/" + self._path_component
 
     @property
-    def result_store(self):
-        return self.parent.result_store
+    def result_server(self):
+        return self.parent.result_server
 
     def __repr__(self):
         # probably should include repr of external store, too
@@ -81,16 +81,16 @@ class ResultClient(_ResultContainer):
         # result store; users could easily write a subblass that behaves
         # differently
         metadata_store = JSONMetadataStore(external_store)
-        self._result_store = ResultStore(external_store, metadata_store)
+        self._result_server = ResultServer(external_store, metadata_store)
         super().__init__(parent=self, path_component=None)
 
     def delete(self, location):
-        self._result_store.delete(location)
+        self._result_server.delete(location)
 
     def store_protocol_dag_result(self, result):
         # I don't know how we get the path information for the protocol dag
         # results
-        self.result_store.store(...)
+        self.result_server.store(...)
 
     def _load_next_level(self, transformation):
         return TransformationResult(self, transformation)
@@ -102,8 +102,8 @@ class ResultClient(_ResultContainer):
         return 'transformations'
 
     @property
-    def result_store(self):
-        return self._result_store
+    def result_server(self):
+        return self._result_server
 
 
 class TransformationResult(_ResultContainer):
@@ -142,4 +142,4 @@ class ExtensionResult(_ResultContainer):
         return self._load_next_level(filename)
 
     def _load_next_level(self, filename):
-        return self.result_store.load_stream(self.path + "/" + filename)
+        return self.result_server.load_stream(self.path + "/" + filename)

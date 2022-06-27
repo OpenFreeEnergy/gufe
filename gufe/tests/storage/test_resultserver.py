@@ -3,7 +3,7 @@ from unittest import mock
 
 import pathlib
 
-from gufe.storage.resultstore import ResultStore
+from gufe.storage.resultserver import ResultServer
 
 from gufe.storage.externalresource import FileStorage
 from gufe.storage.metadatastore import JSONMetadataStore
@@ -13,22 +13,22 @@ from gufe.storage.errors import (
 
 
 @pytest.fixture
-def result_store(tmpdir):
+def result_server(tmpdir):
     external = FileStorage(tmpdir)
     metadata = JSONMetadataStore(external)
-    result_store = ResultStore(external, metadata)
-    result_store.store_bytes("path/to/foo.txt", "foo".encode('utf-8'))
-    return result_store
+    result_server = ResultServer(external, metadata)
+    result_server.store_bytes("path/to/foo.txt", "foo".encode('utf-8'))
+    return result_server
 
 
-class TestResultStore:
-    def test_store_bytes(self, result_store):
+class TestResultServer:
+    def test_store_bytes(self, result_server):
         # first check the thing stored during the fixture
-        metadata_store = result_store.metadata_store
+        metadata_store = result_server.metadata_store
         foo_loc = "path/to/foo.txt"
         assert len(metadata_store) == 1
         assert foo_loc in metadata_store
-        assert result_store.external_store.exists(foo_loc)
+        assert result_server.external_store.exists(foo_loc)
 
         # also explicitly test storing here
         mock_hash = mock.Mock(
@@ -38,17 +38,17 @@ class TestResultStore:
         )
         bar_loc = "path/to/bar.txt"
         with mock.patch('hashlib.md5', mock_hash):
-            result_store.store_bytes(bar_loc, "bar".encode('utf-8'))
+            result_server.store_bytes(bar_loc, "bar".encode('utf-8'))
 
         assert len(metadata_store) == 2
         assert bar_loc in metadata_store
-        assert result_store.external_store.exists(bar_loc)
+        assert result_server.external_store.exists(bar_loc)
         assert metadata_store[bar_loc] == {"hash": "deadbeef"}
-        external = result_store.external_store
+        external = result_server.external_store
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
 
-    def test_store_path(self, result_store, tmp_path):
+    def test_store_path(self, result_server, tmp_path):
         orig_file = tmp_path / ".hidden" / "bar.txt"
         orig_file.parent.mkdir(parents=True, exist_ok=True)
         with open(orig_file, mode='wb') as f:
@@ -61,58 +61,58 @@ class TestResultStore:
         )
         bar_loc = "path/to/bar.txt"
 
-        assert len(result_store.metadata_store) == 1
-        assert bar_loc not in result_store.metadata_store
+        assert len(result_server.metadata_store) == 1
+        assert bar_loc not in result_server.metadata_store
 
         with mock.patch('hashlib.md5', mock_hash):
-            result_store.store_path(bar_loc, orig_file)
+            result_server.store_path(bar_loc, orig_file)
 
-        assert len(result_store.metadata_store) == 2
-        assert bar_loc in result_store.metadata_store
-        assert result_store.metadata_store[bar_loc] == {"hash": "deadcode"}
-        external = result_store.external_store
+        assert len(result_server.metadata_store) == 2
+        assert bar_loc in result_server.metadata_store
+        assert result_server.metadata_store[bar_loc] == {"hash": "deadcode"}
+        external = result_server.external_store
         with external.load_stream(bar_loc) as f:
             assert f.read().decode('utf-8') == "bar"
 
-    def test_iter(self, result_store):
-        assert list(result_store) == ["path/to/foo.txt"]
+    def test_iter(self, result_server):
+        assert list(result_server) == ["path/to/foo.txt"]
 
-    def test_find_missing_files(self, result_store):
-        result_store.metadata_store.store_metadata("fake/file.txt",
+    def test_find_missing_files(self, result_server):
+        result_server.metadata_store.store_metadata("fake/file.txt",
                                                    "1badc0de")
 
-        assert result_store.find_missing_files() == ["fake/file.txt"]
+        assert result_server.find_missing_files() == ["fake/file.txt"]
 
-    def test_load_stream(self, result_store):
-        with result_store.load_stream('path/to/foo.txt') as f:
+    def test_load_stream(self, result_server):
+        with result_server.load_stream('path/to/foo.txt') as f:
             contents = f.read()
 
         assert contents.decode('utf-8') == "foo"
 
-    def test_delete(self, result_store, tmpdir):
+    def test_delete(self, result_server, tmpdir):
         location = "path/to/foo.txt"
         path = tmpdir / pathlib.Path(location)
         assert path.exists()
-        assert location in result_store.metadata_store
-        result_store.delete(location)
+        assert location in result_server.metadata_store
+        result_server.delete(location)
         assert not path.exists()
-        assert location not in result_store.metadata_store
+        assert location not in result_server.metadata_store
 
-    def test_load_stream_missing(self, result_store):
+    def test_load_stream_missing(self, result_server):
         with pytest.raises(MissingExternalResourceError, match="not found"):
-            result_store.load_stream("path/does/not/exist.txt")
+            result_server.load_stream("path/does/not/exist.txt")
 
-    def test_load_stream_error_bad_hash(self, result_store):
-        result_store.metadata_store.store_metadata('path/to/foo.txt',
+    def test_load_stream_error_bad_hash(self, result_server):
+        result_server.metadata_store.store_metadata('path/to/foo.txt',
                                                    '1badc0de')
         with pytest.raises(ChangedExternalResourceError):
-            result_store.load_stream('path/to/foo.txt')
+            result_server.load_stream('path/to/foo.txt')
 
-    def test_load_stream_allow_bad_hash(self, result_store):
-        result_store.metadata_store.store_metadata('path/to/foo.txt',
+    def test_load_stream_allow_bad_hash(self, result_server):
+        result_server.metadata_store.store_metadata('path/to/foo.txt',
                                                    '1badc0de')
         with pytest.warns(UserWarning, match="Metadata mismatch"):
-            file = result_store.load_stream("path/to/foo.txt",
+            file = result_server.load_stream("path/to/foo.txt",
                                             allow_changed=True)
 
         with file as f:

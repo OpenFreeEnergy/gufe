@@ -13,7 +13,7 @@ def result_client(tmpdir):
     result_client = ResultClient(external)
 
     # store one file with contents "foo"
-    result_client.result_store.store_bytes(
+    result_client.result_server.store_bytes(
         "transformations/MAIN_TRANS/0/0/file.txt",
         "foo".encode('utf-8')
     )
@@ -28,7 +28,7 @@ def result_client(tmpdir):
     ]
 
     for file in empty_files:
-        result_client.result_store.store_bytes(file, b"")  # empty
+        result_client.result_server.store_bytes(file, b"")  # empty
 
     return result_client
 
@@ -109,9 +109,9 @@ class _ResultContainerTest:
         container = self.get_container(result_client)
         assert container.path == self.expected_path
 
-    def test_result_store(self, result_client):
+    def test_result_server(self, result_client):
         container = self.get_container(result_client)
-        assert container.result_store == result_client.result_store
+        assert container.result_server == result_client.result_server
 
 
 class TestResultClient(_ResultContainerTest):
@@ -139,7 +139,7 @@ class TestResultClient(_ResultContainerTest):
 
     def test_delete(self, result_client):
         file_to_delete = self.expected_files[0]
-        storage = result_client.result_store.external_store
+        storage = result_client.result_server.external_store
         assert storage.exists(file_to_delete)
         result_client.delete(file_to_delete)
         assert not storage.exists(file_to_delete)
@@ -206,7 +206,7 @@ class TestExtensionResults(_ResultContainerTest):
                                "as_object=True")
         path = "transformations/MAIN_TRANS/0/0/"
         fname = "file.txt"
-        return fname, container.result_store.load_stream(path + fname)
+        return fname, container.result_server.load_stream(path + fname)
 
     # things involving div and getitem need custom treatment
     def test_div(self, result_client):
