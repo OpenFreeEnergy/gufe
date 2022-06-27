@@ -76,12 +76,12 @@ class PerFileJSONMetadataStore(MetadataStore):
     def _metadata_path(self, location):
         return self._metadata_prefix + location + ".json"
 
-    def store_metadata(self, location: str, metadata: str):
+    def store_metadata(self, location: str, metadata: Metadata):
         self._metadata_cache[location] = metadata
         path = self._metadata_path(location)
         dct = {
             'path': location,
-            'md5': metadata,
+            'metadata': metadata.to_dict(),
         }
         metadata_bytes = json.dumps(dct).encode('utf-8')
         self.external_store.store_bytes(path, metadata_bytes)
@@ -94,10 +94,10 @@ class PerFileJSONMetadataStore(MetadataStore):
                 with self.external_store.load_stream(location) as f:
                     dct = json.loads(f.read().decode('utf-8'))
 
-                if set(dct) != {"path", "md5"}:
+                if set(dct) != {"path", "metadata"}:
                     raise ChangedExternalResourceError("Bad metadata file: "
                                                        f"'{location}'")
-                metadata_cache[dct['path']] = dct['md5']
+                metadata_cache[dct['path']] = Metadata(**dct['metadata'])
 
         return metadata_cache
 
