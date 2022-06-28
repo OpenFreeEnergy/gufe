@@ -1,15 +1,28 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 import abc
 import hashlib
 import pathlib
 import shutil
 import io
+import os
 import glob
-
 from typing import Union, Tuple, ContextManager
+import dataclasses
 
-from gufe.storage.errors import (
+from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
+
+
+@dataclasses.dataclass
+class Metadata:
+    # as a dataclass to facilitate inheritance and type checking:
+    # https://stackoverflow.com/a/50369898
+    md5: str
+
+    def to_dict(self):
+        return dataclasses.asdict(self)
 
 
 class _ForceContext:
@@ -44,7 +57,7 @@ class ExternalStorage(abc.ABC):
 
         return digest
 
-    def get_metadata(self, location: str) -> str:
+    def get_metadata(self, location: str) -> Metadata:
         """
         Obtain the metadata associated with the actual stored data.
 
@@ -59,12 +72,12 @@ class ExternalStorage(abc.ABC):
 
         Returns
         -------
-        str :
-            hexdigest of the md5 hash of the data
+        Metadata :
+            Metadata for this object.
         """
         # NOTE: in the future, this may become a (named)tuple of metadata.
         # Subclasses would implement private methods to get each field.
-        return self._get_hexdigest(location)
+        return Metadata(md5=self._get_hexdigest(location))
 
     def get_filename(self, location) -> str:
         # we'd like to not need to include the get_filename method, but for
@@ -149,7 +162,6 @@ class ExternalStorage(abc.ABC):
         """
         return self._exists(location)
 
-    @abc.abstractmethod
     def iter_contents(self, prefix=""):
         """Iterate over the labels in this storage.
 
@@ -164,6 +176,10 @@ class ExternalStorage(abc.ABC):
             Contents of this storage, which may include items without
             metadata.
         """
+        return self._iter_contents(prefix)
+
+    @abc.abstractmethod
+    def _iter_contents(self, prefix=""):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -176,6 +192,10 @@ class ExternalStorage(abc.ABC):
 
     @abc.abstractmethod
     def _store_path(self, location, path):
+        """
+        For implementers: This should be blocking, even if the storage
+        backend allows asynchronous storage.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -193,98 +213,3 @@ class ExternalStorage(abc.ABC):
     @abc.abstractmethod
     def _load_stream(self, location):
         raise NotImplementedError()
-
-
-# TODO: this should use pydantic to check init inputs
-class FileStorage(ExternalStorage):
-    def __init__(self, root_dir: Union[pathlib.Path, str]):
-        self.root_dir = pathlib.Path(root_dir)
-
-    def _exists(self, location):
-        return self._as_path(location).exists()
-
-    def _store_bytes(self, location, byte_data):
-        path = self._as_path(location)
-        directory = path.parent
-        filename = path.name
-        # TODO: add some stuff here to catch permissions-based errors
-        directory.mkdir(parents=True, exist_ok=True)
-        with open(path, mode='wb') as f:
-            f.write(byte_data)
-
-    def _store_path(self, location, path):
-        my_path = self._as_path(location)
-        if path.resolve() != my_path.resolve():
-            shutil.copyfile(path, my_path)
-
-    def iter_contents(self, prefix):
-        as_directory = f"{self.root_dir}/{prefix}*/**"
-        as_file = f"{self.root_dir}/{prefix}**"
-        results = glob.glob(as_directory, recursive=True)
-        if len(results) == 0:
-            results = glob.glob(as_file, recursive=True)
-
-        return iter(results)
-
-    def _delete(self, location):
-        path = self._as_path(location)
-        if self.exists(location):
-            path.unlink()
-        else:
-            raise MissingExternalResourceError(
-                f"Unable to delete '{str(path)}': File does not exist"
-            )
-
-    def _as_path(self, location):
-        return self.root_dir / pathlib.Path(location)
-
-    def _get_filename(self, location):
-        return str(self._as_path(location))
-
-    def _load_stream(self, location):
-        try:
-            return open(self._as_path(location), 'rb')
-        except OSError as e:
-            raise MissingExternalResourceError(str(e))
-
-
-class MemoryStorage(ExternalStorage):
-    """Not for production use, but potentially useful in testing"""
-    def __init__(self):
-        self._data = {}
-
-    def _exists(self, location):
-        return location in self._data
-
-    def _delete(self, location):
-        try:
-            del self._data[location]
-        except KeyError:
-            raise MissingExternalResourceError(
-                f"Unable to delete '{location}': key does not exist"
-            )
-
-    def _store_bytes(self, location, byte_data):
-        self._data[location] = byte_data
-        return location, self.get_metadata(location)
-
-    def _store_path(self, location, path):
-        with open(path, 'rb') as f:
-            byte_data = f.read()
-
-        return self._store_bytes(location, byte_data)
-
-    def iter_contents(self, prefix):
-        for label in self._data:
-            if label.startswith(prefix):
-                yield label
-
-    def _get_filename(self, location):
-        # TODO: how to get this to work? how to manage tempfile? maybe a
-        # __del__ here?
-        pass
-
-    def _load_stream(self, location):
-        byte_data = self._data[location]
-        stream = io.BytesIO(byte_data)
-        return stream

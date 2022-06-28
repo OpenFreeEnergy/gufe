@@ -1,6 +1,7 @@
 import pytest
 import pathlib
 import hashlib
+import os
 from unittest import mock
 
 from gufe.storage.externalresource import FileStorage, MemoryStorage
@@ -74,6 +75,12 @@ class TestFileStorage:
         assert not path.exists()
 
     @pytest.mark.parametrize('prefix,expected', [
+        ("", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
+        ("foo", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
+        ("foo_dir/", {'foo_dir/a.txt', 'foo_dir/b.txt'}),
+        ("foo_dir/a", {'foo_dir/a.txt'}),
+        ("foo_dir/a.txt", {'foo_dir/a.txt'}),
+        ("baz", set()),
     ])
     def test_iter_contents(self, tmp_path, prefix, expected):
         files = [
@@ -83,14 +90,14 @@ class TestFileStorage:
         ]
         for file in files:
             path = tmp_path / file
-            os.mkdir(path.parent, parents=True, exist_ok=True)
+            path.parent.mkdir(parents=True, exist_ok=True)
             assert not path.exists()
             with open(path, 'wb') as f:
                 f.write(b"")
 
-            ...
+        storage = FileStorage(tmp_path)
 
-        pytest.skip()
+        assert set(storage.iter_contents(prefix)) == expected
 
     def test_delete_error_not_existing(self, file_storage):
         with pytest.raises(MissingExternalResourceError,
@@ -153,6 +160,24 @@ class TestMemoryStorage:
             storage.store_path(label, path)
 
         assert storage._data == self.contents
+
+    @pytest.mark.parametrize('prefix,expected', [
+        ("", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
+        ("foo", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
+        ("foo_dir/", {'foo_dir/a.txt', 'foo_dir/b.txt'}),
+        ("foo_dir/a", {'foo_dir/a.txt'}),
+        ("foo_dir/a.txt", {'foo_dir/a.txt'}),
+        ("baz", set()),
+    ])
+    def test_iter_contents(self, prefix, expected):
+        storage = MemoryStorage()
+        storage._data = {
+            "foo.txt": b"",
+            "foo_dir/a.txt": b"",
+            "foo_dir/b.txt": b"",
+        }
+
+        assert set(storage.iter_contents(prefix)) == expected
 
     def test_get_filename(self):
         pytest.skip("Not implemented yet")

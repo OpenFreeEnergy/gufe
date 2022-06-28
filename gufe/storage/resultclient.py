@@ -1,10 +1,13 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
+import abc
 from typing import Any
 
-from gufe.storage.resultstore import ResultStore
-from gufe.storage.metadatastore import JSONMetadataStore
+from .resultserver import ResultServer
+from .metadatastore import JSONMetadataStore
 
 
-class _ResultContainer:
+class _ResultContainer(abc.ABC):
     """
     Abstract class, represents all data under some level of the heirarchy.
     """
@@ -31,6 +34,11 @@ class _ResultContainer:
         return str(hash(item))
 
     def __getitem__(self, item):
+        # code for the case this is a file
+        if item in self.result_server:
+            return self.result_server.load_stream(item)
+
+        # code for the case this is a "directory"
         hash_item = self._to_path_component(item)
 
         if hash_item not in self._cache:
@@ -41,16 +49,17 @@ class _ResultContainer:
     def __truediv__(self, item):
         return self[item]
 
+    @abc.abstractmethod
     def _load_next_level(self, item):
         raise NotImplementedError()
 
     def __iter__(self):
-        for loc in self.result_store:
+        for loc in self.result_server:
             if loc.startswith(self.path):
                 yield loc
 
     def load_stream(self, location, *, allow_changed=False):
-        return self.result_store.load_stream(location, allow_changed)
+        return self.result_server.load_stream(location, allow_changed)
 
     def load_bytes(self, location, *, allow_changed=False):
         with self.load_stream(location, allow_changed=allow_changed) as f:
@@ -63,33 +72,33 @@ class _ResultContainer:
         return self.parent.path + "/" + self._path_component
 
     @property
-    def result_store(self):
-        return self.parent.result_store
+    def result_server(self):
+        return self.parent.result_server
 
     def __repr__(self):
         # probably should include repr of external store, too
         return f"{self.__class__.__name__}({self.path})"
 
 
-class ResultsClient(_ResultContainer):
+class ResultClient(_ResultContainer):
     def __init__(self, external_store):
         # default client is using JSONMetadataStore with the given external
         # result store; users could easily write a subblass that behaves
         # differently
         metadata_store = JSONMetadataStore(external_store)
-        self._result_store = ResultStore(external_store, metadata_store)
+        self._result_server = ResultServer(external_store, metadata_store)
         super().__init__(parent=self, path_component=None)
 
     def delete(self, location):
-        self._result_store.delete(location)
+        self._result_server.delete(location)
 
     def store_protocol_dag_result(self, result):
         # I don't know how we get the path information for the protocol dag
         # results
-        self.result_store.store(...)
+        self.result_server.store(...)
 
     def _load_next_level(self, transformation):
-        return TransformationResults(self, transformation)
+        return TransformationResult(self, transformation)
 
     # override these two inherited properies since this is always the end of
     # the recursive chain
@@ -98,20 +107,20 @@ class ResultsClient(_ResultContainer):
         return 'transformations'
 
     @property
-    def result_store(self):
-        return self._result_store
+    def result_server(self):
+        return self._result_server
 
 
-class TransformationResults(_ResultContainer):
+class TransformationResult(_ResultContainer):
     def __init__(self, parent, transformation):
         super().__init__(parent, transformation)
         self.transformation = transformation
 
     def _load_next_level(self, clone):
-        return CloneResults(self, clone)
+        return CloneResult(self, clone)
 
 
-class CloneResults(_ResultContainer):
+class CloneResult(_ResultContainer):
     def __init__(self, parent, clone):
         super().__init__(parent, clone)
         self.clone = clone
@@ -121,10 +130,10 @@ class CloneResults(_ResultContainer):
         return str(item)
 
     def _load_next_level(self, extension):
-        return ExtensionResults(self, extension)
+        return ExtensionResult(self, extension)
 
 
-class ExtensionResults(_ResultContainer):
+class ExtensionResult(_ResultContainer):
     def __init__(self, parent, extension):
         super().__init__(parent, str(extension))
         self.extension = extension
@@ -138,4 +147,4 @@ class ExtensionResults(_ResultContainer):
         return self._load_next_level(filename)
 
     def _load_next_level(self, filename):
-        return self.result_store.load_stream(self.path + "/" + filename)
+        return self.result_server.load_stream(self.path + "/" + filename)

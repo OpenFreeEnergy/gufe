@@ -1,13 +1,15 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 import warnings
 
 from typing import ClassVar
 
-from gufe.storage.errors import (
+from .errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
 
-class ResultStore:
+class ResultServer:
     """Class to manage communication between metadata and data storage.
 
     At this level, we provide an abstraction where client code no longer
@@ -37,11 +39,11 @@ class ResultStore:
         try:
             metadata = self.metadata_store[location]
         except KeyError:
-            raise MissingExternalResourceError(f"Hash for '{location}' not "
-                                               "found")
+            raise MissingExternalResourceError(f"Metadata for '{location}' "
+                                               "not found")
 
         if not self.external_store.get_metadata(location) == metadata:
-            msg = (f"Hash mismatch for {location}: this object "
+            msg = (f"Metadata mismatch for {location}: this object "
                    "may have changed.")
             if not allow_changed:
                 raise ChangedExternalResourceError(

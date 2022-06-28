@@ -2,18 +2,18 @@ import pytest
 from unittest import mock
 
 from gufe.storage.externalresource import MemoryStorage
-from gufe.storage.resultsclient import (
-    ResultsClient, TransformationResults, CloneResults, ExtensionResults
+from gufe.storage.resultclient import (
+    ResultClient, TransformationResult, CloneResult, ExtensionResult
 )
 
 
 @pytest.fixture
-def results_client(tmpdir):
+def result_client(tmpdir):
     external = MemoryStorage()
-    results_client = ResultsClient(external)
+    result_client = ResultClient(external)
 
     # store one file with contents "foo"
-    results_client.result_store.store_bytes(
+    result_client.result_server.store_bytes(
         "transformations/MAIN_TRANS/0/0/file.txt",
         "foo".encode('utf-8')
     )
@@ -28,9 +28,9 @@ def results_client(tmpdir):
     ]
 
     for file in empty_files:
-        results_client.result_store.store_bytes(file, b"")  # empty
+        result_client.result_server.store_bytes(file, b"")  # empty
 
-    return results_client
+    return result_client
 
 
 def _make_mock_transformation(hash_str):
@@ -39,16 +39,22 @@ def _make_mock_transformation(hash_str):
     )
 
 
+def test_load_file(result_client):
+    file_handler = result_client / "MAIN_TRANS" / "0" / 0 / "file.txt"
+    with file_handler as f:
+        assert f.read().decode('utf-8') == "foo"
+
+
 class _ResultContainerTest:
     @staticmethod
-    def get_container(results_client):
+    def get_container(result_client):
         raise NotImplementedError()
 
     def _getitem_object(self, container):
         raise NotImplementedError()
 
-    def test_iter(self, results_client):
-        container = self.get_container(results_client)
+    def test_iter(self, result_client):
+        container = self.get_container(result_client)
         assert set(container) == set(self.expected_files)
 
     def _get_key(self, as_object, container):
@@ -62,21 +68,21 @@ class _ResultContainerTest:
         return key, obj
 
     @pytest.mark.parametrize('as_object', [True, False])
-    def test_getitem(self, as_object, results_client):
-        container = self.get_container(results_client)
+    def test_getitem(self, as_object, result_client):
+        container = self.get_container(result_client)
         key, obj = self._get_key(as_object, container)
         assert container[key] == obj
 
     @pytest.mark.parametrize('as_object', [True, False])
-    def test_div(self, as_object, results_client):
-        container = self.get_container(results_client)
+    def test_div(self, as_object, result_client):
+        container = self.get_container(result_client)
         key, obj = self._get_key(as_object, container)
         assert container / key == obj
 
     @pytest.mark.parametrize('load_with', ['div', 'getitem'])
-    def test_caching(self, results_client, load_with):
+    def test_caching(self, result_client, load_with):
         # used to test caching regardless of how first loaded was loaded
-        container = self.get_container(results_client)
+        container = self.get_container(result_client)
         key, obj = self._get_key(False, container)
 
         if load_with == 'div':
@@ -94,22 +100,27 @@ class _ResultContainerTest:
         assert loaded is reloaded_div
         assert reloaded_div is reloaded_getitem
 
-    def test_load_stream(self, results_client):
-        container = self.get_container(results_client)
+    def test_load_stream(self, result_client):
+        container = self.get_container(result_client)
         loc = "transformations/MAIN_TRANS/0/0/file.txt"
         with container.load_stream(loc) as f:
             assert f.read().decode('utf-8') == "foo"
 
-    def test_path(self, results_client):
-        container = self.get_container(results_client)
+    def test_load_bytes(self, result_client):
+        container = self.get_container(result_client)
+        loc = "transformations/MAIN_TRANS/0/0/file.txt"
+        assert container.load_bytes(loc).decode('utf-8') == "foo"
+
+    def test_path(self, result_client):
+        container = self.get_container(result_client)
         assert container.path == self.expected_path
 
-    def test_result_store(self, results_client):
-        container = self.get_container(results_client)
-        assert container.result_store == results_client.result_store
+    def test_result_server(self, result_client):
+        container = self.get_container(result_client)
+        assert container.result_server == result_client.result_server
 
 
-class TestResultsClient(_ResultContainerTest):
+class TestResultClient(_ResultContainerTest):
     expected_files = [
         "transformations/MAIN_TRANS/0/0/file.txt",
         "transformations/MAIN_TRANS/0/0/other.txt",
@@ -120,11 +131,11 @@ class TestResultsClient(_ResultContainerTest):
     expected_path = "transformations"
 
     @staticmethod
-    def get_container(results_client):
-        return results_client
+    def get_container(result_client):
+        return result_client
 
     def _getitem_object(self, container):
-        return TransformationResults(
+        return TransformationResult(
             parent=container,
             transformation=_make_mock_transformation("MAIN_TRANS")
         )
@@ -132,11 +143,11 @@ class TestResultsClient(_ResultContainerTest):
     def test_store_protocol_dag_result(self):
         pytest.skip("Not implemented yet")
 
-    def test_delete(self, results_client):
+    def test_delete(self, result_client):
         file_to_delete = self.expected_files[0]
-        storage = results_client.result_store.external_store
+        storage = result_client.result_server.external_store
         assert storage.exists(file_to_delete)
-        results_client.delete(file_to_delete)
+        result_client.delete(file_to_delete)
         assert not storage.exists(file_to_delete)
 
 
@@ -150,16 +161,16 @@ class TestTransformationResults(_ResultContainerTest):
     expected_path = "transformations/MAIN_TRANS"
 
     @staticmethod
-    def get_container(results_client):
-        container = TransformationResults(
-            parent=TestResultsClient.get_container(results_client),
+    def get_container(result_client):
+        container = TransformationResult(
+            parent=TestResultClient.get_container(result_client),
             transformation=_make_mock_transformation("MAIN_TRANS")
         )
         container._path_component = "MAIN_TRANS"
         return container
 
     def _getitem_object(self, container):
-        return CloneResults(parent=container, clone=0)
+        return CloneResult(parent=container, clone=0)
 
 
 class TestCloneResults(_ResultContainerTest):
@@ -171,14 +182,14 @@ class TestCloneResults(_ResultContainerTest):
     expected_path = "transformations/MAIN_TRANS/0"
 
     @staticmethod
-    def get_container(results_client):
-        return CloneResults(
-            parent=TestTransformationResults.get_container(results_client),
+    def get_container(result_client):
+        return CloneResult(
+            parent=TestTransformationResults.get_container(result_client),
             clone=0
         )
 
     def _getitem_object(self, container):
-        return ExtensionResults(parent=container, extension=0)
+        return ExtensionResult(parent=container, extension=0)
 
 
 class TestExtensionResults(_ResultContainerTest):
@@ -189,9 +200,9 @@ class TestExtensionResults(_ResultContainerTest):
     expected_path = "transformations/MAIN_TRANS/0/0"
 
     @staticmethod
-    def get_container(results_client):
-        return ExtensionResults(
-            parent=TestCloneResults.get_container(results_client),
+    def get_container(result_client):
+        return ExtensionResult(
+            parent=TestCloneResults.get_container(result_client),
             extension=0
         )
 
@@ -201,22 +212,22 @@ class TestExtensionResults(_ResultContainerTest):
                                "as_object=True")
         path = "transformations/MAIN_TRANS/0/0/"
         fname = "file.txt"
-        return fname, container.result_store.load_stream(path + fname)
+        return fname, container.result_server.load_stream(path + fname)
 
     # things involving div and getitem need custom treatment
-    def test_div(self, results_client):
-        container = self.get_container(results_client)
+    def test_div(self, result_client):
+        container = self.get_container(result_client)
         with container / "file.txt" as f:
             assert f.read().decode('utf-8') == "foo"
 
-    def test_getitem(self, results_client):
-        container = self.get_container(results_client)
+    def test_getitem(self, result_client):
+        container = self.get_container(result_client)
         with container["file.txt"] as f:
             assert f.read().decode('utf-8') == "foo"
 
-    def test_caching(self, results_client):
+    def test_caching(self, result_client):
         # this one does not cache results; the cache should remain empty
-        container = self.get_container(results_client)
+        container = self.get_container(result_client)
         assert container._cache == {}
         from_div = container / "file.txt"
         assert container._cache == {}
