@@ -8,8 +8,8 @@ def test_defaults():
     s = SolventComponent()
 
     assert s.smiles == 'O'
-    assert s.positive_ion is None
-    assert s.negative_ion is None
+    assert s.positive_ion == "Na+"
+    assert s.negative_ion == "Cl-"
     assert s.ion_concentration is None
 
 
@@ -43,9 +43,10 @@ def test_to_dict():
                            'ion_concentration': None}
 
 
-def test_from_dict():
+@pytest.mark.parametrize('conc', [None, 1.75 * unit.molar])
+def test_from_dict(conc):
     s1 = SolventComponent(positive_ion='Na', negative_ion='Cl',
-                          ion_concentration=1.75 * unit.molar,
+                          ion_concentration=conc,
                           neutralize=False)
 
     assert SolventComponent.from_dict(s1.to_dict()) == s1
@@ -81,13 +82,3 @@ def test_solvent_charge():
 def test_bad_inputs(pos, neg):
     with pytest.raises(ValueError):
         _ = SolventComponent(positive_ion=pos, negative_ion=neg)
-
-
-@pytest.mark.parametrize('pos, neg', [
-    ('Na', None), (None, 'Cl'), (None, None),
-])
-def test_conc_no_ions(pos, neg):
-    # if you specify concentration you must also give ions
-    with pytest.raises(ValueError):
-        _ = SolventComponent(positive_ion=pos, negative_ion=neg,
-                             ion_concentration=1.5 * unit.molar)
