@@ -101,7 +101,8 @@ def test_to_storage_ready():
     assert SolventComponent.from_dict(as_dict) == s
 
     # check that we got the right hash
-    expected_default_keys = ['smiles', 'neutralize']
+    expected_default_keys = ['smiles', 'neutralize', 'positive_ion',
+                             'negative_ion']
     expected_md5 = hashlib.md5(
         json.dumps(
             {k: v for k, v in as_dict.items()
