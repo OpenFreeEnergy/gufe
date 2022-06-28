@@ -49,15 +49,15 @@ class ProtocolUnit(abc.ABC):
 
         Parameters
         ----------
+        dependency_results : Iterable[ProtocolUnitResult]
+            The `ProtocolUnitResult`s from the `ProtocolUnit`s this unit is dependent on.
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
-        dependency_results :
-            the
         """
         if block:
             try:
                 out = self._execute(dependency_results)
-                result = ProtocolUnitResult(
+                result = ProtocolUnitCompletion(
                     name=self._name, dependencies=dependency_results, **out
                 )
             except Exception as e:

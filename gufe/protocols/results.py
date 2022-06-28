@@ -35,10 +35,12 @@ class ProtocolUnitResult(BaseModel, abc.ABC):
         """
         Parameters
         ----------
-        dependencies : list, optional
-          the predecessors of the creating ProtocolUnit
-        data : dict, optional
-          all other kwargs get stored as the output of a ProtocolUnit
+        dependencies : Optional[Iterable["ProtocolUnitResult"]]
+          The `ProtocolUnitResult`s from the predecessors of the `ProtocolUnit`
+          that creates this `ProtocolUnitResult`.
+        **data
+          All other keyword arguments are retained as attributes of this
+          `ProtocolUnitResult`.
         """
 
         if dependencies is None:
