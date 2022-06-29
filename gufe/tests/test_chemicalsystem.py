@@ -121,7 +121,7 @@ def test_chemical_system_to_storage_ready(solvated_ligand):
     assert set(storage_ready.keys()) == {solvated_ligand, solvent, ligand}
 
     # TODO: it would be really nice to provide convenience methods for
-    # testing some of the stuff before. A lot of this is transferable to
+    # testing some of the stuff below. A lot of this is transferable to
     # other problems.
     info = storage_ready[solvated_ligand]
     dct = json.loads(info.bytes_data.decode('utf-8'))
@@ -138,8 +138,6 @@ def test_chemical_system_to_storage_ready(solvated_ligand):
     assert set(dct_ligand) == {":path:", ":class:", ":module:", ":md5:"}
     assert set(dct_solvent) == {":path:", ":class:", ":module:", ":md5:"}
 
-    # NOTE: this is weird. I'm still having trouble getting arrays of NaN to
-    # be recognized as default values.
     expected_non_defaults = ['components']
     expected_hash_dict = {key: dct[key] for key in expected_non_defaults}
     expected_hash = hashlib.md5(
@@ -147,6 +145,23 @@ def test_chemical_system_to_storage_ready(solvated_ligand):
     ).hexdigest()
     assert info.metadata[":md5:"] == expected_hash
 
+
+def test_chemical_system_from_storage_bytes(solvated_ligand):
+    storage_ready = solvated_ligand.to_storage_ready()
+    info = storage_ready.pop(solvated_ligand)
+    serialized_bytes = info.bytes_data
+    path_to_bytes = {val.path: val.bytes_data
+                     for val in storage_ready.values()}
+
+    def load_func(location):
+        return path_to_bytes[location]
+
+    reloaded = gufe.ChemicalSystem.from_storage_bytes(serialized_bytes,
+                                                      load_func)
+
+    # objects are equivalent, but not same in memory
+    assert reloaded == solvated_ligand
+    assert reloaded is not solvated_ligand
 
 @pytest.mark.xfail
 def test_complex_system_charge(solvated_complex):

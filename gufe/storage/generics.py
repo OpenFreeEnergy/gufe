@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from gufe.storage.utils import (
-    import_qualname, SerializationInfo, REMAPPED_CLASSES
+    import_qualname, SerializationInfo, REMAPPED_CLASSES, OBJECT_REGISTRY
 )
 
 
@@ -93,6 +93,21 @@ def generic_to_storage_ready(obj, path_pattern, defaults, *,
     return storage_ready
 
 
+def load_obj_from_reference(ref_dict, load_func, known_objs=None):
+    if known_objs is None:
+        known_objs = OBJECT_REGISTRY
+
+    path = ref_dict[":path:"]
+
+    try:
+        return known_objs[path]
+    except KeyError:
+        cls = import_qualname(ref_dict[":module:"], ref_dict[":class:"],
+                              REMAPPED_CLASSES)
+        as_bytes = load_func(ref_dict[":path:"])
+        return cls.from_storage_bytes(as_bytes, load_func)
+
+
 def storage_bytes_to_dict(serialized_bytes, load_func):
     """
     Parameters
@@ -107,9 +122,6 @@ def storage_bytes_to_dict(serialized_bytes, load_func):
     dct = json.loads(serialized_bytes.decode('utf-8'))
     for attr, val in dct.items():
         if _is_saved_metadata(val):
-            val_cls = import_qualname(val[":module:"], val[":class:"],
-                                      REMAPPED_CLASSES)
-            val_bytes = load_func(val[":path:"])
-            dct[attr] = val_cls.from_serialization_bytes(val_bytes)
+            dct[attr] = load_obj_from_reference(val)
 
     return dct

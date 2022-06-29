@@ -8,8 +8,9 @@ import numpy as np
 from openff.toolkit.utils.serialization import Serializable
 
 from .component import Component
-from .storage.generics import (generic_to_storage_ready,
-                               storage_bytes_to_dict)
+from .storage.generics import (
+    generic_to_storage_ready, storage_bytes_to_dict, load_obj_from_reference
+)
 
 
 class ChemicalSystem(Serializable, abc.Mapping):
@@ -146,6 +147,14 @@ class ChemicalSystem(Serializable, abc.Mapping):
             dict_rep_modifier=replace_components,
         ))
         return storage_ready
+
+    @classmethod
+    def from_storage_bytes(cls, serialized_bytes, load_func):
+        dct = storage_bytes_to_dict(serialized_bytes, load_func)
+        components = {key: load_obj_from_reference(val, load_func)
+                      for key, val in dct['components'].items()}
+        dct['components'] = components
+        return cls(**dct)
 
     @property
     def components(self):

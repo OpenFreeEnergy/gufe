@@ -1,4 +1,4 @@
-from typing import NamedTuple, Dict, Tuple
+from typing import NamedTuple, Dict, Tuple, Any
 
 import hashlib
 
@@ -12,6 +12,14 @@ REMAPPED_CLASSES: Dict[Tuple[str, str], Tuple[str, str]] = {}
 This should be a mapping of the Tuple[str, str] giving (old_module,
 old_class) to Tuple[str, str] giving (new_module, new_class)
 """
+
+OBJECT_REGISTRY: Dict[str, Any] = {}
+"""Mapping of pathlike location to object for objects we need to cache.
+
+This prevents us from making extraneous copies of objects that appear at
+multiple places in the data structure.
+"""
+
 
 class SerializationInfo(NamedTuple):
     """
