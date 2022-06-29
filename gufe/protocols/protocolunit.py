@@ -8,15 +8,15 @@ part of a `ProtocolDAG`.
 
 import abc
 from os import PathLike
-from typing import Iterable, List, Dict, Any, Optional
+from typing import Iterable, List, Dict, Any, Optional, Union
 
 from .results import (
-    ProtocolUnitResult, ProtocolUnitCompletion, ProtocolUnitFailure,
+    ProtocolUnitResult, ProtocolUnitFailure,
 )
 
 
 class ProtocolUnit(abc.ABC):
-    """A unit of work computable by"""
+    """A unit of work within a `ProtocolDAG`"""
 
     def __init__(
         self,
@@ -24,7 +24,6 @@ class ProtocolUnit(abc.ABC):
         name: Optional[str] = None,
         **kwargs
     ):
-
         self._settings = settings
         self._kwargs = kwargs
         self._name = name
@@ -44,7 +43,7 @@ class ProtocolUnit(abc.ABC):
 
     def execute(
         self, dependency_results: Iterable[ProtocolUnitResult], block=True
-    ) -> ProtocolUnitResult:
+    ) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
@@ -57,7 +56,7 @@ class ProtocolUnit(abc.ABC):
         if block:
             try:
                 out = self._execute(dependency_results)
-                result = ProtocolUnitCompletion(
+                result = ProtocolUnitResult(
                     name=self._name, dependencies=dependency_results, **out
                 )
             except Exception as e:

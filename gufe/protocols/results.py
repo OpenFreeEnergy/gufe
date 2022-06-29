@@ -19,6 +19,7 @@ class ProtocolUnitResult(BaseModel, abc.ABC):
     class Config:
         extra = "allow"
         allow_mutation = False
+        arbitrary_types_allowed = True
 
     _dependencies: List[str] = PrivateAttr()
     _uuid: str = PrivateAttr()
@@ -53,17 +54,13 @@ class ProtocolUnitResult(BaseModel, abc.ABC):
         dep_uuids = [dep._uuid for dep in dependencies]
         self._dependencies = dep_uuids
 
-    @abc.abstractmethod
-    def ok(self) -> bool:
-        ...
-
-
-class ProtocolUnitCompletion(ProtocolUnitResult):
     def ok(self) -> bool:
         return True
 
 
 class ProtocolUnitFailure(ProtocolUnitResult):
+    exception: Exception
+
     def ok(self) -> bool:
         return False
 
@@ -98,3 +95,17 @@ class ProtocolDAGResult(BaseModel):
     @property
     def protocol_unit_results(self):
         return list(nx.get_node_attributes(self.graph, "result").values())
+
+    def ok(self) -> bool:
+        return True
+
+
+class ProtocolDAGFailure(ProtocolDAGResult):
+
+    def ok(self) -> bool:
+        return False
+
+    @property
+    def protocol_unit_failures(self):
+        return [r for r in nx.get_node_attributes(self.graph, "result").values() if not r.ok()]
+
