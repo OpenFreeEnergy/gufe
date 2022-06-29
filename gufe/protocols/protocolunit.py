@@ -8,13 +8,15 @@ part of a `ProtocolDAG`.
 
 import abc
 from os import PathLike
-from typing import Iterable, List, Dict, Any, Optional
+from typing import Iterable, List, Dict, Any, Optional, Union
 
-from .results import ProtocolUnitResult
+from .results import (
+    ProtocolUnitResult, ProtocolUnitFailure,
+)
 
 
 class ProtocolUnit(abc.ABC):
-    """A unit of work computable by"""
+    """A unit of work within a `ProtocolDAG`"""
 
     def __init__(
         self,
@@ -22,7 +24,6 @@ class ProtocolUnit(abc.ABC):
         name: Optional[str] = None,
         **kwargs
     ):
-
         self._settings = settings
         self._kwargs = kwargs
         self._name = name
@@ -42,22 +43,28 @@ class ProtocolUnit(abc.ABC):
 
     def execute(
         self, dependency_results: Iterable[ProtocolUnitResult], block=True
-    ) -> ProtocolUnitResult:
+    ) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
+        dependency_results : Iterable[ProtocolUnitResult]
+            The `ProtocolUnitResult`s from the `ProtocolUnit`s this unit is dependent on.
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
-        dependency_results :
-
         """
         if block:
-            out = self._execute(dependency_results)
-            result = ProtocolUnitResult(
-                name=self._name, dependencies=dependency_results, **out
-            )
-
+            try:
+                out = self._execute(dependency_results)
+                result = ProtocolUnitResult(
+                    name=self._name, dependencies=dependency_results, **out
+                )
+            except Exception as e:
+                result = ProtocolUnitFailure(
+                    name=self._name,
+                    depedencies=dependency_results,
+                    exception=e,
+                )
         else:
             # TODO: wrap in a thread; update status
             ...
