@@ -14,7 +14,9 @@ from gufe.protocols import (
     ProtocolUnit,
     ProtocolResult,
     ProtocolDAGResult,
+    ProtocolDAGFailure,
     ProtocolUnitResult,
+    ProtocolUnitFailure,
 )
 
 
@@ -198,12 +200,14 @@ class TestProtocol:
         dagfailure = dag.execute()
 
         assert not dagfailure.ok()
+        assert isinstance(dagfailure, ProtocolDAGFailure)
 
         failed_units = dagfailure.protocol_unit_failures
 
         assert len(failed_units) == 1
         assert failed_units[0].name == "problem child"
         assert failed_units[0].exception.args[1]['data'] == "lol"
+        assert isinstance(failed_units[0], ProtocolUnitFailure)
 
         succeeded_units = dagfailure.protocol_unit_results
 
