@@ -7,7 +7,9 @@ import collections
 from typing import Tuple, Dict
 from .externalresource.base import Metadata
 
-from .errors import MissingExternalResourceError
+from .errors import (
+    MissingExternalResourceError, ChangedExternalResourceError
+)
 
 
 class MetadataStore(collections.abc.Mapping):
@@ -66,3 +68,39 @@ class JSONMetadataStore(MetadataStore):
     def __delitem__(self, location):
         del self._metadata_cache[location]
         self._dump_file()
+
+
+class PerFileJSONMetadataStore(MetadataStore):
+    _metadata_prefix = "metadata/"
+
+    def _metadata_path(self, location):
+        return self._metadata_prefix + location + ".json"
+
+    def store_metadata(self, location: str, metadata: Metadata):
+        self._metadata_cache[location] = metadata
+        path = self._metadata_path(location)
+        dct = {
+            'path': location,
+            'metadata': metadata.to_dict(),
+        }
+        metadata_bytes = json.dumps(dct).encode('utf-8')
+        self.external_store.store_bytes(path, metadata_bytes)
+
+    def load_all_metadata(self):
+        metadata_cache = {}
+        prefix = self._metadata_prefix
+        for location in self.external_store.iter_contents(prefix=prefix):
+            if location.endswith(".json"):
+                with self.external_store.load_stream(location) as f:
+                    dct = json.loads(f.read().decode('utf-8'))
+
+                if set(dct) != {"path", "metadata"}:
+                    raise ChangedExternalResourceError("Bad metadata file: "
+                                                       f"'{location}'")
+                metadata_cache[dct['path']] = Metadata(**dct['metadata'])
+
+        return metadata_cache
+
+    def __delitem__(self, location):
+        del self._metadata_cache[location]
+        self.external_store.delete(self._metadata_path(location))
