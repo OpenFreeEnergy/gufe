@@ -1,6 +1,5 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import socket
 import pathlib
 import shutil
 import os
@@ -11,6 +10,7 @@ from .base import ExternalStorage
 from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
+
 
 # TODO: this should use pydantic to check init inputs
 class FileStorage(ExternalStorage):
@@ -32,11 +32,9 @@ class FileStorage(ExternalStorage):
     def _store_path(self, location, path):
         my_path = self._as_path(location)
         if path.resolve() != my_path.resolve():
-            # TODO: add some stuff here to catch permissions-based errors
-            my_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, my_path)
 
-    def iter_contents(self, prefix):
+    def _iter_contents(self, prefix):
         start_dir = (self.root_dir / pathlib.Path(prefix).parent).resolve()
         for dirpath, _, filenames in os.walk(start_dir):
             for filename in filenames:
@@ -63,13 +61,11 @@ class FileStorage(ExternalStorage):
         relpath = path.relative_to(self.root_dir.resolve())
         return str(relpath)
 
-    def _get_uri(self, location):
-        hostname = socket.gethostname()
-        return f"file://{hostname}" + str(self._as_path(location).absolute())
+    def _get_filename(self, location):
+        return str(self._as_path(location))
 
     def _load_stream(self, location):
         try:
             return open(self._as_path(location), 'rb')
         except OSError as e:
             raise MissingExternalResourceError(str(e))
-

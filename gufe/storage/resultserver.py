@@ -9,7 +9,7 @@ from .errors import (
 )
 
 
-class ResultStore:
+class ResultServer:
     """Class to manage communication between metadata and data storage.
 
     At this level, we provide an abstraction where client code no longer
@@ -39,8 +39,8 @@ class ResultStore:
         try:
             metadata = self.metadata_store[location]
         except KeyError:
-            raise MissingExternalResourceError(f"Metadata for '{location}' not "
-                                               "found")
+            raise MissingExternalResourceError(f"Metadata for '{location}' "
+                                               "not found")
 
         if not self.external_store.get_metadata(location) == metadata:
             msg = (f"Metadata mismatch for {location}: this object "

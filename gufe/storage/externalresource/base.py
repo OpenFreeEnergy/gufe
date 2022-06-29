@@ -8,10 +8,21 @@ import io
 import os
 import glob
 from typing import Union, Tuple, ContextManager
+import dataclasses
 
 from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
+
+
+@dataclasses.dataclass
+class Metadata:
+    # as a dataclass to facilitate inheritance and type checking:
+    # https://stackoverflow.com/a/50369898
+    md5: str
+
+    def to_dict(self):
+        return dataclasses.asdict(self)
 
 
 class _ForceContext:
@@ -46,7 +57,7 @@ class ExternalStorage(abc.ABC):
 
         return digest
 
-    def get_metadata(self, location: str) -> str:
+    def get_metadata(self, location: str) -> Metadata:
         """
         Obtain the metadata associated with the actual stored data.
 
@@ -61,17 +72,17 @@ class ExternalStorage(abc.ABC):
 
         Returns
         -------
-        str :
-            hexdigest of the md5 hash of the data
+        Metadata :
+            Metadata for this object.
         """
         # NOTE: in the future, this may become a (named)tuple of metadata.
         # Subclasses would implement private methods to get each field.
-        return {'hash': self._get_hexdigest(location)}
+        return Metadata(md5=self._get_hexdigest(location))
 
-    def get_uri(self, location) -> str:
+    def get_filename(self, location) -> str:
         # we'd like to not need to include the get_filename method, but for
         # now some consumers of this may not work with byteslike
-        return self._get_uri(location)
+        return self._get_filename(location)
 
     def load_stream(self, location) -> ContextManager:
         """
@@ -151,7 +162,6 @@ class ExternalStorage(abc.ABC):
         """
         return self._exists(location)
 
-    @abc.abstractmethod
     def iter_contents(self, prefix=""):
         """Iterate over the labels in this storage.
 
@@ -166,6 +176,10 @@ class ExternalStorage(abc.ABC):
             Contents of this storage, which may include items without
             metadata.
         """
+        return self._iter_contents(prefix)
+
+    @abc.abstractmethod
+    def _iter_contents(self, prefix=""):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -193,7 +207,7 @@ class ExternalStorage(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _get_uri(self, location):
+    def _get_filename(self, location):
         raise NotImplementedError()
 
     @abc.abstractmethod

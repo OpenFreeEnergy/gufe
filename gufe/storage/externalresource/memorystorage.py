@@ -9,6 +9,7 @@ from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
+
 class MemoryStorage(ExternalStorage):
     """Not for production use, but potentially useful in testing"""
     def __init__(self):
@@ -35,15 +36,15 @@ class MemoryStorage(ExternalStorage):
 
         return self._store_bytes(location, byte_data)
 
-    def iter_contents(self, prefix):
+    def _iter_contents(self, prefix):
         for label in self._data:
             if label.startswith(prefix):
                 yield label
 
-    def _get_uri(self, location):
+    def _get_filename(self, location):
         # TODO: how to get this to work? how to manage tempfile? maybe a
         # __del__ here?
-        raise NotImplementedError()
+        pass
 
     def _load_stream(self, location):
         byte_data = self._data[location]
