@@ -4,6 +4,9 @@
 import pytest
 import numpy as np
 
+import json
+import hashlib
+
 import gufe
 
 
@@ -108,6 +111,41 @@ def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp,
     )
     assert solvated_complex != complex2
     assert hash(solvated_complex) != hash(complex2)
+
+
+def test_chemical_system_to_storage_ready(solvated_ligand):
+    storage_ready = solvated_ligand.to_storage_ready()
+    solvent = solvated_ligand['solvent']
+    ligand = solvated_ligand['ligand']
+    assert len(storage_ready) == 3
+    assert set(storage_ready.keys()) == {solvated_ligand, solvent, ligand}
+
+    # TODO: it would be really nice to provide convenience methods for
+    # testing some of the stuff before. A lot of this is transferable to
+    # other problems.
+    info = storage_ready[solvated_ligand]
+    dct = json.loads(info.bytes_data.decode('utf-8'))
+    assert set(dct) == {'components', 'box_vectors', 'name'}
+
+    assert dct['name'] is None
+
+    for val in dct['box_vectors']:
+        assert np.isnan(val)
+
+    dct_ligand = dct['components']['ligand']
+    dct_solvent = dct['components']['solvent']
+    # ensure that we've wrapped these correctly
+    assert set(dct_ligand) == {":path:", ":class:", ":module:", ":md5:"}
+    assert set(dct_solvent) == {":path:", ":class:", ":module:", ":md5:"}
+
+    # NOTE: this is weird. I'm still having trouble getting arrays of NaN to
+    # be recognized as default values.
+    expected_non_defaults = ['components']
+    expected_hash_dict = {key: dct[key] for key in expected_non_defaults}
+    expected_hash = hashlib.md5(
+        json.dumps(expected_hash_dict, sort_keys=True).encode('utf-8')
+    ).hexdigest()
+    assert info.metadata[":md5:"] == expected_hash
 
 
 @pytest.mark.xfail

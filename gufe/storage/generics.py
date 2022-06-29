@@ -1,4 +1,5 @@
 import json
+import numpy as np
 from gufe.storage.utils import (
     import_qualname, SerializationInfo, REMAPPED_CLASSES
 )
@@ -9,6 +10,29 @@ def _is_saved_metadata(dct):
         isinstance(dct, dict)
         and set(dct) == {":path:", ":md5:", ":module:", ":class:"}
     )
+
+
+def _eq(a, b):
+    # handle special case equality checks; used in comparing against
+    # defaults
+
+    # handle numpy arrays
+    if isinstance(a, np.ndarray) or isinstance(b, np.ndarray):
+        return np.array_equal(a, b, equal_nan=True)
+
+    # handle bare NaN
+    # must come after early exit for np array handling, otherwise isnan
+    # returns array and gives us errors on ambiguous equality
+    try:
+        isnan_a = np.isnan(a)
+        isnan_b = np.isnan(b)
+    except TypeError:
+        pass
+    else:
+        return isnan_a == isnan_b  # == in case we have a list here
+
+    return a == b
+
 
 def generic_to_storage_ready(obj, path_pattern, defaults, *,
                              keys_to_replace=None, dict_rep_modifier=None,
@@ -58,7 +82,7 @@ def generic_to_storage_ready(obj, path_pattern, defaults, *,
     bytes_data = json.dumps(dict_rep, sort_keys=True).encode("utf-8")
 
     dict_for_hash = {key: val for key, val in dict_rep.items()
-                     if val != defaults[key]}
+                     if key not in defaults or not _eq(val,defaults[key])}
 
     hash_bytes = json.dumps(dict_for_hash, sort_keys=True).encode("utf-8")
     metadata = SerializationInfo.create_metadata(obj, hash_bytes,
