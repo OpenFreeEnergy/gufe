@@ -151,7 +151,7 @@ class Protocol(Serializable, abc.ABC):
         """
         return ProtocolDAG(
             name=name,
-            graph=self._create(
+            protocol_units=self._create(
                 stateA=stateA,
                 stateB=stateB,
                 mapping=mapping,

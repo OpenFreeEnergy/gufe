@@ -3,14 +3,15 @@
 
 import abc
 import uuid
-from typing import List, Optional, Any, Iterable
+from typing import List, Optional, Any, Iterable, Dict
 
 import networkx as nx
 
 from pydantic import BaseModel, PrivateAttr
 
+from .base import ProtocolUnitToken, ProtocolUnitMixin
 
-class ProtocolUnitResult(BaseModel):
+class ProtocolUnitResult(BaseModel, ProtocolUnitMixin):
     """Result for a single `ProtocolUnit` execution.
 
     Immutable upon creation.
@@ -18,30 +19,21 @@ class ProtocolUnitResult(BaseModel):
     """
 
     class Config:
-        extra = "allow"
+        arbitrary_types_allowed = True
         allow_mutation = False
 
-    _dependencies: List[str] = PrivateAttr()
-    _uuid: str = PrivateAttr()
+    inputs: Dict[str,Any]
 
-    name: Optional[
-        str
-    ]  # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-    data: Any  # should likely be fleshed out, currently a free-for-all
+    name: Optional[str]      # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    pure: bool               # whether `ProtocolUnit` that produced this `ProtocolUnitResult` was a function purely of its inputs
+    token: ProtocolUnitToken # token of the `ProtocolUnit` that produced this `ProtocolUnitResult`
 
-    def __init__(
-        self, dependencies: Optional[Iterable["ProtocolUnitResult"]] = None, **data
-    ):
+    outputs: Any
 
-        if dependencies is None:
-            dependencies = []
-
-        super().__init__(**data)
-
-        self._uuid = str(uuid.uuid4())
-
-        dep_uuids = [dep._uuid for dep in dependencies]
-        self._dependencies = dep_uuids
+    def __init__(self, *, name=None, token, pure, inputs, outputs):
+            
+        inputs = self._tokenize_dependencies(inputs, ProtocolUnitResult)
+        super().__init__(name=name, token=token, inputs=inputs, outputs=outputs, )
 
 
 class ProtocolDAGResult(BaseModel):
@@ -63,6 +55,7 @@ class ProtocolDAGResult(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        allow_mutation = False
 
     graph: nx.DiGraph
     name: Optional[str]

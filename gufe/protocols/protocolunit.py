@@ -7,30 +7,71 @@ part of a `ProtocolDAG`.
 """
 
 import abc
+import uuid
 from os import PathLike
+from copy import copy
 from typing import Iterable, List, Dict, Any, Optional
 
+from dask.base import tokenize, normalize_token
+
+from .base import ProtocolUnitToken, ProtocolUnitMixin
 from .results import ProtocolUnitResult
 
 
 class ProtocolUnit(abc.ABC):
-    """A unit of work computable by"""
+    """A unit of work within a ProtocolDAG."""
 
     def __init__(
         self,
+        *,
         settings: Optional["ProtocolSettings"] = None,  # type: ignore
         name: Optional[str] = None,
-        **kwargs
+        pure: bool = False,
+        **inputs
     ):
+        """Create an instance of a ProtocolUnit.
 
+        Parameters
+        ----------
+        **inputs 
+            Keyword arguments, which an include other `ProtocolUnit`s on which this
+            `ProtocolUnit` is dependent.
+
+        """
+        
         self._settings = settings
-        self._kwargs = kwargs
+
         self._name = name
+        self._pure = pure
+        self._token = None
+
+        self._inputs = self._tokenize_dependencies(inputs, ProtocolUnit)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self._name})"
 
     def __hash__(self):
         return hash(
             (self.__class__.__name__, self._settings, frozenset(self._kwargs.items()))
         )
+
+    def _tokenize(self):
+        # inspired by implementation of tokenization in dask
+        if self._name is not None:
+            return self._name
+        elif self._pure:
+            # tokenize on inputs
+            return tokenize(self)
+        else:
+            # tokenize with uuid
+            return uuid.uuid4()
+
+    def __dask_tokenize__(self):
+        return list(map(normalize_token, 
+            [self._settings,
+             self._inputs,
+             self._name,
+             self._pure]))
 
     @property
     def settings(self):
@@ -38,24 +79,39 @@ class ProtocolUnit(abc.ABC):
 
     @property
     def name(self):
+        # set name if not manually set; used for display
+        if self._name is None:
+            prefix = type(self).__name__
+            self._name = f"{prefix}-{self.token}"
+
         return self._name
 
-    def execute(
-        self, dependency_results: Iterable[ProtocolUnitResult], block=True
-    ) -> ProtocolUnitResult:
+    @property
+    def inputs(self):
+        return copy(self._inputs)
+
+    @property
+    def token(self):
+        if self._token is None:
+            self._token = ProtocolUnitToken(token=tokenize())
+        return self._token
+
+    def execute(self, block=True, **inputs) -> ProtocolUnitResult:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
-        dependency_results :
 
         """
+
+        # process inputs that point to ProtocolUnits
+
         if block:
-            out = self._execute(dependency_results)
+            outputs = self._execute(**inputs)
             result = ProtocolUnitResult(
-                name=self._name, dependencies=dependency_results, **out
+                name=self._name, token=self.token, pure=self.pure, inputs=inputs, outputs=outputs
             )
 
         else:
