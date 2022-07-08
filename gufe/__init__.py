@@ -1,3 +1,5 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 
 from . import _version
 __version__ = _version.get_versions()['version']
@@ -19,7 +21,9 @@ from .protocols import (
     ProtocolDAGResult,  # the collected result of a DAG
     ProtocolResult,  # potentially many DAGs together, giving an estimate
 )
-from .mapping import Mapping
+from .mapping import (
+    AtomMapping, AtomMapper
+)
 from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork
