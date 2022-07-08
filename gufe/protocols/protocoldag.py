@@ -7,7 +7,7 @@ from typing import Iterable, List, Dict, Set, Optional
 import networkx as nx
 
 from .protocolunit import ProtocolUnit, ProtocolUnitToken
-from .results import ProtocolDAGResult
+from .results import ProtocolUnitResult, ProtocolDAGResult
 
 
 class ProtocolDAG:
@@ -29,9 +29,9 @@ class ProtocolDAG:
 
         Parameters
         ----------
-        protocol_units : nx.DiGraph
+        protocol_units : Iterable[ProtocolUnit]
             The `ProtocolUnit`s that make up this `ProtocolDAG`, with
-            dependencies set as inputs.
+            dependencies included as inputs.
         name : str
             Unique identifier for this `ProtocolDAG`.
 
@@ -49,18 +49,19 @@ class ProtocolDAG:
         mapping = {pu.token: pu for pu in protocol_units}
 
         for pu in protocol_units:
-            dependencies = []
             for key, value in pu.inputs.items():
                 if isinstance(value, dict):
                     for k, v in value.items():
                         if isinstance(v, ProtocolUnitToken):
-                            G.add_edge(pu, mapping[v], inputs={key: {k: None}})
+                            G.add_edge(pu, mapping[v])
                 elif isinstance(value, list):
                     for i in value:
-                        if isinstance(v, ProtocolUnitToken):
-                            G.add_edge(pu, mapping[v], inputs={key: [None]})
+                        if isinstance(i, ProtocolUnitToken):
+                            G.add_edge(pu, mapping[i])
                 elif isinstance(value, ProtocolUnitToken):
-                    G.add_edge(pu, mapping[v], inputs={key: None})
+                    G.add_edge(pu, mapping[value])
+
+        return G
 
     @property
     def name(self):
@@ -76,44 +77,50 @@ class ProtocolDAG:
         graph = self._graph.copy(as_view=False)
 
         # build mapping of tokens to ProtocolUnits
-        mapping = {pu.token: pu for pu in graph.nodes}
+        mapping = {pu.token: pu for pu in graph}
 
         # iterate in DAG order
         for unit in reversed(list(nx.topological_sort(self._graph))):
 
-            inputs = unit.inputs
-
-            # for each successor, get result and input data;
-            for d in self._graph.successors(unit):
-                edge = self._graph.edges[unit, d]['inputs']
-                result = graph.nodes[d]['result']
-
-            ninputs = dict()
-            for key, value in inputs.items():
-                if isinstance(value, dict):
-                    if key not in ninputs:
-                        ninputs[key] = dict()
-                    for k, v in value.items():
-                        if isinstance(v, ProtocolUnitToken):
-                            ninputs[key][k] = mapping[v]['result']
-                            G.add_edge(pu, mapping[v], inputs={key: {k: None}})
-                elif isinstance(value, list):
-                    for i in value:
-                        if isinstance(v, ProtocolUnitToken):
-                            G.add_edge(pu, mapping[v], inputs={key: [None]})
-                elif isinstance(value, ProtocolUnitToken):
-                    G.add_edge(pu, mapping[v], inputs={key: None})
+            # translate each `ProtocolUnitToken` in input into corresponding
+            # `ProtocolUnitResult`
+            inputs = self._detokenize_dependencies(unit.inputs, graph, mapping)
                 
-            # construct input to unit
             # execute
-            result = unit.execute(
-                inputs=[
-                    graph.nodes[d]["result"]
+            result = unit.execute(**inputs)
 
-                    for d in self._graph.successors(unit)
-                ]
-            )
-            # attach results
+            # attach result to this `ProtocolUnit`
             graph.nodes[unit]["result"] = result
 
         return ProtocolDAGResult(name=self._name, graph=graph)
+
+    @staticmethod
+    def _detokenize_dependencies(
+            inputs, 
+            graph,
+            mapping: Dict[str, ProtocolUnit]):
+        ninputs = dict()
+        for key, value in inputs.items():
+            if isinstance(value, dict):
+                if key not in ninputs:
+                    ninputs[key] = dict()
+                for k, v in value.items():
+                    if isinstance(v, ProtocolUnitToken):
+                        ninputs[key][k] = graph.nodes[mapping[v]]['result']
+                    else:
+                        ninputs[key][k] = v
+            elif isinstance(value, list):
+                if key not in ninputs:
+                    ninputs[key] = list()
+                for i in value:
+                    if isinstance(i, ProtocolUnitToken):
+                        ninputs[key].append(graph.nodes[mapping[i]]['result'])
+                    else:
+                        ninputs[key].append(i)
+            elif isinstance(value, ProtocolUnitToken):
+                ninputs[key] = graph.nodes[mapping[value]]['result']
+            else:
+                ninputs[key] = value
+
+        return ninputs
+

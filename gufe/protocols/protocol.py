@@ -175,7 +175,7 @@ class Protocol(Serializable, abc.ABC):
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
 
         """
-        return self._results_cls(**self._gather(protocol_dag_results))
+        return self.result_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
     def _gather(

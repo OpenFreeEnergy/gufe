@@ -18,13 +18,12 @@ from .base import ProtocolUnitToken, ProtocolUnitMixin
 from .results import ProtocolUnitResult
 
 
-class ProtocolUnit(abc.ABC):
+class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
     """A unit of work within a ProtocolDAG."""
 
     def __init__(
         self,
         *,
-        settings: Optional["ProtocolSettings"] = None,  # type: ignore
         name: Optional[str] = None,
         pure: bool = False,
         **inputs
@@ -38,9 +37,6 @@ class ProtocolUnit(abc.ABC):
             `ProtocolUnit` is dependent.
 
         """
-        
-        self._settings = settings
-
         self._name = name
         self._pure = pure
         self._token = None
@@ -48,12 +44,12 @@ class ProtocolUnit(abc.ABC):
         self._inputs = self._tokenize_dependencies(inputs, ProtocolUnit)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self._name})"
+        return f"{type(self).__name__}({self.name})"
 
-    def __hash__(self):
-        return hash(
-            (self.__class__.__name__, self._settings, frozenset(self._kwargs.items()))
-        )
+    #def __hash__(self):
+    #    return hash(
+    #        (self.__class__.__name__, self._settings, frozenset(self._kwargs.items()))
+    #    )
 
     def _tokenize(self):
         # inspired by implementation of tokenization in dask
@@ -91,9 +87,13 @@ class ProtocolUnit(abc.ABC):
         return copy(self._inputs)
 
     @property
+    def pure(self):
+        return self._pure
+
+    @property
     def token(self):
         if self._token is None:
-            self._token = ProtocolUnitToken(token=tokenize())
+            self._token = ProtocolUnitToken(self._tokenize())
         return self._token
 
     def execute(self, block=True, **inputs) -> ProtocolUnitResult:

@@ -2,9 +2,11 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 from typing import Optional, Iterable, List, Dict, Any
+from collections import defaultdict
 
 import pytest
 import networkx as nx
+import numpy as np
 
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import Mapping
@@ -19,39 +21,55 @@ from gufe.protocols import (
 
 
 class InitializeUnit(ProtocolUnit):
-    def _execute(self, dependency_results):
+    def _execute(self, *, settings, systemA, systemB, mapping, start, **inputs):
 
         return dict(
-            data="initialized",
+            log="initialized",
         )
 
 
 class SimulationUnit(ProtocolUnit):
-    def _execute(self, dependency_results):
+    def _execute(self, *, initialization: ProtocolUnitResult, **inputs):
 
-        output = [r.data for r in dependency_results]
-        output.append("running_md_{}".format(self._kwargs["window"]))
+        output = [initialization.outputs['log']]
+        output.append("running_md_{}".format(inputs["window"]))
 
         return dict(
-            data=output,
-            window=self._kwargs["window"],  # extra attributes allowed
+            log=output,
+            window=self.inputs["window"],
+            key_result=(100 - (self.inputs["window"] - 10)**2)
         )
 
 
 class FinishUnit(ProtocolUnit):
-    def _execute(self, dependency_results):
+    def _execute(self, *, simulations, **inputs):
 
-        output = [r.data for r in dependency_results]
+        output = [s.outputs['log'] for s in simulations]
         output.append("assembling_results")
 
+        key_results = {s.inputs['window']: s.outputs['key_result'] for s in simulations}
+
         return dict(
-            data=output,
+            log=output,
+            key_results=key_results
         )
 
 
 class DummyProtocolResult(ProtocolResult):
     def get_estimate(self):
-        ...
+        # we'll pretend that the free energy estimate here is the sum of the
+        # product of neighboring simulation window `key_result`s
+
+        dgs = []
+        for sample in self.data['key_results']:
+            windows = sorted(sample.keys())
+            dg = 0
+            for i, j in zip(windows[:-1], windows[1:]):
+                dg += sample[i] * sample[j]
+
+            dgs.append(dg)
+
+        return np.mean(dg)
 
     def get_uncertainty(self):
         ...
@@ -62,7 +80,7 @@ class DummyProtocolResult(ProtocolResult):
 
 class DummyProtocol(Protocol):
 
-    _results_cls = DummyProtocolResult
+    result_cls = DummyProtocolResult
 
     @classmethod
     def get_default_settings(cls):
@@ -77,35 +95,33 @@ class DummyProtocol(Protocol):
     ) -> nx.DiGraph:
 
         alpha = InitializeUnit(
-            self.settings,
-            stateA=stateA,
-            stateB=stateB,
+            name="the beginning",
+            settings=self.settings,
+            systemA=stateA,
+            systemB=stateB,
             mapping=mapping,
             start=extend_from,
         )
 
         simulations: List[ProtocolUnit] = [
-            SimulationUnit(self.settings, window=i) for i in range(20)
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
         ]
 
-        omega = FinishUnit(self.settings, name="the end")
+        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
 
-        dag = nx.DiGraph()
-        for sim in simulations:
-            dag.add_edge(sim, alpha)
-            dag.add_edge(omega, sim)
-
-        return dag
+        # return all `ProtocolUnit`s we created
+        return [alpha, *simulations, omega]
 
     def _gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
     ) -> Dict[str, Any]:
 
-        outputs = []
+        outputs = defaultdict(list)
         for pdr in protocol_dag_results:
             for pur in pdr.protocol_unit_results:
                 if pur.name == "the end":
-                    outputs.append(pur.data)
+                    outputs['logs'].append(pur.outputs['log'])
+                    outputs['key_results'].append(pur.outputs['key_results'])
 
         return dict(data=outputs)
 
@@ -137,13 +153,15 @@ class TestProtocol:
         ]
 
         # check that we have dependency information in results
-        assert set(finishresult._dependencies) == {u._uuid for u in simulationresults}
+        assert set(finishresult.inputs['simulations']) == {u.token for u in simulationresults}
 
         # check that we have as many units as we expect in resulting graph
-        assert len(dagresult.graph) == 22
+        assert len(dagresult.graph) == 23
 
         # gather aggregated results of interest
         protocolresult = protocol.gather([dagresult])
 
-        assert len(protocolresult.data) == 1
-        assert len(protocolresult.data[0]) == 20 + 1
+        assert len(protocolresult.data['logs']) == 1
+        assert len(protocolresult.data['logs'][0]) == 21 + 1
+
+        assert protocolresult.get_estimate() == 105336

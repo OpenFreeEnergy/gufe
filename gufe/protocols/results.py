@@ -33,7 +33,7 @@ class ProtocolUnitResult(BaseModel, ProtocolUnitMixin):
     def __init__(self, *, name=None, token, pure, inputs, outputs):
             
         inputs = self._tokenize_dependencies(inputs, ProtocolUnitResult)
-        super().__init__(name=name, token=token, inputs=inputs, outputs=outputs, )
+        super().__init__(name=name, token=token, pure=pure, inputs=inputs, outputs=outputs, )
 
 
 class ProtocolDAGResult(BaseModel):

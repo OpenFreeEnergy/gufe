@@ -1,3 +1,4 @@
+
 class ProtocolUnitToken(str):
     def __repr__(self):
         return f"<ProtocolUnitToken('{str(self)}')>"
@@ -18,12 +19,15 @@ class ProtocolUnitMixin:
             elif isinstance(value, list):
                 nvalue = list()
                 for i in value:
-                    if isinstance(v, targetcls):
-                        nvalue.append(v.token)
+                    if isinstance(i, targetcls):
+                        nvalue.append(i.token)
                     else:
-                        nvalue.append(v)
+                        nvalue.append(i)
             elif isinstance(value, targetcls):
                 nvalue = value.token
+            else:
+                nvalue = value
+
             ninputs[key] = nvalue
 
         return ninputs
