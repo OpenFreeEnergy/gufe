@@ -7,7 +7,7 @@ from openff.toolkit.utils.serialization import Serializable
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
-from ..mapping import Mapping
+from ..mapping import AtomMapping
 
 
 class Transformation(Serializable):
@@ -26,7 +26,7 @@ class Transformation(Serializable):
         Includes all details needed to perform required
         simulations/calculations and encodes the alchemical pathway used.
         May also correspond to an experimental result.
-    mapping : Optional[Mapping]
+    mapping : Optional[AtomMapping]
         Mapping of e.g. atoms between the `stateA` and `stateB`
         `ChemicalSystem`s.
     name : Optional[str]
@@ -41,7 +41,7 @@ class Transformation(Serializable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[AtomMapping] = None,
         name: Optional[str] = None,
     ):
 
@@ -132,7 +132,7 @@ class Transformation(Serializable):
             stateA=ChemicalSystem.from_dict(d["stateA"]),
             stateB=ChemicalSystem.from_dict(d["stateB"]),
             protocol=Protocol.from_dict(d["protocol"]),
-            mapping=Mapping.from_dict(d["mapping"]),
+            mapping=AtomMapping.from_dict(d["mapping"]),
         )
 
     def create(self) -> ProtocolDAG:

@@ -4,9 +4,11 @@ import abc
 from collections.abc import Iterator
 import gufe
 
+from .atom_mapping import AtomMapping
+
 
 class AtomMapper(abc.ABC):
     """A class for manufacturing mappings"""
     def suggest_mappings(self, A: gufe.Component,
-                         B: gufe.Component) -> Iterator[gufe.AtomMapping]:
+                         B: gufe.Component) -> Iterator[AtomMapping]:
         ...

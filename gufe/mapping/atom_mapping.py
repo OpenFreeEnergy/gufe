@@ -3,26 +3,36 @@
 
 import abc
 from collections.abc import Mapping
+from openff.toolkit.utils.serialization import Serializable
 
 import gufe
 
 
-class AtomMapping(abc.ABC):
+class AtomMapping(Serializable, abc.ABC):
     """A mapping between two different Components"""
     @abc.abstractmethod
+    def to_dict(self) -> dict:
+        ...
+
+    @classmethod
+    @abc.abstractmethod
+    def from_dict(cls, d: dict):
+        ...
+
     @property
+    @abc.abstractmethod
     def molA(self) -> gufe.Component:
         """A reference to the first Component in the mapping"""
         ...
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def molB(self) -> gufe.Component:
         """A reference to the second Component in the mapping"""
         ...
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def molA_to_molB(self) -> Mapping[int, int]:
         """Maps the index of an item from Component A onto Component B
 
@@ -31,7 +41,7 @@ class AtomMapping(abc.ABC):
         """
         ...
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def molB_to_molA(self) -> Mapping[int, int]:
         ...

@@ -11,9 +11,8 @@ from typing import Optional, Iterable, Any, Dict
 from openff.toolkit.utils.serialization import Serializable
 import networkx as nx
 
+from .. import AtomMapping
 from ..chemicalsystem import ChemicalSystem
-from ..mapping import Mapping
-
 from .protocoldag import ProtocolDAG
 from .results import ProtocolDAGResult
 
@@ -103,7 +102,7 @@ class Protocol(Serializable, abc.ABC):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[AtomMapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
         ...
@@ -112,7 +111,7 @@ class Protocol(Serializable, abc.ABC):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[AtomMapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
         name: str = None,
     ) -> ProtocolDAG:
