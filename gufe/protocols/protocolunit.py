@@ -14,7 +14,7 @@ from typing import Iterable, List, Dict, Any, Optional
 
 from dask.base import tokenize, normalize_token
 
-from .base import ProtocolUnitToken, ProtocolUnitMixin
+from .base import ProtocolUnitKey, ProtocolUnitMixin
 from .results import ProtocolUnitResult
 
 
@@ -39,9 +39,16 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
         """
         self._name = name
         self._pure = pure
+
+        # token is generated via hashing when possible, falling back to `uuid4`
+        # if not;
+        # key is the combination of `<classname>-<token>`, and is used for
+        # referencing this object
         self._token = None
 
-        self._inputs = self._tokenize_dependencies(inputs, ProtocolUnit)
+        self._key = None
+
+        self._inputs = self._keyencode_dependencies(inputs, ProtocolUnit)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.name})"
@@ -75,11 +82,9 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
 
     @property
     def name(self):
-        # set name if not manually set; used for display
+        # set name to key if not manually set; used for display
         if self._name is None:
-            prefix = type(self).__name__
-            self._name = f"{prefix}-{self.token}"
-
+            self._name = self.key()
         return self._name
 
     @property
@@ -93,8 +98,15 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
     @property
     def token(self):
         if self._token is None:
-            self._token = ProtocolUnitToken(self._tokenize())
+            self._token = self._tokenize()
         return self._token
+
+    @property
+    def key(self):
+        if self._key is None:
+            prefix = type(self).__name__
+            self._key = ProtocolUnitKey(f"{prefix}-{self.token}")
+        return self._key
 
     def execute(self, block=True, **inputs) -> ProtocolUnitResult:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
@@ -111,7 +123,7 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
         if block:
             outputs = self._execute(**inputs)
             result = ProtocolUnitResult(
-                name=self._name, token=self.token, pure=self.pure, inputs=inputs, outputs=outputs
+                name=self._name, key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
             )
 
         else:

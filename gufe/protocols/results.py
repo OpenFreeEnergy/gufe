@@ -9,7 +9,8 @@ import networkx as nx
 
 from pydantic import BaseModel, PrivateAttr
 
-from .base import ProtocolUnitToken, ProtocolUnitMixin
+from .base import ProtocolUnitKey, ProtocolUnitMixin
+
 
 class ProtocolUnitResult(BaseModel, ProtocolUnitMixin):
     """Result for a single `ProtocolUnit` execution.
@@ -26,14 +27,14 @@ class ProtocolUnitResult(BaseModel, ProtocolUnitMixin):
 
     name: Optional[str]      # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
     pure: bool               # whether `ProtocolUnit` that produced this `ProtocolUnitResult` was a function purely of its inputs
-    token: ProtocolUnitToken # token of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    key: ProtocolUnitKey     # key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
 
     outputs: Any
 
-    def __init__(self, *, name=None, token, pure, inputs, outputs):
+    def __init__(self, *, name=None, key, pure, inputs, outputs):
             
-        inputs = self._tokenize_dependencies(inputs, ProtocolUnitResult)
-        super().__init__(name=name, token=token, pure=pure, inputs=inputs, outputs=outputs, )
+        inputs = self._keyencode_dependencies(inputs, ProtocolUnitResult)
+        super().__init__(name=name, key=key, pure=pure, inputs=inputs, outputs=outputs, )
 
 
 class ProtocolDAGResult(BaseModel):

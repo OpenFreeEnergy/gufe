@@ -6,7 +6,7 @@ from typing import Iterable, List, Dict, Set, Optional
 
 import networkx as nx
 
-from .protocolunit import ProtocolUnit, ProtocolUnitToken
+from .protocolunit import ProtocolUnit, ProtocolUnitKey
 from .results import ProtocolUnitResult, ProtocolDAGResult
 
 
@@ -45,20 +45,20 @@ class ProtocolDAG:
         G = nx.DiGraph()
         """Build dependency DAG of ProtocolUnits with input keys stored on edges"""
 
-        # build mapping of tokens to ProtocolUnits
-        mapping = {pu.token: pu for pu in protocol_units}
+        # build mapping of keys to ProtocolUnits
+        mapping = {pu.key: pu for pu in protocol_units}
 
         for pu in protocol_units:
             for key, value in pu.inputs.items():
                 if isinstance(value, dict):
                     for k, v in value.items():
-                        if isinstance(v, ProtocolUnitToken):
+                        if isinstance(v, ProtocolUnitKey):
                             G.add_edge(pu, mapping[v])
                 elif isinstance(value, list):
                     for i in value:
-                        if isinstance(i, ProtocolUnitToken):
+                        if isinstance(i, ProtocolUnitKey):
                             G.add_edge(pu, mapping[i])
-                elif isinstance(value, ProtocolUnitToken):
+                elif isinstance(value, ProtocolUnitKey):
                     G.add_edge(pu, mapping[value])
 
         return G
@@ -76,15 +76,15 @@ class ProtocolDAG:
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
 
-        # build mapping of tokens to ProtocolUnits
-        mapping = {pu.token: pu for pu in graph}
+        # build mapping of key to ProtocolUnits
+        mapping = {pu.key: pu for pu in graph}
 
         # iterate in DAG order
         for unit in reversed(list(nx.topological_sort(self._graph))):
 
-            # translate each `ProtocolUnitToken` in input into corresponding
+            # translate each `ProtocolUnitKey` in input into corresponding
             # `ProtocolUnitResult`
-            inputs = self._detokenize_dependencies(unit.inputs, graph, mapping)
+            inputs = self._keydecode_dependencies(unit.inputs, graph, mapping)
                 
             # execute
             result = unit.execute(**inputs)
@@ -95,7 +95,7 @@ class ProtocolDAG:
         return ProtocolDAGResult(name=self._name, graph=graph)
 
     @staticmethod
-    def _detokenize_dependencies(
+    def _keydecode_dependencies(
             inputs, 
             graph,
             mapping: Dict[str, ProtocolUnit]):
@@ -105,7 +105,7 @@ class ProtocolDAG:
                 if key not in ninputs:
                     ninputs[key] = dict()
                 for k, v in value.items():
-                    if isinstance(v, ProtocolUnitToken):
+                    if isinstance(v, ProtocolUnitKey):
                         ninputs[key][k] = graph.nodes[mapping[v]]['result']
                     else:
                         ninputs[key][k] = v
@@ -113,11 +113,11 @@ class ProtocolDAG:
                 if key not in ninputs:
                     ninputs[key] = list()
                 for i in value:
-                    if isinstance(i, ProtocolUnitToken):
+                    if isinstance(i, ProtocolUnitKey):
                         ninputs[key].append(graph.nodes[mapping[i]]['result'])
                     else:
                         ninputs[key].append(i)
-            elif isinstance(value, ProtocolUnitToken):
+            elif isinstance(value, ProtocolUnitKey):
                 ninputs[key] = graph.nodes[mapping[value]]['result']
             else:
                 ninputs[key] = value

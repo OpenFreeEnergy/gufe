@@ -153,7 +153,7 @@ class TestProtocol:
         ]
 
         # check that we have dependency information in results
-        assert set(finishresult.inputs['simulations']) == {u.token for u in simulationresults}
+        assert set(finishresult.inputs['simulations']) == {u.key for u in simulationresults}
 
         # check that we have as many units as we expect in resulting graph
         assert len(dagresult.graph) == 23
