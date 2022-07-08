@@ -8,7 +8,7 @@ from ..tokenization import GufeTokenizable
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
-from ..mapping import Mapping
+from ..mapping import AtomMapping
 
 
 class Transformation(GufeTokenizable):
@@ -42,7 +42,7 @@ class Transformation(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[AtomMapping] = None,
         name: Optional[str] = None,
     ):
 

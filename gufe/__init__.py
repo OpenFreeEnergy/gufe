@@ -13,6 +13,9 @@ from .components import (
 
 from .chemicalsystem import ChemicalSystem
 
+from .mapping import (
+    AtomMapping, AtomMapper
+)
 from .protocols import (
     Protocol,  # description of a method
     ProtocolUnit,  # the individual step within a method
@@ -21,9 +24,7 @@ from .protocols import (
     ProtocolDAGResult,  # the collected result of a DAG
     ProtocolResult,  # potentially many DAGs together, giving an estimate
 )
-from .mapping import (
-    AtomMapping, AtomMapper
-)
+
 from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork
