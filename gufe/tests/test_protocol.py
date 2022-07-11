@@ -16,7 +16,9 @@ from gufe.protocols import (
     ProtocolUnit,
     ProtocolResult,
     ProtocolDAGResult,
+    ProtocolDAGFailure,
     ProtocolUnitResult,
+    ProtocolUnitFailure,
 )
 
 
@@ -128,6 +130,43 @@ class DummyProtocol(Protocol):
 
         return dict(data=outputs)
 
+class BrokenSimulationUnit(SimulationUnit):
+    def _execute(self, **inputs):
+        raise ValueError("I have failed my mission", {'data': 'lol'})
+
+
+class BrokenProtocol(DummyProtocol):
+    def _create(
+        self,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Mapping] = None,
+        extend_from: Optional[ProtocolDAGResult] = None,
+    ) -> nx.DiGraph:
+
+        # convert protocol inputs into starting points for independent simulations
+        alpha = InitializeUnit(
+            settings=self.settings,
+            stateA=stateA,
+            stateB=stateB,
+            mapping=mapping,
+            start=extend_from,
+        )
+
+        # create several units that would each run an independent simulation
+        simulations: List[ProtocolUnit] = [
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
+        ]
+
+        # introduce a broken ProtocolUnit
+        simulations.append(BrokenSimulationUnit(settings=self.settings, window=21, name="problem child", initialization=alpha))
+
+        # gather results from simulations, finalize outputs
+        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
+
+        # return all `ProtocolUnit`s we created
+        return [alpha, *simulations, omega]
+
 
 class TestProtocol:
     def test_init(self):
@@ -143,6 +182,8 @@ class TestProtocol:
             stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
         )
         dagresult = dag.execute()
+
+        assert dagresult.ok()
 
         finishresult = [
             dagresult.graph.nodes[u]["result"]
@@ -168,3 +209,26 @@ class TestProtocol:
         assert len(protocolresult.data['logs'][0]) == 21 + 1
 
         assert protocolresult.get_estimate() == 105336
+
+    def test_create_execute_failure(self, solvated_ligand, solvated_complex):
+        protocol = BrokenProtocol(settings=None)
+
+        dag = protocol.create(
+            stateA=solvated_ligand, stateB=solvated_complex, name="a broken dummy run"
+        )
+
+        dagfailure = dag.execute()
+
+        assert not dagfailure.ok()
+        assert isinstance(dagfailure, ProtocolDAGFailure)
+
+        failed_units = dagfailure.protocol_unit_failures
+
+        assert len(failed_units) == 1
+        assert failed_units[0].name == "problem child"
+        assert failed_units[0].exception.args[1]['data'] == "lol"
+        assert isinstance(failed_units[0], ProtocolUnitFailure)
+
+        succeeded_units = dagfailure.protocol_unit_results
+
+        assert len(succeeded_units) > 0

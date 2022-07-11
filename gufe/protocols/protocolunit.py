@@ -10,12 +10,14 @@ import abc
 import uuid
 from os import PathLike
 from copy import copy
-from typing import Iterable, List, Dict, Any, Optional
+from typing import Iterable, List, Dict, Any, Optional, Union
 
 from dask.base import tokenize, normalize_token
 
 from .base import ProtocolUnitKey, ProtocolUnitMixin
-from .results import ProtocolUnitResult
+from .results import (
+    ProtocolUnitResult, ProtocolUnitFailure,
+)
 
 
 class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
@@ -108,11 +110,13 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
             self._key = ProtocolUnitKey(f"{prefix}-{self.token}")
         return self._key
 
-    def execute(self, block=True, **inputs) -> ProtocolUnitResult:
+    def execute(self, block=True, **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
+        dependency_results : Iterable[ProtocolUnitResult]
+            The `ProtocolUnitResult`s from the `ProtocolUnit`s this unit is dependent on.
         block : bool
             If `True`, block until execution completes; otherwise run in its own thread.
 
@@ -121,11 +125,21 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
         # process inputs that point to ProtocolUnits
 
         if block:
-            outputs = self._execute(**inputs)
-            result = ProtocolUnitResult(
-                name=self._name, key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
-            )
+            try:
+                outputs = self._execute(**inputs)
+                result = ProtocolUnitResult(
+                    name=self._name, key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
+                )
 
+            except Exception as e:
+                result = ProtocolUnitFailure(
+                    name=self._name,
+                    key=self.key,
+                    pure=self.pure,
+                    inputs=inputs,
+                    outputs=dict(),
+                    exception=e,
+                )
         else:
             # TODO: wrap in a thread; update status
             ...

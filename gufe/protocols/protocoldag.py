@@ -2,12 +2,12 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from typing import Iterable, List, Dict, Set, Optional
+from typing import Iterable, List, Dict, Set, Optional, Union
 
 import networkx as nx
 
 from .protocolunit import ProtocolUnit, ProtocolUnitKey
-from .results import ProtocolUnitResult, ProtocolDAGResult
+from .results import ProtocolUnitResult, ProtocolDAGResult, ProtocolDAGFailure
 
 
 class ProtocolDAG:
@@ -71,7 +71,7 @@ class ProtocolDAG:
     def graph(self):
         return self._graph
 
-    def execute(self) -> ProtocolDAGResult:
+    def execute(self) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
         """Execute the full DAG in-serial, in process."""
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
@@ -91,6 +91,9 @@ class ProtocolDAG:
 
             # attach result to this `ProtocolUnit`
             graph.nodes[unit]["result"] = result
+
+            if not result.ok():
+                return ProtocolDAGFailure(name=self._name, graph=graph)
 
         return ProtocolDAGResult(name=self._name, graph=graph)
 
