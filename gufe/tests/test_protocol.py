@@ -21,7 +21,7 @@ from gufe.protocols import (
 
 
 class InitializeUnit(ProtocolUnit):
-    def _execute(self, *, settings, systemA, systemB, mapping, start, **inputs):
+    def _execute(self, *, settings, stateA, stateB, mapping, start, **inputs):
 
         return dict(
             log="initialized",
@@ -92,21 +92,24 @@ class DummyProtocol(Protocol):
         stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
-    ) -> nx.DiGraph:
+    ) -> List[ProtocolUnit]:
 
+        # convert protocol inputs into starting points for independent simulations
         alpha = InitializeUnit(
             name="the beginning",
             settings=self.settings,
-            systemA=stateA,
-            systemB=stateB,
+            stateA=stateA,
+            stateB=stateB,
             mapping=mapping,
             start=extend_from,
         )
 
+        # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
             SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
         ]
 
+        # gather results from simulations, finalize outputs
         omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
 
         # return all `ProtocolUnit`s we created

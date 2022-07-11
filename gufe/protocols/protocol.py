@@ -6,7 +6,7 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Dict
+from typing import Optional, Iterable, Any, Dict, List
 
 from openff.toolkit.utils.serialization import Serializable
 import networkx as nx
@@ -15,6 +15,7 @@ from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
 from .protocoldag import ProtocolDAG
+from .protocolunit import ProtocolUnit
 from .results import ProtocolDAGResult
 
 
@@ -105,7 +106,7 @@ class Protocol(Serializable, abc.ABC):
         stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
-    ) -> nx.DiGraph:
+    ) -> List[ProtocolUnit]:
         ...
 
     def create(
