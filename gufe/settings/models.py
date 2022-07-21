@@ -26,17 +26,17 @@ class SettingsBaseModel(BaseModel):
 
 
 class vdWScale(TypedDict):
-    scale12: float = 0
-    scale13: float = 0
-    scale14: float = 0.5
-    scale15: float = 1.0
+    scale12: float
+    scale13: float
+    scale14: float
+    scale15: float
 
 
 class ElectrostaticScale(TypedDict):
-    scale12: float = 0
-    scale13: float = 0
-    scale14: float = 0.833333
-    scale15: float = 1.0
+    scale12: float
+    scale13: float
+    scale14: float
+    scale15: float
 
 
 class VdWSettings(SettingsBaseModel):
@@ -44,13 +44,13 @@ class VdWSettings(SettingsBaseModel):
     Settings for van der Waals force
     """
 
-    combining_rules: Literal["Lorentz-Berthelot"] = "Lorentz-Berthelot"
-    potential: Literal["Lennard-Jones-12-6"] = "Lennard-Jones-12-6"
-    scale: vdWScale = {"scale12": 0, "scale13": 0, "scale14": 0.5, "scale15": 1.0}
-    long_range_dispersion: Literal["isotropic"] = "isotropic"
-    cutoff: float = 9.0  # angstrom
-    switch_width: float = 1.0  # angstrom
-    method: Literal["cutoff"] = "cutoff"
+    combining_rules: Literal["Lorentz-Berthelot"]
+    potential: Literal["Lennard-Jones-12-6"]
+    scale: vdWScale
+    long_range_dispersion: Literal["isotropic"]
+    cutoff: float  # angstrom
+    switch_width: float  # angstrom
+    method: Literal["cutoff"]
 
 
 class ElectrostaticSettings(SettingsBaseModel):
@@ -59,20 +59,13 @@ class ElectrostaticSettings(SettingsBaseModel):
     """
 
     # Tricky since this allows functions https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics
-    periodic_potential: Union[
-        Literal["Ewald3D-ConductingBoundary"], str
-    ] = "Ewald3D-ConductingBoundary"
-    nonperiodic_potential: Union[Literal["Coulomb"], str] = "Coulomb"
-    exception_potential: Union[Literal["Coulomb"], str] = "Coulomb"
-    scale: ElectrostaticScale = {
-        "scale12": 0,
-        "scale13": 0,
-        "scale14": 0.833333,
-        "scale15": 1.0,
-    }
-    cutoff: float = None
-    switch_width: float = None
-    solvent_dielectric: float = None
+    periodic_potential: Union[Literal["Ewald3D-ConductingBoundary"], str]
+    nonperiodic_potential: Union[Literal["Coulomb"], str]
+    exception_potential: Union[Literal["Coulomb"], str]
+    scale: ElectrostaticScale
+    cutoff: Union[float, None]
+    switch_width: Union[float, None]
+    solvent_dielectric: Union[float, None]
 
 
 class BondSettings(SettingsBaseModel):
@@ -81,10 +74,10 @@ class BondSettings(SettingsBaseModel):
     """
 
     # U(r) = (k/2)*(r-length)^2
-    potential: Literal["harmonic"] = "harmonic"
+    potential: Literal["harmonic"]
     # Might support other methods?
-    fractional_bondorder_method: Literal["AM1-Wiberg"] = "AM1-Wiberg"
-    fractional_bondorder_interpolation: Literal["linear"] = "linear"
+    fractional_bondorder_method: Literal["AM1-Wiberg"]
+    fractional_bondorder_interpolation: Literal["linear"]
 
 
 class AngleSettings(SettingsBaseModel):
@@ -93,7 +86,7 @@ class AngleSettings(SettingsBaseModel):
     """
 
     # U(r) = (k/2)*(theta-angle)^2
-    potential: Literal["harmonic"] = "harmonic"
+    potential: Literal["harmonic"]
 
 
 class ProperTorsionSettings(SettingsBaseModel):
@@ -102,13 +95,11 @@ class ProperTorsionSettings(SettingsBaseModel):
     """
 
     # U = \sum_{i=1}^N k_i * (1 + cos(periodicity_i * phi - phase_i))
-    potential: Literal[
-        "k*(1+cos(periodicity*theta-phase))"
-    ] = "k*(1+cos(periodicity*theta-phase))"
+    potential: Literal["k*(1+cos(periodicity*theta-phase))"]
     default_idivf: Union[Literal["auto"], int] = "auto"
     # Might support other methods?
-    fractional_bondorder_method: Literal["AM1-Wiberg"] = "AM1-Wiberg"
-    fractional_bondorder_interpolation: Literal["linear"] = "linear"
+    fractional_bondorder_method: Literal["AM1-Wiberg"]
+    fractional_bondorder_interpolation: Literal["linear"]
 
 
 class ImproperTorsionSettings(SettingsBaseModel):
@@ -117,11 +108,8 @@ class ImproperTorsionSettings(SettingsBaseModel):
     """
 
     # U = \sum_{i=1}^N k_i * (1 + cos(periodicity_i * phi - phase_i))
-    potential: Literal[
-        "k*(1+cos(periodicity*theta-phase))"
-    ] = "k*(1+cos(periodicity*theta-phase))"
-    # or is it potential="k*(1+cos(periodicity*theta-phase))" ?
-    default_idivf: Literal["auto"] = "auto"
+    potential: Literal["k*(1+cos(periodicity*theta-phase))"]
+    default_idivf: Literal["auto"]
 
 
 class GBSASettings(SettingsBaseModel):
@@ -129,9 +117,9 @@ class GBSASettings(SettingsBaseModel):
     Settings for Generalized-Born surface area (GBSA) implicit solvent parameters
     """
 
-    gb_model: Literal["HCT", "OBC1", "OBC2"] = "OBC1"
-    solvent_dielectric: float = 78.5
-    solute_dielectric: float = 1
+    gb_model: Literal["HCT", "OBC1", "OBC2"]
+    solvent_dielectric: float
+    solute_dielectric: float
 
 
 class ForcefieldSettings(SettingsBaseModel):
@@ -153,7 +141,7 @@ class ForcefieldSettings(SettingsBaseModel):
     gbsa: GBSASettings
 
     # Misc
-    aromaticity_model: Literal["OEAroModel_MDL"] = "OEAroModel_MDL"
+    aromaticity_model: Literal["OEAroModel_MDL"]
 
 
 class ThermoSettings(SettingsBaseModel):
@@ -163,8 +151,8 @@ class ThermoSettings(SettingsBaseModel):
 
     temperature: PositiveFloat  # Θ
     pressure: PositiveFloat  # M L**−1 T**−2
-    ph: PositiveFloat = None
-    redox_potential: float = None
+    ph: Union[PositiveFloat, None]
+    redox_potential: Union[float, None]
 
 
 class ChemicalComposition(SettingsBaseModel):
@@ -180,9 +168,7 @@ class Settings(SettingsBaseModel):
     """
 
     # symvar? calver?
-    settings_version: int = 0
-    # Rip this out, only return ff settings from function
+    settings_version: int
     forcefield_file: Union[FilePath, str]
-    #####
     forcefield_settings: ForcefieldSettings
     thermo_settings: ThermoSettings

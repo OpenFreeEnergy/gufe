@@ -133,6 +133,7 @@ def get_settings(settings_file) -> Settings:
 
     thermo_settings = ThermoSettings.parse_obj(settings_from_file["thermo_settings"])
     settings = Settings(
+        settings_version=settings_from_file["settings_version"],
         forcefield_settings=forcefield_settings,
         thermo_settings=thermo_settings,
         forcefield_file=ff_file_path,
