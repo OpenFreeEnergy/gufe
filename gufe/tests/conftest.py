@@ -46,6 +46,23 @@ def PDBx_181L_path():
         yield str(f)
 
 
+@pytest.fixture
+def offxml_settings_path():
+    with importlib.resources.path('gufe.tests.data', 'offxml_settings.json') as f:
+        yield str(f)
+
+
+@pytest.fixture
+def all_settings_path():
+    with importlib.resources.path('gufe.tests.data', 'all_settings.json') as f:
+        yield str(f)
+
+
+@pytest.fixture
+def dummy_xml_path():
+    with importlib.resources.path('gufe.tests.data', 'note.xml') as f:
+        yield str(f)
+
 ## RDKit molecules
 
 @pytest.fixture

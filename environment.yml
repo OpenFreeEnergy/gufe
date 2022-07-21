@@ -4,16 +4,20 @@ channels:
   - conda-forge
   - openeye
 dependencies:
-  - numpy
+  - cachetools
+  - coverage
   - networkx
-  - rdkit
+  - numpy
+  - openeye-toolkits
+  - openff-toolkit
+  - openff-units
   - pip
   - pydantic
   - pytest
-  - pytest-xdist
   - pytest-cov
-  - coverage
-  - openff-toolkit
-  - openff-units
-  - openeye-toolkits
+  - pytest-xdist
+  - rdkit
   - typing-extensions
+  - pip:
+    - git+https://github.com/openforcefield/openff-toolkit.git@main
+
