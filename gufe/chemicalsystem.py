@@ -8,6 +8,9 @@ import numpy as np
 from openff.toolkit.utils.serialization import Serializable
 
 from .component import Component
+from .storage.generics import (
+    generic_to_storage_ready, storage_bytes_to_dict, load_obj_from_reference
+)
 
 
 class ChemicalSystem(Serializable, abc.Mapping):
@@ -28,6 +31,8 @@ class ChemicalSystem(Serializable, abc.Mapping):
         `AlchemicalNetwork`.
 
     """
+
+    _storage_path = "setup/systems/{md5}.json"
 
     def __init__(
         self,
@@ -59,7 +64,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
         if box_vectors is None:
             self._box_vectors = np.array([np.nan] * 9)
         else:
-            self._box_vectors = box_vectors
+            self._box_vectors = np.asarray(box_vectors)
 
     def __repr__(self):
         return (
@@ -113,6 +118,43 @@ class ChemicalSystem(Serializable, abc.Mapping):
             box_vectors=np.array(d["box_vectors"]),
             name=d["name"],
         )
+
+    def to_storage_ready(self):
+        components_storage_ready = {
+            key: value.to_storage_ready()
+            for key, value in self.components.items()
+        }
+        # merge the dictionary from the values
+        storage_ready = dict(sum(
+            [list(d.items()) for d in components_storage_ready.values()], []
+        ))
+        # give the replacement dictionary
+        components = {
+            key: val[self.components[key]].metadata
+            for key, val in components_storage_ready.items()
+        }
+
+        # define a function that replaces to nested structure with our
+        # metadata dict
+        def replace_components(dct):
+            dct['components'] = components
+            return dct
+
+        storage_ready.update(generic_to_storage_ready(
+            self,
+            self._storage_path,
+            defaults={'name': None, 'box_vectors': np.array([np.nan] * 9)},
+            dict_rep_modifier=replace_components,
+        ))
+        return storage_ready
+
+    @classmethod
+    def from_storage_bytes(cls, serialized_bytes, load_func):
+        dct = storage_bytes_to_dict(serialized_bytes, load_func)
+        components = {key: load_obj_from_reference(val, load_func)
+                      for key, val in dct['components'].items()}
+        dct['components'] = components
+        return cls(**dct)
 
     @property
     def components(self):

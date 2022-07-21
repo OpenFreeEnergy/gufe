@@ -6,6 +6,9 @@ from openff.units import unit
 from typing import Optional, Tuple
 
 from gufe import Component
+from gufe.storage.generics import (generic_to_storage_ready,
+                                   storage_bytes_to_dict)
+from gufe.storage.utils import get_defaults_from_init
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
@@ -25,6 +28,8 @@ class SolventComponent(Component):
     _negative_ion: Optional[str]
     _neutralize: bool
     _ion_concentration: unit.Quantity
+
+    _storage_path = "setup/components/{md5}.json"
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
@@ -129,6 +134,7 @@ class SolventComponent(Component):
     @classmethod
     def from_dict(cls, d):
         """Deserialize from dict representation"""
+        d = d.copy()  # local copy since we modify it
         ion_conc = d['ion_concentration']
         if ion_conc:
             d['ion_concentration'] = unit.Quantity.from_tuple(ion_conc)
@@ -145,3 +151,13 @@ class SolventComponent(Component):
                 'negative_ion': self.negative_ion,
                 'ion_concentration': ion_conc,
                 'neutralize': self._neutralize}
+
+    def to_storage_ready(self):
+        default_keys = get_defaults_from_init(self, self.to_dict())
+        return generic_to_storage_ready(self, self._storage_path,
+                                        default_keys)
+
+    @classmethod
+    def from_storage_bytes(cls, serialized_bytes, load_func):
+        dct = storage_bytes_to_dict(serialized_bytes, load_func)
+        return cls.from_dict(dct)

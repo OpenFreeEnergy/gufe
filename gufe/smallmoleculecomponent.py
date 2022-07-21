@@ -14,6 +14,7 @@ from gufe import __version__
 from gufe import Component
 from gufe.molhashing import hashmol
 from gufe.custom_typing import RDKitMol, OEMol
+from gufe.storage.utils import SerializationInfo
 
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
@@ -76,6 +77,9 @@ class SmallMoleculeComponent(Component, Serializable):
         are used, a name must be given to differentiate these.  This name
         will be used in the hash.
     """
+
+    _storage_path = "setup/components/{md5}.sdf"
+
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
@@ -211,6 +215,16 @@ class SmallMoleculeComponent(Component, Serializable):
             raise RuntimeError(f"SDF contains more than 1 molecule")
 
         return cls(rdkit=mol)  # name is obtained automatically
+
+    def to_storage_ready(self):
+        bytes_data = self.to_sdf().encode("utf-8")
+        metadata = SerializationInfo.create_metadata(self, bytes_data,
+                                                     self._storage_path)
+        return {self: SerializationInfo(bytes_data, metadata)}
+
+    @classmethod
+    def from_storage_bytes(cls, serialized_bytes, load_func):
+        return cls.from_sdf_string(serialized_bytes.decode("utf-8"))
 
     @property
     def total_charge(self):
