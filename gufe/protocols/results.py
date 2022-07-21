@@ -3,62 +3,45 @@
 
 import abc
 import uuid
-from typing import List, Optional, Any, Iterable
+from typing import List, Optional, Any, Iterable, Dict
 
 import networkx as nx
 
 from pydantic import BaseModel, PrivateAttr
 
+from .base import ProtocolUnitKey, ProtocolUnitMixin
 
-class ProtocolUnitResult(BaseModel, abc.ABC):
+
+class ProtocolUnitResultBase(BaseModel, ProtocolUnitMixin):
+    class Config:
+        arbitrary_types_allowed = True
+        allow_mutation = False
+
+    inputs: Dict[str, Any]
+
+    name: Optional[str]      # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    pure: bool               # whether `ProtocolUnit` that produced this `ProtocolUnitResult` was a function purely of its inputs
+    key: ProtocolUnitKey     # key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+
+    outputs: Dict[str, Any]  # outputs is a dict returned by a `ProtocolUnit`'s `_execute` method
+
+
+class ProtocolUnitResult(ProtocolUnitResultBase):
     """Result for a single `ProtocolUnit` execution.
 
     Immutable upon creation.
 
     """
-    class Config:
-        extra = "allow"
-        allow_mutation = False
-        arbitrary_types_allowed = True
-
-    _dependencies: List[str] = PrivateAttr()
-    _uuid: str = PrivateAttr()
-
-    name: Optional[
-        str
-    ]  # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-    data: Any  # should likely be fleshed out, currently a free-for-all
-
-    def __init__(
-        self, dependencies: Optional[Iterable["ProtocolUnitResult"]] = None,
-            **data
-    ):
-        """
-        Parameters
-        ----------
-        dependencies : Optional[Iterable["ProtocolUnitResult"]]
-          The `ProtocolUnitResult`s from the predecessors of the `ProtocolUnit`
-          that creates this `ProtocolUnitResult`.
-        **data
-          All other keyword arguments are retained as attributes of this
-          `ProtocolUnitResult`.
-        """
-
-        if dependencies is None:
-            dependencies = []
-
-        super().__init__(**data)
-
-        self._uuid = str(uuid.uuid4())
-
-        dep_uuids = [dep._uuid for dep in dependencies]
-        self._dependencies = dep_uuids
+    def __init__(self, *, name=None, key, pure, inputs, outputs):
+            
+        inputs = self._keyencode_dependencies(inputs, ProtocolUnitResult)
+        super().__init__(name=name, key=key, pure=pure, inputs=inputs, outputs=outputs)
 
     def ok(self) -> bool:
         return True
 
 
-class ProtocolUnitFailure(ProtocolUnitResult):
+class ProtocolUnitFailure(ProtocolUnitResultBase):
     exception: Exception
 
     def ok(self) -> bool:
@@ -84,6 +67,7 @@ class ProtocolDAGResult(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        allow_mutation = False
 
     graph: nx.DiGraph
     name: Optional[str]

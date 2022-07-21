@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - openeye
 dependencies:
+  - dask-core
   - numpy
   - networkx
   - rdkit

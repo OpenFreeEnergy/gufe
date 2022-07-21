@@ -6,7 +6,7 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Dict
+from typing import Optional, Iterable, Any, Dict, List
 
 from openff.toolkit.utils.serialization import Serializable
 import networkx as nx
@@ -15,6 +15,7 @@ from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
 from .protocoldag import ProtocolDAG
+from .protocolunit import ProtocolUnit
 from .results import ProtocolDAGResult
 
 
@@ -105,7 +106,7 @@ class Protocol(Serializable, abc.ABC):
         stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
-    ) -> nx.DiGraph:
+    ) -> List[ProtocolUnit]:
         ...
 
     def create(
@@ -151,7 +152,7 @@ class Protocol(Serializable, abc.ABC):
         """
         return ProtocolDAG(
             name=name,
-            graph=self._create(
+            protocol_units=self._create(
                 stateA=stateA,
                 stateB=stateB,
                 mapping=mapping,
@@ -175,7 +176,7 @@ class Protocol(Serializable, abc.ABC):
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
 
         """
-        return self._results_cls(**self._gather(protocol_dag_results))
+        return self.result_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
     def _gather(
