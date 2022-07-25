@@ -139,3 +139,36 @@ def get_settings(settings_file) -> Settings:
         forcefield_file=ff_file_path,
     )
     return settings
+
+
+
+from typing import List
+from .. import chemicalsystem, SmallMoleculeComponent 
+from .models import Chemical_Composition, Solute
+
+def generate_chemicalComposition_settings(chemicalsystem:chemicalsystem) ->Chemical_Composition:
+    settings = {}
+
+    for label,component in chemicalsystem.components.items():
+        if isinstance(component, SmallMoleculeComponent):
+            if Solute.__name__ in settings:
+                pass
+            else:
+                settings[Solute.__name__] = Solute(exists=True)
+        else:
+            raise ValueError("Got unknown System Component: "+label+"\t"+component.__name__+"\n HELP!")
+        
+    return Chemical_Composition(**settings)
+
+
+#Rules:
+def any_molecule_present(chemical_composition:Chemical_Composition):
+    if(all([component_setting.exists == False for component_setting in chemical_composition])):
+        return ValueError("No Molecule at all in the system!")
+    return
+    
+
+def validate_chemical_composition(chemical_composition:Chemical_Composition)->List[Exception]:
+    exceptions = []
+    exceptions.append(any_molecule_present(chemical_composition=chemical_composition))
+    
