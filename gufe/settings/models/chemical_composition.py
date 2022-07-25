@@ -1,3 +1,7 @@
+"""
+Pydantic models used for storing settings.
+"""
+
 from .abstract import SettingsBaseModel
 from pydantic import BaseModel
 from typing import List, Optional
