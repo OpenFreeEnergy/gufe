@@ -6,11 +6,11 @@ from typing import Dict, Optional
 
 import numpy as np
 
-from .base import GufeTokenizableMixin, normalize_object
-from .component import Component, from_dict as component_from_dict
+from .base import GufeTokenizable
+from .component import Component
 
 
-class ChemicalSystem(abc.Mapping, GufeTokenizableMixin):
+class ChemicalSystem(abc.Mapping, GufeTokenizable):
     """A node of an alchemical network.
 
     Attributes
@@ -31,6 +31,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizableMixin):
 
     def __init__(
         self,
+        *, # force kwarg usage
         components: Dict[str, Component],
         box_vectors: Optional[np.ndarray] = None,
         name: Optional[str] = None,
@@ -96,7 +97,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizableMixin):
     def to_dict(self):
         return {
             "components": {
-                key: value.to_dict() for key, value in self.components.items()
+                key: value for key, value in self.components.items()
             },
             "box_vectors": self.box_vectors.tolist(),
             "name": self.name,
@@ -108,7 +109,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizableMixin):
     def from_dict(cls, d):
         return cls(
             components={
-                key: Component.from_dict(value) for key, value in d["components"]
+                key: Component.from_dict(value) for key, value in d["components"].items()
             },
             box_vectors=np.array(d["box_vectors"]),
             name=d["name"],

@@ -77,7 +77,11 @@ class SmallMoleculeComponent(Component):
         are used, a name must be given to differentiate these.  This name
         will be used in the hash.
     """
-    def __init__(self, rdkit: RDKitMol, name: str = ""):
+    def __init__(self, *, # force kwarg usage
+            rdkit: RDKitMol, name: str = ""):
+
+        super().__init__()
+
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
         conformers = list(rdkit.GetConformers())
@@ -117,7 +121,7 @@ class SmallMoleculeComponent(Component):
     @classmethod
     def from_openff(cls, openff: OFFMolecule, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
-        return cls(openff.to_rdkit(), name=name)
+        return cls(rdkit=openff.to_rdkit(), name=name)
 
     @property
     def smiles(self) -> str:
@@ -127,13 +131,7 @@ class SmallMoleculeComponent(Component):
     def name(self) -> str:
         return self._hash.name
 
-    def __hash__(self):
-        return hash(self._hash)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         """Serialize to dict representation"""
         # required attributes: (based on openff to_dict)
         # for each atom:
@@ -183,7 +181,7 @@ class SmallMoleculeComponent(Component):
         return d
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""
         # manually construct OpenFF molecule as in cookbook
         m = OFFMolecule()
