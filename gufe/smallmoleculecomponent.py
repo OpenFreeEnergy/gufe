@@ -5,7 +5,6 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
-from openff.toolkit.utils.serialization import Serializable
 import warnings
 
 from rdkit import Chem
@@ -46,7 +45,7 @@ def _ensure_ofe_version(mol: RDKitMol):
     mol.SetProp("ofe-version", __version__)
 
 
-class SmallMoleculeComponent(Component, Serializable):
+class SmallMoleculeComponent(Component):
     """A molecule wrapper suitable for small molecules
 
     .. note::

@@ -7,10 +7,11 @@ from typing import Dict, Optional
 import numpy as np
 from openff.toolkit.utils.serialization import Serializable
 
-from .component import Component
+from .base import GufeTokenizableMixin, normalize_object
+from .component import Component, from_dict as component_from_dict
 
 
-class ChemicalSystem(Serializable, abc.Mapping):
+class ChemicalSystem(abc.Mapping, GufeTokenizableMixin):
     """A node of an alchemical network.
 
     Attributes
@@ -93,8 +94,9 @@ class ChemicalSystem(Serializable, abc.Mapping):
 
     # TODO: broken without a `Component` registry of some kind
     # should then be changed to use the registry
-    def to_dict(self):
+    def _to_dict(self):
         return {
+            "__class__": self.__class__.__name__,
             "components": {
                 key: value.to_dict() for key, value in self.components.items()
             },
@@ -105,7 +107,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
     # TODO: broken without a `Component` registry of some kind
     # should then be changed to use the registry
     @classmethod
-    def from_dict(cls, d):
+    def _from_dict(cls, d):
         return cls(
             components={
                 key: Component.from_dict(value) for key, value in d["components"]
