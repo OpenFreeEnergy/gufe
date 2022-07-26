@@ -45,15 +45,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
         if not isinstance(other, self.__class__):
             return NotImplemented("Component comparisons must be of the same type")
 
-        d = self.to_dict()
-        do = other.to_dict()
-
-        if set(d.keys()) == set(do.keys()):
-            for key in d:
-                if d[key] != do[key]:
-                    return False
-
-            return True
+        return self.to_dict() == other.to_dict()
 
     def __hash__(self):
         return hash(self.key)
@@ -235,5 +227,3 @@ def tokenize(arg):
     """Deterministic token"""
     hasher = _md5(str(normalize_object(arg)).encode())
     return hasher.hexdigest()
-
-
