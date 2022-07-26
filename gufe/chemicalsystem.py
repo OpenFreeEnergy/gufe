@@ -5,12 +5,12 @@ from collections import abc
 from typing import Dict, Optional
 
 import numpy as np
-from openff.toolkit.utils.serialization import Serializable
 
-from .components import Component
+from .base import GufeTokenizableMixin, normalize_object
+from .component import Component, from_dict as component_from_dict
 
 
-class ChemicalSystem(Serializable, abc.Mapping):
+class ChemicalSystem(abc.Mapping, GufeTokenizableMixin):
     """A node of an alchemical network.
 
     Attributes
