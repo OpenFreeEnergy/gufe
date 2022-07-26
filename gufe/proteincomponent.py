@@ -29,6 +29,8 @@ class ProteinComponent(Component):
         name : str, optional
           identifier for this Protein, used as the hash
         """
+        super().__init__()
+
         # yes this is fragile and silly, but it'll do for now
         self._openmm_top = openmm_top
         self._openmm_pos = openmm_pos
@@ -71,18 +73,12 @@ class ProteinComponent(Component):
     def to_openeye(self) -> OEMol:
         raise NotImplementedError()
 
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         raise NotImplementedError()
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         raise NotImplementedError()
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
 
     @property
     def total_charge(self):

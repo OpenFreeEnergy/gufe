@@ -54,6 +54,8 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             chemical state is added to an `AlchemicalNetwork`.
 
         """
+        super().__init__()
+
         self._components = components
         self._name = name
 
@@ -109,7 +111,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
     def _from_dict(cls, d):
         return cls(
             components={
-                key: Component.from_dict(value) for key, value in d["components"].items()
+                key: value for key, value in d["components"].items()
             },
             box_vectors=np.array(d["box_vectors"]),
             name=d["name"],

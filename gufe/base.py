@@ -4,6 +4,7 @@ import sys
 import threading
 import hashlib
 import inspect
+from copy import copy
 from packaging.version import parse as parse_version
 from typing import Dict, Any, Callable
 
@@ -94,10 +95,10 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
             elif isinstance(value, list):
                 for i, item in enumerate(value):
                     if hasattr(item, '_gufe_tokenize'):
-                        d[key][i] = item.token
+                        d[key][i] = item.key
             else:
                 if hasattr(value, '_gufe_tokenize'):
-                    d[key] = value.token
+                    d[key] = value.key
 
         return d
 
@@ -111,8 +112,8 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
                     if isinstance(item, str) and item in TOKENIZABLE_REGISTRY:
                         d[key][i] = TOKENIZABLE_REGISTRY[item]
             else:
-                if isinstance(item, str) and item in TOKENIZABLE_REGISTRY:
-                    d[key] = TOKENIZABLE_REGISTRY[item]
+                if isinstance(value, str) and value in TOKENIZABLE_REGISTRY:
+                    d[key] = TOKENIZABLE_REGISTRY[value]
 
         return d
 
@@ -140,7 +141,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
                     obj[key] = cls._dictdecode_dependencies(value)
         elif isinstance(obj, list):
             for i, item in enumerate(obj):
-                obj[i] = cls._dictdecode_dependencies
+                obj[i] = cls._dictdecode_dependencies(item)
 
         return obj
 
@@ -171,6 +172,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
     @classmethod
     def from_dict(cls, d: dict, keydecode_dependencies=False):
         """Deserialize from dict representation"""
+        d = copy(d)
         component_type = d.pop('__class__', None)
         if component_type is None:
             raise KeyError("No `__class__` key found; unable to deserialize Component")
