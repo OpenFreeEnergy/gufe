@@ -56,6 +56,8 @@ class SolventComponent(Component):
           ...                      ion_concentration=0.2 * unit.molar)
 
         """
+        super().__init__()
+
         self._smiles = smiles
         norm = positive_ion.strip('-+').capitalize()
         if norm not in _CATIONS:
@@ -114,20 +116,14 @@ class SolventComponent(Component):
         """Solvents don't have a formal charge defined so this returns None"""
         return None
 
-    def __eq__(self, other):
-        if not isinstance(other, SolventComponent):
-            return NotImplemented
-        return (self.smiles == other.smiles and
-                self.positive_ion == other.positive_ion and
-                self.negative_ion == other.negative_ion and
-                self.ion_concentration == other.ion_concentration)
+    def _gufe_tokenize(self):
+        """Return a list of normalized inputs for `gufe.base.tokenize`.
 
-    def __hash__(self):
-        return hash((self.smiles, self.positive_ion, self.negative_ion,
-                     self.ion_concentration))
+        """
+        return sorted(self.to_dict(include_defaults=False).items(), key=str)
 
     @classmethod
-    def from_dict(cls, d):
+    def _from_dict(cls, d):
         """Deserialize from dict representation"""
         ion_conc = d['ion_concentration']
         if ion_conc:
@@ -135,7 +131,7 @@ class SolventComponent(Component):
 
         return cls(**d)
 
-    def to_dict(self):
+    def _to_dict(self):
         """For serialization"""
         ion_conc = self.ion_concentration
         if ion_conc:

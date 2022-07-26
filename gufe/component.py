@@ -4,37 +4,28 @@
 import abc
 from typing import Union
 
+from .base import GufeTokenizable
 
-class Component(abc.ABC):
+
+class Component(abc.ABC, GufeTokenizable):
     """Base class for members of a ChemicalSystem"""
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name})"
-
-    @abc.abstractmethod
-    def __hash__(self):
-        pass
-
-    def __lt__(self, other):
-        return hash(self) < hash(other)
-
-    @abc.abstractmethod
-    def __eq__(self, other):
-        pass
-
-    @abc.abstractmethod
-    def to_dict(self) -> dict:
-        pass
 
     @property
     @abc.abstractmethod
     def name(self) -> str:
         pass
 
+    @abc.abstractmethod
+    def _to_dict(self) -> dict:
+        ...
+
     @classmethod
     @abc.abstractmethod
-    def from_dict(cls, d: dict):
-        pass
+    def _from_dict(cls, d: dict):
+        ...
 
     @property
     @abc.abstractmethod
