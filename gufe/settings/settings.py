@@ -64,7 +64,6 @@ def ff_settings_from_offxml(force_field) -> ForcefieldSettings:
     forcefield_settings = ForcefieldSettings(
         date=force_field.date,
         author=force_field.author,
-        aromaticity_model=force_field.aromaticity_model,
         vdW=vdW,
         electrostatics=electrostatics,
         gbsa=gbsa,
