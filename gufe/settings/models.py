@@ -104,13 +104,6 @@ class ThermoSettings(SettingsBaseModel):
     redox_potential: Union[float, None]
 
 
-class ChemicalComposition(SettingsBaseModel):
-    # What does this look like?
-    # We take in smiles or file?
-    # Or do we take in a SmallMoleculeComponent object?
-    pass
-
-
 class Settings(SettingsBaseModel):
     """
     Container for all settings needed by a protocol
