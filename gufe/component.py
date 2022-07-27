@@ -7,7 +7,7 @@ from typing import Union
 from .base import GufeTokenizable
 
 
-class Component(abc.ABC, GufeTokenizable):
+class Component(GufeTokenizable):
     """Base class for members of a ChemicalSystem"""
 
     def __repr__(self):
