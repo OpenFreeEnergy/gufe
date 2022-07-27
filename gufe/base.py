@@ -35,7 +35,7 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
     ...
         
 
-class GufeTokenizable(metaclass=_ABCGufeClassMeta):
+class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
     """
@@ -52,16 +52,11 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
         return hash(self.key)
 
     @property
-    def token(self):
-        if not hasattr(self, '_token') or self._token is None:
-            self._token = tokenize(self)
-        return self._token
-
-    @property
     def key(self):
         if not hasattr(self, '_key') or self._key is None:
             prefix = type(self).__name__
-            self._key = GufeKey(f"{prefix}-{self.token}")
+            token = tokenize(self)
+            self._key = GufeKey(f"{prefix}-{token}")
 
         # add to registry if not already present
         TOKENIZABLE_REGISTRY[self._key] = self
@@ -69,6 +64,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
         return self._key
 
     @property
+    @abc.abstractmethod
     def defaults(self):
         sig = inspect.signature(self.__init__)
 
@@ -84,7 +80,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
     def _keyencode_dependencies(self, d):
         for key, value in d.items():
             if isinstance(value, dict):
-                self._keyencode_dependencies(value)
+                d[key] = self._keyencode_dependencies(value)
             elif isinstance(value, list):
                 for i, item in enumerate(value):
                     if hasattr(item, '_gufe_tokenize'):
@@ -99,7 +95,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
     def _keydecode_dependencies(cls, d):
         for key, value in d.items():
             if isinstance(value, dict):
-                cls._keydecode_dependencies(value)
+                d[key] = cls._keydecode_dependencies(value)
             elif isinstance(value, list):
                 for i, item in enumerate(value):
                     if isinstance(item, str) and item in TOKENIZABLE_REGISTRY:
@@ -113,7 +109,7 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
     def _dictencode_dependencies(self, d):
         for key, value in d.items():
             if isinstance(value, dict):
-                self._dictencode_dependencies(value)
+                d[key] = self._dictencode_dependencies(value)
             elif isinstance(value, list):
                 for i, item in enumerate(value):
                     if hasattr(item, 'to_dict'):
