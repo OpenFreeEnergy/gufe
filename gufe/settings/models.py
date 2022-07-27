@@ -68,50 +68,6 @@ class ElectrostaticSettings(SettingsBaseModel):
     solvent_dielectric: Union[float, None]
 
 
-class BondSettings(SettingsBaseModel):
-    """
-    Settings for harmonic bonds
-    """
-
-    # U(r) = (k/2)*(r-length)^2
-    potential: Literal["harmonic"]
-    # Might support other methods?
-    fractional_bondorder_method: Literal["AM1-Wiberg"]
-    fractional_bondorder_interpolation: Literal["linear"]
-
-
-class AngleSettings(SettingsBaseModel):
-    """
-    Settings for harmonic angles
-    """
-
-    # U(r) = (k/2)*(theta-angle)^2
-    potential: Literal["harmonic"]
-
-
-class ProperTorsionSettings(SettingsBaseModel):
-    """
-    Settings for proper torsions
-    """
-
-    # U = \sum_{i=1}^N k_i * (1 + cos(periodicity_i * phi - phase_i))
-    potential: Literal["k*(1+cos(periodicity*theta-phase))"]
-    default_idivf: Union[Literal["auto"], int] = "auto"
-    # Might support other methods?
-    fractional_bondorder_method: Literal["AM1-Wiberg"]
-    fractional_bondorder_interpolation: Literal["linear"]
-
-
-class ImproperTorsionSettings(SettingsBaseModel):
-    """
-    Settings for improper torsions
-    """
-
-    # U = \sum_{i=1}^N k_i * (1 + cos(periodicity_i * phi - phase_i))
-    potential: Literal["k*(1+cos(periodicity*theta-phase))"]
-    default_idivf: Literal["auto"]
-
-
 class GBSASettings(SettingsBaseModel):
     """ "
     Settings for Generalized-Born surface area (GBSA) implicit solvent parameters
@@ -134,10 +90,6 @@ class ForcefieldSettings(SettingsBaseModel):
     # These should also allow None
     vdW: VdWSettings
     electrostatics: ElectrostaticSettings
-    bonds: BondSettings
-    angles: AngleSettings
-    proper_torsions: ProperTorsionSettings
-    improper_torsions: ImproperTorsionSettings
     gbsa: GBSASettings
 
 
