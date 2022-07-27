@@ -5,7 +5,7 @@ from __future__ import annotations
 from openff.units import unit
 from typing import Optional, Tuple
 
-from gufe import Component
+from .component import Component
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
