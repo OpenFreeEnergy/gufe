@@ -9,10 +9,10 @@ import warnings
 
 from rdkit import Chem
 
-from gufe import __version__
-from gufe import Component
-from gufe.molhashing import hashmol
-from gufe.custom_typing import RDKitMol, OEMol
+from .. import __version__
+from .component import Component
+from ..molhashing import hashmol
+from ..custom_typing import RDKitMol, OEMol
 
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:

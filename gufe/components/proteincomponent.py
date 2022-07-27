@@ -8,8 +8,8 @@ except ImportError:
 else:
     HAS_OPENMM = True
 
-from gufe import Component
-from gufe.custom_typing import RDKitMol, OEMol
+from .component import Component
+from ..custom_typing import RDKitMol, OEMol
 
 
 class ProteinComponent(Component):
