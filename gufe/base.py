@@ -12,19 +12,13 @@ from typing import Dict, Any, Callable
 TOKENIZABLE_CLASS_REGISTRY = {}
 
 def register_tokenizable_class(cls):
-    TOKENIZABLE_CLASS_REGISTRY[cls.__name__] = cls
+    TOKENIZABLE_CLASS_REGISTRY[(cls.__module__, cls.__qualname__)] = cls
 
-def _hash(obj):
-    return hash(obj.key)
-    
+
 class _GufeTokenizableMeta(type):
     def __new__(cls, name, bases, classdict):
         componentcls = super().__new__(cls, name, bases, classdict)
         register_tokenizable_class(componentcls)
-
-        # since __hash__ isn't inheritable, monkey-patching is the best we can
-        # do besides defining it in every subclass
-        cls.__hash__ = _hash
 
         return componentcls
 
@@ -59,7 +53,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             self._key = GufeKey(f"{prefix}-{token}")
 
         # add to registry if not already present
-        TOKENIZABLE_REGISTRY[self._key] = self
+        TOKENIZABLE_REGISTRY.setdefault(self._key, self)
 
         return self._key
 
@@ -144,7 +138,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Serialize to dict representation"""
 
         d = self._to_dict()
-        d['__class__'] = self.__class__.__name__
+        d['__module__'] = self.__class__.__module__
+        d['__qualname__'] = self.__class__.__qualname__
 
         if keyencode_dependencies:
             d = self._keyencode_dependencies(d)
@@ -162,16 +157,17 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def from_dict(cls, d: dict, keydecode_dependencies=False):
         """Deserialize from dict representation"""
         d = copy(d)
-        component_type = d.pop('__class__', None)
-        if component_type is None:
-            raise KeyError("No `__class__` key found; unable to deserialize Component")
+        qualname = d.pop('__qualname__', None)
+        module = d.pop('__module__', None)
+        if (qualname is None) or (module is None):
+            raise KeyError("`__qualname__` or `__module__` key not found; unable to reconstitute from dict")
 
         if keydecode_dependencies:
             d = cls._keydecode_dependencies(d)
         else:
             d = cls._dictdecode_dependencies(d)
 
-        obj = TOKENIZABLE_CLASS_REGISTRY[component_type]._from_dict(d)
+        obj = TOKENIZABLE_CLASS_REGISTRY[(module, qualname)]._from_dict(d)
 
         # if this object is already in memory, return existing object
         # new object will eventually be garbage collected
@@ -211,7 +207,7 @@ else:
 
 def normalize_object(o):
     try:
-        o._gufe_tokenize()
+        return o._gufe_tokenize()
     except AttributeError:
         raise ValueError("Cannot normalize object without `_gufe_tokenize` method.")
 
@@ -224,7 +220,7 @@ def tokenize(obj: GufeTokenizable):
     >>> from gufe import SolventComponent
     >>> s = SolventComponent()
     >>> tokenize(s)
-    '6adf97f83acf6453d4a6a4b1070f3754'
+    'e6eef7519854d35a5ce6c84136b3684c'
 
     >>> tokenize(s) == tokenize(SolventComponent.from_dict(s.to_dict()))
     True

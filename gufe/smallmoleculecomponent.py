@@ -212,3 +212,7 @@ class SmallMoleculeComponent(Component):
     @property
     def total_charge(self):
         return Chem.GetFormalCharge(self._rdkit)
+
+    @property
+    def defaults(self):
+        return super().defaults
