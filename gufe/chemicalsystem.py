@@ -96,7 +96,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
 
     # TODO: broken without a `Component` registry of some kind
     # should then be changed to use the registry
-    def to_dict(self):
+    def _to_dict(self):
         return {
             "components": {
                 key: value for key, value in self.components.items()
@@ -108,7 +108,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
     # TODO: broken without a `Component` registry of some kind
     # should then be changed to use the registry
     @classmethod
-    def from_dict(cls, d):
+    def _from_dict(cls, d):
         return cls(
             components={
                 key: value for key, value in d["components"].items()

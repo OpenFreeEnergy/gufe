@@ -14,11 +14,18 @@ TOKENIZABLE_CLASS_REGISTRY = {}
 def register_tokenizable_class(cls):
     TOKENIZABLE_CLASS_REGISTRY[cls.__name__] = cls
 
+def _hash(obj):
+    return hash(obj.key)
     
 class _GufeTokenizableMeta(type):
     def __new__(cls, name, bases, classdict):
         componentcls = super().__new__(cls, name, bases, classdict)
         register_tokenizable_class(componentcls)
+
+        # since __hash__ isn't inheritable, monkey-patching is the best we can
+        # do besides defining it in every subclass
+        cls.__hash__ = _hash
+
         return componentcls
 
 
@@ -32,12 +39,6 @@ class GufeTokenizable(metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
     """
-    def __init__(self):
-
-        # since __hash__ isn't inheritable, monkey-patching is the best we can
-        # do besides defining it in every subclass
-        self.__class__.__hash__ = GufeTokenizable.__hash__
-
     def __lt__(self, other):
         return hash(self) < hash(other)
 
@@ -190,7 +191,6 @@ class GufeKey(str):
 
 
 
-
 # TODO: may want to make this a weakref dict to avoid holding references here
 TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = {}
 """Registry of tokenizable objects.
@@ -209,21 +209,30 @@ if _PY_VERSION >= parse_version("3.9"):
 
     def _md5(x, _hashlib_md5=hashlib.md5):
         return _hashlib_md5(x, usedforsecurity=False)
-
 else:
     _md5 = hashlib.md5
 
-NORMALIZERS = {}
 
 def normalize_object(o):
-    method = getattr(o, "_gufe_tokenize", None)
-    if method is not None:
-        return method()
-    else:
-        raise ValueError("Cannot normalize without `_gufe_tokenize` method.")
+    try:
+        o._gufe_tokenize()
+    except AttributeError:
+        raise ValueError("Cannot normalize object without `_gufe_tokenize` method.")
 
 
-def tokenize(arg):
-    """Deterministic token"""
-    hasher = _md5(str(normalize_object(arg)).encode())
+def tokenize(obj: GufeTokenizable):
+    """Generate a deterministic, relatively-stable token from a `GufeTokenizable` object.
+
+    Examples
+    --------
+    >>> from gufe import SolventComponent
+    >>> s = SolventComponent()
+    >>> tokenize(s)
+    '6adf97f83acf6453d4a6a4b1070f3754'
+
+    >>> tokenize(s) == tokenize(SolventComponent.from_dict(s.to_dict()))
+    True
+
+    """
+    hasher = _md5(str(normalize_object(obj)).encode())
     return hasher.hexdigest()

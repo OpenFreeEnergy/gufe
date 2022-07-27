@@ -29,8 +29,6 @@ class ProteinComponent(Component):
         name : str, optional
           identifier for this Protein, used as the hash
         """
-        super().__init__()
-
         # yes this is fragile and silly, but it'll do for now
         self._openmm_top = openmm_top
         self._openmm_pos = openmm_pos
