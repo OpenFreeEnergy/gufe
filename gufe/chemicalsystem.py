@@ -54,8 +54,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             chemical state is added to an `AlchemicalNetwork`.
 
         """
-        super().__init__()
-
         self._components = components
         self._name = name
 
@@ -94,8 +92,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             )
         )
 
-    # TODO: broken without a `Component` registry of some kind
-    # should then be changed to use the registry
     def _to_dict(self):
         return {
             "components": {
@@ -105,8 +101,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             "name": self.name,
         }
 
-    # TODO: broken without a `Component` registry of some kind
-    # should then be changed to use the registry
     @classmethod
     def _from_dict(cls, d):
         return cls(

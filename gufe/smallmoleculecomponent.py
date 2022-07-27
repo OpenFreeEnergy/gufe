@@ -78,8 +78,6 @@ class SmallMoleculeComponent(Component):
     def __init__(self, *, # force kwarg usage
             rdkit: RDKitMol, name: str = ""):
 
-        super().__init__()
-
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
         self._rdkit = rdkit
@@ -122,6 +120,8 @@ class SmallMoleculeComponent(Component):
     def name(self) -> str:
         return self._hash.name
 
+    # TODO: this implementation is not stable due to its dependence on OpenFF's to_dict
+    # may be preferrable to use SDF representation
     def _to_dict(self) -> dict:
         """Serialize to dict representation"""
         d = self.to_openff().to_dict()

@@ -56,8 +56,6 @@ class SolventComponent(Component):
           ...                      ion_concentration=0.2 * unit.molar)
 
         """
-        super().__init__()
-
         self._smiles = smiles
         norm = positive_ion.strip('-+').capitalize()
         if norm not in _CATIONS:
@@ -115,12 +113,6 @@ class SolventComponent(Component):
     def total_charge(self):
         """Solvents don't have a formal charge defined so this returns None"""
         return None
-
-    def _gufe_tokenize(self):
-        """Return a list of normalized inputs for `gufe.base.tokenize`.
-
-        """
-        return sorted(self.to_dict(include_defaults=False).items(), key=str)
 
     @classmethod
     def _from_dict(cls, d):
