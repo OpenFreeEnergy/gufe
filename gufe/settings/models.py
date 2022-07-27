@@ -21,7 +21,7 @@ class SettingsBaseModel(BaseModel):
         # they can always modify a so-called "immutable" object.
         # https://pydantic-docs.helpmanual.io/usage/models/#faux-immutability
         allow_mutation = False
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed = False
         smart_union = True
 
 
@@ -139,9 +139,6 @@ class ForcefieldSettings(SettingsBaseModel):
     proper_torsions: ProperTorsionSettings
     improper_torsions: ImproperTorsionSettings
     gbsa: GBSASettings
-
-    # Misc
-    aromaticity_model: Literal["OEAroModel_MDL"]
 
 
 class ThermoSettings(SettingsBaseModel):

@@ -54,8 +54,7 @@
       "gb_model": "OBC1",
       "solvent_dielectric": 78.5,
       "solute_dielectric": 1.0
-    },
-    "aromaticity_model": "OEAroModel_MDL"
+    }
   },
   "thermo_settings": {
     "temperature": 300.0,

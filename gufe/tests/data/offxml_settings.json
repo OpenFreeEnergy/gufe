@@ -16,8 +16,7 @@
       "switch_width": 1.0,
       "method": "cutoff"
     },
-    "periodic_potential": "Ewald3D-ConductingBoundary",
-    "aromaticity_model": "OEAroModel_MDL"
+    "periodic_potential": "Ewald3D-ConductingBoundary"
   },
   "thermo_settings": {
     "temperature": 300.0,
