@@ -18,7 +18,8 @@ class ProteinComponent(Component):
     This representation is immutable.  If you want to make any modifications,
     do this in an appropriate toolkit then remake this class.
     """
-    def __init__(self, openmm_top, openmm_pos, name=""):
+    def __init__(self, *, # force kwarg usage
+            openmm_top, openmm_pos, name=""):
         """
         Parameters
         ----------
@@ -81,3 +82,7 @@ class ProteinComponent(Component):
     @property
     def total_charge(self):
         return None
+
+    @property
+    def defaults(self):
+        return super().defaults

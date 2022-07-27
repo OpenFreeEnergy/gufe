@@ -34,7 +34,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
         *, # force kwarg usage
         components: Dict[str, Component],
         box_vectors: Optional[np.ndarray] = None,
-        name: Optional[str] = None,
+        name: Optional[str] = "",
     ):
         """Create a node for an alchemical network.
 
@@ -163,3 +163,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
         """ """
         # alternate initializer for typical ligand+solvent system
         ...
+
+    @property
+    def defaults(self):
+        return super().defaults
