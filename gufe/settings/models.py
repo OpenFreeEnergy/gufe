@@ -73,7 +73,7 @@ class GBSASettings(SettingsBaseModel):
     Settings for Generalized-Born surface area (GBSA) implicit solvent parameters
     """
 
-    gb_model: Literal["HCT", "OBC1", "OBC2"]
+    gb_model: str
     solvent_dielectric: float
     solute_dielectric: float
 
