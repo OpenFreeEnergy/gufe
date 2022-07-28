@@ -31,7 +31,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
 
     def __init__(
         self,
-        *, # force kwarg usage
         components: Dict[str, Component],
         box_vectors: Optional[np.ndarray] = None,
         name: Optional[str] = "",
@@ -158,6 +157,5 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
         # alternate initializer for typical ligand+solvent system
         ...
 
-    @property
-    def defaults(self):
-        return super().defaults
+    def _defaults(self):
+        return super()._defaults()
