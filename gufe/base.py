@@ -97,6 +97,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """This method should be overridden to provide the dict form of the 
         `GufeTokenizable` subclass.
 
+        `GufeTokenizable` instances shoulds *not* be used as keys in dicts
+        within this object; even though they are hashable, this makes
+        serialization into e.g. JSON difficult.
+
         """
         ...
 

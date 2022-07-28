@@ -77,8 +77,7 @@ class SmallMoleculeComponent(Component):
         are used, a name must be given to differentiate these.  This name
         will be used in the hash.
     """
-    def __init__(self, *, # force kwarg usage
-            rdkit: RDKitMol, name: str = ""):
+    def __init__(self, rdkit: RDKitMol, name: str = ""):
 
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
@@ -288,6 +287,5 @@ class SmallMoleculeComponent(Component):
     def total_charge(self):
         return Chem.GetFormalCharge(self._rdkit)
 
-    @property
-    def defaults(self):
-        return super().defaults
+    def _defaults(self):
+        return super()._defaults()
