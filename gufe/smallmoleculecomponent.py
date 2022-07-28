@@ -127,14 +127,59 @@ class SmallMoleculeComponent(Component, Serializable):
 
     def to_dict(self) -> dict:
         """Serialize to dict representation"""
-        d = self.to_openff().to_dict()
+        # required attributes: (based on openff to_dict)
+        # for each atom:
+        #   element, name, formal charge, aromaticity, stereochemistry
+        # for each bond:
+        #   idx0, idx1, order, aromaticity, stereochemistry
+        # TODO: Do we care about fractional bond orders?
+        #       is aromaticity reperceived on creation?
+        d = dict()
+        m = self.to_openff()
+        atoms = [
+            (atom.element.atomic_number,
+             atom.name,
+             atom.formal_charge._value,
+             atom.is_aromatic,
+             atom.stereochemistry or '')
+            for atom in m.atoms
+        ]
+        bonds = [
+            (bond.atom1_index, bond.atom2_index, bond.bond_order,
+             bond.is_aromatic, bond.stereochemistry or '')
+            for bond in m.bonds
+        ]
+        d = {
+            'atoms': atoms,
+            'bonds': bonds,
+            'name': m.name,
+            'conformer':
+        }
+
         return d
 
     @classmethod
     def from_dict(cls, d: dict):
         """Deserialize from dict representation"""
-        return cls.from_openff(OFFMolecule.from_dict(d),
-                               name=d.get('name', ''))
+        m = OFFMolecule()
+        for (an, name, fc, arom, stereo) in d['atoms']:
+            m.add_atom(
+                atomic_number=an,
+                formal_charge=fc,
+                is_aromatic=arom,
+                stereochemistry=stereo or None,
+                name=name,
+            )
+        for (idx1, idx2, order, arom, stereo) in d['bonds']:
+            m.add_bond(
+                atom1=idx1,
+                atom2=idx2,
+                bond_order=order,
+                is_aromatic=arom,
+                stereochemistry=stereo or None,
+            )
+
+        return cls.from_openff(m, name=d['name'])
 
     def to_sdf(self) -> str:
         """Create a string based on SDF.
