@@ -1,10 +1,15 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import abc
+import json
 from typing import Any
 
 from .resultserver import ResultServer
 from .metadatastore import JSONMetadataStore
+
+from ..base import (
+    is_gufe_obj, key_decode_dependencies, modify_dependencies
+)
 
 
 class _ResultContainer(abc.ABC):
@@ -92,10 +97,75 @@ class ResultClient(_ResultContainer):
     def delete(self, location):
         self._result_server.delete(location)
 
-    def store_protocol_dag_result(self, result):
+    def store_result(self, result):
         # I don't know how we get the path information for the protocol dag
         # results
         self.result_server.store(...)
+
+    @staticmethod
+    def _gufe_key_to_storage_key(prefix, key):
+        prefix = prefix.split('/')  # remove this if we switch to tuples
+        cls, token = key.split('-')
+        tup = tuple(list(prefix) + [cls, f"{token}.json"])
+        # right now we're using strings, but we've talked about switching
+        # that to tuples
+        return "/".join(tup)
+
+    def _store_gufe_tokenizable(self, prefix, obj):
+        # I think this is the only place we'll use this trick, otherwise the
+        # next two lines should be find_all_tokenizables
+        all_objs = {obj}
+        modify_dependencies(obj.to_shallow_dict(), all_objs.add, is_gufe_obj)
+        # that bit of magic inspired by common approaches with ast
+
+        for o in all_objs:
+            key = self._gufe_key_to_storage_key(prefix, o.key)
+
+            # we trust that if we get the same key, it's the same object, so
+            # we only store on keys that we don't already know
+            if key not in self.result_server:
+                data = json.dumps(o.to_keyed_dict(),
+                                  sort_keys=True).encode('utf-8')
+                self.result_server.store_bytes(key, data)
+
+    def store_transformation(self, transformation):
+        self._store_gufe_tokenizable("setup", transformation)
+
+    def store_network(self, network):
+        self._store_gufe_tokenizable("setup", network)
+
+
+    def _load_gufe_object(self, gufe_key):
+        def find_keyencoded_in_json(json_str):
+            # this implementation may seem strange, but it will be a lot
+            # faster than traversing the dict
+            ...
+
+        def recursive_build_object_cache(gufe_key):
+            # This implementation is a bit fragile, because it ensuring that
+            # we don't duplicate objects in memory depends on the fact that
+            # `from_keyencoded_dict` gets keyencoded objects from a cache
+            # (they are cached on creation).
+            storage_key = self._gufe_key_to_storage_key(gufe_key)
+            with self.load_bytes(storage_key) as f:
+                keyencoded_json = f.read().decode('utf-8')
+
+            key_encoded = find_keyencoded_in_json(keyencoded_json)
+            for key in key_encoded:
+                # we're actually only doing this for the side effect of
+                # generating the objects and adding them to the registry
+                recursive_build_object_cache(key)
+
+            dct = json.loads(keyencoded_json)
+            return key_decode_dependencies(dct)
+
+        return recursive_build_object_cache(gufe_key)
+
+    def load_transformation(self, key: str):
+        return self._load_gufe_object(key)
+
+    def load_network(self, key: str):
+        return self._load_gufe_object(key)
 
     def _load_next_level(self, transformation):
         return TransformationResult(self, transformation)
