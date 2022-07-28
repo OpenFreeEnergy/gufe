@@ -18,15 +18,6 @@ class Component(GufeTokenizable):
     def name(self) -> str:
         pass
 
-    @abc.abstractmethod
-    def _to_dict(self) -> dict:
-        ...
-
-    @classmethod
-    @abc.abstractmethod
-    def _from_dict(cls, d: dict):
-        ...
-
     @property
     @abc.abstractmethod
     def total_charge(self) -> Union[int, None]:

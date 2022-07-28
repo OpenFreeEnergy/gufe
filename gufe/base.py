@@ -48,6 +48,12 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def __hash__(self):
         return hash(self.key)
 
+    def _gufe_tokenize(self):
+        """Return a list of normalized inputs for `gufe.base.tokenize`.
+
+        """
+        return sorted(self.to_dict(include_defaults=False).items(), key=str)
+
     @property
     def key(self):
         if not hasattr(self, '_key') or self._key is None:
@@ -61,8 +67,21 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return self._key
 
     @property
-    @abc.abstractmethod
     def defaults(self):
+        """Dictionary of default key-value pairs for this `GufeTokenizable` object.
+
+        These defaults are stripped from the dict form of this object produced
+        with `to_dict(include_defaults=False) where default values are present.
+
+        """
+        return self._defaults()
+
+    @abc.abstractmethod
+    def _defaults(self):
+        """This method should be overridden to provide the dict of defaults
+        appropriate for the `GufeTokenizable` subclass.
+
+        """
         sig = inspect.signature(self.__init__)
 
         defaults = {
@@ -72,11 +91,24 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         return defaults
 
-    def _gufe_tokenize(self):
-        """Return a list of normalized inputs for `gufe.base.tokenize`.
+
+    @abc.abstractmethod
+    def _to_dict(self) -> Dict:
+        """This method should be overridden to provide the dict form of the 
+        `GufeTokenizable` subclass.
 
         """
-        return sorted(self.to_dict(include_defaults=False).items(), key=str)
+        ...
+
+    @classmethod
+    @abc.abstractmethod
+    def _from_dict(cls, dct: Dict):
+        """This method should be overridden to receive the dict form of the 
+        `GufeTokenizable` subclass and generate an instance from it.
+
+        """
+        ...
+
 
     def to_dict(self, include_defaults=True) -> Dict:
         """Generate full dict representation, with all referenced `GufeTokenizable` objects
@@ -105,7 +137,14 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @classmethod
     def from_dict(cls, dct: Dict):
-        """Generate instance from full dict representation.
+        """Generate an instance from full dict representation.
+
+        Parameters
+        ----------
+        dct : Dict
+            A dictionary produced by `to_dict` to instantiate from.
+            If an identical instance already exists in memory, it will be returned.
+            Otherwise, a new instance will be returned.
 
         """
         return dict_decode_dependencies(dct)
