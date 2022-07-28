@@ -49,3 +49,22 @@ class TestGufeTokenizable:
         bar = Leaf(leaf)
 
         cont = Container(bar, [leaf, 0], {"leaf": leaf, "a": "b"})
+
+
+    def test_to_dict(self):
+        ...
+
+    def test_to_dict_roundtrip(self):
+        ...
+
+    def test_to_keyed_dict(self):
+        ...
+
+    def test_to_keyed_dict_roundtrip(self):
+        ...
+
+    def test_to_shallow_dict(self):
+        ...
+
+    def test_to_shallow_dict_roundtrip(self):
+        ...
