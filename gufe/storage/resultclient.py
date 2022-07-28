@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import abc
 import json
+import re
 from typing import Any
 
 from .resultserver import ResultServer
@@ -135,19 +136,26 @@ class ResultClient(_ResultContainer):
         self._store_gufe_tokenizable("setup", network)
 
 
-    def _load_gufe_object(self, gufe_key):
+    def _load_gufe_tokenizable(self, prefix, gufe_key):
+        regex = re.compile('":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"')
         def find_keyencoded_in_json(json_str):
-            # this implementation may seem strange, but it will be a lot
+            # this implementation may seem strange, but it will be a
             # faster than traversing the dict
-            ...
+            return set(regex.findall(json_str))
+
+        # def alt_find_keyencoded(dct):
+        #     # this one takes the dct instead of the json str
+        #     found = []
+        #     modify_dependencies(dct, found.append, is_gufe_dict)
+        #     return {d[":gufe-key:"] for d in found}
 
         def recursive_build_object_cache(gufe_key):
-            # This implementation is a bit fragile, because it ensuring that
-            # we don't duplicate objects in memory depends on the fact that
-            # `from_keyencoded_dict` gets keyencoded objects from a cache
+            # This implementation is a bit fragile, because ensuring that we
+            # don't duplicate objects in memory depends on the fact that
+            # `key_decode_dependencies` gets keyencoded objects from a cache
             # (they are cached on creation).
-            storage_key = self._gufe_key_to_storage_key(gufe_key)
-            with self.load_bytes(storage_key) as f:
+            storage_key = self._gufe_key_to_storage_key(prefix, gufe_key)
+            with self.load_stream(storage_key) as f:
                 keyencoded_json = f.read().decode('utf-8')
 
             key_encoded = find_keyencoded_in_json(keyencoded_json)
@@ -162,10 +170,10 @@ class ResultClient(_ResultContainer):
         return recursive_build_object_cache(gufe_key)
 
     def load_transformation(self, key: str):
-        return self._load_gufe_object(key)
+        return self._load_gufe_tokenizable("setup", key)
 
     def load_network(self, key: str):
-        return self._load_gufe_object(key)
+        return self._load_gufe_tokenizable("setup", key)
 
     def _load_next_level(self, transformation):
         return TransformationResult(self, transformation)
