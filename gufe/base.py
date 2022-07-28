@@ -3,13 +3,16 @@ import uuid
 import sys
 import threading
 import hashlib
+import importlib
 import inspect
-from copy import copy
+import copy
 from packaging.version import parse as parse_version
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Union, List
 
 
 TOKENIZABLE_CLASS_REGISTRY = {}
+REMAPPED_CLASSES = {}
+
 
 def register_tokenizable_class(cls):
     TOKENIZABLE_CLASS_REGISTRY[(cls.__module__, cls.__qualname__)] = cls
@@ -27,7 +30,7 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
     # required to make use of abc.ABC in classes that use _ComponentMeta metaclass
     # see https://stackoverflow.com/questions/57349105/python-abc-inheritance-with-specified-metaclass 
     ...
-        
+
 
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
@@ -69,117 +72,65 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         return defaults
 
-    # TODO: rewrite the below three functions to be fully recursive like 
-    # _dictdecode_dependencies
-    def _keyencode_dependencies(self, d):
-        for key, value in d.items():
-            if isinstance(value, dict):
-                d[key] = self._keyencode_dependencies(value)
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    if hasattr(item, '_gufe_tokenize'):
-                        d[key][i] = item.key
-            else:
-                if hasattr(value, '_gufe_tokenize'):
-                    d[key] = value.key
-
-        return d
-
-    @classmethod
-    def _keydecode_dependencies(cls, d):
-        for key, value in d.items():
-            if isinstance(value, dict):
-                d[key] = cls._keydecode_dependencies(value)
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    if isinstance(item, str) and item in TOKENIZABLE_REGISTRY:
-                        d[key][i] = TOKENIZABLE_REGISTRY[item]
-            else:
-                if isinstance(value, str) and value in TOKENIZABLE_REGISTRY:
-                    d[key] = TOKENIZABLE_REGISTRY[value]
-
-        return d
-
-    def _dictencode_dependencies(self, d):
-        for key, value in d.items():
-            if isinstance(value, dict):
-                d[key] = self._dictencode_dependencies(value)
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    if hasattr(item, 'to_dict'):
-                        d[key][i] = item.to_dict()
-            else:
-                if hasattr(value, 'to_dict'):
-                    d[key] = value.to_dict()
-
-        return d
-
-    @classmethod
-    def _dictdecode_dependencies(cls, obj):
-        if isinstance(obj, dict):
-            if '__class__' in obj:
-                obj = cls.from_dict(obj)
-            else:
-                for key, value in obj.items():
-                    obj[key] = cls._dictdecode_dependencies(value)
-        elif isinstance(obj, list):
-            for i, item in enumerate(obj):
-                obj[i] = cls._dictdecode_dependencies(item)
-
-        return obj
-
     def _gufe_tokenize(self):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
         return sorted(self.to_dict(include_defaults=False).items(), key=str)
 
-    def to_dict(self, include_defaults=True, keyencode_dependencies=False) -> dict:
-        """Serialize to dict representation"""
+    def to_dict(self, include_defaults=True) -> Dict:
+        """Generate full dict representation, with all referenced `GufeTokenizable` objects
+        also given in full dict representations.
 
-        d = self._to_dict()
-        d['__module__'] = self.__class__.__module__
-        d['__qualname__'] = self.__class__.__qualname__
+        Parameters
+        ----------
+        include_defaults : bool
+            If `False`, strip keys from dict representation with values equal
+            to those in `defaults`.
+        
+        See also
+        --------
+        :meth:`GufeTokenizable.to_shallow_dict`
+        :meth:`GufeTokenizable.to_keyed_dict`
 
-        if keyencode_dependencies:
-            d = self._keyencode_dependencies(d)
-        else:
-            d = self._dictencode_dependencies(d)
+        """
+        dct = dict_encode_dependencies(self)
 
         if not include_defaults:
             for key, value in self.defaults.items():
-                if d.get(key) == value:
-                    d.pop(key)
+                if dct.get(key) == value:
+                    dct.pop(key)
 
-        return d
+        return dct
 
     @classmethod
-    def from_dict(cls, d: dict, keydecode_dependencies=False):
-        """Deserialize from dict representation"""
-        d = copy(d)
-        qualname = d.pop('__qualname__', None)
-        module = d.pop('__module__', None)
-        if (qualname is None) or (module is None):
-            raise KeyError("`__qualname__` or `__module__` key not found; unable to reconstitute from dict")
+    def from_dict(cls, dct: Dict):
+        """Generate instance from full dict representation.
 
-        if keydecode_dependencies:
-            d = cls._keydecode_dependencies(d)
-        else:
-            d = cls._dictdecode_dependencies(d)
+        """
+        return dict_decode_dependencies(dct)
 
-        obj = TOKENIZABLE_CLASS_REGISTRY[(module, qualname)]._from_dict(d)
+    def to_keyed_dict(self) -> Dict:
+        return key_encode_dependencies(self)
 
-        # if this object is already in memory, return existing object
-        # new object will eventually be garbage collected
-        if obj.key in TOKENIZABLE_REGISTRY:
-            return TOKENIZABLE_REGISTRY[obj.key]
-        else:
-            return obj
+    @classmethod
+    def from_keyed_dict(self, dct: Dict):
+        return key_decode_dependencies(dct)
+
+    def to_shallow_dict(self) -> Dict:
+        return to_dict(self) 
+
+    @classmethod
+    def from_shallow_dict(self, dct: Dict):
+        return from_dict(dct)
 
 
 class GufeKey(str):
     def __repr__(self):
         return f"<GufeKey('{str(self)}')>"
+
+    def to_dict(self):
+        return {':gufe-key:': str(self)}
 
 
 
@@ -191,6 +142,141 @@ Used to avoid duplication of tokenizable `gufe` objects in memory when deseriali
 Each key is a token, each value the corresponding object.
 
 """
+
+
+def module_qualname(obj):
+    return {'__qualname__': obj.__class__.__qualname__,
+            '__module__': obj.__class__.__module__}
+
+
+def is_gufe_obj(obj: Any):
+    return isinstance(obj, GufeTokenizable)
+
+
+def is_gufe_dict(dct: Any):
+    return (isinstance(dct, dict) and '__qualname__' in dct
+            and '__module__' in dct)
+
+
+def is_gufe_key_dict(dct: Any):
+    return isinstance(dct, dict) and ":gufe-key:" in dct
+
+
+# conveniences to get a class from module/class name
+def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
+    if (modname, qualname) in remappings:
+        modname, qualname = remappings[(modname, qualname)]
+
+    result = importlib.import_module(modname)
+    for name in qualname.split('.'):
+        result = getattr(result, name)
+
+    return result
+
+
+def get_class(module: str, qualname: str):
+    key = module, qualname
+    try:
+        return TOKENIZABLE_CLASS_REGISTRY[key]
+    except KeyError:
+        cls = import_qualname(module, qualname, REMAPPED_CLASSES)
+        TOKENIZABLE_CLASS_REGISTRY[key] = cls
+        return cls
+
+
+def modify_dependencies(obj: Union[Dict,List], modifier, is_mine, top=True):
+    """
+    Parameters
+    ----------
+    d : Dict
+        Dictionary to traverse. Assumes that only mappings are dict and only
+        iterables are list, and that no gufe objects are in the keys of
+        dicts
+    modifier : Callable[[GufeTokenizable], Any]
+        function that modifies any GufeTokenizable found
+    is_mine : Callable[Any, bool]
+        function that determines whether the given object should be
+        subjected to the modifier
+    top : bool
+        If `True`, skip modifying `obj` itself; needed for recursive use to avoid
+        early stopping on `obj`.
+    """
+    obj = copy.deepcopy(obj)
+
+    if is_mine(obj) and not top:
+        obj = modifier(obj)
+
+    elif isinstance(obj, dict):
+        obj = {key: modify_dependencies(value, modifier, is_mine, top=False)
+                for key, value in obj.items()}
+
+    elif isinstance(obj, list):
+        obj = [modify_dependencies(item, modifier, is_mine, top=False)
+                for item in obj]
+
+    return obj
+
+
+# encode options
+def to_dict(obj: GufeTokenizable) -> Dict:
+    dct = obj._to_dict()
+    dct.update(module_qualname(obj))
+    return dct
+
+
+def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
+    return modify_dependencies(
+        obj.to_shallow_dict(),
+        to_dict,
+        is_gufe_obj,
+        top=True
+    )
+
+
+def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
+    return modify_dependencies(
+        obj.to_shallow_dict(),
+        lambda obj: obj.key.to_dict(),
+        is_gufe_obj,
+        top=True
+    )
+
+
+
+# decode options
+def from_dict(dct):
+    obj = _from_dict(dct)
+    try:
+        # TODO: not sure why this isn't working right now
+        return TOKENIZABLE_REGISTRY[obj.key]
+    except KeyError:
+        return obj
+
+
+def _from_dict(dct: Dict) -> GufeTokenizable:
+    module = dct.pop('__module__')
+    qualname = dct.pop('__qualname__')
+    if (qualname is None) or (module is None):
+        raise KeyError("`__qualname__` or `__module__` key not found; unable to reconstitute from dict")
+
+    cls = get_class(module, qualname)
+    return cls._from_dict(dct)
+
+
+def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
+    return from_dict(modify_dependencies(dct, from_dict, is_gufe_dict, top=True))
+
+
+def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
+    # this version requires that all dependent objects are already registered
+    # responsibility of the storage system that uses this to do so
+    dct = modify_dependencies(
+        dct,
+        lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])],
+        is_gufe_key_dict,
+        top=True
+    )
+    return from_dict(dct)
 
 
 # FROM dask.base
