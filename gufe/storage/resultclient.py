@@ -135,19 +135,11 @@ class ResultClient(_ResultContainer):
     def store_network(self, network):
         self._store_gufe_tokenizable("setup", network)
 
-
     def _load_gufe_tokenizable(self, prefix, gufe_key):
-        regex = re.compile('":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"')
-        def find_keyencoded_in_json(json_str):
-            # this implementation may seem strange, but it will be a
-            # faster than traversing the dict
-            return set(regex.findall(json_str))
-
-        # def alt_find_keyencoded(dct):
-        #     # this one takes the dct instead of the json str
-        #     found = []
-        #     modify_dependencies(dct, found.append, is_gufe_dict)
-        #     return {d[":gufe-key:"] for d in found}
+        # move to module-level constant if we keep this approach
+        regex = re.compile(
+            '":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"'
+        )
 
         def recursive_build_object_cache(gufe_key):
             # This implementation is a bit fragile, because ensuring that we
@@ -158,13 +150,21 @@ class ResultClient(_ResultContainer):
             with self.load_stream(storage_key) as f:
                 keyencoded_json = f.read().decode('utf-8')
 
-            key_encoded = find_keyencoded_in_json(keyencoded_json)
+            dct = json.loads(keyencoded_json)
+            # this implementation may seem strange, but it will be a
+            # faster than traversing the dict
+            key_encoded = set(regex.findall(keyencoded_json))
+
+            # this approach takes the dct instead of the json str
+            # found = []
+            # modify_dependencies(dct, found.append, is_gufe_key_dict)
+            # key_encoded = {d[":gufe-key:"] for d in found}
+
             for key in key_encoded:
                 # we're actually only doing this for the side effect of
                 # generating the objects and adding them to the registry
                 recursive_build_object_cache(key)
 
-            dct = json.loads(keyencoded_json)
             return key_decode_dependencies(dct)
 
         return recursive_build_object_cache(gufe_key)
