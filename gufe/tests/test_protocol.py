@@ -95,6 +95,9 @@ class DummyProtocol(Protocol):
     def _default_settings(cls):
         return {}
 
+    def _defaults(self):
+        return {}
+
     def _create(
         self,
         stateA: ChemicalSystem,
