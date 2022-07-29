@@ -110,6 +110,7 @@ class TestSmallMoleculeComponent:
     def test_empty_name(self, alt_ethane):
         assert alt_ethane.name == ''
 
+    @pytest.mark.xfail
     def test_serialization_cycle(self, named_ethane):
         serialized = named_ethane.to_sdf()
         deserialized = SmallMoleculeComponent.from_sdf_string(serialized)
@@ -122,10 +123,12 @@ class TestSmallMoleculeComponent:
         expected = serialization_template("ethane_template.sdf")
         assert named_ethane.to_sdf() == expected
 
+    @pytest.mark.xfail
     def test_from_sdf_string(self, named_ethane, serialization_template):
         sdf_str = serialization_template("ethane_template.sdf")
         assert SmallMoleculeComponent.from_sdf_string(sdf_str) == named_ethane
 
+    @pytest.mark.xfail
     def test_from_sdf_file(self, named_ethane, serialization_template,
                            tmpdir):
         sdf_str = serialization_template("ethane_template.sdf")
