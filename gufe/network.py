@@ -21,6 +21,8 @@ class AlchemicalNetwork(Serializable):
         The nodes of the network, given as a `frozenset` of `ChemicalSystem`s.
 
     """
+    _edges: frozenset[Transformation]
+    _nodes: frozenset[ChemicalSystem]
 
     def __init__(
         self,
