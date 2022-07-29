@@ -251,7 +251,7 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
     if is_mine(obj) and not top:
         obj = modifier(obj)
 
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         obj = {key: modify_dependencies(value, modifier, is_mine, top=False)
                 for key, value in obj.items()}
 
