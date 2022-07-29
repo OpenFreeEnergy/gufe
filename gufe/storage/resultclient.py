@@ -12,6 +12,19 @@ from ..base import (
     is_gufe_obj, key_decode_dependencies, modify_dependencies
 )
 
+############## MOVE TO BASE? ###############################################
+# currently waiting until #39 gets merged; this is needed here, but don't
+# want to add to the to-do list on that PR, or to create merge conflicts
+def get_all_gufe_objs(obj):
+    results = set()
+    def modifier(o):
+        results.add(o)
+        return o.to_shallow_dict()
+
+    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj)
+    return results
+############################################################################
+
 
 class _ResultContainer(abc.ABC):
     """
@@ -113,13 +126,7 @@ class ResultClient(_ResultContainer):
         return "/".join(tup)
 
     def _store_gufe_tokenizable(self, prefix, obj):
-        # I think this is the only place we'll use this trick, otherwise the
-        # next two lines should be find_all_tokenizables
-        all_objs = {obj}
-        modify_dependencies(obj.to_shallow_dict(), all_objs.add, is_gufe_obj)
-        # that bit of magic inspired by common approaches with ast
-
-        for o in all_objs:
+        for o in get_all_gufe_objs(obj):
             key = self._gufe_key_to_storage_key(prefix, o.key)
 
             # we trust that if we get the same key, it's the same object, so

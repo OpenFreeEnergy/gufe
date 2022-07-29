@@ -2,6 +2,7 @@ import pytest
 from unittest import mock
 
 from gufe.storage.externalresource import MemoryStorage
+from gufe.base import TOKENIZABLE_REGISTRY
 from gufe.storage.resultclient import (
     ResultClient, TransformationResult, CloneResult, ExtensionResult
 )
@@ -153,6 +154,11 @@ class TestResultClient(_ResultContainerTest):
         client = ResultClient(store)
         assert store._data == {}
         client.store_transformation(transformation)
+        assert store._data != {}
+        # this tests that we can reload identical object in the same process
+        reload1 = client.load_transformation(transformation.key)
+        assert reload1 is transformation
+
         pytest.skip()
 
     def test_store_load_transformation_different_process(self):
