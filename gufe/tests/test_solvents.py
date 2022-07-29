@@ -37,7 +37,9 @@ def test_neq():
 def test_to_dict():
     s = SolventComponent(positive_ion='Na', negative_ion='Cl')
 
-    assert s.to_dict() == {'smiles': 'O',
+    assert s.to_dict() == {'__module__': 'gufe.components.solventcomponent',
+                           '__qualname__': 'SolventComponent',
+                           'smiles': 'O',
                            'positive_ion': 'Na+',
                            'negative_ion': 'Cl-',
                            'neutralize': True,
