@@ -8,6 +8,7 @@ import inspect
 import copy
 from packaging.version import parse as parse_version
 from typing import Dict, Any, Callable, Union, List
+import weakref
 
 
 TOKENIZABLE_CLASS_REGISTRY = {}
@@ -57,12 +58,12 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     @property
     def key(self):
         if not hasattr(self, '_key') or self._key is None:
-            prefix = type(self).__qualname__
+            prefix = self.__class__.__qualname__
             token = tokenize(self)
             self._key = GufeKey(f"{prefix}-{token}")
 
         # add to registry if not already present
-        TOKENIZABLE_REGISTRY.setdefault(self._key, self)
+        TOKENIZABLE_REGISTRY.setdefault(self._key, weakref.ref(self))
 
         return self._key
 
@@ -176,9 +177,8 @@ class GufeKey(str):
         return {':gufe-key:': str(self)}
 
 
-
 # TODO: may want to make this a weakref dict to avoid holding references here
-TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = {}
+TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when deserialized.
@@ -285,13 +285,12 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
     )
 
 
-
 # decode options
-def from_dict(dct):
+def from_dict(dct) -> GufeTokenizable:
     obj = _from_dict(dct)
     try:
         # TODO: not sure why this isn't working right now
-        return TOKENIZABLE_REGISTRY[obj.key]
+        return TOKENIZABLE_REGISTRY[obj.key]()
     except KeyError:
         return obj
 
@@ -315,7 +314,7 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
     # responsibility of the storage system that uses this to do so
     dct = modify_dependencies(
         dct,
-        lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])],
+        lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])](),
         is_gufe_key_dict,
         top=True
     )
