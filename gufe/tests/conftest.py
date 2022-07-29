@@ -248,8 +248,102 @@ def solvated_ligand(solv_comp, toluene_ligand_comp):
         {"ligand": toluene_ligand_comp, "solvent": solv_comp},
     )
 
+
 @pytest.fixture
 def vacuum_ligand(toluene_ligand_comp):
     return gufe.ChemicalSystem(
         {"ligand": toluene_ligand_comp},
+    )
+
+
+## Transformations
+
+
+@pytest.fixture
+def absolute_transformation(solvated_ligand, solvated_complex):
+    return gufe.Transformation(
+        solvated_ligand,
+        solvated_complex,
+        protocol=gufe.tests.test_protocol.DummyProtocol(settings=None),
+        mapping=None,
+    )
+
+
+@pytest.fixture
+def complex_equilibrium(solvated_complex):
+    return gufe.NonTransformation(
+        solvated_complex,
+        protocol=gufe.tests.test_protocol.DummyProtocol(settings=None)
+    )
+
+
+## Alchemical Networks
+
+
+@pytest.fixture
+def benzene_variants_star_map(
+    benzene,
+    toluene,
+    phenol,
+    benzonitrile,
+    anisole,
+    benzaldehyde,
+    styrene,
+    prot_comp,
+    solv_comp,
+):
+
+    variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde,
+                styrene]
+
+    # define the solvent chemical systems and transformations between
+    # benzene and the others
+    solvated_ligands = {}
+    solvated_ligand_transformations = {}
+
+    solvated_ligands["benzene"] = gufe.ChemicalSystem(
+        {"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent"
+    )
+
+    for ligand in variants:
+        solvated_ligands[ligand.name] = gufe.ChemicalSystem(
+            {"solvent": solv_comp, "ligand": ligand},
+            name=f"{ligand.name}-solvnet"
+        )
+        solvated_ligand_transformations[
+            ("benzene", ligand.name)
+        ] = gufe.Transformation(
+            solvated_ligands["benzene"],
+            solvated_ligands[ligand.name],
+            protocol=gufe.tests.test_protocol.DummyProtocol(settings=None),
+            mapping=None,
+        )
+
+    # define the complex chemical systems and transformations between
+    # benzene and the others
+    solvated_complexes = {}
+    solvated_complex_transformations = {}
+
+    solvated_complexes["benzene"] = gufe.ChemicalSystem(
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": benzene},
+        name="benzene-complex",
+    )
+
+    for ligand in variants:
+        solvated_complexes[ligand.name] = gufe.ChemicalSystem(
+            {"protein": prot_comp, "solvent": solv_comp, "ligand": ligand},
+            name=f"{ligand.name}-complex",
+        )
+        solvated_complex_transformations[
+            ("benzene", ligand.name)
+        ] = gufe.Transformation(
+            solvated_complexes["benzene"],
+            solvated_complexes[ligand.name],
+            protocol=gufe.tests.test_protocol.DummyProtocol(settings=None),
+            mapping=None,
+        )
+
+    return gufe.AlchemicalNetwork(
+        list(solvated_ligand_transformations.values())
+        + list(solvated_complex_transformations.values())
     )
