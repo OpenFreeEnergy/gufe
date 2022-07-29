@@ -11,8 +11,12 @@ from typing import Dict, Any, Callable, Union, List
 import weakref
 
 
-TOKENIZABLE_CLASS_REGISTRY = {}
-REMAPPED_CLASSES = {}
+# maps qualified name strings to the class
+TOKENIZABLE_CLASS_REGISTRY: Dict[tuple[str, str], "GufeTokenizable"] = {}
+# maps fully qualified names to a new location
+# e.g. if we did a rename:
+# ('gufe', 'ProteinComponent') -> ('gufe', 'BiopolymerComponent')
+REMAPPED_CLASSES: Dict[tuple[str, str], tuple[str, str]] = {}
 
 
 def register_tokenizable_class(cls):
@@ -92,7 +96,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         return defaults
 
-
     @abc.abstractmethod
     def _to_dict(self) -> Dict:
         """This method should be overridden to provide the dict form of the 
@@ -113,7 +116,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         ...
-
 
     def to_dict(self, include_defaults=True) -> Dict:
         """Generate full dict representation, with all referenced `GufeTokenizable` objects
@@ -227,11 +229,11 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[Dict,List], modifier, is_mine, top=True):
+def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
     """
     Parameters
     ----------
-    d : Dict
+    obj : Dict or List
         Dictionary to traverse. Assumes that only mappings are dict and only
         iterables are list, and that no gufe objects are in the keys of
         dicts
@@ -290,7 +292,12 @@ def from_dict(dct) -> GufeTokenizable:
     obj = _from_dict(dct)
     try:
         # TODO: not sure why this isn't working right now
-        return TOKENIZABLE_REGISTRY[obj.key]()
+        thing = TOKENIZABLE_REGISTRY[obj.key]()
+        # weakref will return None if the object was deleted
+        if thing is None:
+            return obj
+        else:
+            return thing
     except KeyError:
         return obj
 
@@ -333,14 +340,14 @@ else:
     _md5 = hashlib.md5
 
 
-def normalize_object(o):
+def normalize_object(o: GufeTokenizable):
     try:
         return o._gufe_tokenize()
     except AttributeError:
         raise ValueError("Cannot normalize object without `_gufe_tokenize` method.")
 
 
-def tokenize(obj: GufeTokenizable):
+def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a `GufeTokenizable` object.
 
     Examples
