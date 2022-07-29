@@ -4,14 +4,14 @@
 from typing import FrozenSet, Iterable, Optional, Tuple
 
 import networkx as nx
-from openff.toolkit.utils.serialization import Serializable
+from .base import GufeTokenizable
 from typing import FrozenSet
 
 from .chemicalsystem import ChemicalSystem
 from .transformations import Transformation
 
 
-class AlchemicalNetwork(Serializable):
+class AlchemicalNetwork(GufeTokenizable):
     """A network of `ChemicalSystem`s as nodes, `Transformation`s as edges.
 
     Attributes
@@ -75,13 +75,17 @@ class AlchemicalNetwork(Serializable):
     def nodes(self) -> FrozenSet[ChemicalSystem]:
         return self._nodes
 
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         """ """
-        ...
+        return {"nodes": self.nodes,
+                "edges": self.edges}
 
     @classmethod
-    def from_dict(cls, d: dict):
-        ...
+    def _from_dict(cls, d: dict):
+        return cls(**d)
+
+    def _defaults(self):
+        return super().defaults()
 
     def to_graphml(self) -> str:
         """ """
