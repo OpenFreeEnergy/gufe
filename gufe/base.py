@@ -7,16 +7,16 @@ import importlib
 import inspect
 import copy
 from packaging.version import parse as parse_version
-from typing import Dict, Any, Callable, Union, List
+from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
 
 
 # maps qualified name strings to the class
-TOKENIZABLE_CLASS_REGISTRY: Dict[tuple[str, str], "GufeTokenizable"] = {}
+TOKENIZABLE_CLASS_REGISTRY: Dict[Tuple[str, str], "GufeTokenizable"] = {}
 # maps fully qualified names to a new location
 # e.g. if we did a rename:
 # ('gufe', 'ProteinComponent') -> ('gufe', 'BiopolymerComponent')
-REMAPPED_CLASSES: Dict[tuple[str, str], tuple[str, str]] = {}
+REMAPPED_CLASSES: Dict[Tuple[str, str], Tuple[str, str]] = {}
 
 
 def register_tokenizable_class(cls):
