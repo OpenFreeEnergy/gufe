@@ -143,6 +143,21 @@ class TestResultClient(_ResultContainerTest):
     def test_store_protocol_dag_result(self):
         pytest.skip("Not implemented yet")
 
+    @pytest.mark.parametrize("fixture", [
+        "absolute_transformation",
+        "complex_equilibrium"
+    ])
+    def test_store_load_transformation_same_process(self, request, fixture):
+        transformation = request.getfixturevalue(fixture)
+        store = MemoryStorage()
+        client = ResultClient(store)
+        assert store._data == {}
+        client.store_transformation(transformation)
+        pytest.skip()
+
+    def test_store_load_transformation_different_process(self):
+        pytest.skip()
+
     def test_delete(self, result_client):
         file_to_delete = self.expected_files[0]
         storage = result_client.result_server.external_store

@@ -11,6 +11,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 import gufe
+from gufe.tests.test_protocol import DummyProtocol
 
 try:
     urllib.request.urlopen("https://google.com")
@@ -264,7 +265,7 @@ def absolute_transformation(solvated_ligand, solvated_complex):
     return gufe.Transformation(
         solvated_ligand,
         solvated_complex,
-        protocol=gufe.tests.test_protocol.DummyProtocol(settings=None),
+        protocol=DummyProtocol(settings=None),
         mapping=None,
     )
 
@@ -273,7 +274,7 @@ def absolute_transformation(solvated_ligand, solvated_complex):
 def complex_equilibrium(solvated_complex):
     return gufe.NonTransformation(
         solvated_complex,
-        protocol=gufe.tests.test_protocol.DummyProtocol(settings=None)
+        protocol=DummyProtocol(settings=None)
     )
 
 
@@ -315,7 +316,7 @@ def benzene_variants_star_map(
         ] = gufe.Transformation(
             solvated_ligands["benzene"],
             solvated_ligands[ligand.name],
-            protocol=gufe.tests.test_protocol.DummyProtocol(settings=None),
+            protocol=DummyProtocol(settings=None),
             mapping=None,
         )
 
@@ -339,7 +340,7 @@ def benzene_variants_star_map(
         ] = gufe.Transformation(
             solvated_complexes["benzene"],
             solvated_complexes[ligand.name],
-            protocol=gufe.tests.test_protocol.DummyProtocol(settings=None),
+            protocol=DummyProtocol(settings=None),
             mapping=None,
         )
 

@@ -23,7 +23,7 @@ class ProtocolResult(GufeTokenizable):
 
     This is an abstract base class; individual `Protocol` implementations
     should have a corresponding subclass of `ProtocolResult` implemented as
-    well. 
+    well.
 
     The following methods should be implemented in any subclass:
     - `get_estimate`
@@ -70,7 +70,7 @@ class ProtocolResult(GufeTokenizable):
         ...
 
 
-class Protocol(GufeTokenizable):
+class Protocol(GufeTokenizable, abc.ABC):
     """A protocol that implements an alchemical transformation.
 
     Takes a `ProtocolSettings` object specific to the protocol on init.
@@ -152,6 +152,13 @@ class Protocol(GufeTokenizable):
 
         """
         return cls._default_settings()
+
+    def _to_dict(self):
+        return  {'settings': self.settings}
+
+    @classmethod
+    def _from_dict(cls, dct):
+        return cls(**dct)
 
     @abc.abstractmethod
     def _create(
