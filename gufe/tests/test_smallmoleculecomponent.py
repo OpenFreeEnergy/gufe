@@ -14,7 +14,7 @@ except ImportError:
 else:
     HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
-from gufe.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe_version
+from gufe.components.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe_version
 import gufe
 import json
 from rdkit import Chem
