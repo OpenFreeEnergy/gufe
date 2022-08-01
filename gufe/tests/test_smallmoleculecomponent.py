@@ -78,9 +78,16 @@ class TestSmallMoleculeComponent:
         assert ethane is not alt_ethane
         assert ethane.to_rdkit() is not alt_ethane.to_rdkit()
 
+
     def test_error_missing_conformers(self):
         mol = Chem.MolFromSmiles("CC")
         with pytest.raises(ValueError, match="conformer"):
+            SmallMoleculeComponent(mol)
+
+    def test_warn_multiple_conformers(self):
+        mol = Chem.MolFromSmiles("CC")
+        AllChem.EmbedMultipleConfs(mol)
+        with pytest.warns(UserWarning, match="conformers. Only"):
             SmallMoleculeComponent(mol)
 
     def test_rdkit_independence(self):

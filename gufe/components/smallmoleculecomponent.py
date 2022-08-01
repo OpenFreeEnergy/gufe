@@ -81,9 +81,12 @@ class SmallMoleculeComponent(Component, Serializable):
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
-        if not list(rdkit.GetConformers()):
-            # do we require at least 1 or exactly 1?
+        conformers = list(rdkit.GetConformers())
+        if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
+        elif (n_confs := len(conformers)) > 1:
+            warnings.warn(f"Molecule provided with {n_confs} conformers. "
+                          "Only the first will be used.")
 
         self._rdkit = rdkit
         self._hash = hashmol(self._rdkit, name=name)
