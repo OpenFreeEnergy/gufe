@@ -134,7 +134,6 @@ class SmallMoleculeComponent(Component, Serializable):
         #   idx0, idx1, order, aromaticity, stereochemistry
         # TODO: Do we care about fractional bond orders?
         #       is aromaticity reperceived on creation?
-        d = dict()
         m = self.to_openff()
         atoms = [
             (atom.element.atomic_number,
@@ -153,7 +152,7 @@ class SmallMoleculeComponent(Component, Serializable):
             'atoms': atoms,
             'bonds': bonds,
             'name': m.name,
-            'conformer':
+            'conformer': 'TODO',
         }
 
         return d
@@ -161,6 +160,7 @@ class SmallMoleculeComponent(Component, Serializable):
     @classmethod
     def from_dict(cls, d: dict):
         """Deserialize from dict representation"""
+        # manually construct OpenFF molecule as in cookbook
         m = OFFMolecule()
         for (an, name, fc, arom, stereo) in d['atoms']:
             m.add_atom(
