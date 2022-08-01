@@ -4,6 +4,7 @@
 import importlib.resources
 import pytest
 from rdkit import Chem
+from rdkit.Chem import AllChem
 
 import gufe
 
@@ -99,7 +100,9 @@ def styrene(benzene_modifications):
 
 @pytest.fixture(scope="session")
 def ethane():
-    return gufe.SmallMoleculeComponent(Chem.MolFromSmiles("CC"))
+    mol = Chem.MolFromSmiles("CC")
+    AllChem.Compute2DCoords(mol)
+    return gufe.SmallMoleculeComponent(mol)
 
 
 @pytest.fixture

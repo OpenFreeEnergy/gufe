@@ -6,13 +6,15 @@ logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
 from openff.toolkit.utils.serialization import Serializable
+from openmm import unit  # TODO: waiting on off-tk 0.11
+# from openff.units import unit  # off-tk 0.11
 import warnings
 
 from rdkit import Chem
 
 from gufe import __version__
 from gufe import Component
-from gufe.molhashing import hashmol
+from gufe.molhashing import hashmol, deserialize_numpy, serialize_numpy
 from gufe.custom_typing import RDKitMol, OEMol
 
 
@@ -79,6 +81,10 @@ class SmallMoleculeComponent(Component, Serializable):
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
+        if not list(rdkit.GetConformers()):
+            # do we require at least 1 or exactly 1?
+            raise ValueError("Molecule was provided with no conformers.")
+
         self._rdkit = rdkit
         self._hash = hashmol(self._rdkit, name=name)
 
@@ -134,11 +140,15 @@ class SmallMoleculeComponent(Component, Serializable):
         #   idx0, idx1, order, aromaticity, stereochemistry
         # TODO: Do we care about fractional bond orders?
         #       is aromaticity reperceived on creation?
+        # NOTE: Here we're implicitly using units of angstrom and elementary
+        # charge. We might want to explcitly include them in the stored dict.
         m = self.to_openff()
         atoms = [
             (atom.element.atomic_number,
              atom.name,
-             atom.formal_charge._value,
+             # off-tk 0.11 changes formal charge:
+             atom.formal_charge.value_in_unit(unit.elementary_charge),
+             # atom.formal_charge.m_as(unit.elementary_charge),
              atom.is_aromatic,
              atom.stereochemistry or '')
             for atom in m.atoms
@@ -148,11 +158,24 @@ class SmallMoleculeComponent(Component, Serializable):
              bond.is_aromatic, bond.stereochemistry or '')
             for bond in m.bonds
         ]
+
+        if m.conformers is None:  # -no-cov-
+            # this should not be reachable; indicates that something went
+            # very wrong
+            raise RuntimeError(f"{self.__class__.__name__} must have at "
+                               "least 1 conformer")
+
+        conformers = [
+            serialize_numpy(conf.value_in_unit(unit.angstrom)) # off-tk 0.11
+            # serialize_numpy(conf.m_as(unit.angstrom))
+            for conf in m.conformers
+        ]
+
         d = {
             'atoms': atoms,
             'bonds': bonds,
-            'name': m.name,
-            'conformer': 'TODO',
+            'name': self.name,
+            'conformers': conformers,
         }
 
         return d
@@ -165,11 +188,12 @@ class SmallMoleculeComponent(Component, Serializable):
         for (an, name, fc, arom, stereo) in d['atoms']:
             m.add_atom(
                 atomic_number=an,
-                formal_charge=fc,
+                formal_charge=fc * unit.elementary_charge,
                 is_aromatic=arom,
                 stereochemistry=stereo or None,
                 name=name,
             )
+
         for (idx1, idx2, order, arom, stereo) in d['bonds']:
             m.add_bond(
                 atom1=idx1,
@@ -178,6 +202,9 @@ class SmallMoleculeComponent(Component, Serializable):
                 is_aromatic=arom,
                 stereochemistry=stereo or None,
             )
+
+        for conf in d['conformers']:
+            m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
 
         return cls.from_openff(m, name=d['name'])
 
