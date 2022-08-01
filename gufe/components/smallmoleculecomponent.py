@@ -166,7 +166,7 @@ class SmallMoleculeComponent(Component, Serializable):
                                "least 1 conformer")
 
         conformers = [
-            serialize_numpy(conf.value_in_unit(unit.angstrom)) # off-tk 0.11
+            serialize_numpy(conf.value_in_unit(unit.angstrom))  # off-tk 0.11
             # serialize_numpy(conf.m_as(unit.angstrom))
             for conf in m.conformers
         ]
