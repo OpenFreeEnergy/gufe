@@ -117,7 +117,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         ...
 
-    def to_dict(self, include_defaults=True) -> Dict:
+    def to_dict(self, include_defaults=True) -> dict:
         """Generate full dict representation, with all referenced `GufeTokenizable` objects
         also given in full dict representations.
 

@@ -244,10 +244,10 @@ class NonTransformation(Transformation):
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
-    def to_dict(self) -> dict:
+    def to_dict(self, include_defaults=True) -> dict:
         return {
-            "system": self.system.to_dict(),
-            "protocol": self.protocol.to_dict(),
+            "system": self.system.to_dict(include_defaults),
+            "protocol": self.protocol.to_dict(),  # TODO: include defaults?
         }
 
     # TODO: broken without a `Protocol` registry of some kind

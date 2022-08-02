@@ -128,8 +128,6 @@ class SmallMoleculeComponent(Component):
     def name(self) -> str:
         return self._hash.name
 
-    # TODO: this implementation is not stable due to its dependence on OpenFF's to_dict
-    # may be preferrable to use SDF representation
     def _to_dict(self) -> dict:
         """Serialize to dict representation"""
         # required attributes: (based on openff to_dict)
