@@ -18,17 +18,20 @@ from gufe.components.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe
 import gufe
 import json
 from rdkit import Chem
+from rdkit.Chem import AllChem
 
 
 @pytest.fixture
 def alt_ethane():
-    return SmallMoleculeComponent(Chem.MolFromSmiles("CC"))
+    mol = Chem.MolFromSmiles("CC")
+    Chem.AllChem.Compute2DCoords(mol)
+    return SmallMoleculeComponent(mol)
 
 
 @pytest.fixture
 def named_ethane():
     mol = Chem.MolFromSmiles("CC")
-
+    Chem.AllChem.Compute2DCoords(mol)
     return SmallMoleculeComponent(mol, name='ethane')
 
 
@@ -75,9 +78,22 @@ class TestSmallMoleculeComponent:
         assert ethane is not alt_ethane
         assert ethane.to_rdkit() is not alt_ethane.to_rdkit()
 
+
+    def test_error_missing_conformers(self):
+        mol = Chem.MolFromSmiles("CC")
+        with pytest.raises(ValueError, match="conformer"):
+            SmallMoleculeComponent(mol)
+
+    def test_warn_multiple_conformers(self):
+        mol = Chem.MolFromSmiles("CC")
+        AllChem.EmbedMultipleConfs(mol)
+        with pytest.warns(UserWarning, match="conformers. Only"):
+            SmallMoleculeComponent(mol)
+
     def test_rdkit_independence(self):
         # once we've constructed a Molecule, it is independent from the source
         mol = Chem.MolFromSmiles('CC')
+        AllChem.Compute2DCoords(mol)
         our_mol = SmallMoleculeComponent.from_rdkit(mol)
 
         mol.SetProp('foo', 'bar')  # this is the source molecule, not ours
@@ -87,6 +103,7 @@ class TestSmallMoleculeComponent:
     def test_rdkit_copy_source_copy(self):
         # we should copy in any properties that were in the source molecule
         mol = Chem.MolFromSmiles('CC')
+        AllChem.Compute2DCoords(mol)
         mol.SetProp('foo', 'bar')
         our_mol = SmallMoleculeComponent.from_rdkit(mol)
 
@@ -146,6 +163,7 @@ class TestSmallMoleculeComponent:
 
     def test_from_rdkit(self, named_ethane):
         rdkit = Chem.MolFromSmiles("CC")
+        AllChem.Compute2DCoords(rdkit)
         mol = SmallMoleculeComponent.from_rdkit(rdkit, "ethane")
         assert mol == named_ethane
         assert mol.to_rdkit() is not rdkit
@@ -173,7 +191,9 @@ class TestSmallMoleculeComponentConversion:
     ('CC', 0), ('CC[O-]', -1),
 ])
 def test_total_charge_neutral(mol, charge):
-    sm = SmallMoleculeComponent.from_rdkit(Chem.MolFromSmiles(mol))
+    mol = Chem.MolFromSmiles(mol)
+    AllChem.Compute2DCoords(mol)
+    sm = SmallMoleculeComponent.from_rdkit(mol)
 
     assert sm.total_charge == charge
 
