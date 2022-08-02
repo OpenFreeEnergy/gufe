@@ -146,16 +146,28 @@ class SmallMoleculeComponent(Component, Serializable):
         # NOTE: Here we're implicitly using units of angstrom and elementary
         # charge. We might want to explcitly include them in the stored dict.
         m = self.to_openff()
-        atoms = [
-            (atom.element.atomic_number,
-             atom.name,
-             # off-tk 0.11 changes formal charge:
-             atom.formal_charge.value_in_unit(unit.elementary_charge),
-             # atom.formal_charge.m_as(unit.elementary_charge),
-             atom.is_aromatic,
-             atom.stereochemistry or '')
-            for atom in m.atoms
-        ]
+
+        old_openff_toolkit_api = hasattr(m.atoms[0], "element")
+        # openff.toolkit < 0.11
+        if old_openff_toolkit_api:
+            atoms = [
+                (atom.element.atomic_number,
+                 atom.name,
+                 atom.formal_charge.magnitude,
+                 atom.is_aromatic,
+                 atom.stereochemistry or '')
+                for atom in m.atoms
+            ]
+        else:
+            atoms = [
+                (atom.atomic_number,
+                 atom.name,
+                 atom.formal_charge.m_as(unit.elementary_charge),
+                 atom.is_aromatic,
+                 atom.stereochemistry or '')
+                for atom in m.atoms
+            ]
+
         bonds = [
             (bond.atom1_index, bond.atom2_index, bond.bond_order,
              bond.is_aromatic, bond.stereochemistry or '')
