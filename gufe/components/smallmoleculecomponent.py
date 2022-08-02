@@ -153,7 +153,7 @@ class SmallMoleculeComponent(Component, Serializable):
             atoms = [
                 (atom.element.atomic_number,
                  atom.name,
-                 atom.formal_charge.magnitude,
+                 atom.formal_charge.value_in_unit(unit.elementary_charge),
                  atom.is_aromatic,
                  atom.stereochemistry or '')
                 for atom in m.atoms
