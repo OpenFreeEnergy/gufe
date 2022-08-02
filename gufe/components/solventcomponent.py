@@ -5,7 +5,7 @@ from __future__ import annotations
 from openff.units import unit
 from typing import Optional, Tuple
 
-from gufe import Component
+from .component import Component
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
@@ -31,7 +31,7 @@ class SolventComponent(Component):
                  positive_ion: str = 'Na+',
                  negative_ion: str = 'Cl-',
                  neutralize: bool = True,
-                 ion_concentration: unit.Quantity = None):
+                 ion_concentration: unit.Quantity = 0.0 * unit.molar):
         """
         Parameters
         ----------
@@ -69,15 +69,15 @@ class SolventComponent(Component):
         self._negative_ion = negative_ion
 
         self._neutralize = neutralize
-        if ion_concentration is not None:
-            if (not isinstance(ion_concentration, unit.Quantity) or
-               not ion_concentration.is_compatible_with(unit.molar)):
-                raise ValueError(f"ion_concentration must be given in units of"
-                                 f" concentration, got {ion_concentration}")
-            # concentration requires both ions be given
-            if ion_concentration > 0:
-                if self._negative_ion is None or self._positive_ion is None:
-                    raise ValueError("Ions must be given for concentration")
+
+        if (not isinstance(ion_concentration, unit.Quantity)
+            or not ion_concentration.is_compatible_with(unit.molar)):
+            raise ValueError(f"ion_concentration must be given in units of"
+                             f" concentration, got: {ion_concentration}")
+        if ion_concentration.m < 0:
+            raise ValueError(f"ion_concentration must be positive, "
+                             f"got: {ion_concentration}")
+
         self._ion_concentration = ion_concentration
 
     @property
@@ -130,16 +130,13 @@ class SolventComponent(Component):
     def from_dict(cls, d):
         """Deserialize from dict representation"""
         ion_conc = d['ion_concentration']
-        if ion_conc:
-            d['ion_concentration'] = unit.Quantity.from_tuple(ion_conc)
+        d['ion_concentration'] = unit.parse_expression(ion_conc)
 
         return cls(**d)
 
     def to_dict(self):
         """For serialization"""
-        ion_conc = self.ion_concentration
-        if ion_conc:
-            ion_conc = ion_conc.to_tuple()
+        ion_conc = str(self.ion_concentration)
 
         return {'smiles': self.smiles, 'positive_ion': self.positive_ion,
                 'negative_ion': self.negative_ion,

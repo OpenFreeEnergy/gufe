@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import numpy as np
 from openff.toolkit.utils.serialization import Serializable
 
-from .component import Component
+from gufe import Component
 
 
 class ChemicalSystem(Serializable, abc.Mapping):

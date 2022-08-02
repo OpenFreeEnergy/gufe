@@ -6,14 +6,16 @@ logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
 from openff.toolkit.utils.serialization import Serializable
+from openmm import unit  # TODO: waiting on off-tk 0.11
+# from openff.units import unit  # off-tk 0.11
 import warnings
 
 from rdkit import Chem
 
-from gufe import __version__
-from gufe import Component
-from gufe.molhashing import hashmol
-from gufe.custom_typing import RDKitMol, OEMol
+from .. import __version__
+from .component import Component
+from ..molhashing import hashmol, deserialize_numpy, serialize_numpy
+from ..custom_typing import RDKitMol, OEMol
 
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
@@ -79,6 +81,13 @@ class SmallMoleculeComponent(Component, Serializable):
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
+        conformers = list(rdkit.GetConformers())
+        if not conformers:
+            raise ValueError("Molecule was provided with no conformers.")
+        elif (n_confs := len(conformers)) > 1:
+            warnings.warn(f"Molecule provided with {n_confs} conformers. "
+                          "Only the first will be used.")
+
         self._rdkit = rdkit
         self._hash = hashmol(self._rdkit, name=name)
 
@@ -127,14 +136,80 @@ class SmallMoleculeComponent(Component, Serializable):
 
     def to_dict(self) -> dict:
         """Serialize to dict representation"""
-        d = self.to_openff().to_dict()
+        # required attributes: (based on openff to_dict)
+        # for each atom:
+        #   element, name, formal charge, aromaticity, stereochemistry
+        # for each bond:
+        #   idx0, idx1, order, aromaticity, stereochemistry
+        # TODO: Do we care about fractional bond orders?
+        #       is aromaticity reperceived on creation?
+        # NOTE: Here we're implicitly using units of angstrom and elementary
+        # charge. We might want to explcitly include them in the stored dict.
+        m = self.to_openff()
+        atoms = [
+            (atom.element.atomic_number,
+             atom.name,
+             # off-tk 0.11 changes formal charge:
+             atom.formal_charge.value_in_unit(unit.elementary_charge),
+             # atom.formal_charge.m_as(unit.elementary_charge),
+             atom.is_aromatic,
+             atom.stereochemistry or '')
+            for atom in m.atoms
+        ]
+        bonds = [
+            (bond.atom1_index, bond.atom2_index, bond.bond_order,
+             bond.is_aromatic, bond.stereochemistry or '')
+            for bond in m.bonds
+        ]
+
+        if m.conformers is None:  # -no-cov-
+            # this should not be reachable; indicates that something went
+            # very wrong
+            raise RuntimeError(f"{self.__class__.__name__} must have at "
+                               "least 1 conformer")
+
+        conformers = [
+            serialize_numpy(conf.value_in_unit(unit.angstrom))  # off-tk 0.11
+            # serialize_numpy(conf.m_as(unit.angstrom))
+            for conf in m.conformers
+        ]
+
+        d = {
+            'atoms': atoms,
+            'bonds': bonds,
+            'name': self.name,
+            'conformers': conformers,
+        }
+
         return d
 
     @classmethod
     def from_dict(cls, d: dict):
         """Deserialize from dict representation"""
-        return cls.from_openff(OFFMolecule.from_dict(d),
-                               name=d.get('name', ''))
+        # manually construct OpenFF molecule as in cookbook
+        m = OFFMolecule()
+        for (an, name, fc, arom, stereo) in d['atoms']:
+            m.add_atom(
+                atomic_number=an,
+                formal_charge=fc * unit.elementary_charge,
+                is_aromatic=arom,
+                stereochemistry=stereo or None,
+                name=name,
+            )
+
+        for (idx1, idx2, order, arom, stereo) in d['bonds']:
+            m.add_bond(
+                atom1=idx1,
+                atom2=idx2,
+                bond_order=order,
+                is_aromatic=arom,
+                stereochemistry=stereo or None,
+            )
+
+        for conf in d['conformers']:
+            m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
+
+        return cls.from_openff(m, name=d['name'])
 
     def to_sdf(self) -> str:
         """Create a string based on SDF.
