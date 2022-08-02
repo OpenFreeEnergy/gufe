@@ -21,7 +21,7 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}-latest
-    name: "tests"
+    name: "tests on ${{ matrix.OS }}, python version ${{ matrix.python-version }}, latest openff-toolkit: ${{ matrix.latest-openff-toolkit }}"
     strategy:
       fail-fast: false
       matrix:
