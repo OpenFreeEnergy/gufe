@@ -14,7 +14,7 @@ dependencies:
   - pytest-xdist
   - pytest-cov
   - coverage
-  - openff-toolkit >=0.11
+  - openff-toolkit >0.10
   - openff-units
   - openeye-toolkits
   - typing-extensions
