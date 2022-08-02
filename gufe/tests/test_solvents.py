@@ -10,7 +10,7 @@ def test_defaults():
     assert s.smiles == 'O'
     assert s.positive_ion == "Na+"
     assert s.negative_ion == "Cl-"
-    assert s.ion_concentration is None
+    assert s.ion_concentration == 0.0 * unit.molar
 
 
 @pytest.mark.parametrize('pos, neg', [
@@ -25,6 +25,7 @@ def test_hash(pos, neg):
     assert hash(s1) == hash(s2)
     assert s2.positive_ion == 'Na+'
     assert s2.negative_ion == 'Cl-'
+
 
 def test_neq():
     s1 = SolventComponent(positive_ion='Na', negative_ion='Cl')
@@ -42,10 +43,10 @@ def test_to_dict():
                            'positive_ion': 'Na+',
                            'negative_ion': 'Cl-',
                            'neutralize': True,
-                           'ion_concentration': None}
+                           'ion_concentration': '0.0 molar'}
 
 
-@pytest.mark.parametrize('conc', [None, 1.75 * unit.molar])
+@pytest.mark.parametrize('conc', [0.0 * unit.molar, 1.75 * unit.molar])
 def test_from_dict(conc):
     s1 = SolventComponent(positive_ion='Na', negative_ion='Cl',
                           ion_concentration=conc,
@@ -63,7 +64,8 @@ def test_conc():
 
 @pytest.mark.parametrize('conc,',
                          [1.22,  # no units, 1.22 what?
-                          1.5 * unit.kg])  # probably a tad much salt
+                          1.5 * unit.kg,  # probably a tad much salt
+                          -0.1 * unit.molar])  # negative conc
 def test_bad_conc(conc):
     with pytest.raises(ValueError):
         _ = SolventComponent(positive_ion='Na', negative_ion='Cl',

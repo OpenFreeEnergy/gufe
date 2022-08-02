@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import numpy as np
 
 from .base import GufeTokenizable
-from .components import Component
+from gufe import Component
 
 
 class ChemicalSystem(abc.Mapping, GufeTokenizable):
@@ -53,6 +53,8 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             chemical state is added to an `AlchemicalNetwork`.
 
         """
+        super().__init__()
+
         self._components = components
         self._name = name
 
