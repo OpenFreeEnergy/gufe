@@ -59,7 +59,7 @@ jobs:
         if: ${{ matrix.latest-openff-toolkit }}
         run: |
           # The new toolkit has cachetools as a dependency
-          mamba install -y -c conda-forge/label/openff-toolkit_rc openff-toolkit
+          mamba update -y -c conda-forge/label/openff-toolkit_rc openff-toolkit
           # This openmmforcefields install can be removed when a new version after 0.11.0 is released 
           python -m pip install git+https://github.com/openmm/openmmforcefields.git
 
