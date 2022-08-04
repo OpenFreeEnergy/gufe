@@ -289,6 +289,7 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
 
 # decode options
 def from_dict(dct) -> GufeTokenizable:
+    dct = copy.deepcopy(dct)
     obj = _from_dict(dct)
     try:
         # TODO: not sure why this isn't working right now

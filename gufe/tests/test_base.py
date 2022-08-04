@@ -94,8 +94,7 @@ class TestGufeTokenizable:
         assert self.cont.to_dict() == self.expected_deep
 
     def test_from_dict_deep(self):
-        pytest.skip("TODO: figure out why this doesn't work")
-        ...
+        pytest.skip("TODO: this currently fails")
         recreated = Container.from_dict(self.expected_deep)
         assert recreated == self.cont
 
@@ -106,10 +105,16 @@ class TestGufeTokenizable:
         assert self.cont.to_keyed_dict() == self.expected_keyed
 
     def test_from_keyed_dict(self):
-        ...
+        recreated = Container.from_keyed_dict(self.expected_keyed)
+        assert recreated == self.cont
 
     def test_to_keyed_dict_roundtrip(self):
-        ...
+        ser = self.cont.to_keyed_dict()
+        deser = Container.from_keyed_dict(ser)
+        reser = deser.to_keyed_dict()
+
+        assert self.cont == deser
+        assert ser == reser
 
     def test_to_shallow_dict(self):
         assert self.cont.to_shallow_dict() == self.expected_shallow
@@ -122,4 +127,9 @@ class TestGufeTokenizable:
         assert recreated.obj.a is recreated.dct['leaf']
 
     def test_to_shallow_dict_roundtrip(self):
-        ...
+        ser = self.cont.to_shallow_dict()
+        deser = Container.from_shallow_dict(ser)
+        reser = deser.to_shallow_dict()
+
+        assert self.cont == deser
+        assert ser == reser
