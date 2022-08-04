@@ -303,8 +303,6 @@ def from_dict(dct) -> GufeTokenizable:
 
     obj = _from_dict(dct)
     try:
-        # TODO: not sure why this isn't working right now
-        breakpoint()
         thing = TOKENIZABLE_REGISTRY[obj.key]()
         # weakref will return None if the object was deleted
         if thing is None:
