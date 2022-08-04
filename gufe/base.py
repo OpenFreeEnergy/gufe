@@ -52,7 +52,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return NotImplemented("Component comparisons must be of the same type")
+            return NotImplemented("Object comparisons must be of the same "
+                                  "type")
 
         return self.to_dict() == other.to_dict()
 
@@ -76,7 +77,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @property
     def defaults(self):
-        """Dictionary of default key-value pairs for this `GufeTokenizable` object.
+        """Dict of default key-value pairs for this `GufeTokenizable` object.
 
         These defaults are stripped from the dict form of this object produced
         with `to_dict(include_defaults=False) where default values are present.
@@ -121,8 +122,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         ...
 
     def to_dict(self, include_defaults=True) -> dict:
-        """Generate full dict representation, with all referenced `GufeTokenizable` objects
-        also given in full dict representations.
+        """Generate full dict representation, with all referenced
+        `GufeTokenizable` objects also given in full dict representations.
 
         Parameters
         ----------
@@ -153,8 +154,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         ----------
         dct : Dict
             A dictionary produced by `to_dict` to instantiate from.
-            If an identical instance already exists in memory, it will be returned.
-            Otherwise, a new instance will be returned.
+            If an identical instance already exists in memory, it will be
+            returned.  Otherwise, a new instance will be returned.
 
         """
         return dict_decode_dependencies(dct)
@@ -188,8 +189,8 @@ TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
 # TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = WeakValueDictionary()
 """Registry of tokenizable objects.
 
-Used to avoid duplication of tokenizable `gufe` objects in memory when deserialized.
-Each key is a token, each value the corresponding object.
+Used to avoid duplication of tokenizable `gufe` objects in memory when
+deserialized.  Each key is a token, each value the corresponding object.
 
 """
 
@@ -248,8 +249,8 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
         function that determines whether the given object should be
         subjected to the modifier
     top : bool
-        If `True`, skip modifying `obj` itself; needed for recursive use to avoid
-        early stopping on `obj`.
+        If `True`, skip modifying `obj` itself; needed for recursive use to
+        avoid early stopping on `obj`.
     """
     obj = copy.deepcopy(obj)
 
@@ -258,11 +259,11 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
 
     if isinstance(obj, dict):
         obj = {key: modify_dependencies(value, modifier, is_mine, top=False)
-                for key, value in obj.items()}
+               for key, value in obj.items()}
 
     elif isinstance(obj, list):
         obj = [modify_dependencies(item, modifier, is_mine, top=False)
-                for item in obj]
+               for item in obj]
 
     return obj
 
@@ -318,14 +319,17 @@ def _from_dict(dct: Dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
     if (qualname is None) or (module is None):
-        raise KeyError("`__qualname__` or `__module__` key not found; unable to reconstitute from dict")
+        raise KeyError("`__qualname__` or `__module__` key not found; unable "
+                       "to reconstitute from dict")
 
     cls = get_class(module, qualname)
     return cls._from_dict(dct)
 
 
 def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
-    return from_dict(modify_dependencies(dct, from_dict, is_gufe_dict, top=True))
+    return from_dict(
+        modify_dependencies(dct, from_dict, is_gufe_dict, top=True)
+    )
 
 
 def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
@@ -356,11 +360,13 @@ def normalize_object(o: GufeTokenizable):
     try:
         return o._gufe_tokenize()
     except AttributeError:
-        raise ValueError("Cannot normalize object without `_gufe_tokenize` method.")
+        raise ValueError("Cannot normalize object without `_gufe_tokenize` "
+                         "method.")
 
 
 def tokenize(obj: GufeTokenizable) -> str:
-    """Generate a deterministic, relatively-stable token from a `GufeTokenizable` object.
+    """Generate a deterministic, relatively-stable token from a
+    `GufeTokenizable` object.
 
     Examples
     --------
