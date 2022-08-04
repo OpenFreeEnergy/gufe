@@ -1,7 +1,9 @@
 import pytest
+from unittest import mock
 
 from gufe.base import (
-    GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY
+    GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
+    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY,
 )
 
 
@@ -146,3 +148,39 @@ class TestGufeTokenizable:
         assert ser == reser
         assert self.cont == deser
         assert self.cont is deser
+
+
+class Outer:
+    class Inner:
+        pass
+
+
+@pytest.mark.parametrize('modname, qualname, expected', [
+    (__name__, "Outer", Outer),
+    (__name__, "Outer.Inner", Outer.Inner),
+    ("gufe.base", 'import_qualname', import_qualname),
+])
+def test_import_qualname(modname, qualname, expected):
+    assert import_qualname(modname, qualname) is expected
+
+
+def test_import_qualname_not_yet_imported():
+    # this is specifically to test that something we don't have imported in
+    # this module will import correctly
+    msg_cls = import_qualname(modname="email.message",
+                              qualname="EmailMessage")
+    from email.message import EmailMessage
+    assert msg_cls is EmailMessage
+
+
+def test_import_qualname_remappings():
+    remappings = {("foo", "Bar.Baz"): (__name__, "Outer.Inner")}
+    assert import_qualname("foo", "Bar.Baz", remappings) is Outer.Inner
+
+@pytest.mark.parametrize('cls_reg', [
+    {},
+    {(__name__, "Outer.Inner"): Outer.Inner},
+])
+def test_get_class(cls_reg):
+    with mock.patch.dict("gufe.base.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
+        assert get_class(__name__, "Outer.Inner") is Outer.Inner
