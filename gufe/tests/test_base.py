@@ -1,6 +1,8 @@
 import pytest
 
-from gufe.base import GufeTokenizable, GufeKey, tokenize
+from gufe.base import (
+    GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY
+)
 
 
 class Leaf(GufeTokenizable):
@@ -94,12 +96,19 @@ class TestGufeTokenizable:
         assert self.cont.to_dict() == self.expected_deep
 
     def test_from_dict_deep(self):
-        pytest.skip("TODO: this currently fails")
         recreated = Container.from_dict(self.expected_deep)
         assert recreated == self.cont
+        pytest.skip("TODO: fix so that this next part works")
+        assert recreated is self.cont
+
 
     def test_to_dict_roundtrip(self):
-        ...
+        ser = self.cont.to_dict()
+        deser = Container.from_dict(ser)
+        reser = deser.to_dict()
+
+        assert self.cont == deser
+        assert ser == reser
 
     def test_to_keyed_dict(self):
         assert self.cont.to_keyed_dict() == self.expected_keyed

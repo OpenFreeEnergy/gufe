@@ -180,7 +180,9 @@ class GufeKey(str):
 
 
 # TODO: may want to make this a weakref dict to avoid holding references here
+# why are we not using WeakValueDictionary?
 TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
+# TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = WeakValueDictionary()
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when deserialized.
@@ -290,6 +292,11 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
 # decode options
 def from_dict(dct) -> GufeTokenizable:
     dct = copy.deepcopy(dct)
+
+    for key, val in dct.items():
+        if is_gufe_dict(val):
+            dct[key] = from_dict(val)
+
     obj = _from_dict(dct)
     try:
         # TODO: not sure why this isn't working right now
