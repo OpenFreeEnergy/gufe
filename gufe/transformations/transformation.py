@@ -11,7 +11,7 @@ from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import Mapping
 
 
-class Transformation(GufeTokenizable):
+class Transformation:#(GufeTokenizable):
     """An edge of an alchemical network.
 
     Connects two `ChemicalSystem`s, with directionality.

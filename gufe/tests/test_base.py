@@ -125,6 +125,7 @@ class TestGufeTokenizable:
 
         assert self.cont == deser
         assert ser == reser
+        assert self.cont is deser
 
     def test_to_shallow_dict(self):
         assert self.cont.to_shallow_dict() == self.expected_shallow
@@ -141,5 +142,6 @@ class TestGufeTokenizable:
         deser = Container.from_shallow_dict(ser)
         reser = deser.to_shallow_dict()
 
-        assert self.cont == deser
         assert ser == reser
+        assert self.cont == deser
+        assert self.cont is deser
