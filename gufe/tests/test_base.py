@@ -92,15 +92,16 @@ class TestGufeTokenizable:
         'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
         }
 
+    def teardown(self):
+        TOKENIZABLE_REGISTRY.clear()
+
     def test_to_dict_deep(self):
         assert self.cont.to_dict() == self.expected_deep
 
     def test_from_dict_deep(self):
         recreated = Container.from_dict(self.expected_deep)
         assert recreated == self.cont
-        pytest.skip("TODO: fix so that this next part works")
         assert recreated is self.cont
-
 
     def test_to_dict_roundtrip(self):
         ser = self.cont.to_dict()

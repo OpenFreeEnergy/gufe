@@ -30,10 +30,16 @@ class _GufeTokenizableMeta(type):
 
         return componentcls
 
+    def __call__(cls, *args, **kwargs):
+        instance = super().__call__(*args, **kwargs)
+        # add to registry if not already present
+        TOKENIZABLE_REGISTRY.setdefault(instance.key, weakref.ref(instance))
+        return instance
+
 
 class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
-    # required to make use of abc.ABC in classes that use _ComponentMeta metaclass
-    # see https://stackoverflow.com/questions/57349105/python-abc-inheritance-with-specified-metaclass 
+    # required to make use of abc.ABC in classes that use _ComponentMeta
+    # metaclass: see https://stackoverflow.com/questions/57349105/
     ...
 
 
@@ -66,9 +72,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             token = tokenize(self)
             self._key = GufeKey(f"{prefix}-{token}")
 
-        # add to registry if not already present
-        TOKENIZABLE_REGISTRY.setdefault(self._key, weakref.ref(self))
-
         return self._key
 
     @property
@@ -98,7 +101,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @abc.abstractmethod
     def _to_dict(self) -> Dict:
-        """This method should be overridden to provide the dict form of the 
+        """This method should be overridden to provide the dict form of the
         `GufeTokenizable` subclass.
 
         `GufeTokenizable` instances shoulds *not* be used as keys in dicts
@@ -111,7 +114,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     @classmethod
     @abc.abstractmethod
     def _from_dict(cls, dct: Dict):
-        """This method should be overridden to receive the dict form of the 
+        """This method should be overridden to receive the dict form of the
         `GufeTokenizable` subclass and generate an instance from it.
 
         """
@@ -126,7 +129,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         include_defaults : bool
             If `False`, strip keys from dict representation with values equal
             to those in `defaults`.
-        
+
         See also
         --------
         :meth:`GufeTokenizable.to_shallow_dict`
@@ -160,14 +163,14 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return key_encode_dependencies(self)
 
     @classmethod
-    def from_keyed_dict(self, dct: Dict):
+    def from_keyed_dict(cls, dct: Dict):
         return key_decode_dependencies(dct)
 
     def to_shallow_dict(self) -> Dict:
-        return to_dict(self) 
+        return to_dict(self)
 
     @classmethod
-    def from_shallow_dict(self, dct: Dict):
+    def from_shallow_dict(cls, dct: Dict):
         return from_dict(dct)
 
 
@@ -300,6 +303,7 @@ def from_dict(dct) -> GufeTokenizable:
     obj = _from_dict(dct)
     try:
         # TODO: not sure why this isn't working right now
+        breakpoint()
         thing = TOKENIZABLE_REGISTRY[obj.key]()
         # weakref will return None if the object was deleted
         if thing is None:
