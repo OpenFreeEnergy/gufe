@@ -65,6 +65,7 @@ class TestGufeTokenizable:
         bar = Leaf(leaf)
 
         self.cont = Container(bar, [leaf, 0], {"leaf": leaf, "a": "b"})
+
         def leaf_dict(a):
             return {'__module__': __name__, '__qualname__': "Leaf", "a": a}
 
@@ -89,7 +90,7 @@ class TestGufeTokenizable:
             '__module__': __name__,
             'obj': {":gufe-key:": bar.key},
             'lst': [{":gufe-key:": leaf.key}, 0],
-        'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
+            'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
         }
 
     def teardown(self):

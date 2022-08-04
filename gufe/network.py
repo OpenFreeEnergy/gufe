@@ -11,7 +11,7 @@ from .chemicalsystem import ChemicalSystem
 from .transformations import Transformation
 
 
-class AlchemicalNetwork:#(GufeTokenizable):
+class AlchemicalNetwork:  #(GufeTokenizable):
     """A network of `ChemicalSystem`s as nodes, `Transformation`s as edges.
 
     Attributes
