@@ -177,6 +177,17 @@ def test_import_qualname_remappings():
     remappings = {("foo", "Bar.Baz"): (__name__, "Outer.Inner")}
     assert import_qualname("foo", "Bar.Baz", remappings) is Outer.Inner
 
+
+@pytest.mark.parametrize('modname, qualname', [
+    (None, "Outer.Inner"),
+    (__name__, None),
+])
+def test_import_qualname_error_none(modname, qualname):
+    with pytest.raises(ValueError, match="cannot be None"):
+        import_qualname(modname, qualname)
+
+
+
 @pytest.mark.parametrize('cls_reg', [
     {},
     {(__name__, "Outer.Inner"): Outer.Inner},

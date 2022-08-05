@@ -215,6 +215,10 @@ def is_gufe_key_dict(dct: Any):
 
 # conveniences to get a class from module/class name
 def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
+    if (qualname is None) or (modname is None):
+        raise ValueError("`__qualname__` or `__module__` cannot be None; "
+                         f"unable to identify object {modname}.{qualname}")
+
     if (modname, qualname) in remappings:
         modname, qualname = remappings[(modname, qualname)]
 
@@ -316,9 +320,6 @@ def from_dict(dct) -> GufeTokenizable:
 def _from_dict(dct: Dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
-    if (qualname is None) or (module is None):
-        raise KeyError("`__qualname__` or `__module__` key not found; unable "
-                       "to reconstitute from dict")
 
     cls = get_class(module, qualname)
     return cls._from_dict(dct)
