@@ -146,7 +146,7 @@ class TestResultClient(_ResultContainerTest):
 
     @pytest.mark.parametrize("fixture", [
         "absolute_transformation",
-        "complex_equilibrium"
+        "complex_equilibrium",
     ])
     def test_store_load_transformation_same_process(self, request, fixture):
         transformation = request.getfixturevalue(fixture)
@@ -161,8 +161,23 @@ class TestResultClient(_ResultContainerTest):
 
         pytest.skip()
 
-    def test_store_load_transformation_different_process(self):
-        pytest.skip()
+    @pytest.mark.parametrize('fixture', [
+        "absolute_transformation",
+        "complex_equilibrium",
+    ])
+    def test_store_load_transformation_different_process(self, fixture):
+        transformation = request.getfixturevalue(fixture)
+        store = MemoryStorage()
+        client = ResultClient(store)
+        assert store._data == {}
+        client.store_transformation(transformation)
+        assert store._data != {}
+        # make it look like we have an empty cache, as if this was a
+        # different process
+        with mock.patch.dict("gufe.base.TOKENIZABLE_REGISTRY", {}):
+            reload = client.load_transformation(transformation.key)
+            assert reload == transformation
+            assert reload is not transformation
 
     def test_delete(self, result_client):
         file_to_delete = self.expected_files[0]
