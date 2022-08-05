@@ -16,7 +16,7 @@ from ..base import (
 # currently waiting until #39 gets merged; this is needed here, but don't
 # want to add to the to-do list on that PR, or to create merge conflicts
 def get_all_gufe_objs(obj):
-    results = set()
+    results = {obj}
     def modifier(o):
         results.add(o)
         return o.to_shallow_dict()
