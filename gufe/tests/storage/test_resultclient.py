@@ -165,7 +165,8 @@ class TestResultClient(_ResultContainerTest):
         "absolute_transformation",
         "complex_equilibrium",
     ])
-    def test_store_load_transformation_different_process(self, fixture):
+    def test_store_load_transformation_different_process(self, request,
+                                                         fixture):
         transformation = request.getfixturevalue(fixture)
         store = MemoryStorage()
         client = ResultClient(store)
