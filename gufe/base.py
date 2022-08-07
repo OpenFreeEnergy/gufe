@@ -33,7 +33,7 @@ class _GufeTokenizableMeta(type):
     def __call__(cls, *args, **kwargs):
         instance = super().__call__(*args, **kwargs)
         # add to registry if not already present
-        TOKENIZABLE_REGISTRY.setdefault(instance.key, weakref.ref(instance))
+        TOKENIZABLE_REGISTRY.setdefault(instance.key, instance)
         return instance
 
 
@@ -183,14 +183,15 @@ class GufeKey(str):
         return {':gufe-key:': str(self)}
 
 
-# TODO: may want to make this a weakref dict to avoid holding references here
-# why are we not using WeakValueDictionary?
-TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
-# TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = WeakValueDictionary()
+# TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
+TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = weakref.WeakValueDictionary()
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when
 deserialized.  Each key is a token, each value the corresponding object.
+
+We use a `weakref.WeakValueDictionary` here to avoid holding references to
+objects that are no longer referenced anywhere else.
 
 """
 
@@ -215,10 +216,6 @@ def is_gufe_key_dict(dct: Any):
 
 # conveniences to get a class from module/class name
 def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
-    if (qualname is None) or (modname is None):
-        raise ValueError("`__qualname__` or `__module__` cannot be None; "
-                         f"unable to identify object {modname}.{qualname}")
-
     if (modname, qualname) in remappings:
         modname, qualname = remappings[(modname, qualname)]
 
@@ -244,8 +241,8 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
     Parameters
     ----------
     obj : Dict or List
-        Dictionary to traverse. Assumes that only mappings are dict and only
-        iterables are list, and that no gufe objects are in the keys of
+        Dictionary or list to traverse. Assumes that only mappings are dict and
+        only iterables are list, and that no gufe objects are in the keys of
         dicts
     modifier : Callable[[GufeTokenizable], Any]
         function that modifies any GufeTokenizable found
@@ -307,7 +304,7 @@ def from_dict(dct) -> GufeTokenizable:
 
     obj = _from_dict(dct)
     try:
-        thing = TOKENIZABLE_REGISTRY[obj.key]()
+        thing = TOKENIZABLE_REGISTRY[obj.key]
         # weakref will return None if the object was deleted
         if thing is None:
             return obj
@@ -320,6 +317,9 @@ def from_dict(dct) -> GufeTokenizable:
 def _from_dict(dct: Dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
+    if (qualname is None) or (module is None):
+        raise KeyError("`__qualname__` or `__module__` key not found; unable "
+                       "to reconstitute from dict")
 
     cls = get_class(module, qualname)
     return cls._from_dict(dct)
@@ -336,7 +336,7 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
     # responsibility of the storage system that uses this to do so
     dct = modify_dependencies(
         dct,
-        lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])](),
+        lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])],
         is_gufe_key_dict,
         top=True
     )
