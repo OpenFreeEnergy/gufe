@@ -344,26 +344,7 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
     return from_dict(dct)
 
 
-# FROM dask.base
-# Pass `usedforsecurity=False` for Python 3.9+ to support FIPS builds of Python
-_PY_VERSION = parse_version(".".join(map(str, sys.version_info[:3])))
-_md5: Callable
-if _PY_VERSION >= parse_version("3.9"):
-
-    def _md5(x, _hashlib_md5=hashlib.md5):
-        return _hashlib_md5(x, usedforsecurity=False)
-else:
-    _md5 = hashlib.md5
-
-
-def normalize_object(o: GufeTokenizable):
-    try:
-        return o._gufe_tokenize()
-    except AttributeError:
-        raise ValueError("Cannot normalize object without `_gufe_tokenize` "
-                         "method.")
-
-
+# inspired by `dask.base`
 def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a
     `GufeTokenizable` object.
@@ -379,5 +360,5 @@ def tokenize(obj: GufeTokenizable) -> str:
     True
 
     """
-    hasher = _md5(str(normalize_object(obj)).encode())
+    hasher = hashlib.md5(str(obj._gufe_tokenize()).encode(), usedforsecurity=False)
     return hasher.hexdigest()
