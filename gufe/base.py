@@ -307,15 +307,13 @@ def from_dict(dct) -> GufeTokenizable:
             dct[key] = from_dict(val)
 
     obj = _from_dict(dct)
-    try:
-        thing = TOKENIZABLE_REGISTRY[obj.key]
-        # weakref will return None if the object was deleted
-        if thing is None:
-            return obj
-        else:
-            return thing
-    except KeyError:
+    thing = TOKENIZABLE_REGISTRY[obj.key]
+
+    # weakref will return None if the object was deleted
+    if thing is None:
         return obj
+    else:
+        return thing
 
 
 def _from_dict(dct: Dict) -> GufeTokenizable:
