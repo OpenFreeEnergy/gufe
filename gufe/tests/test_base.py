@@ -27,6 +27,25 @@ class Leaf(GufeTokenizable):
         return super()._defaults()
 
 
+class Leaf2(GufeTokenizable):
+    def __init__(self, a, b=2):
+        self.a = a
+        self.b = b
+
+    def _to_dict(self):
+        return {"a": self.a}
+
+    @classmethod
+    def _from_dict(cls, dct):
+        return cls(**dct)
+
+    def __repr__(self):
+        return f"Leaf({self.a})"
+
+    def _defaults(self):
+        return super()._defaults()
+
+
 class Container(GufeTokenizable):
     def __init__(self, obj, lst, dct):
         self.obj = obj
@@ -68,7 +87,10 @@ class GufeTokenizableTestsMixin(abc.ABC):
         reser = deser.to_dict()
 
         assert instance == deser
-        assert ser == reser
+
+        # not generally true that the dict forms are equal, e.g. if they
+        # include `np.nan`s
+        #assert ser == reser
 
     def test_to_keyed_dict_roundtrip(self, instance):
         ser = instance.to_keyed_dict()
@@ -77,7 +99,10 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
         assert instance == deser
         assert instance is deser
-        assert ser == reser
+
+        # not generally true that the dict forms are equal, e.g. if they
+        # include `np.nan`s
+        #assert ser == reser
 
     def test_to_shallow_dict_roundtrip(self, instance):
         ser = instance.to_shallow_dict()
@@ -86,7 +111,10 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
         assert instance == deser
         assert instance is deser
-        assert ser == reser
+
+        # not generally true that the dict forms are equal, e.g. if they
+        # include `np.nan`s
+        #assert ser == reser
 
 
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
@@ -160,6 +188,13 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         # here we keep the same objects in memory
         assert recreated.obj.a is recreated.lst[0]
         assert recreated.obj.a is recreated.dct['leaf']
+
+    def test_notequal_different_type(self):
+        l1 = Leaf(4)
+        l2 = Leaf2(4)
+
+        with pytest.raises(NotImplementedError):
+            l1 == l2
 
 
 class Outer:

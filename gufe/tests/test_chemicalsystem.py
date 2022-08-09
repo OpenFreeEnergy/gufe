@@ -4,13 +4,14 @@
 import pytest
 import numpy as np
 
-import gufe
+from gufe import ChemicalSystem
 
+from .test_base import GufeTokenizableTestsMixin
 
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
-    state = gufe.ChemicalSystem(
+    state = ChemicalSystem(
         {'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
     )
@@ -29,7 +30,7 @@ def test_ligand_construction(solv_comp, toluene_ligand_comp):
 def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
-    state = gufe.ChemicalSystem(
+    state = ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
@@ -49,11 +50,11 @@ def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
 
 
 def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
-    c1 = gufe.ChemicalSystem({'protein': prot_comp,
+    c1 = ChemicalSystem({'protein': prot_comp,
                               'solvent': solv_comp,
                               'ligand': toluene_ligand_comp})
 
-    c2 = gufe.ChemicalSystem({'solvent': solv_comp,
+    c2 = ChemicalSystem({'solvent': solv_comp,
                               'ligand': toluene_ligand_comp,
                               'protein': prot_comp})
 
@@ -70,7 +71,7 @@ def test_chemical_system_neq_1(solvated_complex, prot_comp):
 def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
                                toluene_ligand_comp):
     # names are different
-    complex2 = gufe.ChemicalSystem(
+    complex2 = ChemicalSystem(
         {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp},
         name="Not quite the same",
     )
@@ -82,7 +83,7 @@ def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
 def test_chemical_system_neq_3(solvated_complex, prot_comp, solv_comp,
                                toluene_ligand_comp):
     # different unit cell size
-    complex2 = gufe.ChemicalSystem(
+    complex2 = ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': toluene_ligand_comp},
@@ -101,7 +102,7 @@ def test_chemical_system_neq_4(solvated_complex, solvated_ligand):
 def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp,
                                phenol_ligand_comp):
     # same component keys, but different components
-    complex2 = gufe.ChemicalSystem(
+    complex2 = ChemicalSystem(
         {'protein': prot_comp,
          'solvent': solv_comp,
          'ligand': phenol_ligand_comp},
@@ -125,3 +126,17 @@ def test_sorting(solvated_complex, solvated_ligand):
     order2 = [solvated_ligand, solvated_complex, solvated_ligand]
 
     assert sorted(order1) == sorted(order2)
+
+
+
+# FINISH ME
+class TestChemicalSystem(GufeTokenizableTestsMixin):
+
+    cls = ChemicalSystem
+
+    @pytest.fixture
+    def instance(self, solv_comp, toluene_ligand_comp):
+        return ChemicalSystem(
+            {'solvent': solv_comp,
+             'ligand': toluene_ligand_comp},
+            )
