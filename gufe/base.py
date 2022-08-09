@@ -161,17 +161,64 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return dict_decode_dependencies(dct)
 
     def to_keyed_dict(self) -> Dict:
+        """Generate keyed dict representation, with all referenced
+        `GufeTokenizable` objects given in keyed representations.
+
+        A keyed representation of an object is a dict of the form:
+
+            {':gufe-key:': <GufeTokenizable.key>}
+
+        These function as stubs to allow for serialization and storage of
+        `GufeTokenizable` objects with minimal duplication.
+
+        The original object can be re-assembled with `from_keyed_dict`.
+
+        See also
+        --------
+        :meth:`GufeTokenizable.to_dict`
+        :meth:`GufeTokenizable.to_shallow_dict`
+
+        """
         return key_encode_dependencies(self)
 
     @classmethod
     def from_keyed_dict(cls, dct: Dict):
+        """Generate an instance from keyed dict representation.
+
+        Parameters
+        ----------
+        dct : Dict
+            A dictionary produced by `to_keyed_dict` to instantiate from.
+            If an identical instance already exists in memory, it will be
+            returned.  Otherwise, a new instance will be returned.
+
+        """
         return key_decode_dependencies(dct)
 
     def to_shallow_dict(self) -> Dict:
+        """Generate shallow dict representation, with all referenced
+        `GufeTokenizable` objects left intact.
+
+        See also
+        --------
+        :meth:`GufeTokenizable.to_dict`
+        :meth:`GufeTokenizable.to_keyed_dict`
+
+        """
         return to_dict(self)
 
     @classmethod
     def from_shallow_dict(cls, dct: Dict):
+        """Generate an instance from shallow dict representation.
+
+        Parameters
+        ----------
+        dct : Dict
+            A dictionary produced by `to_shallow_dict` to instantiate from.
+            If an identical instance already exists in memory, it will be
+            returned.  Otherwise, a new instance will be returned.
+
+        """
         return from_dict(dct)
 
 
