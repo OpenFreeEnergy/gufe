@@ -3,7 +3,9 @@ API docs
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 3
+   :caption: API Contents:
 
    api/components
+   api/protocols
+
