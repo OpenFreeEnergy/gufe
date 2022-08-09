@@ -240,6 +240,7 @@ class TestSmallMoleculeSerialization:
 
     # TODO: determine if we want to add our own serializers for e.g. JSON
     # based on `to_dict`
+    @pytest.mark.xfail
     def test_bounce_off_file(self, toluene, tmpdir):
         fname = str(tmpdir / 'mol.json')
 
