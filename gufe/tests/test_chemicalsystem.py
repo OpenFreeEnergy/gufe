@@ -128,8 +128,6 @@ def test_sorting(solvated_complex, solvated_ligand):
     assert sorted(order1) == sorted(order2)
 
 
-
-# FINISH ME
 class TestChemicalSystem(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem

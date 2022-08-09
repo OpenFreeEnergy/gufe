@@ -176,7 +176,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
 
 class GufeKey(str):
-    def __repr__(self):
+    def __repr__(self):   # pragma: no cover
         return f"<GufeKey('{str(self)}')>"
 
     def to_dict(self):
