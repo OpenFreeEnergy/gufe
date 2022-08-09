@@ -5,7 +5,6 @@ from typing import FrozenSet, Iterable, Optional, Tuple
 
 import networkx as nx
 from .base import GufeTokenizable
-from typing import FrozenSet
 
 from .chemicalsystem import ChemicalSystem
 from .transformations import Transformation
@@ -27,7 +26,7 @@ class AlchemicalNetwork:  #(GufeTokenizable):
         edges: Iterable[Transformation] = None,
         nodes: Iterable[ChemicalSystem] = None,
     ):
-        self._edges = frozenset(edges) if edges else frozenset()
+        self._edges: FrozenSet[Transformation] = frozenset(edges) if edges else frozenset()
         self._nodes: FrozenSet[ChemicalSystem]
 
         # possible to get more nodes via edges above,

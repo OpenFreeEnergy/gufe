@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import numpy as np
 
 from .base import GufeTokenizable
-from gufe import Component
+from .components import Component
 
 
 class ChemicalSystem(abc.Mapping, GufeTokenizable):

@@ -1,4 +1,5 @@
 import pytest
+import abc
 from unittest import mock
 
 from gufe.base import (
@@ -11,13 +12,6 @@ class Leaf(GufeTokenizable):
     def __init__(self, a, b=2):
         self.a = a
         self.b = b
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__)
-            and self.a == other.a
-            and self.b == other.b
-        )
 
     def _to_dict(self):
         return {"a": self.a}
@@ -39,14 +33,6 @@ class Container(GufeTokenizable):
         self.lst = lst
         self.dct = dct
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__)
-            and self.obj == other.obj
-            and self.lst == other.lst
-            and self.dct == other.dct
-        )
-
     def _to_dict(self):
         return {'obj': self.obj, 'lst': self.lst, 'dct': self.dct}
 
@@ -61,7 +47,59 @@ class Container(GufeTokenizable):
         return super()._defaults()
 
 
-class TestGufeTokenizable:
+class GufeTokenizableTestsMixin(abc.ABC):
+
+    # set this to the `GufeTokenizable` subclass you are testing
+    cls: type[GufeTokenizable]
+
+    @pytest.fixture
+    def instance(self):
+        """Define instance to test with here.
+
+        """
+        ...
+
+    def teardown(self):
+        TOKENIZABLE_REGISTRY.clear()
+
+    def test_to_dict_roundtrip(self, instance):
+        ser = instance.to_dict()
+        deser = self.cls.from_dict(ser)
+        reser = deser.to_dict()
+
+        assert instance == deser
+        assert ser == reser
+
+    def test_to_keyed_dict_roundtrip(self, instance):
+        ser = instance.to_keyed_dict()
+        deser = self.cls.from_keyed_dict(ser)
+        reser = deser.to_keyed_dict()
+
+        assert instance == deser
+        assert instance is deser
+        assert ser == reser
+
+    def test_to_shallow_dict_roundtrip(self, instance):
+        ser = instance.to_shallow_dict()
+        deser = self.cls.from_shallow_dict(ser)
+        reser = deser.to_shallow_dict()
+
+        assert instance == deser
+        assert instance is deser
+        assert ser == reser
+
+
+class TestGufeTokenizable(GufeTokenizableTestsMixin):
+
+    cls = Container
+
+    @pytest.fixture
+    def instance(self):
+        """Define instance to test with here.
+
+        """
+        return self.cont
+
     def setup(self):
         leaf = Leaf("foo")
         bar = Leaf(leaf)
@@ -95,9 +133,6 @@ class TestGufeTokenizable:
             'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
         }
 
-    def teardown(self):
-        TOKENIZABLE_REGISTRY.clear()
-
     def test_to_dict_deep(self):
         assert self.cont.to_dict() == self.expected_deep
 
@@ -106,48 +141,25 @@ class TestGufeTokenizable:
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_to_dict_roundtrip(self):
-        ser = self.cont.to_dict()
-        deser = Container.from_dict(ser)
-        reser = deser.to_dict()
-
-        assert self.cont == deser
-        assert ser == reser
-
     def test_to_keyed_dict(self):
         assert self.cont.to_keyed_dict() == self.expected_keyed
 
     def test_from_keyed_dict(self):
-        recreated = Container.from_keyed_dict(self.expected_keyed)
+        recreated = self.cls.from_keyed_dict(self.expected_keyed)
         assert recreated == self.cont
-
-    def test_to_keyed_dict_roundtrip(self):
-        ser = self.cont.to_keyed_dict()
-        deser = Container.from_keyed_dict(ser)
-        reser = deser.to_keyed_dict()
-
-        assert self.cont == deser
-        assert ser == reser
-        assert self.cont is deser
+        assert recreated is self.cont
 
     def test_to_shallow_dict(self):
         assert self.cont.to_shallow_dict() == self.expected_shallow
 
     def test_from_shallow_dict(self):
-        recreated = Container.from_shallow_dict(self.expected_shallow)
+        recreated = self.cls.from_shallow_dict(self.expected_shallow)
         assert recreated == self.cont
+        assert recreated is self.cont
+
         # here we keep the same objects in memory
         assert recreated.obj.a is recreated.lst[0]
         assert recreated.obj.a is recreated.dct['leaf']
-
-    def test_to_shallow_dict_roundtrip(self):
-        ser = self.cont.to_shallow_dict()
-        deser = Container.from_shallow_dict(ser)
-        reser = deser.to_shallow_dict()
-
-        assert ser == reser
-        assert self.cont == deser
-        assert self.cont is deser
 
 
 class Outer:

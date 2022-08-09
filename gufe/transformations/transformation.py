@@ -244,16 +244,16 @@ class NonTransformation(Transformation):
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
-    def to_dict(self, include_defaults=True) -> dict:
+    def _to_dict(self) -> dict:
         return {
-            "system": self.system.to_dict(include_defaults),
+            "system": self.system.to_dict(),
             "protocol": self.protocol.to_dict(),  # TODO: include defaults?
         }
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         return cls(
             system=ChemicalSystem.from_dict(d["system"]),
             protocol=Protocol.from_dict(d["protocol"]),
