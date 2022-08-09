@@ -114,27 +114,15 @@ class SolventComponent(Component):
         """Solvents don't have a formal charge defined so this returns None"""
         return None
 
-    def __eq__(self, other):
-        if not isinstance(other, SolventComponent):
-            return NotImplemented
-        return (self.smiles == other.smiles and
-                self.positive_ion == other.positive_ion and
-                self.negative_ion == other.negative_ion and
-                self.ion_concentration == other.ion_concentration)
-
-    def __hash__(self):
-        return hash((self.smiles, self.positive_ion, self.negative_ion,
-                     self.ion_concentration))
-
     @classmethod
-    def from_dict(cls, d):
+    def _from_dict(cls, d):
         """Deserialize from dict representation"""
         ion_conc = d['ion_concentration']
         d['ion_concentration'] = unit.parse_expression(ion_conc)
 
         return cls(**d)
 
-    def to_dict(self):
+    def _to_dict(self):
         """For serialization"""
         ion_conc = str(self.ion_concentration)
 
@@ -142,3 +130,6 @@ class SolventComponent(Component):
                 'negative_ion': self.negative_ion,
                 'ion_concentration': ion_conc,
                 'neutralize': self._neutralize}
+
+    def _defaults(self):
+        return super()._defaults()
