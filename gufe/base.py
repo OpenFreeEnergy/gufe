@@ -184,7 +184,7 @@ class GufeKey(str):
 
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
-TOKENIZABLE_REGISTRY: Dict[str, GufeTokenizable] = weakref.WeakValueDictionary()
+TOKENIZABLE_REGISTRY: weakref.WeakKeyDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary() # type: ignore
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when
