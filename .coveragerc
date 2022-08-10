@@ -2,6 +2,7 @@
 omit =
     */_version.py
     */tests/dev/*py
+    gufe/tests/*
 
 [report]
 exclude_lines =
