@@ -102,6 +102,9 @@ class ProtocolDAG:
             inputs, 
             graph,
             mapping: Dict[str, ProtocolUnit]):
+        """
+
+        """
         ninputs = dict()
         for key, value in inputs.items():
             if isinstance(value, dict):

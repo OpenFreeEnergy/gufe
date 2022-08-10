@@ -107,6 +107,9 @@ class Protocol(Serializable, abc.ABC):
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
+        """
+
+        """
         ...
 
     def create(

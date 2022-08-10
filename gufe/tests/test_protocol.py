@@ -130,6 +130,7 @@ class DummyProtocol(Protocol):
 
         return dict(data=outputs)
 
+
 class BrokenSimulationUnit(SimulationUnit):
     def _execute(self, **inputs):
         raise ValueError("I have failed my mission", {'data': 'lol'})
@@ -181,7 +182,7 @@ class TestProtocol:
         dag = protocol.create(
             stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
         )
-        dagresult = dag.execute()
+        dagresult: ProtocolDAGResult = dag.execute()
 
         assert dagresult.ok()
 
