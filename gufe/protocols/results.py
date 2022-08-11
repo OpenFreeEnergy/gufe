@@ -9,7 +9,8 @@ import networkx as nx
 
 from pydantic import BaseModel, PrivateAttr
 
-from .base import ProtocolUnitKey, ProtocolUnitMixin
+from ..base import GufeKey
+from .base import ProtocolUnitMixin
 
 
 class ProtocolUnitResultBase(BaseModel, ProtocolUnitMixin):
@@ -21,7 +22,7 @@ class ProtocolUnitResultBase(BaseModel, ProtocolUnitMixin):
 
     name: Optional[str]      # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
     pure: bool               # whether `ProtocolUnit` that produced this `ProtocolUnitResult` was a function purely of its inputs
-    key: ProtocolUnitKey     # key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    key: GufeKey             # key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
 
     outputs: Dict[str, Any]  # outputs is a dict returned by a `ProtocolUnit`'s `_execute` method
 

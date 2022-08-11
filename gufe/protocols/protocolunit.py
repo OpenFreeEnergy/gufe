@@ -12,15 +12,16 @@ from os import PathLike
 from copy import copy
 from typing import Iterable, List, Dict, Any, Optional, Union
 
-from dask.base import tokenize, normalize_token
+from dask.base import normalize_token
 
-from .base import ProtocolUnitKey, ProtocolUnitMixin
+from ..base import GufeTokenizable
+from .base import ProtocolUnitMixin
 from .results import (
     ProtocolUnitResult, ProtocolUnitFailure,
 )
 
 
-class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
+class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
     """A unit of work within a ProtocolDAG."""
 
     def __init__(
@@ -34,6 +35,8 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
 
         Parameters
         ----------
+        name : str
+            Custom name to give this 
         **inputs 
             Keyword arguments, which an include other `ProtocolUnit`s on which this
             `ProtocolUnit` is dependent.
@@ -42,45 +45,42 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
         self._name = name
         self._pure = pure
 
-        # token is generated via hashing when possible, falling back to `uuid4`
-        # if not;
-        # key is the combination of `<classname>-<token>`, and is used for
-        # referencing this object
-        self._token = None
+        # we likely want to key-encode dependencies upfront
+        # this saves having a full chain of dependencies for computing key for
+        # this object; effectively makes key calculation happen 
+        # approximately once per `ProtocolUnit`
+        # although if the key is cached, no need to recalculate
 
-        self._key = None
-
-        self._inputs = self._keyencode_dependencies(inputs, ProtocolUnit)
+        # so perhaps best to leave this be for simplicity?
+        self._inputs = inputs
 
     def __repr__(self):
         return f"{type(self).__name__}({self.name})"
 
-    #def __hash__(self):
-    #    return hash(
-    #        (self.__class__.__name__, self._settings, frozenset(self._kwargs.items()))
-    #    )
-
-    def _tokenize(self):
-        # inspired by implementation of tokenization in dask
-        if self._name is not None:
-            return self._name
-        elif self._pure:
-            # tokenize on inputs
-            return tokenize(self)
+    def _gufe_tokenize(self):
+        if self._pure:
+            # we use `dask` tokenization components for this
+            # allows for deterministic handling of e.g. pandas DataFrames
+            return list(map(normalize_token,
+                            sorted(self.to_dict(include_defaults=False).items(),
+                                   key=str)))
         else:
             # tokenize with uuid
             return uuid.uuid4()
 
-    def __dask_tokenize__(self):
-        return list(map(normalize_token, 
-            [self._settings,
-             self._inputs,
-             self._name,
-             self._pure]))
+    def _defaults(self):
+        # not used by `ProtocolUnit`s
+        return {}
 
-    @property
-    def settings(self):
-        return self._settings
+    def _to_dict(self):
+        return {'inputs': self.inputs,
+                'name': self.name,
+                'pure': self.pure}
+
+    def _from_dict(cls, dct: Dict):
+        cls(name=dct['name'],
+            pure=dct['pure'],
+            **dct['inputs'])
 
     @property
     def name(self):
@@ -97,64 +97,35 @@ class ProtocolUnit(abc.ABC, ProtocolUnitMixin):
     def pure(self):
         return self._pure
 
-    @property
-    def token(self):
-        if self._token is None:
-            self._token = self._tokenize()
-        return self._token
-
-    @property
-    def key(self):
-        if self._key is None:
-            prefix = type(self).__name__
-            self._key = ProtocolUnitKey(f"{prefix}-{self.token}")
-        return self._key
-
-    def execute(self, block=True, **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
+    def execute(self, **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
-        dependency_results : Iterable[ProtocolUnitResult]
-            The `ProtocolUnitResult`s from the `ProtocolUnit`s this unit is dependent on.
-        block : bool
-            If `True`, block until execution completes; otherwise run in its own thread.
+        **inputs
+            Keyword arguments giving the named inputs to `_execute`.
+            These can include `ProtocolUnitResult`s from `ProtocolUnit`s this
+            unit is dependent on.
 
         """
+        try:
+            outputs = self._execute(**inputs)
+            result = ProtocolUnitResult(
+                name=self._name, key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
+            )
 
-        # process inputs that point to ProtocolUnits
-
-        if block:
-            try:
-                outputs = self._execute(**inputs)
-                result = ProtocolUnitResult(
-                    name=self._name, key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
-                )
-
-            except Exception as e:
-                result = ProtocolUnitFailure(
-                    name=self._name,
-                    key=self.key,
-                    pure=self.pure,
-                    inputs=inputs,
-                    outputs=dict(),
-                    exception=e,
-                )
-        else:
-            # TODO: wrap in a thread; update status
-            ...
+        except Exception as e:
+            result = ProtocolUnitFailure(
+                name=self._name,
+                key=self.key,
+                pure=self.pure,
+                inputs=inputs,
+                outputs=dict(),
+                exception=e,
+            )
 
         return result
 
     @abc.abstractmethod
-    def _execute(
-        self, dependency_results: Iterable[ProtocolUnitResult]
-    ) -> Dict[str, Any]:
-        ...
-
-    def get_artifacts(self) -> Dict[str, PathLike]:
-        """Return a dict of file-like artifacts produced by this
-        `ProtocolUnit`.
-
-        """
+    def _execute(self, **inputs) -> Dict[str, Any]:
         ...

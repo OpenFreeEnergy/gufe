@@ -1,9 +1,3 @@
-
-class ProtocolUnitKey(str):
-    def __repr__(self):
-        return f"<ProtocolUnitKey('{str(self)}')>"
-
-
 class ProtocolUnitMixin:
 
     @staticmethod
