@@ -4,7 +4,7 @@
 import abc
 from typing import Union
 
-from ..base import GufeTokenizable
+from ..tokenize_base import GufeTokenizable
 
 
 class Component(GufeTokenizable):

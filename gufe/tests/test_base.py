@@ -2,7 +2,7 @@ import pytest
 import abc
 from unittest import mock
 
-from gufe.base import (
+from gufe.tokenize_base import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
     import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY,
 )
