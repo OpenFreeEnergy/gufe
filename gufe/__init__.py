@@ -14,8 +14,9 @@ from .components import (
 from .chemicalsystem import ChemicalSystem
 
 from .mapping import (
-    ComponentMapping,
-    AtomMapping, AtomMapper
+    SystemMapping,  # how Chemical Systems relate
+    ComponentMapping,  # how individual Components relate
+    AtomMapping, AtomMapper,
 )
 from .protocols import (
     Protocol,  # description of a method
