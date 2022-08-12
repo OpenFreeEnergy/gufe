@@ -14,6 +14,7 @@ from .components import (
 from .chemicalsystem import ChemicalSystem
 
 from .mapping import (
+    ComponentMapping,
     AtomMapping, AtomMapper
 )
 from .protocols import (

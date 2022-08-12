@@ -6,10 +6,10 @@ from collections.abc import Mapping, Iterable
 
 
 import gufe
-from gufe.base import GufeTokenizable
+from .componentmapping import ComponentMapping
 
 
-class AtomMapping(GufeTokenizable, abc.ABC):
+class AtomMapping(ComponentMapping, abc.ABC):
     """A mapping between two different atom-based Components"""
     @abc.abstractmethod
     def _to_dict(self) -> dict:
@@ -24,13 +24,13 @@ class AtomMapping(GufeTokenizable, abc.ABC):
     @abc.abstractmethod
     def molA(self) -> gufe.Component:
         """A copy of the first Component in the mapping"""
-        ...
+        return self.stateA
 
     @property
     @abc.abstractmethod
     def molB(self) -> gufe.Component:
         """A copy of the second Component in the mapping"""
-        ...
+        return self.stateB
 
     @property
     @abc.abstractmethod
