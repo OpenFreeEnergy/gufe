@@ -2,33 +2,34 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from collections.abc import Mapping
-from openff.toolkit.utils.serialization import Serializable
+from collections.abc import Mapping, Iterable
+
 
 import gufe
+from gufe.base import GufeTokenizable
 
 
-class AtomMapping(Serializable, abc.ABC):
-    """A mapping between two different Components"""
+class AtomMapping(GufeTokenizable, abc.ABC):
+    """A mapping between two different atom-based Components"""
     @abc.abstractmethod
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         ...
 
     @classmethod
     @abc.abstractmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         ...
 
     @property
     @abc.abstractmethod
     def molA(self) -> gufe.Component:
-        """A reference to the first Component in the mapping"""
+        """A copy of the first Component in the mapping"""
         ...
 
     @property
     @abc.abstractmethod
     def molB(self) -> gufe.Component:
-        """A reference to the second Component in the mapping"""
+        """A copy of the second Component in the mapping"""
         ...
 
     @property
@@ -44,4 +45,16 @@ class AtomMapping(Serializable, abc.ABC):
     @property
     @abc.abstractmethod
     def molB_to_molA(self) -> Mapping[int, int]:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def molA_unique(self) -> Iterable[int]:
+        """Indices of atoms in mol A that aren't mappable to B"""
+        ...
+
+    @property
+    @abc.abstractmethod
+    def molB_unique(self) -> Iterable[int]:
+        """Indices of atoms in mol B that aren't mappable to A"""
         ...
