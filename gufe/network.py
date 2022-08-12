@@ -4,7 +4,7 @@
 from typing import FrozenSet, Iterable, Optional, Tuple
 
 import networkx as nx
-from .tokenize_base import GufeTokenizable
+from .tokenize import GufeTokenizable
 
 from .chemicalsystem import ChemicalSystem
 from .transformations import Transformation

@@ -6,7 +6,7 @@ from typing import Dict, Optional
 
 import numpy as np
 
-from .tokenize_base import GufeTokenizable
+from .tokenize import GufeTokenizable
 from .components import Component
 
 

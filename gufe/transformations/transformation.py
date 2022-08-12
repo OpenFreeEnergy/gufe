@@ -4,7 +4,7 @@
 from typing import Optional, Iterable
 
 from openff.toolkit.utils.serialization import Serializable
-from ..tokenize_base import GufeTokenizable
+from ..tokenize import GufeTokenizable
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
