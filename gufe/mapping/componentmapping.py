@@ -10,5 +10,5 @@ class ComponentMapping(GufeTokenizable, abc.ABC):
     stateA: gufe.Component
     stateB: gufe.Component
 
-    def __contains__(self, item):
+    def __contains__(self, item: gufe.Component):
         return item == self.stateA or item == self.stateB
