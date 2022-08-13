@@ -52,14 +52,14 @@ class ProtocolDAG:
             for key, value in pu.inputs.items():
                 if isinstance(value, dict):
                     for k, v in value.items():
-                        if isinstance(v, ProtocolUnitKey):
-                            G.add_edge(pu, mapping[v])
+                        if isinstance(v, ProtocolUnit):
+                            G.add_edge(pu.to_keyed_dict(), v.to_keyed_dict())
                 elif isinstance(value, list):
                     for i in value:
-                        if isinstance(i, ProtocolUnitKey):
-                            G.add_edge(pu, mapping[i])
-                elif isinstance(value, ProtocolUnitKey):
-                    G.add_edge(pu, mapping[value])
+                        if isinstance(i, ProtocolUnit):
+                            G.add_edge(pu.to_keyed_dict(), i.to_keyed_dict())
+                elif isinstance(value, ProtocolUnit):
+                    G.add_edge(pu.to_keyed_dict(), value.to_keyed_dict())
 
         return G
 
@@ -76,57 +76,40 @@ class ProtocolDAG:
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
 
-        # build mapping of key to ProtocolUnits
-        mapping = {pu.key: pu for pu in graph}
-
         # iterate in DAG order
-        for unit in reversed(list(nx.topological_sort(self._graph))):
+        for unit_dict in reversed(list(nx.topological_sort(self._graph))):
+
+            unit: ProtocolUnit = ProtocolUnit.from_keyed_dict(unit_dict)
 
             # translate each `ProtocolUnitKey` in input into corresponding
             # `ProtocolUnitResult`
-            inputs = self._keydecode_dependencies(unit.inputs, graph, mapping)
-                
+            inputs = self._pu_to_pur(unit.inputs, graph)
+            
             # execute
             result = unit.execute(**inputs)
 
             # attach result to this `ProtocolUnit`
-            graph.nodes[unit]["result"] = result
+            graph.nodes[unit]["result"] = result.to_keyed_dict()
 
             if not result.ok():
                 return ProtocolDAGFailure(name=self._name, graph=graph)
 
         return ProtocolDAGResult(name=self._name, graph=graph)
 
-    @staticmethod
-    def _keydecode_dependencies(
+    def _pu_to_pur(
+            self,
             inputs, 
-            graph,
-            mapping: Dict[str, ProtocolUnit]):
-        """
+            graph):
+        """Convert each `ProtocolUnit` to its corresponding `ProtocolUnitResult`.
 
         """
-        ninputs = dict()
-        for key, value in inputs.items():
-            if isinstance(value, dict):
-                if key not in ninputs:
-                    ninputs[key] = dict()
-                for k, v in value.items():
-                    if isinstance(v, ProtocolUnitKey):
-                        ninputs[key][k] = graph.nodes[mapping[v]]['result']
-                    else:
-                        ninputs[key][k] = v
-            elif isinstance(value, list):
-                if key not in ninputs:
-                    ninputs[key] = list()
-                for i in value:
-                    if isinstance(i, ProtocolUnitKey):
-                        ninputs[key].append(graph.nodes[mapping[i]]['result'])
-                    else:
-                        ninputs[key].append(i)
-            elif isinstance(value, ProtocolUnitKey):
-                ninputs[key] = graph.nodes[mapping[value]]['result']
-            else:
-                ninputs[key] = value
+        if isinstance(inputs, dict):
+            return {key: self._pu_to_pur(value, graph) for key, value in inputs.items()}
+        elif isinstance(inputs, list):
+            return [self._pu_to_pur(value, graph) for value in inputs]
+        elif isinstance(inputs, ProtocolUnit):
+            return graph.nodes[inputs]['result']
+        else:
+            return inputs
 
-        return ninputs
 

@@ -12,7 +12,7 @@ from os import PathLike
 from copy import copy
 from typing import Iterable, List, Dict, Any, Optional, Union
 
-from dask.base import normalize_token
+#from dask.base import normalize_token
 
 from ..base import GufeTokenizable
 from .base import ProtocolUnitMixin
@@ -21,7 +21,7 @@ from .results import (
 )
 
 
-class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
+class ProtocolUnit(GufeTokenizable):
     """A unit of work within a ProtocolDAG."""
 
     def __init__(
@@ -59,11 +59,8 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
 
     def _gufe_tokenize(self):
         if self._pure:
-            # we use `dask` tokenization components for this
-            # allows for deterministic handling of e.g. pandas DataFrames
-            return list(map(normalize_token,
-                            sorted(self.to_dict(include_defaults=False).items(),
-                                   key=str)))
+            return sorted(self.to_dict(include_defaults=False).items(),
+                                   key=str)
         else:
             # tokenize with uuid
             return uuid.uuid4()
