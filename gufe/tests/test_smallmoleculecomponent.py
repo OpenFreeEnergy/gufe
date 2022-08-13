@@ -20,7 +20,7 @@ import json
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from .test_base import GufeTokenizableTestsMixin
+from .test_tokenize import GufeTokenizableTestsMixin
 
 @pytest.fixture
 def alt_ethane():
