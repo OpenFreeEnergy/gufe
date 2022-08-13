@@ -2,7 +2,7 @@ import pytest
 import abc
 from unittest import mock
 
-from gufe.base import (
+from gufe.tokenize import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
     import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY,
 )
@@ -205,7 +205,7 @@ class Outer:
 @pytest.mark.parametrize('modname, qualname, expected', [
     (__name__, "Outer", Outer),
     (__name__, "Outer.Inner", Outer.Inner),
-    ("gufe.base", 'import_qualname', import_qualname),
+    ("gufe.tokenize", 'import_qualname', import_qualname),
 ])
 def test_import_qualname(modname, qualname, expected):
     assert import_qualname(modname, qualname) is expected
@@ -240,5 +240,5 @@ def test_import_qualname_error_none(modname, qualname):
     {(__name__, "Outer.Inner"): Outer.Inner},
 ])
 def test_get_class(cls_reg):
-    with mock.patch.dict("gufe.base.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
+    with mock.patch.dict("gufe.tokenize.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
         assert get_class(__name__, "Outer.Inner") is Outer.Inner

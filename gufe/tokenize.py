@@ -1,12 +1,13 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
+"""
+The machinery for tokenizing gufe objects live in this module.
+"""
 import abc
-import uuid
-import sys
-import threading
 import hashlib
 import importlib
 import inspect
 import copy
-from packaging.version import parse as parse_version
 from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
 
@@ -46,6 +47,11 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
+    Subclassing from this provides sorting, equality and hashing operators,
+    provided that the class implements the `_to_dict` and `_from_dict` method.
+
+    This extra work in serializing is important for hashes that are stable
+    *across different Python sessions*.
     """
     def __lt__(self, other):
         return hash(self) < hash(other)
