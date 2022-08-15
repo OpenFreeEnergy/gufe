@@ -5,10 +5,9 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
-from openff.toolkit.utils.serialization import Serializable
-from openff.units import unit
 import warnings
-import json
+from openmm import unit  # TODO: waiting on off-tk 0.11
+# from openff.units import unit  # off-tk 0.11
 
 from rdkit import Chem
 
@@ -48,7 +47,7 @@ def _ensure_ofe_version(mol: RDKitMol):
     mol.SetProp("ofe-version", __version__)
 
 
-class SmallMoleculeComponent(Component, Serializable):
+class SmallMoleculeComponent(Component):
     """A molecule wrapper suitable for small molecules
 
     .. note::
@@ -79,6 +78,7 @@ class SmallMoleculeComponent(Component, Serializable):
         will be used in the hash.
     """
     def __init__(self, rdkit: RDKitMol, name: str = ""):
+
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
         conformers = list(rdkit.GetConformers())
@@ -118,7 +118,7 @@ class SmallMoleculeComponent(Component, Serializable):
     @classmethod
     def from_openff(cls, openff: OFFMolecule, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
-        return cls(openff.to_rdkit(), name=name)
+        return cls(rdkit=openff.to_rdkit(), name=name)
 
     @property
     def smiles(self) -> str:
@@ -128,13 +128,7 @@ class SmallMoleculeComponent(Component, Serializable):
     def name(self) -> str:
         return self._hash.name
 
-    def __hash__(self):
-        return hash(self._hash)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         """Serialize to dict representation"""
         # required attributes: (based on openff to_dict)
         # for each atom:
@@ -181,7 +175,7 @@ class SmallMoleculeComponent(Component, Serializable):
         return d
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""
         # manually construct OpenFF molecule as in cookbook
         m = OFFMolecule()
@@ -284,15 +278,9 @@ class SmallMoleculeComponent(Component, Serializable):
 
         return cls(rdkit=mol)  # name is obtained automatically
 
-    def to_json(self):
-        return json.dumps(self.to_dict())
-
-    @classmethod
-    def from_json(cls, json_str):
-        dct = json.loads(json_str)
-        return cls.from_dict(dct)
-
-
     @property
     def total_charge(self):
         return Chem.GetFormalCharge(self._rdkit)
+
+    def _defaults(self):
+        return super()._defaults()

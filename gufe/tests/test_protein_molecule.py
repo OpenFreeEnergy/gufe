@@ -6,6 +6,8 @@ from rdkit import Chem
 
 from gufe import ProteinComponent
 
+from .test_tokenize import GufeTokenizableTestsMixin
+
 
 @pytest.fixture
 def PDB_181L_mutant(PDB_181L_path):
@@ -98,3 +100,15 @@ def test_protein_total_charge(PDB_181L_path):
     m1 = ProteinComponent.from_pdbfile(PDB_181L_path)
 
     assert m1.total_charge == 22
+
+
+
+# FIXME: fix in #45
+@pytest.mark.xfail
+class TestProteinComponent(GufeTokenizableTestsMixin):
+
+    cls = ProteinComponent
+
+    @pytest.fixture
+    def instance(self, PDB_181L_path):
+        return ProteinComponent.from_pdbfile(PDB_181L_path, name='Steve')

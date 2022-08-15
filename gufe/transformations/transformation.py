@@ -4,13 +4,14 @@
 from typing import Optional, Iterable
 
 from openff.toolkit.utils.serialization import Serializable
+from ..tokenize import GufeTokenizable
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import Mapping
 
 
-class Transformation(Serializable):
+class Transformation:  #(GufeTokenizable):
     """An edge of an alchemical network.
 
     Connects two `ChemicalSystem`s, with directionality.
@@ -51,6 +52,9 @@ class Transformation(Serializable):
         self._name = name
 
         self._protocol = protocol
+
+    def _defaults(self):
+        return super().defaults()
 
     def __repr__(self):
         return f"{self.__class__.__name__}(stateA={self.stateA}, "\
@@ -116,7 +120,7 @@ class Transformation(Serializable):
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         return {
             "stateA": self.stateA.to_dict(),
             "stateB": self.stateB.to_dict(),
@@ -127,7 +131,7 @@ class Transformation(Serializable):
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         return cls(
             stateA=ChemicalSystem.from_dict(d["stateA"]),
             stateB=ChemicalSystem.from_dict(d["stateB"]),
@@ -240,16 +244,16 @@ class NonTransformation(Transformation):
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         return {
             "system": self.system.to_dict(),
-            "protocol": self.protocol.to_dict(),
+            "protocol": self.protocol.to_dict(),  # TODO: include defaults?
         }
 
     # TODO: broken without a `Protocol` registry of some kind
     # should then be changed to use the registry
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         return cls(
             system=ChemicalSystem.from_dict(d["system"]),
             protocol=Protocol.from_dict(d["protocol"]),

@@ -3,6 +3,8 @@ import pytest
 from gufe import SolventComponent
 from openff.units import unit
 
+from .test_tokenize import GufeTokenizableTestsMixin
+
 
 def test_defaults():
     s = SolventComponent()
@@ -37,7 +39,9 @@ def test_neq():
 def test_to_dict():
     s = SolventComponent(positive_ion='Na', negative_ion='Cl')
 
-    assert s.to_dict() == {'smiles': 'O',
+    assert s.to_dict() == {'__module__': 'gufe.components.solventcomponent',
+                           '__qualname__': 'SolventComponent',
+                           'smiles': 'O',
                            'positive_ion': 'Na+',
                            'negative_ion': 'Cl-',
                            'neutralize': True,
@@ -84,3 +88,12 @@ def test_solvent_charge():
 def test_bad_inputs(pos, neg):
     with pytest.raises(ValueError):
         _ = SolventComponent(positive_ion=pos, negative_ion=neg)
+
+
+class TestSolventComponent(GufeTokenizableTestsMixin):
+
+    cls = SolventComponent
+
+    @pytest.fixture
+    def instance(self):
+        return SolventComponent(positive_ion='Na', negative_ion='Cl')
