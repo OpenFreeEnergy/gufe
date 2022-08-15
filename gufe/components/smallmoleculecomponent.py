@@ -5,9 +5,8 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
+from openff.units import unit
 import warnings
-from openmm import unit  # TODO: waiting on off-tk 0.11
-# from openff.units import unit  # off-tk 0.11
 
 from rdkit import Chem
 
