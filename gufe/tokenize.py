@@ -4,6 +4,7 @@
 The machinery for tokenizing gufe objects live in this module.
 """
 import abc
+import datetime
 import hashlib
 import importlib
 import inspect
@@ -393,7 +394,48 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
     return from_dict(dct)
 
 
-# inspired by `dask.base`
+## inspired by `dask.base`
+
+def normalize(o):
+
+    # dicts
+    if isinstance(o, dict):
+        dct = {key: normalize(value) 
+               for key, value in o.items()}
+        return normalize_dict(dct)
+
+    # lists and tuples
+    if isinstance(o, (list, tuple)):
+        return list(map(normalize, o))
+
+    # GufeTokenizable
+    method = getattr(o, "_gufe_tokenize", None)
+    if method is not None:
+        return method()
+
+    # primitives we support
+    if isinstance(o,
+        (int,
+        float,
+        str,
+        bytes,
+        type(None),
+        type,
+        slice,
+        complex,
+        type(Ellipsis),
+        datetime.date)):
+            return o
+
+    raise RuntimeError(
+        f"Object {str(o)} cannot be deterministically hashed."
+    )
+
+
+def normalize_dict(d):
+    return sorted(d.items(), key=str)
+
+
 def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a
     `GufeTokenizable` object.
@@ -409,5 +451,5 @@ def tokenize(obj: GufeTokenizable) -> str:
     True
 
     """
-    hasher = hashlib.md5(str(obj._gufe_tokenize()).encode(), usedforsecurity=False)
+    hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
     return hasher.hexdigest()

@@ -39,7 +39,9 @@ class SimulationUnit(ProtocolUnit):
         return dict(
             log=output,
             window=self.inputs["window"],
-            key_result=(100 - (self.inputs["window"] - 10)**2)
+            key_result=(100 - (self.inputs["window"] - 10)**2),
+            unit_scratch=self.unit_scratch,
+            dag_scratch=self.dag_scratch
         )
 
 
@@ -104,6 +106,8 @@ class DummyProtocol(Protocol):
             stateB=stateB,
             mapping=mapping,
             start=extend_from,
+            pure=True            # states that this unit is purely a function of its explicit arguments;
+                                 # allows scheduler to deduplicate based on inputs
         )
 
         # create several units that would each run an independent simulation
@@ -191,10 +195,11 @@ class TestProtocol:
             for u in dagresult.graph.nodes
             if u.__class__.__name__ == "FinishUnit"
         ][0]
+
         simulationresults = [
             dagresult.graph.nodes[u]["result"]
             for u in dagresult.graph.nodes
-            if u.__class__.__name__ == "SimulationUnit"
+            if isinstance(u, SimulationUnit)
         ]
 
         # check that we have dependency information in results
@@ -202,6 +207,12 @@ class TestProtocol:
 
         # check that we have as many units as we expect in resulting graph
         assert len(dagresult.graph) == 23
+        
+        # check that dag_scratch directory the same for all simulations
+        assert len(set(i.outputs['dag_scratch'] for i in simulationresults)) == 1
+
+        # check that unit_scratch directory is different for all simulations
+        assert len(set(i.outputs['unit_scratch'] for i in simulationresults)) == len(simulationresults)
 
         # gather aggregated results of interest
         protocolresult = protocol.gather([dagresult])

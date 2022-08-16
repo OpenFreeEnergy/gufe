@@ -12,8 +12,9 @@ import uuid
 from os import PathLike
 from copy import copy
 from typing import Iterable, List, Dict, Any, Optional, Union
+import tempfile
 
-from ..tokenize import GufeTokenizable, GufeKey
+from ..tokenize import GufeTokenizable, GufeKey, normalize
 
 
 class ProtocolUnitResultBase(GufeTokenizable):
@@ -25,13 +26,48 @@ class ProtocolUnitResultBase(GufeTokenizable):
 
     outputs: Dict[str, Any]  # outputs is a dict returned by a `ProtocolUnit`'s `_execute` method
 
-    def __init__(self, *, name=None, source_key, pure, inputs, outputs):
+    def __init__(self, *, 
+            name: Optional[str] = None, 
+            source_key: GufeKey, 
+            pure: bool, 
+            inputs: Dict[str, Any], 
+            outputs: Dict[str, Any]
+        ):
+        """Generate a `ProtocolUnitResult`.
+
+        Parameters
+        ----------
+        name : Optional[str]
+            Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
+        source_key : GufeKey
+            Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+        pure : bool
+            If `True`, this `ProtocolUnitResult` is purely a function of the
+            inputs that produced it.
+        inputs : Dict[str, Any]
+            Inputs to the `ProtocolUnit` that produced this
+            `ProtocolUnitResult`. Includes any `ProtocolUnitResult`s this
+            `ProtocolUnitResult` is dependent on.
+        outputs
+            Outputs from the `ProtocolUnit._execute` that generated this
+            `ProtocolUnitResult`.
+        """
             
         self._name = name
         self._source_key = source_key
         self._pure = pure
         self._inputs = inputs
         self._outputs = outputs
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.name})"
+
+    def _gufe_tokenize(self):
+        if self._pure:
+            return normalize(self.to_dict(include_defaults=False))
+        else:
+            # tokenize with uuid
+            return uuid.uuid4()
 
     def _defaults(self):
         # not used by `ProtocolDAG`
@@ -50,6 +86,9 @@ class ProtocolUnitResultBase(GufeTokenizable):
 
     @property
     def name(self):
+        """
+
+        """
         # set name to source_key if not manually set; used for display
         if self._name is None:
             self._name = self.source_key
@@ -121,20 +160,22 @@ class ProtocolUnit(GufeTokenizable):
             Custom name to give this 
         **inputs 
             Keyword arguments, which an include other `ProtocolUnit`s on which this
-            `ProtocolUnit` is dependent.
+            `ProtocolUnit` is dependent. For serializability, should be composed of
 
         """
         self._name = name
         self._pure = pure
         self._inputs = inputs
 
+        self.dag_scratch = None
+        self.unit_scratch = None
+
     def __repr__(self):
         return f"{type(self).__name__}({self.name})"
 
     def _gufe_tokenize(self):
         if self._pure:
-            return sorted(self.to_dict(include_defaults=False).items(),
-                                   key=str)
+            return normalize(self.to_dict(include_defaults=False))
         else:
             # tokenize with uuid
             return uuid.uuid4()
@@ -169,17 +210,37 @@ class ProtocolUnit(GufeTokenizable):
     def pure(self):
         return self._pure
 
-    def execute(self, **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
+    def execute(self, *, 
+            dag_scratch: PathLike, 
+            unit_scratch: PathLike = None, 
+            **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
+        dag_scratch : PathLike
+           Path to scratch space that persists across whole DAG execution, but
+           is removed after. Used by some `ProtocolUnit`s to pass file contents
+           to dependent `ProtocolUnit`s.
+        unit_scratch : Optional[PathLike]
+            Path to scratch space that persists during execution of this
+            `ProtocolUnit`, but removed after.
+            
         **inputs
             Keyword arguments giving the named inputs to `_execute`.
             These can include `ProtocolUnitResult`s from `ProtocolUnit`s this
             unit is dependent on.
 
         """
+        result: Union[ProtocolUnitResult, ProtocolUnitFailure]
+
+        self.dag_scratch = dag_scratch
+        if unit_scratch is None:
+            unit_scratch_tmp = tempfile.TemporaryDirectory()
+            self.unit_scratch = unit_scratch_tmp.name
+        else:
+            self.unit_scratch = unit_scratch
+
         try:
             outputs = self._execute(**inputs)
             result = ProtocolUnitResult(
@@ -196,6 +257,13 @@ class ProtocolUnit(GufeTokenizable):
                 exception=e,
                 traceback=traceback.format_exc(),
             )
+
+        # TODO: change this part once we have clearer ideas on how to inject
+        # persistent storage use
+        if unit_scratch is None:
+            unit_scratch_tmp.cleanup()
+        self.unit_scratch = None
+        self.dag_scratch = None
 
         return result
 

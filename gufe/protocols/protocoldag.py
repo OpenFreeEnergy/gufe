@@ -3,6 +3,8 @@
 
 import abc
 from typing import Iterable, List, Dict, Set, Optional, Union
+from os import PathLike
+import tempfile
 
 import networkx as nx
 
@@ -119,6 +121,8 @@ class ProtocolDAG(GufeTokenizable):
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
 
+        self.dag_scratch = None
+
     def _defaults(self):
         # not used by `ProtocolDAG`
         return {}
@@ -164,8 +168,24 @@ class ProtocolDAG(GufeTokenizable):
     def protocol_units(self):
         return list(self._protocol_units)
 
-    def execute(self) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
-        """Execute the full DAG in-serial, in process."""
+    def execute(self, *, 
+            dag_scratch: PathLike = None) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
+        """Execute the full DAG in-serial, in process.
+
+        Parameters
+        ----------
+        dag_scratch : Optional[PathLike]
+           Path to scratch space that persists across whole DAG execution, but
+           is removed after. Used by some `ProtocolUnit`s to pass file contents
+           to dependent `ProtocolUnit`s.
+
+        """
+        if dag_scratch is None:
+            dag_scratch_tmp = tempfile.TemporaryDirectory()
+            self.dag_scratch = dag_scratch_tmp.name
+        else:
+            self.dag_scratch = dag_scratch
+
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
 
@@ -179,13 +199,23 @@ class ProtocolDAG(GufeTokenizable):
             inputs = self._pu_to_pur(unit.inputs, graph)
 
             # execute
-            result = unit.execute(**inputs)
+            result = unit.execute(dag_scratch=self.dag_scratch, **inputs)
 
             # attach result to this `ProtocolUnit`
             graph.nodes[unit]["result"] = result
 
             if not result.ok():
+                if dag_scratch is None:
+                    dag_scratch_tmp.cleanup()
+                self.dag_scratch = None
+
                 return ProtocolDAGFailure(name=self._name, graph=graph)
+
+        # TODO: change this part once we have clearer ideas on how to inject
+        # persistent storage use
+        if dag_scratch is None:
+            dag_scratch_tmp.cleanup()
+        self.dag_scratch = None
 
         return ProtocolDAGResult(name=self._name, graph=graph)
 
