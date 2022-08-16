@@ -310,8 +310,6 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
         If `True`, skip modifying `obj` itself; needed for recursive use to
         avoid early stopping on `obj`.
     """
-    obj = copy.deepcopy(obj)
-
     if is_mine(obj) and not top:
         obj = modifier(obj)
 

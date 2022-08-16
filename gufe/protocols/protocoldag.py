@@ -7,7 +7,7 @@ from typing import Iterable, List, Dict, Set, Optional, Union
 import networkx as nx
 
 from ..tokenize import GufeTokenizable
-from .protocolunit import ProtocolUnit
+from .protocolunit import ProtocolUnit, ProtocolUnitResult
 
 
 class ProtocolDAGResult(GufeTokenizable):
@@ -41,6 +41,7 @@ class ProtocolDAGResult(GufeTokenizable):
         return {'name': self.name,
                 'graph': self.graph}
 
+    @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 
@@ -81,6 +82,7 @@ class ProtocolDAGFailure(ProtocolDAGResult):
         return {'name': self.name,
                 'graph': self.graph}
 
+    @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 
@@ -125,6 +127,7 @@ class ProtocolDAG(GufeTokenizable):
         return {'name': self.name,
                 'protocol_units': self.protocol_units}
 
+    @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 

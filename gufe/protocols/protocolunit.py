@@ -44,6 +44,7 @@ class ProtocolUnitResultBase(GufeTokenizable):
                 'inputs': self.inputs,
                 'outputs': self.outputs}
 
+    @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 
@@ -147,6 +148,7 @@ class ProtocolUnit(GufeTokenizable):
                 'name': self.name,
                 'pure': self.pure}
 
+    @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(name=dct['name'],
                    pure=dct['pure'],
