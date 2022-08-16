@@ -6,11 +6,86 @@ from typing import Iterable, List, Dict, Set, Optional, Union
 
 import networkx as nx
 
-from .protocolunit import ProtocolUnit, ProtocolUnitKey
-from .results import ProtocolUnitResult, ProtocolDAGResult, ProtocolDAGFailure
+from ..tokenize import GufeTokenizable
+from .protocolunit import ProtocolUnit
 
 
-class ProtocolDAG:
+class ProtocolDAGResult(GufeTokenizable):
+    """Result for a single `ProtocolDAG` execution.
+
+    There may be many of these in a given `ResultStore` for a given `Transformation`.
+    Data elements from these objects are combined by `Protocol.gather` into a
+    `ProtocolResult`.
+
+    Attributes
+    ----------
+    name : str
+        Unique identifier for this `ProtocolDAGResult`.
+    graph : nx.DiGraph
+        The `ProtocolUnit`s, with dependencies set, as a networkx `DiGraph`.
+        Each `ProtocolUnit` features its `ProtocolUnitCompletion` as a `result` attribute.
+
+    """
+    name: Optional[str]
+    graph: nx.DiGraph
+
+    def __init__(self, *, name=None, graph):
+        self._name = name
+        self._graph = graph
+
+    def _defaults(self):
+        # not used by `ProtocolDAG`
+        return {}
+
+    def _to_dict(self):
+        return {'name': self.name,
+                'graph': self.graph}
+
+    def _from_dict(cls, dct: Dict):
+        return cls(**dct)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def graph(self):
+        return self._graph
+
+    @property
+    def protocol_units(self):
+        return [pu for pu in self.graph.nodes]
+
+    @property
+    def protocol_unit_results(self):
+        return list(nx.get_node_attributes(self.graph, "result").values())
+
+    def ok(self) -> bool:
+        return True
+
+
+class ProtocolDAGFailure(ProtocolDAGResult):
+
+    def ok(self) -> bool:
+        return False
+
+    @property
+    def protocol_unit_failures(self):
+        return [r for r in nx.get_node_attributes(self.graph, "result").values() if not r.ok()]
+
+    def _defaults(self):
+        # not used by `ProtocolDAG`
+        return {}
+
+    def _to_dict(self):
+        return {'name': self.name,
+                'graph': self.graph}
+
+    def _from_dict(cls, dct: Dict):
+        return cls(**dct)
+
+
+class ProtocolDAG(GufeTokenizable):
     """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`s
     with dependencies specified.
 
@@ -37,9 +112,21 @@ class ProtocolDAG:
 
         """
         self._name = name
+        self._protocol_units = protocol_units
 
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
+
+    def _defaults(self):
+        # not used by `ProtocolDAG`
+        return {}
+
+    def _to_dict(self):
+        return {'name': self.name,
+                'protocol_units': self.protocol_units}
+
+    def _from_dict(cls, dct: Dict):
+        return cls(**dct)
 
     def _build_graph(self, protocol_units):
         G = nx.DiGraph()
@@ -53,13 +140,13 @@ class ProtocolDAG:
                 if isinstance(value, dict):
                     for k, v in value.items():
                         if isinstance(v, ProtocolUnit):
-                            G.add_edge(pu.to_keyed_dict(), v.to_keyed_dict())
+                            G.add_edge(pu, v)
                 elif isinstance(value, list):
                     for i in value:
                         if isinstance(i, ProtocolUnit):
-                            G.add_edge(pu.to_keyed_dict(), i.to_keyed_dict())
+                            G.add_edge(pu, i)
                 elif isinstance(value, ProtocolUnit):
-                    G.add_edge(pu.to_keyed_dict(), value.to_keyed_dict())
+                    G.add_edge(pu, value)
 
         return G
 
@@ -71,25 +158,28 @@ class ProtocolDAG:
     def graph(self):
         return self._graph
 
+    def protocol_units(self):
+        return list(self._protocol_units)
+
     def execute(self) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
         """Execute the full DAG in-serial, in process."""
         # operate on a copy, since we'll add ProtocolUnitResults as node attributes
         graph = self._graph.copy(as_view=False)
 
         # iterate in DAG order
-        for unit_dict in reversed(list(nx.topological_sort(self._graph))):
+        for unit in reversed(list(nx.topological_sort(self._graph))):
 
-            unit: ProtocolUnit = ProtocolUnit.from_keyed_dict(unit_dict)
+            #unit: ProtocolUnit = ProtocolUnit.from_keyed_dict(unit_dict)
 
-            # translate each `ProtocolUnitKey` in input into corresponding
+            # translate each `ProtocolUnit` in input into corresponding
             # `ProtocolUnitResult`
             inputs = self._pu_to_pur(unit.inputs, graph)
-            
+
             # execute
             result = unit.execute(**inputs)
 
             # attach result to this `ProtocolUnit`
-            graph.nodes[unit]["result"] = result.to_keyed_dict()
+            graph.nodes[unit]["result"] = result
 
             if not result.ok():
                 return ProtocolDAGFailure(name=self._name, graph=graph)
@@ -111,5 +201,3 @@ class ProtocolDAG:
             return graph.nodes[inputs]['result']
         else:
             return inputs
-
-

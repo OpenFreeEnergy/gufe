@@ -14,9 +14,8 @@ import networkx as nx
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
-from .protocoldag import ProtocolDAG
+from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
-from .results import ProtocolDAGResult
 
 
 class ProtocolResult(Serializable, abc.ABC):
