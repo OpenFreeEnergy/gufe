@@ -1,8 +1,44 @@
 from .component import Component
+import warnings
+from rdkit import Chem
+from .. import __version__
+from ..molhashing import hashmol, deserialize_numpy, serialize_numpy
+from openff.units import unit
 
 # typing
 from openff.toolkit.topology import Molecule as OFFMolecule
 from ..custom_typing import RDKitMol, OEMol
+
+
+def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
+    """
+    Determine the correct name from the rdkit.Chem.Mol and the user-provided
+    name; ensure that is set in the rdkit representation.
+    """
+    try:
+        rdkit_name = mol.GetProp("_Name")
+    except KeyError:
+        rdkit_name = ""
+
+    try:
+        rdkit_name = mol.GetProp("ofe-name")
+    except KeyError:
+        pass
+
+    if name and rdkit_name and rdkit_name != name:
+        warnings.warn(f"SmallMoleculeComponent being renamed from {rdkit_name}"
+                      f"to {name}.")
+    elif name == "":
+        name = rdkit_name
+
+    mol.SetProp("ofe-name", name)
+    return name
+
+
+def _ensure_ofe_version(mol: RDKitMol):
+    """Ensure the rdkit representation has the current version associated"""
+    mol.SetProp("ofe-version", __version__)
+
 
 class ExplicitMoleculeComponent(Component):
     """Base class for explicit molecules.
@@ -25,9 +61,9 @@ class ExplicitMoleculeComponent(Component):
                           "Only the first will be used.")
 
         self._rdkit = rdkit
-        self._hash = self._hashmol(self._rdkit, name=name)
+        self._hash = self._hashmol(name=name)
 
-    def _hashmol(self):
+    def _hashmol(self, name):
         return hashmol(self._rdkit, name=name)
 
     def to_rdkit(self) -> RDKitMol:
@@ -56,11 +92,11 @@ class ExplicitMoleculeComponent(Component):
         return m
 
     @classmethod
-    def from_openff(self, openff: OFFMolecule, name: str = ""):
+    def from_openff(cls, openff: OFFMolecule, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(openff.to_rdkit(), name=name)
 
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         """Serialize to dict representation"""
         # required attributes: (based on openff to_dict)
         # for each atom:
@@ -107,7 +143,7 @@ class ExplicitMoleculeComponent(Component):
         return d
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""
         # manually construct OpenFF molecule as in cookbook
         m = OFFMolecule()
@@ -133,6 +169,9 @@ class ExplicitMoleculeComponent(Component):
             m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
 
         return cls.from_openff(m, name=d['name'])
+
+    def _defaults(self):
+        return super()._defaults()
 
     def __hash__(self):
         return hash(self._hash)
