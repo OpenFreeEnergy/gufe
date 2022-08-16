@@ -26,7 +26,7 @@ def test_from_pdbfile(PDB_181L_path):
 
     assert isinstance(p, ProteinComponent)
     assert p.name == 'Steve'
-    assert p._openmm_top.getNumAtoms() == 2639
+    assert p.to_rdkit().GetNumAtoms() == 2639
 
 
 def test_from_pdbfile_ValueError(PDBx_181L_path):
