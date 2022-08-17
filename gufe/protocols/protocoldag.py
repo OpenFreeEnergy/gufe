@@ -28,8 +28,8 @@ class ProtocolDAGResult(GufeTokenizable):
         Each `ProtocolUnit` features its `ProtocolUnitCompletion` as a `result` attribute.
 
     """
-    name: Optional[str]
-    graph: nx.DiGraph
+    _name: Optional[str]
+    _graph: nx.DiGraph
 
     def __init__(self, *, name=None, graph):
         self._name = name
