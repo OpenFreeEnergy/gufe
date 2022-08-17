@@ -15,7 +15,7 @@ from copy import copy
 from typing import Iterable, List, Dict, Any, Optional, Union
 import tempfile
 
-from ..tokenize import GufeTokenizable, GufeKey, normalize
+from ..tokenization import GufeTokenizable, GufeKey, normalize
 
 
 @dataclass

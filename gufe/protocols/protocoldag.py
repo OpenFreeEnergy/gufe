@@ -8,7 +8,7 @@ import tempfile
 
 import networkx as nx
 
-from ..tokenize import GufeTokenizable
+from ..tokenization import GufeTokenizable
 from .protocolunit import ProtocolUnit, ProtocolUnitResult
 
 
