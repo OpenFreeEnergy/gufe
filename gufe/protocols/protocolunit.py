@@ -7,6 +7,7 @@ part of a `ProtocolDAG`.
 """
 
 import abc
+from dataclasses import dataclass
 import traceback
 import uuid
 from os import PathLike
@@ -15,6 +16,16 @@ from typing import Iterable, List, Dict, Any, Optional, Union
 import tempfile
 
 from ..tokenize import GufeTokenizable, GufeKey, normalize
+
+
+@dataclass
+class Context:
+    """Data class for passing around execution context components to
+    `ProtocolUnit._execute`.
+
+    """
+    unit_scratch: PathLike
+    dag_scratch: PathLike
 
 
 class ProtocolUnitResultBase(GufeTokenizable):
@@ -234,15 +245,17 @@ class ProtocolUnit(GufeTokenizable):
         """
         result: Union[ProtocolUnitResult, ProtocolUnitFailure]
 
-        self.dag_scratch = dag_scratch
         if unit_scratch is None:
             unit_scratch_tmp = tempfile.TemporaryDirectory()
-            self.unit_scratch = unit_scratch_tmp.name
+            unit_scratch_ = unit_scratch_tmp.name
         else:
-            self.unit_scratch = unit_scratch
+            unit_scratch_ = unit_scratch
+
+        context = Context(dag_scratch=dag_scratch,
+                          unit_scratch=unit_scratch_)
 
         try:
-            outputs = self._execute(**inputs)
+            outputs = self._execute(context, **inputs)
             result = ProtocolUnitResult(
                 name=self.name, source_key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
             )
@@ -267,6 +280,39 @@ class ProtocolUnit(GufeTokenizable):
 
         return result
 
+    @staticmethod
     @abc.abstractmethod
-    def _execute(self, **inputs) -> Dict[str, Any]:
+    def _execute(ctx, **inputs) -> Dict[str, Any]:
+        """Method to override in custom `ProtocolUnit` subclasses.
+
+        A `Context` is always given as its first argument, which provides execution
+        context components like filesystem scratch paths. Every other argument
+        is provided as **inputs corresponding to the keyword arguments given to the
+        `ProtocolUnit` subclass on instantiation.
+
+        An example of a subclass implementation signature might be:
+
+        >>> class MyProtocolUnit(ProtocolUnit):
+        >>>     @staticmethod
+        >>>     def _execute(ctx, *, initialization: ProtocolUnitResult, settings, some_arg=2, **inputs):
+        >>>        ...
+
+        where instantiation with the subclass `MyProtocolUnit` would look like:
+
+        >>> unit = MyProtocolUnit(settings=settings_dict, 
+                                  initialization=another_protocolunit,
+                                  some_arg=7,
+                                  another_arg="five")
+
+        Inside of `_execute` above: 
+        - `settings`, and `some_arg`, would have their values set as given
+        - `initialization` would get the `ProtocolUnitResult` that comes from
+          `another_protocolunit`'s own execution. 
+        - `another_arg` would be accessible via `inputs['another_arg']`
+
+        This allows protocol developers to define how `ProtocolUnit`s are
+        chained together, with their outputs exposed to `ProtocolUnit`s
+        dependent on them.
+
+        """
         ...

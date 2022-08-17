@@ -23,30 +23,33 @@ from gufe.protocols import (
 
 
 class InitializeUnit(ProtocolUnit):
-    def _execute(self, *, settings, stateA, stateB, mapping, start, **inputs):
 
+    @staticmethod
+    def _execute(ctx, *, settings, stateA, stateB, mapping, start, **inputs):
         return dict(
             log="initialized",
         )
 
 
 class SimulationUnit(ProtocolUnit):
-    def _execute(self, *, initialization: ProtocolUnitResult, **inputs):
+    @staticmethod
+    def _execute(ctx, *, initialization: ProtocolUnitResult, **inputs):
 
         output = [initialization.outputs['log']]
         output.append("running_md_{}".format(inputs["window"]))
 
         return dict(
             log=output,
-            window=self.inputs["window"],
-            key_result=(100 - (self.inputs["window"] - 10)**2),
-            unit_scratch=self.unit_scratch,
-            dag_scratch=self.dag_scratch
+            window=inputs["window"],
+            key_result=(100 - (inputs["window"] - 10)**2),
+            unit_scratch=ctx.unit_scratch,
+            dag_scratch=ctx.dag_scratch
         )
 
 
 class FinishUnit(ProtocolUnit):
-    def _execute(self, *, simulations, **inputs):
+    @staticmethod
+    def _execute(ctx, *, simulations, **inputs):
 
         output = [s.outputs['log'] for s in simulations]
         output.append("assembling_results")
@@ -136,7 +139,8 @@ class DummyProtocol(Protocol):
 
 
 class BrokenSimulationUnit(SimulationUnit):
-    def _execute(self, **inputs):
+    @staticmethod
+    def _execute(ctx, **inputs):
         raise ValueError("I have failed my mission", {'data': 'lol'})
 
 
