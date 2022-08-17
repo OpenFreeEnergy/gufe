@@ -52,13 +52,13 @@ jobs:
           echo "${OE_LICENSE_TEXT}" > ${OE_LICENSE}
           python -c "import openeye; assert openeye.oechem.OEChemIsLicensed(), 'OpenEye license checks failed!'"
 
-      - name: "Install"
-        run: python setup.py develop --no-deps
+          #- name: "Install"
+          #  run: python setup.py develop --no-deps
 
-      - name: "Test imports"
-        run: |
-          # if we add more to this, consider changing to for + env vars
-          python -Ic "import gufe"
+          #- name: "Test imports"
+          #  run: |
+          #    # if we add more to this, consider changing to for + env vars
+          #    python -Ic "import gufe"
 
       - name: "Environment Information"
         run: |
