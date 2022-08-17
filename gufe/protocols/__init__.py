@@ -1,4 +1,3 @@
 from .protocol import Protocol, ProtocolResult
-from .results import ProtocolUnitResult, ProtocolUnitFailure, ProtocolDAGResult, ProtocolDAGFailure
-from .protocoldag import ProtocolDAG
-from .protocolunit import ProtocolUnit
+from .protocoldag import ProtocolDAG, ProtocolDAGResult, ProtocolDAGFailure
+from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure
