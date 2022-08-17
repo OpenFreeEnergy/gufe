@@ -178,9 +178,6 @@ class ProtocolUnit(GufeTokenizable):
         self._pure = pure
         self._inputs = inputs
 
-        self.dag_scratch = None
-        self.unit_scratch = None
-
     def __repr__(self):
         return f"{type(self).__name__}({self.name})"
 
@@ -275,14 +272,12 @@ class ProtocolUnit(GufeTokenizable):
         # persistent storage use
         if unit_scratch is None:
             unit_scratch_tmp.cleanup()
-        self.unit_scratch = None
-        self.dag_scratch = None
 
         return result
 
     @staticmethod
     @abc.abstractmethod
-    def _execute(ctx, **inputs) -> Dict[str, Any]:
+    def _execute(ctx: Context, **inputs) -> Dict[str, Any]:
         """Method to override in custom `ProtocolUnit` subclasses.
 
         A `Context` is always given as its first argument, which provides execution
