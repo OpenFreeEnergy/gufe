@@ -29,14 +29,6 @@ class Context:
 
 
 class ProtocolUnitResultBase(GufeTokenizable):
-    inputs: Dict[str, Any]   # `ProtocolUnitResult`s this `ProtocolUnitResult` is dependent on
-
-    name: Optional[str]      # name of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-    pure: bool               # whether `ProtocolUnit` that produced this `ProtocolUnitResult` was a function purely of its inputs
-    source_key: GufeKey             # key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-
-    outputs: Dict[str, Any]  # outputs is a dict returned by a `ProtocolUnit`'s `_execute` method
-
     def __init__(self, *, 
             name: Optional[str] = None, 
             source_key: GufeKey, 

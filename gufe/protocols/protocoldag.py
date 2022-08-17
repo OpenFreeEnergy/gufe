@@ -9,10 +9,57 @@ import tempfile
 import networkx as nx
 
 from ..tokenization import GufeTokenizable
-from .protocolunit import ProtocolUnit, ProtocolUnitResult
+from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBase
 
 
-class ProtocolDAGResult(GufeTokenizable):
+class DAGMixin:
+
+    @staticmethod 
+    def _build_graph(nodes, nodeclass):
+        G = nx.DiGraph()
+        """Build dependency DAG of ProtocolUnits with input keys stored on edges"""
+
+        # build mapping of keys to `GufeTokenizable`s 
+        mapping = {node.key: node for node in nodes}
+
+        for node in nodes:
+            for key, value in node.inputs.items():
+                if isinstance(value, dict):
+                    for k, v in value.items():
+                        if isinstance(v, nodeclass):
+                            G.add_edge(node, v)
+                elif isinstance(value, list):
+                    for i in value:
+                        if isinstance(i, nodeclass):
+                            G.add_edge(node, i)
+                elif isinstance(value, nodeclass):
+                    G.add_edge(node, value)
+
+        return G
+
+    @staticmethod
+    def _iterate_dag_order(graph):
+        return reversed(list(nx.topological_sort(graph)))
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def graph(self) -> nx.DiGraph:
+        """DAG of `ProtocolUnit`s that produced this `ProtocolDAGResult`.
+
+        """
+        return self._graph
+    @property
+    def protocol_units(self):
+        """List of `ProtocolUnit`s given in DAG-order.
+
+        """
+        return list(self._iterate_dag_order(self._graph))
+
+
+class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     """Result for a single `ProtocolDAG` execution.
 
     There may be many of these in a given `ResultStore` for a given `Transformation`.
@@ -28,12 +75,28 @@ class ProtocolDAGResult(GufeTokenizable):
         Each `ProtocolUnit` features its `ProtocolUnitCompletion` as a `result` attribute.
 
     """
-    _name: Optional[str]
-    _graph: nx.DiGraph
-
-    def __init__(self, *, name=None, graph):
+    def __init__(self, *, name=None, protocol_units, protocol_unit_results):
         self._name = name
-        self._graph = graph
+        self._protocol_units = protocol_units
+        self._protocol_unit_results = protocol_unit_results
+
+        # build graph from protocol units
+        self._graph = self._build_graph(protocol_units, ProtocolUnit)
+
+        # build graph from protocol unit results
+        self._result_graph = self._build_graph(protocol_unit_results, ProtocolUnitResultBase)
+
+        # build mapping from protocol units to results
+        keys_to_pu = {unit.key: unit for unit in self._protocol_units}
+        self._unit_result_mapping = {keys_to_pu[result.source_key]: result
+                                     for result in self._protocol_unit_results}
+        self._result_unit_mapping = {result: unit for unit, result
+                                     in self._unit_result_mapping.items()}
+
+        self._validate()
+
+    def _validate(self):
+        assert len(self._protocol_unit_results) == len(self._protocol_units)
 
     def _defaults(self):
         # not used by `ProtocolDAG`
@@ -41,27 +104,35 @@ class ProtocolDAGResult(GufeTokenizable):
 
     def _to_dict(self):
         return {'name': self.name,
-                'graph': self.graph}
+                'protocol_units': self.protocol_units,
+                'protocol_unit_results': self.protocol_unit_results}
 
     @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 
     @property
-    def name(self):
-        return self._name
+    def result_graph(self) -> nx.DiGraph:
+        """DAG of `ProtocolUnitResult`s that compose this `ProtocolDAGResult`.
 
-    @property
-    def graph(self):
-        return self._graph
-
-    @property
-    def protocol_units(self):
-        return [pu for pu in self.graph.nodes]
+        """
+        return self._result_graph
 
     @property
     def protocol_unit_results(self):
-        return list(nx.get_node_attributes(self.graph, "result").values())
+        return list(self._iterate_dag_order(self.result_graph))
+
+    def unit_to_result(self, protocol_unit: ProtocolUnit):
+        try:
+            return self._unit_result_mapping[protocol_unit]
+        except KeyError:
+            raise KeyError("No such `protocol_unit` present")
+
+    def result_to_unit(self, protocol_unit_result: ProtocolUnitResult):
+        try:
+            return self._result_unit_mapping[protocol_unit_result]
+        except KeyError:
+            raise KeyError("No such `protocol_unit_result` present")
 
     def ok(self) -> bool:
         return True
@@ -69,12 +140,15 @@ class ProtocolDAGResult(GufeTokenizable):
 
 class ProtocolDAGFailure(ProtocolDAGResult):
 
+    def _validate(self):
+        assert len(self._protocol_unit_results) <= len(self._protocol_units)
+
     def ok(self) -> bool:
         return False
 
     @property
     def protocol_unit_failures(self):
-        return [r for r in nx.get_node_attributes(self.graph, "result").values() if not r.ok()]
+        return [r for r in self.protocol_unit_results if not r.ok()]
 
     def _defaults(self):
         # not used by `ProtocolDAG`
@@ -82,14 +156,15 @@ class ProtocolDAGFailure(ProtocolDAGResult):
 
     def _to_dict(self):
         return {'name': self.name,
-                'graph': self.graph}
+                'protocol_units': self.protocol_units,
+                'protocol_unit_results': self.protocol_unit_results}
 
     @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 
 
-class ProtocolDAG(GufeTokenizable):
+class ProtocolDAG(GufeTokenizable, DAGMixin):
     """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`s
     with dependencies specified.
 
@@ -119,7 +194,7 @@ class ProtocolDAG(GufeTokenizable):
         self._protocol_units = protocol_units
 
         # build graph from protocol units
-        self._graph = self._build_graph(protocol_units)
+        self._graph = self._build_graph(protocol_units, ProtocolUnit)
 
     def _defaults(self):
         # not used by `ProtocolDAG`
@@ -132,39 +207,6 @@ class ProtocolDAG(GufeTokenizable):
     @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
-
-    def _build_graph(self, protocol_units):
-        G = nx.DiGraph()
-        """Build dependency DAG of ProtocolUnits with input keys stored on edges"""
-
-        # build mapping of keys to ProtocolUnits
-        mapping = {pu.key: pu for pu in protocol_units}
-
-        for pu in protocol_units:
-            for key, value in pu.inputs.items():
-                if isinstance(value, dict):
-                    for k, v in value.items():
-                        if isinstance(v, ProtocolUnit):
-                            G.add_edge(pu, v)
-                elif isinstance(value, list):
-                    for i in value:
-                        if isinstance(i, ProtocolUnit):
-                            G.add_edge(pu, i)
-                elif isinstance(value, ProtocolUnit):
-                    G.add_edge(pu, value)
-
-        return G
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def graph(self):
-        return self._graph
-
-    def protocol_units(self):
-        return list(self._protocol_units)
 
     def execute(self, *, 
             dag_scratch: PathLike = None) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
@@ -184,49 +226,51 @@ class ProtocolDAG(GufeTokenizable):
         else:
             dag_scratch_ = dag_scratch
 
-        # operate on a copy, since we'll add ProtocolUnitResults as node attributes
-        graph = self._graph.copy(as_view=False)
-
         # iterate in DAG order
+        results = {}
         for unit in reversed(list(nx.topological_sort(self._graph))):
-
-            #unit: ProtocolUnit = ProtocolUnit.from_keyed_dict(unit_dict)
 
             # translate each `ProtocolUnit` in input into corresponding
             # `ProtocolUnitResult`
-            inputs = self._pu_to_pur(unit.inputs, graph)
+            inputs = self._pu_to_pur(unit.inputs, results)
 
             # execute
             result = unit.execute(dag_scratch=dag_scratch_, **inputs)
 
             # attach result to this `ProtocolUnit`
-            graph.nodes[unit]["result"] = result
+            results[unit.key] = result
 
             if not result.ok():
                 if dag_scratch is None:
                     dag_scratch_tmp.cleanup()
 
-                return ProtocolDAGFailure(name=self._name, graph=graph)
+                return ProtocolDAGFailure(
+                        name=self._name,
+                        protocol_units=self._protocol_units, 
+                        protocol_unit_results=list(results.values()))
 
         # TODO: change this part once we have clearer ideas on how to inject
         # persistent storage use
         if dag_scratch is None:
             dag_scratch_tmp.cleanup()
 
-        return ProtocolDAGResult(name=self._name, graph=graph)
+        return ProtocolDAGResult(
+                name=self._name, 
+                protocol_units=self._protocol_units, 
+                protocol_unit_results=list(results.values()))
 
     def _pu_to_pur(
             self,
             inputs, 
-            graph):
+            mapping):
         """Convert each `ProtocolUnit` to its corresponding `ProtocolUnitResult`.
 
         """
         if isinstance(inputs, dict):
-            return {key: self._pu_to_pur(value, graph) for key, value in inputs.items()}
+            return {key: self._pu_to_pur(value, mapping) for key, value in inputs.items()}
         elif isinstance(inputs, list):
-            return [self._pu_to_pur(value, graph) for value in inputs]
+            return [self._pu_to_pur(value, mapping) for value in inputs]
         elif isinstance(inputs, ProtocolUnit):
-            return graph.nodes[inputs]['result']
+            return mapping[inputs.key]
         else:
             return inputs

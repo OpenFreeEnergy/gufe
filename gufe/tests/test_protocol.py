@@ -194,17 +194,13 @@ class TestProtocol:
 
         assert dagresult.ok()
 
-        finishresult = [
-            dagresult.graph.nodes[u]["result"]
-            for u in dagresult.graph.nodes
-            if u.__class__.__name__ == "FinishUnit"
-        ][0]
+        # the FinishUnit will always be the last to execute
+        finishresult = dagresult.protocol_unit_results[-1]
+        assert finishresult.name == "the end"
 
-        simulationresults = [
-            dagresult.graph.nodes[u]["result"]
-            for u in dagresult.graph.nodes
-            if isinstance(u, SimulationUnit)
-        ]
+        simulationresults = [dagresult.unit_to_result(pu)
+                             for pu in dagresult.protocol_units
+                             if isinstance(pu, SimulationUnit)]
 
         # check that we have dependency information in results
         assert set(finishresult.inputs['simulations']) == {u for u in simulationresults}
