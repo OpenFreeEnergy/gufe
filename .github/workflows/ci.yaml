@@ -67,7 +67,10 @@ jobs:
 
       - name: "Run tests"
         run: |
-          coverage run -m pytest -n 2 -v --cov=gufe --cov-report=xml
+          # run pytest within a coverage call to avoid module imports before
+          # coverage can run, since this happens if fixtures are defined as
+          # entrypoints
+          coverage run -m pytest
           coverage xml
 
       - name: codecov
