@@ -70,6 +70,7 @@ jobs:
           # run pytest within a coverage call to avoid module imports before
           # coverage can run, since this happens if fixtures are defined as
           # entrypoints
+          # see: https://github.com/pytest-dev/pytest-cov/issues/455#issuecomment-1026836811
           coverage run -m pytest
           coverage xml
 
