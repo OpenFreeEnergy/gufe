@@ -161,6 +161,7 @@ class ProtocolUnit(GufeTokenizable):
         ----------
         name : str
             Custom name to give this 
+        pure : TODO
         **inputs 
             Keyword arguments, which an include other `ProtocolUnit`s on which this
             `ProtocolUnit` is dependent. For serializability, should be composed of

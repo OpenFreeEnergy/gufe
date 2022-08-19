@@ -21,6 +21,8 @@ from gufe.protocols import (
     ProtocolUnitFailure,
 )
 
+from gufe.protocols.protocoldag import execute
+
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
@@ -181,19 +183,30 @@ class BrokenProtocol(DummyProtocol):
 
 
 class TestProtocol:
-    def test_init(self):
-        protocol = DummyProtocol(settings=None)
 
-    def test_create(self, solvated_ligand, solvated_complex):
-        protocol = DummyProtocol(settings=None)
-        dag = protocol.create(stateA=solvated_ligand, stateB=solvated_complex)
-
-    def test_create_execute(self, solvated_ligand, solvated_complex):
+    @pytest.fixture
+    def protocol_dag(self, solvated_ligand, solvated_complex):
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(
             stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
         )
-        dagresult: ProtocolDAGResult = dag.execute()
+        dagresult: ProtocolDAGResult = execute(dag)
+
+        return protocol, dag, dagresult
+
+    @pytest.fixture
+    def protocol_dag_broken(self, solvated_ligand, solvated_complex):
+        protocol = BrokenProtocol(settings=None)
+        dag = protocol.create(
+            stateA=solvated_ligand, stateB=solvated_complex, name="a broken dummy run"
+        )
+
+        dagfailure: ProtocolDAGFailure = execute(dag)
+
+        return protocol, dag, dagfailure
+
+    def test_dag_execute(self, protocol_dag):
+        protocol, dag, dagresult = protocol_dag
 
         assert dagresult.ok()
 
@@ -218,14 +231,8 @@ class TestProtocol:
         # check that unit_scratch directory is different for all simulations
         assert len(set(i.outputs['unit_scratch'] for i in simulationresults)) == len(simulationresults)
 
-    def test_create_execute_failure(self, solvated_ligand, solvated_complex):
-        protocol = BrokenProtocol(settings=None)
-
-        dag = protocol.create(
-            stateA=solvated_ligand, stateB=solvated_complex, name="a broken dummy run"
-        )
-
-        dagfailure: ProtocolDAGFailure = dag.execute()
+    def test_dag_execute_failure(self, protocol_dag_broken):
+        protocol, dag, dagfailure = protocol_dag_broken
 
         assert not dagfailure.ok()
         assert isinstance(dagfailure, ProtocolDAGFailure)
@@ -234,6 +241,8 @@ class TestProtocol:
 
         assert len(failed_units) == 1
         assert failed_units[0].name == "problem child"
+
+        # parse exception arguments
         assert failed_units[0].exception.args[1]['data'] == "lol"
         assert isinstance(failed_units[0], ProtocolUnitFailure)
 
@@ -241,12 +250,8 @@ class TestProtocol:
 
         assert len(succeeded_units) > 0
 
-    def test_create_execute_gather(self, solvated_ligand, solvated_complex):
-        protocol = DummyProtocol(settings=None)
-        dag = protocol.create(
-            stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
-        )
-        dagresult: ProtocolDAGResult = dag.execute()
+    def test_create_execute_gather(self, protocol_dag):
+        protocol, dag, dagresult = protocol_dag
 
         assert dagresult.ok()
 
@@ -258,46 +263,52 @@ class TestProtocol:
 
         assert protocolresult.get_estimate() == 105336
 
-
-class TestProtocolUnit(GufeTokenizableTestsMixin):
-
-    cls = SimulationUnit
-
-    @pytest.fixture
-    def instance(self, solvated_complex, solvated_ligand):
-
-        # convert protocol inputs into starting points for independent simulations
-        alpha = InitializeUnit(
-            name="the beginning",
-            settings={},
-            stateA=solvated_complex,
-            stateB=solvated_ligand,
-            mapping=None,
-            start=None,
-            some_dict={'a': 2, 'b': 12},
-            pure=True,
-        )
-
-        return SimulationUnit(name=f"simulation", initialization=alpha, pure=True)
-
-    def test_purity_behavior(self, instance):
-        ser = instance.to_dict()
-        deser = self.cls.from_dict(ser)
-
-        # instance and deser should be both equal and identical
-        deser == instance
-        deser is instance
-
-        # if we make two non-pure versions, the keys for these won't be a
-        # function of their intputs, but a uuid
-        ser['pure'] = False
-        deser_impure_1 = self.cls.from_dict(ser)
-        deser_impure_2 = self.cls.from_dict(ser)
-
-        # they are equal in contents
-        assert deser_impure_1 == deser_impure_2
-
-        # but they are not the same object
-        assert deser_impure_1 is not deser_impure_2
+    class ProtocolDAGTestsMixin:
+        
+        def test_protocol_units(self, protocol_dag):
+            assert protocol_dag.protocol_units
 
 
+    class TestProtocolDAGResult:
+        ...
+
+    class TestProtocolUnit(GufeTokenizableTestsMixin):
+    
+        cls = SimulationUnit
+    
+        @pytest.fixture
+        def instance(self, solvated_complex, solvated_ligand):
+    
+            # convert protocol inputs into starting points for independent simulations
+            alpha = InitializeUnit(
+                name="the beginning",
+                settings={},
+                stateA=solvated_complex,
+                stateB=solvated_ligand,
+                mapping=None,
+                start=None,
+                some_dict={'a': 2, 'b': 12},
+                pure=True,
+            )
+    
+            return SimulationUnit(name=f"simulation", initialization=alpha, pure=True)
+    
+        def test_purity_behavior(self, instance):
+            ser = instance.to_dict()
+            deser = self.cls.from_dict(ser)
+    
+            # instance and deser should be both equal and identical
+            deser == instance
+            deser is instance
+    
+            # if we make two non-pure versions, the keys for these won't be a
+            # function of their intputs, but a uuid
+            ser['pure'] = False
+            deser_impure_1 = self.cls.from_dict(ser)
+            deser_impure_2 = self.cls.from_dict(ser)
+    
+            # they are equal in contents
+            assert deser_impure_1 == deser_impure_2
+    
+            # but they are not the same object
+            assert deser_impure_1 is not deser_impure_2

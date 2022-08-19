@@ -12,12 +12,13 @@ from ..tokenization import GufeTokenizable
 from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBase
 
 
+
 class DAGMixin:
 
     @staticmethod 
     def _build_graph(nodes, nodeclass):
-        G = nx.DiGraph()
         """Build dependency DAG of ProtocolUnits with input keys stored on edges"""
+        G = nx.DiGraph()
 
         # build mapping of keys to `GufeTokenizable`s 
         mapping = {node.key: node for node in nodes}
@@ -208,69 +209,71 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     def _from_dict(cls, dct: Dict):
         return cls(**dct)
 
-    def execute(self, *, 
+
+def execute(protocoldag: ProtocolDAG, *, 
             dag_scratch: PathLike = None) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
-        """Execute the full DAG in-serial, in process.
+    """Execute the full DAG in-serial, in process.
 
-        Parameters
-        ----------
-        dag_scratch : Optional[PathLike]
-           Path to scratch space that persists across whole DAG execution, but
-           is removed after. Used by some `ProtocolUnit`s to pass file contents
-           to dependent `ProtocolUnit`s.
+    Parameters
+    ----------
+    dag_scratch : Optional[PathLike]
+       Path to scratch space that persists across whole DAG execution, but
+       is removed after. Used by some `ProtocolUnit`s to pass file contents
+       to dependent `ProtocolUnit`s.
 
-        """
-        if dag_scratch is None:
-            dag_scratch_tmp = tempfile.TemporaryDirectory()
-            dag_scratch_ = dag_scratch_tmp.name
-        else:
-            dag_scratch_ = dag_scratch
+    """
+    if dag_scratch is None:
+        dag_scratch_tmp = tempfile.TemporaryDirectory()
+        dag_scratch_ = dag_scratch_tmp.name
+    else:
+        dag_scratch_ = dag_scratch
 
-        # iterate in DAG order
-        results = {}
-        for unit in reversed(list(nx.topological_sort(self._graph))):
+    # iterate in DAG order
+    results = {}
+    for unit in protocoldag.protocol_units:
 
-            # translate each `ProtocolUnit` in input into corresponding
-            # `ProtocolUnitResult`
-            inputs = self._pu_to_pur(unit.inputs, results)
+        # translate each `ProtocolUnit` in input into corresponding
+        # `ProtocolUnitResult`
+        inputs = _pu_to_pur(unit.inputs, results)
 
-            # execute
-            result = unit.execute(dag_scratch=dag_scratch_, **inputs)
+        # execute
+        result = unit.execute(dag_scratch=dag_scratch_, **inputs)
 
-            # attach result to this `ProtocolUnit`
-            results[unit.key] = result
+        # attach result to this `ProtocolUnit`
+        results[unit.key] = result
 
-            if not result.ok():
-                if dag_scratch is None:
-                    dag_scratch_tmp.cleanup()
+        if not result.ok():
+            if dag_scratch is None:
+                dag_scratch_tmp.cleanup()
 
-                return ProtocolDAGFailure(
-                        name=self._name,
-                        protocol_units=self._protocol_units, 
-                        protocol_unit_results=list(results.values()))
+            return ProtocolDAGFailure(
+                    name=protocoldag._name,
+                    protocol_units=protocoldag.protocol_units, 
+                    protocol_unit_results=list(results.values()))
 
-        # TODO: change this part once we have clearer ideas on how to inject
-        # persistent storage use
-        if dag_scratch is None:
-            dag_scratch_tmp.cleanup()
+    # TODO: change this part once we have clearer ideas on how to inject
+    # persistent storage use
+    if dag_scratch is None:
+        dag_scratch_tmp.cleanup()
 
-        return ProtocolDAGResult(
-                name=self._name, 
-                protocol_units=self._protocol_units, 
-                protocol_unit_results=list(results.values()))
+    return ProtocolDAGResult(
+            name=protocoldag.name, 
+            protocol_units=protocoldag.protocol_units, 
+            protocol_unit_results=list(results.values()))
 
-    def _pu_to_pur(
-            self,
-            inputs, 
-            mapping):
-        """Convert each `ProtocolUnit` to its corresponding `ProtocolUnitResult`.
 
-        """
-        if isinstance(inputs, dict):
-            return {key: self._pu_to_pur(value, mapping) for key, value in inputs.items()}
-        elif isinstance(inputs, list):
-            return [self._pu_to_pur(value, mapping) for value in inputs]
-        elif isinstance(inputs, ProtocolUnit):
-            return mapping[inputs.key]
-        else:
-            return inputs
+def _pu_to_pur(
+        inputs, 
+        mapping):
+    """Convert each `ProtocolUnit` to its corresponding `ProtocolUnitResult`.
+
+    """
+    if isinstance(inputs, dict):
+        return {key: _pu_to_pur(value, mapping) for key, value in inputs.items()}
+    elif isinstance(inputs, list):
+        return [_pu_to_pur(value, mapping) for value in inputs]
+    elif isinstance(inputs, ProtocolUnit):
+        return mapping[inputs.key]
+    else:
+        return inputs
+
