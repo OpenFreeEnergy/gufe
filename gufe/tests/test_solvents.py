@@ -3,7 +3,7 @@ import pytest
 from gufe import SolventComponent
 from openff.units import unit
 
-from .test_base import GufeTokenizableTestsMixin
+from .test_tokenize import GufeTokenizableTestsMixin
 
 
 def test_defaults():

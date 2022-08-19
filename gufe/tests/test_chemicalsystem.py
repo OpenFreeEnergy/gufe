@@ -6,7 +6,7 @@ import numpy as np
 
 from gufe import ChemicalSystem
 
-from .test_base import GufeTokenizableTestsMixin
+from .test_tokenize import GufeTokenizableTestsMixin
 
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
     # sanity checks on construction
