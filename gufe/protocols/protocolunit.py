@@ -138,7 +138,7 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         return self._exception
 
     @property
-    def traceback(self):
+    def traceback(self) -> str:
         return self._traceback
 
     def ok(self) -> bool:

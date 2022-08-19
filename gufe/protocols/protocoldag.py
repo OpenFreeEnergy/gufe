@@ -2,13 +2,13 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from typing import Iterable, List, Dict, Set, Optional, Union
+from typing import Iterable, List, Dict, Set, Optional, Union, Any
 from os import PathLike
 import tempfile
 
 import networkx as nx
 
-from ..tokenization import GufeTokenizable
+from ..tokenization import GufeTokenizable, GufeKey
 from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBase
 
 
@@ -263,9 +263,21 @@ def execute(protocoldag: ProtocolDAG, *,
 
 
 def _pu_to_pur(
-        inputs, 
-        mapping):
-    """Convert each `ProtocolUnit` to its corresponding `ProtocolUnitResult`.
+        inputs: Union[Dict[str, Any], List[Any], ProtocolUnit],
+        mapping: Dict[GufeKey, ProtocolUnitResult]):
+    """Convert each `ProtocolUnit` found within `inputs` to its corresponding
+    `ProtocolUnitResult`.
+
+    Parameters
+    ----------
+    inputs
+        Arbitrarily-nested dict or list, with `ProtocolUnit`s present among
+        values/elements. Can also be a single `ProtocolUnit`.
+
+    Returns
+    -------
+    Data structure identical to `inputs`, except with each `ProtocolUnit`
+    replaced with its corresponding `ProtocolUnitResult`.
 
     """
     if isinstance(inputs, dict):
