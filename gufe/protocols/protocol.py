@@ -8,9 +8,9 @@
 import abc
 from typing import Optional, Iterable, Any, Dict, List
 
-from openff.toolkit.utils.serialization import Serializable
 import networkx as nx
 
+from ..tokenization import GufeTokenizable
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import Mapping
 
@@ -18,22 +18,26 @@ from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
 
 
-class ProtocolResult(Serializable, abc.ABC):
+class ProtocolResult(GufeTokenizable):
     """Container for all `ProtocolDAGResult`s for a given `Transformation`."""
 
     def __init__(self, data, **kwargs):
         self._data = data
 
+    def _defaults(self):
+        # not used by `Protocol`s
+        return {}
+
+    def _to_dict(self):
+        return {'data': self.data}
+
+    @classmethod
+    def _from_dict(cls, dct: Dict):
+        return cls()
+
     @property
     def data(self):
         return self._data
-
-    def to_dict(self) -> dict:
-        ...
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        ...
 
     @abc.abstractmethod
     def get_estimate(self):
@@ -48,7 +52,7 @@ class ProtocolResult(Serializable, abc.ABC):
         ...
 
 
-class Protocol(Serializable, abc.ABC):
+class Protocol(GufeTokenizable):
     """A protocol that implements an alchemical transformation.
 
     Takes a `ProtocolSettings` object specific to the protocol on init.
@@ -70,13 +74,6 @@ class Protocol(Serializable, abc.ABC):
     def settings(self):
         return self._settings
 
-    def to_dict(self) -> dict:
-        ...
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        ...
-
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
@@ -87,6 +84,17 @@ class Protocol(Serializable, abc.ABC):
 
     def __hash__(self):
         return hash((self.__class__.__name__, self._settings))
+
+    def _defaults(self):
+        # not used by `Protocol`s
+        return {}
+
+    def _to_dict(self):
+        return {'settings': self.settings}
+
+    @classmethod
+    def _from_dict(cls, dct: Dict):
+        return cls(**dct)
 
     @classmethod
     @abc.abstractmethod

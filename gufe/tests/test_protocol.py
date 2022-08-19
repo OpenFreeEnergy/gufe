@@ -21,6 +21,8 @@ from gufe.protocols import (
     ProtocolUnitFailure,
 )
 
+from .test_tokenization import GufeTokenizableTestsMixin
+
 
 class InitializeUnit(ProtocolUnit):
 
@@ -109,8 +111,9 @@ class DummyProtocol(Protocol):
             stateB=stateB,
             mapping=mapping,
             start=extend_from,
-            pure=True            # states that this unit is purely a function of its explicit arguments;
-                                 # allows scheduler to deduplicate based on inputs
+            some_dict={'a': 2, 'b': 12},
+            pure=True,          # states that this unit is purely a function of its explicit arguments;
+                                # allows scheduler to deduplicate based on inputs
         )
 
         # create several units that would each run an independent simulation
@@ -185,7 +188,7 @@ class TestProtocol:
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(stateA=solvated_ligand, stateB=solvated_complex)
 
-    def test_create_execute_gather(self, solvated_ligand, solvated_complex):
+    def test_create_execute(self, solvated_ligand, solvated_complex):
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(
             stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
@@ -198,6 +201,7 @@ class TestProtocol:
         finishresult = dagresult.protocol_unit_results[-1]
         assert finishresult.name == "the end"
 
+        # gather SimulationUnits
         simulationresults = [dagresult.unit_to_result(pu)
                              for pu in dagresult.protocol_units
                              if isinstance(pu, SimulationUnit)]
@@ -214,14 +218,6 @@ class TestProtocol:
         # check that unit_scratch directory is different for all simulations
         assert len(set(i.outputs['unit_scratch'] for i in simulationresults)) == len(simulationresults)
 
-        # gather aggregated results of interest
-        protocolresult = protocol.gather([dagresult])
-
-        assert len(protocolresult.data['logs']) == 1
-        assert len(protocolresult.data['logs'][0]) == 21 + 1
-
-        assert protocolresult.get_estimate() == 105336
-
     def test_create_execute_failure(self, solvated_ligand, solvated_complex):
         protocol = BrokenProtocol(settings=None)
 
@@ -229,7 +225,7 @@ class TestProtocol:
             stateA=solvated_ligand, stateB=solvated_complex, name="a broken dummy run"
         )
 
-        dagfailure = dag.execute()
+        dagfailure: ProtocolDAGFailure = dag.execute()
 
         assert not dagfailure.ok()
         assert isinstance(dagfailure, ProtocolDAGFailure)
@@ -244,3 +240,64 @@ class TestProtocol:
         succeeded_units = dagfailure.protocol_unit_results
 
         assert len(succeeded_units) > 0
+
+    def test_create_execute_gather(self, solvated_ligand, solvated_complex):
+        protocol = DummyProtocol(settings=None)
+        dag = protocol.create(
+            stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
+        )
+        dagresult: ProtocolDAGResult = dag.execute()
+
+        assert dagresult.ok()
+
+        # gather aggregated results of interest
+        protocolresult = protocol.gather([dagresult])
+
+        assert len(protocolresult.data['logs']) == 1
+        assert len(protocolresult.data['logs'][0]) == 21 + 1
+
+        assert protocolresult.get_estimate() == 105336
+
+
+class TestProtocolUnit(GufeTokenizableTestsMixin):
+
+    cls = SimulationUnit
+
+    @pytest.fixture
+    def instance(self, solvated_complex, solvated_ligand):
+
+        # convert protocol inputs into starting points for independent simulations
+        alpha = InitializeUnit(
+            name="the beginning",
+            settings={},
+            stateA=solvated_complex,
+            stateB=solvated_ligand,
+            mapping=None,
+            start=None,
+            some_dict={'a': 2, 'b': 12},
+            pure=True,
+        )
+
+        return SimulationUnit(name=f"simulation", initialization=alpha, pure=True)
+
+    def test_purity_behavior(self, instance):
+        ser = instance.to_dict()
+        deser = self.cls.from_dict(ser)
+
+        # instance and deser should be both equal and identical
+        deser == instance
+        deser is instance
+
+        # if we make two non-pure versions, the keys for these won't be a
+        # function of their intputs, but a uuid
+        ser['pure'] = False
+        deser_impure_1 = self.cls.from_dict(ser)
+        deser_impure_2 = self.cls.from_dict(ser)
+
+        # they are equal in contents
+        assert deser_impure_1 == deser_impure_2
+
+        # but they are not the same object
+        assert deser_impure_1 is not deser_impure_2
+
+
