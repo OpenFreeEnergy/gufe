@@ -62,7 +62,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             raise NotImplementedError("Object comparisons must be of the same "
                                   "type")
 
-        return self.to_dict() == other.to_dict()
+        return self.to_keyed_dict() == other.to_keyed_dict()
 
     def __hash__(self):
         return hash(self.key)

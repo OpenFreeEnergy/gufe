@@ -87,6 +87,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
         reser = deser.to_dict()
 
         assert instance == deser
+        assert instance is deser
 
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
