@@ -27,7 +27,6 @@ from .test_tokenization import GufeTokenizableTestsMixin
 
 
 class InitializeUnit(ProtocolUnit):
-
     @staticmethod
     def _execute(ctx, *, settings, stateA, stateB, mapping, start, **inputs):
         return dict(
@@ -37,7 +36,7 @@ class InitializeUnit(ProtocolUnit):
 
 class SimulationUnit(ProtocolUnit):
     @staticmethod
-    def _execute(ctx, *, initialization: ProtocolUnitResult, **inputs):
+    def _execute(ctx, *, initialization, **inputs):
 
         output = [initialization.outputs['log']]
         output.append("running_md_{}".format(inputs["window"]))

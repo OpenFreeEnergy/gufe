@@ -4,6 +4,7 @@
 import abc
 from typing import Iterable, List, Dict, Set, Optional, Union, Any
 from os import PathLike
+from pathlib import Path
 import tempfile
 
 import networkx as nx
@@ -12,8 +13,8 @@ from ..tokenization import GufeTokenizable, GufeKey
 from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBase
 
 
-
 class DAGMixin:
+    _graph: nx.DiGraph
 
     @staticmethod 
     def _build_graph(nodes, nodeclass):
@@ -224,12 +225,12 @@ def execute(protocoldag: ProtocolDAG, *,
     """
     if dag_scratch is None:
         dag_scratch_tmp = tempfile.TemporaryDirectory()
-        dag_scratch_ = dag_scratch_tmp.name
+        dag_scratch_ = Path(dag_scratch_tmp.name)
     else:
-        dag_scratch_ = dag_scratch
+        dag_scratch_ = Path(dag_scratch)
 
     # iterate in DAG order
-    results = {}
+    results: Dict[GufeKey, ProtocolUnitResult] = {}
     for unit in protocoldag.protocol_units:
 
         # translate each `ProtocolUnit` in input into corresponding

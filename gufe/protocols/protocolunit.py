@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import traceback
 import uuid
 from os import PathLike
+from pathlib import Path
 from copy import copy
 from typing import Iterable, List, Dict, Any, Optional, Union
 import tempfile
@@ -126,7 +127,6 @@ class ProtocolUnitResult(ProtocolUnitResultBase):
 
 
 class ProtocolUnitFailure(ProtocolUnitResultBase):
-    exception: Exception
 
     def __init__(self, *, name=None, source_key, pure, inputs, outputs, exception, traceback):
         self._exception = exception
@@ -134,7 +134,7 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         super().__init__(name=name, source_key=source_key, pure=pure, inputs=inputs, outputs=outputs)
 
     @property
-    def exception(self):
+    def exception(self) -> Exception:
         return self._exception
 
     @property
@@ -213,7 +213,7 @@ class ProtocolUnit(GufeTokenizable):
 
     def execute(self, *, 
             dag_scratch: PathLike, 
-            unit_scratch: PathLike = None, 
+            unit_scratch: Optional[PathLike] = None, 
             **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
@@ -237,9 +237,9 @@ class ProtocolUnit(GufeTokenizable):
 
         if unit_scratch is None:
             unit_scratch_tmp = tempfile.TemporaryDirectory()
-            unit_scratch_ = unit_scratch_tmp.name
+            unit_scratch_ = Path(unit_scratch_tmp.name)
         else:
-            unit_scratch_ = unit_scratch
+            unit_scratch_ = Path(unit_scratch)
 
         context = Context(dag_scratch=dag_scratch,
                           unit_scratch=unit_scratch_)

@@ -33,7 +33,7 @@ class ProtocolResult(GufeTokenizable):
 
     @classmethod
     def _from_dict(cls, dct: Dict):
-        return cls()
+        return cls(**dct)
 
     @property
     def data(self):
@@ -64,7 +64,7 @@ class Protocol(GufeTokenizable):
 
     """
 
-    _results_cls = ProtocolResult
+    result_cls: type[ProtocolResult]
 
     def __init__(self, settings: "ProtocolSettings" = None):  # type: ignore
         """ """
