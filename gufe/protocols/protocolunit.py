@@ -29,7 +29,25 @@ class Context:
     dag_scratch: PathLike
 
 
-class ProtocolUnitResultBase(GufeTokenizable):
+class ProtocolUnitMixin:
+
+    def _list_dependencies(self, cls):
+        deps = [] 
+        for key, value in self.inputs.items():
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    if isinstance(v, cls):
+                        deps.append(v)
+            elif isinstance(value, list):
+                for i in value:
+                    if isinstance(i, cls):
+                        deps.append(i)
+            elif isinstance(value, cls):
+                deps.append(value)
+        return deps
+
+
+class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
     def __init__(self, *, 
             name: Optional[str] = None, 
             source_key: GufeKey, 
@@ -114,6 +132,13 @@ class ProtocolUnitResultBase(GufeTokenizable):
     def outputs(self):
         return self._outputs
 
+    @property
+    def dependencies(self) -> List["ProtocolUnitResult"]:
+        """Generate a list of all `ProtocolUnitResult`s dependent on.
+
+        """
+        return self._list_dependencies(ProtocolUnitResult)
+
 
 class ProtocolUnitResult(ProtocolUnitResultBase):
     """Result for a single `ProtocolUnit` execution.
@@ -145,7 +170,7 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         return False
 
 
-class ProtocolUnit(GufeTokenizable):
+class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
     """A unit of work within a ProtocolDAG."""
 
     def __init__(
@@ -206,6 +231,13 @@ class ProtocolUnit(GufeTokenizable):
     @property
     def inputs(self):
         return copy(self._inputs)
+
+    @property
+    def dependencies(self) -> List["ProtocolUnit"]:
+        """Generate a list of all `ProtocolUnit`s dependent on.
+
+        """
+        return self._list_dependencies(ProtocolUnit)
 
     @property
     def pure(self):

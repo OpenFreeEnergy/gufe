@@ -181,7 +181,13 @@ class BrokenProtocol(DummyProtocol):
         return [alpha, *simulations, omega]
 
 
-class TestProtocol:
+class TestProtocol(GufeTokenizableTestsMixin):
+
+    cls = DummyProtocol
+    
+    @pytest.fixture
+    def instance(self):
+        return DummyProtocol(settings=None)
 
     @pytest.fixture
     def protocol_dag(self, solvated_ligand, solvated_complex):
@@ -262,17 +268,41 @@ class TestProtocol:
 
         assert protocolresult.get_estimate() == 105336
 
-    class ProtocolDAGTestsMixin:
+    class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
         
-        def test_protocol_units(self, protocol_dag):
-            assert protocol_dag.protocol_units
+        def test_protocol_units(self, instance):
+            # ensure that protocol units are given in-order based on DAG
+            # dependencies
+            checked = []
+            for pu in instance.protocol_units:
+                assert set(pu.dependencies).issubset(checked) 
+                checked.append(pu)
 
+    class TestProtocolDAG(ProtocolDAGTestsMixin):
+        cls = ProtocolDAG
+        
+        @pytest.fixture
+        def instance(self, protocol_dag):
+            protocol, dag, dagresult = protocol_dag
+            return dag
 
-    class TestProtocolDAGResult:
-        ...
+    class TestProtocolDAGResult(ProtocolDAGTestsMixin):
+        cls = ProtocolDAGResult
+
+        @pytest.fixture
+        def instance(self, protocol_dag):
+            protocol, dag, dagresult = protocol_dag
+            return dagresult
+
+    class TestProtocolDAGFailure(ProtocolDAGResult):
+        cls = ProtocolDAGFailure
+
+        @pytest.fixture
+        def instance(self, protocol_dag_broken):
+            protocol, dag, dagfailure = protocol_dag_broken
+            return dagfailure
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
-    
         cls = SimulationUnit
     
         @pytest.fixture
@@ -311,3 +341,10 @@ class TestProtocol:
     
             # but they are not the same object
             assert deser_impure_1 is not deser_impure_2
+
+        #def test_roundtrip(self, instance):
+        #    ser = instance.to_dict()
+        #    deser = self.cls.from_dict(ser)
+
+        #    import pdb
+        #    pdb.set_trace()

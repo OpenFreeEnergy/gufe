@@ -17,25 +17,13 @@ class DAGMixin:
     _graph: nx.DiGraph
 
     @staticmethod 
-    def _build_graph(nodes, nodeclass):
+    def _build_graph(nodes):
         """Build dependency DAG of ProtocolUnits with input keys stored on edges"""
         G = nx.DiGraph()
 
-        # build mapping of keys to `GufeTokenizable`s 
-        mapping = {node.key: node for node in nodes}
-
         for node in nodes:
-            for key, value in node.inputs.items():
-                if isinstance(value, dict):
-                    for k, v in value.items():
-                        if isinstance(v, nodeclass):
-                            G.add_edge(node, v)
-                elif isinstance(value, list):
-                    for i in value:
-                        if isinstance(i, nodeclass):
-                            G.add_edge(node, i)
-                elif isinstance(value, nodeclass):
-                    G.add_edge(node, value)
+            for dep in node.dependencies:
+                G.add_edge(node, dep)
 
         return G
 
@@ -83,12 +71,14 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._protocol_unit_results = protocol_unit_results
 
         # build graph from protocol units
-        self._graph = self._build_graph(protocol_units, ProtocolUnit)
+        self._graph = self._build_graph(protocol_units)
 
         # build graph from protocol unit results
-        self._result_graph = self._build_graph(protocol_unit_results, ProtocolUnitResultBase)
+        self._result_graph = self._build_graph(protocol_unit_results)
 
         # build mapping from protocol units to results
+        # we use results as the basis for this, so this works for
+        # `ProtocolDAGFailure` as well
         keys_to_pu = {unit.key: unit for unit in self._protocol_units}
         self._unit_result_mapping = {keys_to_pu[result.source_key]: result
                                      for result in self._protocol_unit_results}
@@ -196,7 +186,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self._protocol_units = protocol_units
 
         # build graph from protocol units
-        self._graph = self._build_graph(protocol_units, ProtocolUnit)
+        self._graph = self._build_graph(protocol_units)
 
     def _defaults(self):
         # not used by `ProtocolDAG`

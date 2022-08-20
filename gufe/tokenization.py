@@ -294,7 +294,7 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
+def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=True):
     """
     Parameters
     ----------
@@ -303,24 +303,31 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
         only iterables are list, and that no gufe objects are in the keys of
         dicts
     modifier : Callable[[GufeTokenizable], Any]
-        function that modifies any GufeTokenizable found
+        Function that modifies any GufeTokenizable found
     is_mine : Callable[Any, bool]
-        function that determines whether the given object should be
+        Function that determines whether the given object should be
         subjected to the modifier
+    mode : {'encode', 'decode'}
+        Whether this function is being used to encode a set of
+        `GufeTokenizable`s or decode them from dict or key-encoded forms.
+        Required to determine when to modify objects found in nested dict/list.
     top : bool
         If `True`, skip modifying `obj` itself; needed for recursive use to
         avoid early stopping on `obj`.
     """
-    if is_mine(obj) and not top:
+    if is_mine(obj) and not top and mode == 'encode':
         obj = modifier(obj)
 
     if isinstance(obj, dict):
-        obj = {key: modify_dependencies(value, modifier, is_mine, top=False)
+        obj = {key: modify_dependencies(value, modifier, is_mine, mode=mode, top=False)
                for key, value in obj.items()}
 
     elif isinstance(obj, list):
-        obj = [modify_dependencies(item, modifier, is_mine, top=False)
+        obj = [modify_dependencies(item, modifier, is_mine, mode=mode, top=False)
                for item in obj]
+
+    if is_mine(obj) and not top and mode == 'decode':
+        obj = modifier(obj)
 
     return obj
 
@@ -337,6 +344,7 @@ def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
         obj.to_shallow_dict(),
         to_dict,
         is_gufe_obj,
+        mode='encode',
         top=True
     )
 
@@ -346,6 +354,7 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
         obj.to_shallow_dict(),
         lambda obj: obj.key.to_dict(),
         is_gufe_obj,
+        mode='encode',
         top=True
     )
 
@@ -378,7 +387,7 @@ def _from_dict(dct: Dict) -> GufeTokenizable:
 
 def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
     return from_dict(
-        modify_dependencies(dct, from_dict, is_gufe_dict, top=True)
+        modify_dependencies(dct, from_dict, is_gufe_dict, mode='decode', top=True)
     )
 
 
@@ -389,6 +398,7 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
         dct,
         lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])],
         is_gufe_key_dict,
+        mode='decode',
         top=True
     )
     return from_dict(dct)
