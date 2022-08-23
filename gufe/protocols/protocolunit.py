@@ -51,9 +51,9 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
     def __init__(self, *, 
             name: Optional[str] = None, 
             source_key: GufeKey, 
-            pure: bool, 
             inputs: Dict[str, Any], 
-            outputs: Dict[str, Any]
+            outputs: Dict[str, Any],
+            _key: GufeKey = None
         ):
         """Generate a `ProtocolUnitResult`.
 
@@ -63,21 +63,23 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
             Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
         source_key : GufeKey
             Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-        pure : bool
-            If `True`, this `ProtocolUnitResult` is purely a function of the
-            inputs that produced it.
         inputs : Dict[str, Any]
             Inputs to the `ProtocolUnit` that produced this
             `ProtocolUnitResult`. Includes any `ProtocolUnitResult`s this
             `ProtocolUnitResult` is dependent on.
-        outputs
+        outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
+        _key : GufeKey
+            Used by deserialization to set UUID-based key for this
+            `ProtocolUnitResult` before creation.
+            
         """
+        if _key is not None:
+            self._key = _key
             
         self._name = name
         self._source_key = source_key
-        self._pure = pure
         self._inputs = inputs
         self._outputs = outputs
 
@@ -88,19 +90,16 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         return f"{type(self).__name__}({self.name})"
 
     def _gufe_tokenize(self):
-        if self._pure:
-            return normalize(self.to_dict(include_defaults=False))
-        else:
-            # tokenize with uuid
-            return uuid.uuid4()
+        # tokenize with uuid
+        return uuid.uuid4()
 
     def _defaults(self):
         return {}
 
     def _to_dict(self):
         return {'name': self.name,
+                '_key': self.key,
                 'source_key': self.source_key,
-                'pure': self.pure,
                 'inputs': self.inputs,
                 'outputs': self.outputs}
 
@@ -110,21 +109,11 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
 
     @property
     def name(self):
-        """
-
-        """
-        # set name to source_key if not manually set; used for display
-        if self._name is None:
-            self._name = self.source_key
         return self._name
 
     @property
     def source_key(self):
         return self._source_key
-
-    @property
-    def pure(self):
-        return self._pure
 
     @property
     def inputs(self):
@@ -157,10 +146,10 @@ class ProtocolUnitResult(ProtocolUnitResultBase):
 
 class ProtocolUnitFailure(ProtocolUnitResultBase):
 
-    def __init__(self, *, name=None, source_key, pure, inputs, outputs, exception, traceback):
+    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback):
         self._exception = exception
         self._traceback = traceback
-        super().__init__(name=name, source_key=source_key, pure=pure, inputs=inputs, outputs=outputs)
+        super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs, _key=_key)
 
     def _to_dict(self):
         dct = super()._to_dict()
@@ -187,7 +176,7 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         self,
         *,
         name: Optional[str] = None,
-        pure: bool = False,
+        _key: GufeKey = None,
         **inputs
     ):
         """Create an instance of a ProtocolUnit.
@@ -196,14 +185,18 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         ----------
         name : str
             Custom name to give this 
-        pure : TODO
+        _key : GufeKey
+            Used by deserialization to set UUID-based key for this
+            `ProtocolUnit` before creation.
         **inputs 
             Keyword arguments, which an include other `ProtocolUnit`s on which this
             `ProtocolUnit` is dependent. For serializability, should be composed of
 
         """
+        if _key is not None:
+            self._key = _key
+
         self._name = name
-        self._pure = pure
         self._inputs = inputs
 
         # for caching
@@ -213,11 +206,8 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         return f"{type(self).__name__}({self.name})"
 
     def _gufe_tokenize(self):
-        if self._pure:
-            return normalize(self.to_dict(include_defaults=False))
-        else:
-            # tokenize with uuid
-            return uuid.uuid4()
+        # tokenize with uuid
+        return uuid.uuid4()
 
     def _defaults(self):
         # not used by `ProtocolUnit`s
@@ -226,19 +216,16 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
     def _to_dict(self):
         return {'inputs': self.inputs,
                 'name': self.name,
-                'pure': self.pure}
+                '_key': self.key}
 
     @classmethod
     def _from_dict(cls, dct: Dict):
         return cls(name=dct['name'],
-                   pure=dct['pure'],
+                   _key=dct['_key'],
                    **dct['inputs'])
 
     @property
     def name(self):
-        # set name to key if not manually set; used for display
-        if self._name is None:
-            self._name = self.key
         return self._name
 
     @property
@@ -253,10 +240,6 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         if self._dependencies is None:
             self._dependencies = self._list_dependencies(ProtocolUnit)
         return self._dependencies
-
-    @property
-    def pure(self):
-        return self._pure
 
     def execute(self, *, 
             dag_scratch: PathLike, 
@@ -294,14 +277,13 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         try:
             outputs = self._execute(context, **inputs)
             result = ProtocolUnitResult(
-                name=self.name, source_key=self.key, pure=self.pure, inputs=inputs, outputs=outputs
+                name=self.name, source_key=self.key, inputs=inputs, outputs=outputs
             )
 
         except Exception as e:
             result = ProtocolUnitFailure(
                 name=self._name,
                 source_key=self.key,
-                pure=self.pure,
                 inputs=inputs,
                 outputs=dict(),
                 exception=e,

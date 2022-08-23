@@ -7,6 +7,7 @@ import abc
 import datetime
 import hashlib
 import importlib
+from pathlib import Path
 import inspect
 import copy
 from typing import Dict, Any, Callable, Union, List, Tuple
@@ -70,7 +71,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
-        return sorted(self.to_dict(include_defaults=False).items(), key=str)
+        return normalize(self.to_dict(include_defaults=False))
 
     @property
     def key(self):
@@ -360,12 +361,6 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
 
 # decode options
 def from_dict(dct) -> GufeTokenizable:
-    dct = copy.deepcopy(dct)
-
-    for key, val in dct.items():
-        if is_gufe_dict(val):
-            dct[key] = from_dict(val)
-
     obj = _from_dict(dct)
     thing = TOKENIZABLE_REGISTRY[obj.key]
 
@@ -405,6 +400,8 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
 
 ## inspired by `dask.base`
 
+# TODO: make this more efficient with a dispatch mechanism
+# instead of a series of isinstance checks
 def normalize(o):
 
     # dicts
@@ -416,6 +413,10 @@ def normalize(o):
     # lists and tuples
     if isinstance(o, (list, tuple)):
         return list(map(normalize, o))
+
+    # paths
+    if isinstance(o, Path):
+        return str(o)
 
     # GufeTokenizable
     method = getattr(o, "_gufe_tokenize", None)
@@ -435,6 +436,9 @@ def normalize(o):
         type(Ellipsis),
         datetime.date)):
             return o
+
+    if isinstance(o, Exception):
+        return 
 
     raise RuntimeError(
         f"Object {str(o)} cannot be deterministically hashed."

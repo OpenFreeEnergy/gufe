@@ -112,10 +112,7 @@ class DummyProtocol(Protocol):
             stateB=stateB,
             mapping=mapping,
             start=extend_from,
-            some_dict={'a': 2, 'b': 12},
-            pure=True,          # states that this unit is purely a function of its explicit arguments;
-                                # allows scheduler to deduplicate based on inputs
-        )
+            some_dict={'a': 2, 'b': 12})
 
         # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
@@ -190,20 +187,20 @@ class TestProtocol(GufeTokenizableTestsMixin):
         return DummyProtocol(settings=None)
 
     @pytest.fixture
-    def protocol_dag(self, solvated_ligand, solvated_complex):
+    def protocol_dag(self, solvated_ligand, vacuum_ligand):
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=solvated_complex, name="a dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run"
         )
         dagresult: ProtocolDAGResult = execute(dag)
 
         return protocol, dag, dagresult
 
     @pytest.fixture
-    def protocol_dag_broken(self, solvated_ligand, solvated_complex):
+    def protocol_dag_broken(self, solvated_ligand, vacuum_ligand):
         protocol = BrokenProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=solvated_complex, name="a broken dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
         )
 
         dagfailure: ProtocolDAGFailure = execute(dag)
@@ -374,38 +371,17 @@ class TestProtocol(GufeTokenizableTestsMixin):
         cls = SimulationUnit
     
         @pytest.fixture
-        def instance(self, solvated_complex, solvated_ligand):
+        def instance(self, vacuum_ligand, solvated_ligand):
     
             # convert protocol inputs into starting points for independent simulations
             alpha = InitializeUnit(
                 name="the beginning",
                 settings={},
-                stateA=solvated_complex,
+                stateA=vacuum_ligand,
                 stateB=solvated_ligand,
                 mapping=None,
                 start=None,
                 some_dict={'a': 2, 'b': 12},
-                pure=True,
             )
     
-            return SimulationUnit(name=f"simulation", initialization=alpha, pure=True)
-    
-        def test_purity_behavior(self, instance):
-            ser = instance.to_dict()
-            deser = self.cls.from_dict(ser)
-    
-            # instance and deser should be both equal and identical
-            deser == instance
-            deser is instance
-    
-            # if we make two non-pure versions, the keys for these won't be a
-            # function of their intputs, but a uuid
-            ser['pure'] = False
-            deser_impure_1 = self.cls.from_dict(ser)
-            deser_impure_2 = self.cls.from_dict(ser)
-    
-            # they are equal in contents
-            assert deser_impure_1 == deser_impure_2
-    
-            # but they are not the same object
-            assert deser_impure_1 is not deser_impure_2
+            return SimulationUnit(name=f"simulation", initialization=alpha)
