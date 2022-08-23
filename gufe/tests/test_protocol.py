@@ -309,7 +309,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_protocol_unit_results(self, instance: ProtocolDAGResult):
             # ensure that protocolunitresults are given in-order based on DAG
             # dependencies
-            checked = []
+            checked: List[ProtocolUnitResult] = []
             for pur in instance.protocol_unit_results:
                 assert set(pur.dependencies).issubset(checked)
                 checked.append(pur)

@@ -131,11 +131,11 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def _default_settings(cls) -> "ProtocolSettings":
+    def _default_settings(cls) -> "ProtocolSettings":     # type: ignore
         ...
 
     @classmethod
-    def default_settings(cls) -> "ProtocolSettings":
+    def default_settings(cls) -> "ProtocolSettings":      # type: ignore
         """Get the default settings for this `Protocol`.
 
         These can be modified and passed in as the `settings` for a new

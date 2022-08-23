@@ -130,7 +130,7 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         """
         if self._dependencies is None:
             self._dependencies = self._list_dependencies(ProtocolUnitResultBase)
-        return self._dependencies
+        return self._dependencies     # type: ignore
 
 
 class ProtocolUnitResult(ProtocolUnitResultBase):
@@ -289,7 +289,7 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         """
         if self._dependencies is None:
             self._dependencies = self._list_dependencies(ProtocolUnit)
-        return self._dependencies
+        return self._dependencies     # type: ignore
 
     def execute(self, *, 
             dag_scratch: PathLike, 
