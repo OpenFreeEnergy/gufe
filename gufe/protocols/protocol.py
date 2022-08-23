@@ -19,13 +19,30 @@ from .protocolunit import ProtocolUnit
 
 
 class ProtocolResult(GufeTokenizable):
-    """Container for all `ProtocolDAGResult`s for a given `Transformation`."""
+    """Container for all `ProtocolDAGResult`s for a given `Transformation`.
+
+    This is an abstract base class; individual `Protocol` implementations
+    should have a corresponding subclass of `ProtocolResult` implemented as
+    well. 
+
+    The following methods should be implemented in any subclass:
+    - `get_estimate`
+    - `get_uncertainty`
+    - `get_rate_of_convergence`
+
+    Attributes
+    ----------
+    data : Dict[str,Any]
+        Aggregated data contents from multiple `ProtocolDAGResult`s.
+        The structure of this data is specific to the `Protocol` subclass each
+        `ProtocolResult` subclass corresponds to.
+
+    """
 
     def __init__(self, data, **kwargs):
         self._data = data
 
     def _defaults(self):
-        # not used by `Protocol`s
         return {}
 
     def _to_dict(self):
@@ -58,16 +75,33 @@ class Protocol(GufeTokenizable):
     Takes a `ProtocolSettings` object specific to the protocol on init.
     This configures the protocol for repeated execution on `ChemicalSystem`s.
 
+    This is an abstract base class; individual `Protocol` implementations
+    should be subclasses of this class. The following methods should be
+    implemented in any subclass:
+    - `_create`
+    - `_gather`
+    - `_default_settings`
+
     Attributes
     ----------
     settings : ProtocolSettings
+        The full settings for this `Protocol` instance.
+    result_cls : type[ProtocolResult]
+        Correponding `ProtocolResult` subclass t
 
     """
 
     result_cls: type[ProtocolResult]
 
     def __init__(self, settings: "ProtocolSettings" = None):  # type: ignore
-        """ """
+        """Create a new `Protocol` instance.
+
+        Parameters
+        ----------
+        settings : ProtocolSettings
+            The full settings for this `Protocol` instance.
+
+        """
         self._settings = settings
 
     @property
@@ -86,7 +120,6 @@ class Protocol(GufeTokenizable):
         return hash((self.__class__.__name__, self._settings))
 
     def _defaults(self):
-        # not used by `Protocol`s
         return {}
 
     def _to_dict(self):
@@ -98,13 +131,18 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def get_default_settings(cls):
-        """Get the default settings for this protocol.
+    def _default_settings(cls) -> "ProtocolSettings":
+        ...
 
-        These can be modified and passed back in to the class init.
+    @classmethod
+    def default_settings(cls) -> "ProtocolSettings":
+        """Get the default settings for this `Protocol`.
+
+        These can be modified and passed in as the `settings` for a new
+        `Protocol` instance.
 
         """
-        ...
+        return cls._default_settings()
 
     @abc.abstractmethod
     def _create(
@@ -114,9 +152,6 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
-        """
-
-        """
         ...
 
     def create(

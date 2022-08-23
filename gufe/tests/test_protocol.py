@@ -93,7 +93,7 @@ class DummyProtocol(Protocol):
     result_cls = DummyProtocolResult
 
     @classmethod
-    def get_default_settings(cls):
+    def _default_settings(cls):
         return {}
 
     def _create(

@@ -52,20 +52,31 @@ class DAGMixin:
 class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     """Result for a single `ProtocolDAG` execution.
 
-    There may be many of these in a given `ResultStore` for a given `Transformation`.
-    Data elements from these objects are combined by `Protocol.gather` into a
-    `ProtocolResult`.
+    There may be many of these for a given `Transformation`. Data elements from
+    these objects are combined by `Protocol.gather` into a `ProtocolResult`.
 
     Attributes
     ----------
     name : str
-        Unique identifier for this `ProtocolDAGResult`.
+        Optional identifier for this `ProtocolDAGResult`.
+    protocol_units : List[ProtocolUnit]
+        `ProtocolUnit`s (given in DAG-dependency order) used to compute this
+        `ProtocolDAGResult`.
+    protocol_unit_results : List[ProtocolUnit]
+        `ProtocolUnitResult`s (given in DAG-dependency order) corresponding to
+        each `ProtocolUnit` used to compute this `ProtocolDAGResult`.
     graph : nx.DiGraph
-        The `ProtocolUnit`s, with dependencies set, as a networkx `DiGraph`.
-    result_graph :
+        Graph of `ProtocolUnit`s as nodes, with directed edges to each
+        `ProtocolUnit`'s dependencies.
+    result_graph : nx.DiGraph
+        Graph of `ProtocolUnitResult`s as nodes, with directed edges to each
+        `ProtocolUnitResult`'s dependencies.
 
     """
-    def __init__(self, *, name=None, protocol_units, protocol_unit_results):
+    def __init__(self, *, 
+            name=None, 
+            protocol_units: List[ProtocolUnit], 
+            protocol_unit_results: List[ProtocolUnitResult]):
         self._name = name
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
@@ -131,6 +142,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
 
 class ProtocolDAGFailure(ProtocolDAGResult):
+    """A failed `ProtocolDAGResult`.
+
+    """
 
     def _validate(self):
         assert len(self._protocol_unit_results) <= len(self._protocol_units)
@@ -140,6 +154,10 @@ class ProtocolDAGFailure(ProtocolDAGResult):
 
     @property
     def protocol_unit_failures(self):
+        """A list of `ProtocolUnitFailure`s corresponding to only failed
+        `ProtocolUnit`s.
+
+        """
         return [r for r in self.protocol_unit_results if not r.ok()]
 
     def _defaults(self):
@@ -160,8 +178,22 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`s
     with dependencies specified.
 
-    This is the unit of execution passed to an alchemical `Scheduler`.
-    A `ProtocolDAG` yields a `ProtocolResult`, which can be placed in a `ResultStore`.
+    A single `ProtocolDAG` execution should yield sufficient information to
+    calculate a free energy difference (though perhaps not converged) between
+    two `ChemicalSystem`s.
+    
+    A `ProtocolDAG` yields a `ProtocolDAGResult` when executed.
+
+    Attributes
+    ----------
+    name : str
+        Optional identifier for this `ProtocolDAGResult`.
+    protocol_units : List[ProtocolUnit]
+        `ProtocolUnit`s (given in DAG-dependency order) used to compute this
+        `ProtocolDAGResult`.
+    graph : nx.DiGraph
+        Graph of `ProtocolUnit`s as nodes, with directed edges to each
+        `ProtocolUnit`'s dependencies.
 
     """
 
@@ -207,10 +239,18 @@ def execute(protocoldag: ProtocolDAG, *,
 
     Parameters
     ----------
+    protocoldag : ProtocolDAG
+        The `ProtocolDAG` to execute.
     dag_scratch : Optional[PathLike]
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
+
+    Returns
+    -------
+    Union[ProtocolDAGResult, ProtocolDAGFailure]
+        The result of executing the `ProtocolDAG`.
+        A `ProtocolDAGResult` on success; a `ProtocolDAGFailure` if failed.
 
     """
     if dag_scratch is None:

@@ -136,7 +136,21 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
 class ProtocolUnitResult(ProtocolUnitResultBase):
     """Result for a single `ProtocolUnit` execution.
 
-    Immutable upon creation.
+    Attributes
+    ----------
+    name : Optional[str]
+        Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
+    source_key : GufeKey
+        Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    inputs : Dict[str, Any]
+        Inputs to the `ProtocolUnit` that produced this
+        `ProtocolUnitResult`. Includes any `ProtocolUnitResult`s this
+        `ProtocolUnitResult` is dependent on.
+    outputs : Dict[str, Any]
+        Outputs from the `ProtocolUnit._execute` that generated this
+        `ProtocolUnitResult`.
+    dependencies : List[ProtocolUnitResult]
+        A list of the `ProtocolUnitResult`s depended upon.
 
     """
 
@@ -145,6 +159,29 @@ class ProtocolUnitResult(ProtocolUnitResultBase):
 
 
 class ProtocolUnitFailure(ProtocolUnitResultBase):
+    """Failed result for a single `ProtocolUnit` execution.
+
+    Attributes
+    ----------
+    name : Optional[str]
+        Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
+    source_key : GufeKey
+        Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+    inputs : Dict[str, Any]
+        Inputs to the `ProtocolUnit` that produced this
+        `ProtocolUnitResult`. Includes any `ProtocolUnitResult`s this
+        `ProtocolUnitResult` is dependent on.
+    outputs : Dict[str, Any]
+        Outputs from the `ProtocolUnit._execute` that generated this
+        `ProtocolUnitResult`.
+    dependencies : List[ProtocolUnitResult]
+        A list of the `ProtocolUnitResult`s depended upon.
+    exception : Exception
+        The exception raised during `ProtocolUnit` exectuion.
+    traceback : str
+        The traceback given by the exception.
+
+    """
 
     def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback):
         self._exception = exception
@@ -170,7 +207,19 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
 
 
 class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
-    """A unit of work within a ProtocolDAG."""
+    """A unit of work within a ProtocolDAG.
+
+    Attributes
+    ----------
+    name : Optional[str]
+        Optional name for the `ProtocolUnit`.
+    inputs : Dict[str, Any]
+        Inputs to the `ProtocolUnit`. Includes any `ProtocolUnit`s this
+        `ProtocolUnit` is dependent on.
+    dependencies : List[ProtocolUnit]
+        A list of the `ProtocolUnit`s depended upon.
+
+    """
 
     def __init__(
         self,
@@ -189,8 +238,9 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
             Used by deserialization to set UUID-based key for this
             `ProtocolUnit` before creation.
         **inputs 
-            Keyword arguments, which an include other `ProtocolUnit`s on which this
-            `ProtocolUnit` is dependent. For serializability, should be composed of
+            Keyword arguments, which can include other `ProtocolUnit`s on which
+            this `ProtocolUnit` is dependent. For easy serializability, should
+            be composed of JSON-serializable types where possible.
 
         """
         if _key is not None:
