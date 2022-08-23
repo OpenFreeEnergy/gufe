@@ -152,6 +152,10 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
+        """WE NEED INSTRUCTIONS FOR DEVELOPERS ON WHAT THIS METHOD SHOULD DO,
+        WHAT IT RETURNS, ETC.
+
+        """
         ...
 
     def create(
