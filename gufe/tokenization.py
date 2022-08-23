@@ -59,8 +59,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            raise NotImplementedError("Object comparisons must be of the same "
-                                  "type")
+            return False
 
         return self.to_keyed_dict() == other.to_keyed_dict()
 

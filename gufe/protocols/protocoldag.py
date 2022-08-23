@@ -62,7 +62,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         Unique identifier for this `ProtocolDAGResult`.
     graph : nx.DiGraph
         The `ProtocolUnit`s, with dependencies set, as a networkx `DiGraph`.
-        Each `ProtocolUnit` features its `ProtocolUnitCompletion` as a `result` attribute.
+    result_graph :
 
     """
     def __init__(self, *, name=None, protocol_units, protocol_unit_results):

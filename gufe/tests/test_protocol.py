@@ -278,6 +278,21 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 assert set(pu.dependencies).issubset(checked) 
                 checked.append(pu)
 
+        def test_graph(self, instance):
+            assert isinstance(instance.graph, nx.DiGraph)
+
+            # walk the nodes, check dependencies as given by each node against
+            # edges in the graph
+            for node in instance.graph.nodes:
+
+                # check that each dep is represented by an edge
+                for dep in node.dependencies:
+                    assert isinstance(instance.graph.edges[node, dep], dict)
+
+                # check that each edge corresponds to a known dependency
+                for neighbor in instance.graph.neighbors(node):
+                    assert neighbor in node.dependencies
+
     class TestProtocolDAG(ProtocolDAGTestsMixin):
         cls = ProtocolDAG
         
@@ -294,13 +309,66 @@ class TestProtocol(GufeTokenizableTestsMixin):
             protocol, dag, dagresult = protocol_dag
             return dagresult
 
-    class TestProtocolDAGFailure(ProtocolDAGResult):
+        def test_protocol_unit_results(self, instance: ProtocolDAGResult):
+            # ensure that protocolunitresults are given in-order based on DAG
+            # dependencies
+            checked = []
+            for pur in instance.protocol_unit_results:
+                assert set(pur.dependencies).issubset(checked)
+                checked.append(pur)
+
+        def test_result_graph(self, instance: ProtocolDAGResult):
+            assert isinstance(instance.result_graph, nx.DiGraph)
+
+            # walk the nodes, check dependencies as given by each node against
+            # edges in the graph
+            for node in instance.result_graph.nodes:
+
+                # check that each dep is represented by an edge
+                for dep in node.dependencies:
+                    assert isinstance(instance.result_graph.edges[node, dep], dict)
+
+                # check that each edge corresponds to a known dependency
+                for neighbor in instance.result_graph.neighbors(node):
+                    assert neighbor in node.dependencies
+
+        def test_unit_to_result(self, instance: ProtocolDAGResult):
+            # check that every unit has a result that we can retrieve
+            for pu in instance.protocol_units:
+                pur: ProtocolUnitResult = instance.unit_to_result(pu)
+                assert pur.source_key == pu.key
+
+        def test_result_to_unit(self, instance: ProtocolDAGResult):
+            for pur in instance.protocol_unit_results:
+                pu: ProtocolUnit = instance.result_to_unit(pur)
+                assert pu.key == pur.source_key
+
+    class TestProtocolDAGFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGFailure
 
         @pytest.fixture
         def instance(self, protocol_dag_broken):
             protocol, dag, dagfailure = protocol_dag_broken
             return dagfailure
+
+        def test_protocol_unit_failures(self, instance: ProtocolDAGFailure):
+            # protocolunitfailures should have no dependents
+            for puf in instance.protocol_unit_failures:
+
+                assert all([puf not in pu.dependencies
+                            for pu in instance.protocol_unit_results])
+
+            for node in instance.result_graph.nodes:
+                with pytest.raises(KeyError):
+                    instance.result_graph.edges[node, puf]
+
+        def test_protocol_unit_failure_exception(self, instance: ProtocolDAGFailure):
+            for puf in instance.protocol_unit_failures:
+                isinstance(puf.exception, ValueError)
+
+        def test_protocol_unit_failure_traceback(self, instance: ProtocolDAGFailure):
+            for puf in instance.protocol_unit_failures:
+                assert 'ValueError("I have failed my mission", ' in puf.traceback
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit
@@ -341,10 +409,3 @@ class TestProtocol(GufeTokenizableTestsMixin):
     
             # but they are not the same object
             assert deser_impure_1 is not deser_impure_2
-
-        #def test_roundtrip(self, instance):
-        #    ser = instance.to_dict()
-        #    deser = self.cls.from_dict(ser)
-
-        #    import pdb
-        #    pdb.set_trace()

@@ -81,6 +81,9 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         self._inputs = inputs
         self._outputs = outputs
 
+        # for caching
+        self._dependencies = None
+
     def __repr__(self):
         return f"{type(self).__name__}({self.name})"
 
@@ -92,7 +95,6 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
             return uuid.uuid4()
 
     def _defaults(self):
-        # not used by `ProtocolDAG`
         return {}
 
     def _to_dict(self):
@@ -137,7 +139,9 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         """Generate a list of all `ProtocolUnitResult`s dependent on.
 
         """
-        return self._list_dependencies(ProtocolUnitResult)
+        if self._dependencies is None:
+            self._dependencies = self._list_dependencies(ProtocolUnitResultBase)
+        return self._dependencies
 
 
 class ProtocolUnitResult(ProtocolUnitResultBase):
@@ -157,6 +161,12 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         self._exception = exception
         self._traceback = traceback
         super().__init__(name=name, source_key=source_key, pure=pure, inputs=inputs, outputs=outputs)
+
+    def _to_dict(self):
+        dct = super()._to_dict()
+        dct.update({'exception': self.exception,
+                    'traceback': self.traceback})
+        return dct
 
     @property
     def exception(self) -> Exception:
@@ -195,6 +205,9 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         self._name = name
         self._pure = pure
         self._inputs = inputs
+
+        # for caching
+        self._dependencies = None
 
     def __repr__(self):
         return f"{type(self).__name__}({self.name})"
@@ -237,7 +250,9 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         """Generate a list of all `ProtocolUnit`s dependent on.
 
         """
-        return self._list_dependencies(ProtocolUnit)
+        if self._dependencies is None:
+            self._dependencies = self._list_dependencies(ProtocolUnit)
+        return self._dependencies
 
     @property
     def pure(self):

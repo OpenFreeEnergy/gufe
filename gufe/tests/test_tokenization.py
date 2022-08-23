@@ -194,8 +194,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         l1 = Leaf(4)
         l2 = Leaf2(4)
 
-        with pytest.raises(NotImplementedError):
-            l1 == l2
+        assert l1 != l2
 
 
 class Outer:
