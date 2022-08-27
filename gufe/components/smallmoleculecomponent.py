@@ -1,10 +1,6 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import logging
-# openff complains about oechem being missing, shhh
-logger = logging.getLogger('openff.toolkit')
-logger.setLevel(logging.ERROR)
-from openff.toolkit.topology import Molecule as OFFMolecule
 import warnings
 from openmm import unit  # TODO: waiting on off-tk 0.11
 # from openff.units import unit  # off-tk 0.11
@@ -108,15 +104,17 @@ class SmallMoleculeComponent(Component):
     def from_openeye(cls, oemol: OEMol, name: str = ""):
         raise NotImplementedError
 
-    def to_openff(self) -> OFFMolecule:
+    def to_openff(self) -> "OFFMolecule":
         """OpenFF Toolkit representation of this molecule"""
+        from openff.toolkit.topology import Molecule as OFFMolecule
+
         m = OFFMolecule(self._rdkit, allow_undefined_stereo=True)
         m.name = self.name
 
         return m
 
     @classmethod
-    def from_openff(cls, openff: OFFMolecule, name: str = ""):
+    def from_openff(cls, openff: "OFFMolecule", name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(rdkit=openff.to_rdkit(), name=name)
 
@@ -181,6 +179,8 @@ class SmallMoleculeComponent(Component):
     def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""
         # manually construct OpenFF molecule as in cookbook
+        from openff.toolkit.topology import Molecule as OFFMolecule
+
         m = OFFMolecule()
         for (an, name, fc, arom, stereo) in d['atoms']:
             m.add_atom(
