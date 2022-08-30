@@ -237,6 +237,9 @@ def execute(protocoldag: ProtocolDAG, *,
             dag_scratch: PathLike = None) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
     """Execute the full DAG in-serial, in process.
 
+    This is intended for debug use for Protocol developers.
+    Running locally is generally not useful for production purposes.
+
     Parameters
     ----------
     protocoldag : ProtocolDAG

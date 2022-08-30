@@ -239,8 +239,8 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
             `ProtocolUnit` before creation.
         **inputs 
             Keyword arguments, which can include other `ProtocolUnit`s on which
-            this `ProtocolUnit` is dependent. For easy serializability, should
-            be composed of JSON-serializable types where possible.
+            this `ProtocolUnit` is dependent. Should be either `gufe` objects
+            or JSON-serializables.
 
         """
         if _key is not None:
@@ -380,6 +380,9 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         This allows protocol developers to define how `ProtocolUnit`s are
         chained together, with their outputs exposed to `ProtocolUnit`s
         dependent on them.
+
+        The return dict should contain objects that are either `gufe` objects
+        or JSON-serializables.
 
         """
         ...
