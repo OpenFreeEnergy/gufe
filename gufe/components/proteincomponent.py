@@ -103,7 +103,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             a.SetProp("resName", atom.residue.name)
             a.SetIntProp("resId", int(atom.residue.index))
-
+            
+            # add residue information
+            mi  =  Chem.AtomPDBResidueInfo()
+            mi.SetResidueName(atom.residue.name)
+            mi.SetResidueNumber( int(atom.residue.index))
+            mi.SetOccupancy(0.0)
+            mi.SetTempFactor(0.0)
+            
+            a.SetMonomerInfo(mi)
+            
             if("HIS" ==  atom.residue.name):
                 if(int(atom.residue.index) in histidine_resi_atoms):
                     histidine_resi_atoms[int(atom.residue.index)].append(atom.name)
@@ -189,7 +198,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 elif(atom_name in negative_ions):
                     fc = -default_valence  #e.g. Chlorine ions
                 else:
-                    raise ValueError("I don't know this Ion! \t"+atom_name)     
+                    raise ValueError("I don't know this Ion! \t"+atom_name)  
             elif(default_valence > connectivity):
                 fc = -(default_valence-connectivity) # negative charge
             elif(default_valence < connectivity):
