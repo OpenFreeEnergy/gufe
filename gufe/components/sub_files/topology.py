@@ -303,12 +303,13 @@ class Topology(object):
         Also note that PDBFile calls createStandardBonds() automatically when a file is loaded, so the newly loaded definitions
         will be used for any PDB file loaded after this is called.
         """
+        bond_type = None
         tree = etree.parse(file)
         for residue in tree.getroot().findall('Residue'):
             bonds = []
             Topology._standardBonds[residue.attrib['name']] = bonds
             for bond in residue.findall('Bond'):
-                bonds.append((bond.attrib['from'], bond.attrib['to']))
+                bonds.append((bond.attrib['from'], bond.attrib['to'], bond_type, int(bond.attrib['order'])))
 
     def createStandardBonds(self):
         """Create bonds based on the atom and residue names for all standard residue types.
@@ -355,8 +356,10 @@ class Topology(object):
                         else:
                             toResidue = i
                             toAtom = bond[1]
+                        bond_type = bond[2]
+                        bond_order = bond[3]
                         if fromAtom in atomMaps[fromResidue] and toAtom in atomMaps[toResidue]:
-                            self.addBond(atomMaps[fromResidue][fromAtom], atomMaps[toResidue][toAtom])
+                            self.addBond(atomMaps[fromResidue][fromAtom], atomMaps[toResidue][toAtom], type=bond_type, order=bond_order)
 
     def createDisulfideBonds(self, positions):
         """Identify disulfide bonds based on proximity and add them to the
@@ -519,3 +522,4 @@ class Bond(namedtuple('Bond', ['atom1', 'atom2'])):
             s = "%s, order=%d" % (s, self.order)
         s += ")"
         return s
+
