@@ -81,9 +81,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         -------
         _type_
             _description_
-        """
-            
-                    
+        """   
+                        
         periodicTable = Chem.GetPeriodicTable()
         mol_topology = openmm_PDBFile.topology
 
@@ -91,6 +90,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         editable_rdmol = EditableMol(rd_mol)
 
         # Build Topology
+        histidine_resi_atoms = {}
         # Add Atoms
         for atom in mol_topology.atoms():
             atomID_orig = int(atom.index)
@@ -103,12 +103,18 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a.SetProp("resName", atom.residue.name)
             a.SetIntProp("resId", int(atom.residue.index))
 
+            if("HIS" ==  atom.residue.name):
+                if(int(atom.residue.index) in histidine_resi_atoms):
+                    histidine_resi_atoms[int(atom.residue.index)].append(atom.name)
+                else:
+                    histidine_resi_atoms[int(atom.residue.index)] = [atom.name]
+                
             editable_rdmol.AddAtom(a)
 
         # Add Bonds
         for bond in mol_topology.bonds():
-            bond_order = bond_types[bond.order]
-            editable_rdmol.AddBond(beginAtomIdx=bond.atom1.index, endAtomIdx=bond.atom2.index,)# order=bond_order)    
+            bond_order = bond_types[bond.order]  
+            editable_rdmol.AddBond(beginAtomIdx=bond.atom1.index, endAtomIdx=bond.atom2.index, order=bond_order)    
 
         # Set Positions
         rd_mol = editable_rdmol.GetMol()
@@ -137,38 +143,66 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Chains
         rd_mol.SetProp("chain_names", str([c.index for c in mol_topology.chains()]))
-        rd_mol.SetProp("chain_resi", str([list([r.index for r in c.residues()]) for c in mol_topology.chains()]))
+        rd_mol.SetProp("chain_resi", str([[r.index for r in c.residues()] for c in mol_topology.chains()]))
 
 
         # Add Additionals
-        # Set Bondorder
-        # WIP: if not possible above
-        
         # Formal Charge
-        # WIP: I need Bondorder here!
         atoms = rd_mol.GetAtoms()
         netcharge = 0
         for a in atoms:
-            a.UpdatePropertyCache()
-            connectivity = len(a.GetBonds()) #a.GetTotalValence()
             atomic_num = a.GetAtomicNum()
+            connectivity = sum([int(bond.GetBondType()) for bond in a.GetBonds()]) #
+            
             default_valence = periodicTable.GetDefaultValence(atomic_num)
-            if(default_valence > connectivity):
+            
+            #fix His resonance
+            # Due to the resonance of the Ns in His (which are frequently de/protonating in proteins), there can be bond type changes between ND1-CE1-NE2. 
+            if("HIS" == a.GetProp("resName") and "N" in a.GetProp("name") and len(a.GetProp("name"))>1):
+                atom_name = a.GetProp("name")
+                resi = int(a.GetProp("resId"))
+
+                histidine_atoms = histidine_resi_atoms[resi]
+                own_prot = a.GetProp("name").replace("N", "H") in histidine_atoms
+                other_N = list(filter(lambda x: x.startswith("N") and len(x) > 1 and not atom_name== x, histidine_atoms))[0]
+                other_prot = other_N.replace("N", "H") in histidine_atoms
+
+                if(own_prot and not other_prot and connectivity != default_valence):
+                    #change bond-order
+                    bond_change = [bond for bond in a.GetBonds() if("CE1" in (bond.GetBeginAtom().GetProp("name"),
+                                                                            bond.GetEndAtom().GetProp("name")))][0]
+                    bond_change.SetBondType(bond_types[1])
+                    
+                    alternate_atom = [a for a in rd_mol.GetAtoms() if(a.GetProp("resId") == str(resi) and a.GetProp("name") == str(other_N))][0]
+                    bond_change = [bond for bond in alternate_atom.GetBonds() if("CE1" in (bond.GetBeginAtom().GetProp("name"),
+                                                                                        bond.GetEndAtom().GetProp("name")))][0]
+                    bond_change.SetBondType(bond_types[2])  
+                connectivity = sum([int(bond.GetBondType()) for bond in a.GetBonds()])
+
+
+
+            if(atomic_num == 11 and connectivity == 0):
+                fc = 1  #Sodium ions
+            elif(default_valence > connectivity):
                 fc = -(default_valence-connectivity) # negative charge
             elif(default_valence < connectivity):
                 fc = +(connectivity-default_valence) # positive charge
             else:
                 fc = 0 # neutral
-            
+                
             a.SetFormalCharge(fc)
-            #print(connectivity, default_valence, periodicTable.GetElementSymbol(atomic_num))
+            a.UpdatePropertyCache(strict=True)
+            
 
-            #if(fc > 0):
-            #    print(periodicTable.GetElementSymbol(atomic_num), fc, connectivity)
+            if(fc!=0): #Os => atomic_num==8; Ns => atomic_num==7; Na => atomic_num == 11
+                print(a.GetProp("resName"), a.GetProp("resId"), 
+                    a.GetProp("name"), a.GetIdx(),
+                    fc, connectivity, default_valence)
+
             netcharge+=fc
             
         rd_mol.SetDoubleProp("NetCharge", netcharge)
-        rd_mol.UpdatePropertyCache()
+        rd_mol.UpdatePropertyCache(strict=True)
         # Done
         
         return cls(rdkit=rd_mol, name=name)

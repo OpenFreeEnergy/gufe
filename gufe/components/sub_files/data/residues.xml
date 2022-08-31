@@ -15,12 +15,12 @@
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
   <Bond from="C4" to="C5" order="2" />
-  <Bond from="C4" to="N3" order="2" />
+  <Bond from="C4" to="N3" order="1" />
   <Bond from="C4" to="N9" order="1" />
   <Bond from="C4'" to="C5'" order="1" />
   <Bond from="C4'" to="H4'" order="1" />
   <Bond from="C4'" to="O4'" order="1" />
-  <Bond from="C5" to="C6" order="2" />
+  <Bond from="C5" to="C6" order="1" />
   <Bond from="C5" to="N7" order="1" />
   <Bond from="C5'" to="H5'" order="1" />
   <Bond from="C5'" to="H5''" order="1" />
@@ -28,7 +28,7 @@
   <Bond from="C6" to="N1" order="2" />
   <Bond from="C6" to="N6" order="1" />
   <Bond from="C8" to="H8" order="1" />
-  <Bond from="C8" to="N7" order="1" />
+  <Bond from="C8" to="N7" order="2" />
   <Bond from="C8" to="N9" order="1" />
   <Bond from="H61" to="N6" order="1" />
   <Bond from="H62" to="N6" order="1" />
@@ -96,7 +96,7 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="HD2" order="1" />
   <Bond from="CD" to="HD3" order="1" />
   <Bond from="CD" to="NE" order="1" />
@@ -161,7 +161,7 @@
   <Bond from="C1'" to="N1" order="1" />
   <Bond from="C1'" to="O4'" order="1" />
   <Bond from="C2" to="N1" order="1" />
-  <Bond from="C2" to="N3" order="2" />
+  <Bond from="C2" to="N3" order="1" />
   <Bond from="C2" to="O2" order="2" />
   <Bond from="C2'" to="C3'" order="1" />
   <Bond from="C2'" to="H2'" order="1" />
@@ -169,7 +169,7 @@
   <Bond from="C3'" to="C4'" order="1" />
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
-  <Bond from="C4" to="C5" order="2" />
+  <Bond from="C4" to="C5" order="1" />
   <Bond from="C4" to="N3" order="2" />
   <Bond from="C4" to="N4" order="1" />
   <Bond from="C4'" to="C5'" order="1" />
@@ -181,7 +181,7 @@
   <Bond from="C5'" to="H5''" order="1" />
   <Bond from="C5'" to="O5'" order="1" />
   <Bond from="C6" to="H6" order="1" />
-  <Bond from="C6" to="N1" order="2" />
+  <Bond from="C6" to="N1" order="1" />
   <Bond from="H41" to="N4" order="1" />
   <Bond from="H42" to="N4" order="1" />
   <Bond from="HO2'" to="O2'" order="1" />
@@ -227,12 +227,12 @@
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
   <Bond from="C4" to="C5" order="2" />
-  <Bond from="C4" to="N3" order="2" />
+  <Bond from="C4" to="N3" order="1" />
   <Bond from="C4" to="N9" order="1" />
   <Bond from="C4'" to="C5'" order="1" />
   <Bond from="C4'" to="H4'" order="1" />
   <Bond from="C4'" to="O4'" order="1" />
-  <Bond from="C5" to="C6" order="2" />
+  <Bond from="C5" to="C6" order="1" />
   <Bond from="C5" to="N7" order="1" />
   <Bond from="C5'" to="H5'" order="1" />
   <Bond from="C5'" to="H5''" order="1" />
@@ -240,7 +240,7 @@
   <Bond from="C6" to="N1" order="2" />
   <Bond from="C6" to="N6" order="1" />
   <Bond from="C8" to="H8" order="1" />
-  <Bond from="C8" to="N7" order="1" />
+  <Bond from="C8" to="N7" order="2" />
   <Bond from="C8" to="N9" order="1" />
   <Bond from="H61" to="N6" order="1" />
   <Bond from="H62" to="N6" order="1" />
@@ -260,7 +260,7 @@
   <Bond from="C1'" to="N1" order="1" />
   <Bond from="C1'" to="O4'" order="1" />
   <Bond from="C2" to="N1" order="1" />
-  <Bond from="C2" to="N3" order="2" />
+  <Bond from="C2" to="N3" order="1" />
   <Bond from="C2" to="O2" order="2" />
   <Bond from="C2'" to="C3'" order="1" />
   <Bond from="C2'" to="H2'" order="1" />
@@ -268,7 +268,7 @@
   <Bond from="C3'" to="C4'" order="1" />
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
-  <Bond from="C4" to="C5" order="2" />
+  <Bond from="C4" to="C5" order="1" />
   <Bond from="C4" to="N3" order="2" />
   <Bond from="C4" to="N4" order="1" />
   <Bond from="C4'" to="C5'" order="1" />
@@ -280,7 +280,7 @@
   <Bond from="C5'" to="H5''" order="1" />
   <Bond from="C5'" to="O5'" order="1" />
   <Bond from="C6" to="H6" order="1" />
-  <Bond from="C6" to="N1" order="2" />
+  <Bond from="C6" to="N1" order="1" />
   <Bond from="H41" to="N4" order="1" />
   <Bond from="H42" to="N4" order="1" />
   <Bond from="HO3'" to="O3'" order="1" />
@@ -308,20 +308,20 @@
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
   <Bond from="C4" to="C5" order="2" />
-  <Bond from="C4" to="N3" order="2" />
+  <Bond from="C4" to="N3" order="1" />
   <Bond from="C4" to="N9" order="1" />
   <Bond from="C4'" to="C5'" order="1" />
   <Bond from="C4'" to="H4'" order="1" />
   <Bond from="C4'" to="O4'" order="1" />
-  <Bond from="C5" to="C6" order="2" />
+  <Bond from="C5" to="C6" order="1" />
   <Bond from="C5" to="N7" order="1" />
   <Bond from="C5'" to="H5'" order="1" />
   <Bond from="C5'" to="H5''" order="1" />
   <Bond from="C5'" to="O5'" order="1" />
-  <Bond from="C6" to="N1" order="2" />
+  <Bond from="C6" to="N1" order="1" />
   <Bond from="C6" to="O6" order="2" />
   <Bond from="C8" to="H8" order="1" />
-  <Bond from="C8" to="N7" order="1" />
+  <Bond from="C8" to="N7" order="2" />
   <Bond from="C8" to="N9" order="1" />
   <Bond from="H1" to="N1" order="1" />
   <Bond from="H21" to="N2" order="1" />
@@ -342,7 +342,7 @@
   <Bond from="C1'" to="N1" order="1" />
   <Bond from="C1'" to="O4'" order="1" />
   <Bond from="C2" to="N1" order="1" />
-  <Bond from="C2" to="N3" order="2" />
+  <Bond from="C2" to="N3" order="1" />
   <Bond from="C2" to="O2" order="2" />
   <Bond from="C2'" to="C3'" order="1" />
   <Bond from="C2'" to="H2'" order="1" />
@@ -350,8 +350,8 @@
   <Bond from="C3'" to="C4'" order="1" />
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
-  <Bond from="C4" to="C5" order="2" />
-  <Bond from="C4" to="N3" order="2" />
+  <Bond from="C4" to="C5" order="1" />
+  <Bond from="C4" to="N3" order="1" />
   <Bond from="C4" to="O4" order="2" />
   <Bond from="C4'" to="C5'" order="1" />
   <Bond from="C4'" to="H4'" order="1" />
@@ -362,7 +362,7 @@
   <Bond from="C5'" to="H5''" order="1" />
   <Bond from="C5'" to="O5'" order="1" />
   <Bond from="C6" to="H6" order="1" />
-  <Bond from="C6" to="N1" order="2" />
+  <Bond from="C6" to="N1" order="1" />
   <Bond from="C7" to="H71" order="1" />
   <Bond from="C7" to="H72" order="1" />
   <Bond from="C7" to="H73" order="1" />
@@ -399,20 +399,20 @@
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
   <Bond from="C4" to="C5" order="2" />
-  <Bond from="C4" to="N3" order="2" />
+  <Bond from="C4" to="N3" order="1" />
   <Bond from="C4" to="N9" order="1" />
   <Bond from="C4'" to="C5'" order="1" />
   <Bond from="C4'" to="H4'" order="1" />
   <Bond from="C4'" to="O4'" order="1" />
-  <Bond from="C5" to="C6" order="2" />
+  <Bond from="C5" to="C6" order="1" />
   <Bond from="C5" to="N7" order="1" />
   <Bond from="C5'" to="H5'" order="1" />
   <Bond from="C5'" to="H5''" order="1" />
   <Bond from="C5'" to="O5'" order="1" />
-  <Bond from="C6" to="N1" order="2" />
+  <Bond from="C6" to="N1" order="1" />
   <Bond from="C6" to="O6" order="2" />
   <Bond from="C8" to="H8" order="1" />
-  <Bond from="C8" to="N7" order="1" />
+  <Bond from="C8" to="N7" order="2" />
   <Bond from="C8" to="N9" order="1" />
   <Bond from="H1" to="N1" order="1" />
   <Bond from="H21" to="N2" order="1" />
@@ -438,7 +438,7 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="NE2" order="1" />
   <Bond from="CD" to="OE1" order="2" />
   <Bond from="CG" to="HG2" order="1" />
@@ -461,7 +461,7 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="OE1" order="2" />
   <Bond from="CD" to="OE2" order="1" />
   <Bond from="CG" to="HG2" order="1" />
@@ -496,12 +496,12 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD2" to="CG" order="1" />
+  <Bond from="CD2" to="CG" order="2" />
   <Bond from="CD2" to="HD2" order="1" />
   <Bond from="CD2" to="NE2" order="1" />
   <Bond from="CE1" to="HE1" order="1" />
-  <Bond from="CE1" to="ND1" order="1" />
-  <Bond from="CE1" to="NE2" order="2" />
+  <Bond from="CE1" to="ND1" order="2" />
+  <Bond from="CE1" to="NE2" order="1" />
   <Bond from="CG" to="ND1" order="1" />
   <Bond from="H" to="N" order="1" />
   <Bond from="H2" to="N" order="1" />
@@ -576,7 +576,7 @@
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
   <Bond from="CD" to="CE" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="HD2" order="1" />
   <Bond from="CD" to="HD3" order="1" />
   <Bond from="CE" to="HE2" order="1" />
@@ -640,7 +640,7 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="HD2" order="1" />
   <Bond from="CD" to="HD3" order="1" />
   <Bond from="CD" to="NE" order="1" />
@@ -664,7 +664,7 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="N" order="1" />
   <Bond from="CD" to="OE" order="2" />
   <Bond from="CG" to="HG2" order="1" />
@@ -685,7 +685,7 @@
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
   <Bond from="CD1" to="CE1" order="1" />
-  <Bond from="CD1" to="CG" order="1" />
+  <Bond from="CD1" to="CG" order="2" />
   <Bond from="CD1" to="HD1" order="1" />
   <Bond from="CD2" to="CE2" order="2" />
   <Bond from="CD2" to="CG" order="1" />
@@ -711,7 +711,7 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD" to="CG" order="2" />
+  <Bond from="CD" to="CG" order="1" />
   <Bond from="CD" to="HD2" order="1" />
   <Bond from="CD" to="HD3" order="1" />
   <Bond from="CD" to="N" order="1" />
@@ -770,10 +770,10 @@
   <Bond from="CB" to="CG" order="1" />
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
-  <Bond from="CD1" to="CG" order="1" />
+  <Bond from="CD1" to="CG" order="2" />
   <Bond from="CD1" to="HD1" order="1" />
-  <Bond from="CD1" to="NE1" order="2" />
-  <Bond from="CD2" to="CE2" order="2" />
+  <Bond from="CD1" to="NE1" order="1" />
+  <Bond from="CD2" to="CE2" order="1" />
   <Bond from="CD2" to="CE3" order="2" />
   <Bond from="CD2" to="CG" order="1" />
   <Bond from="CE2" to="CZ2" order="2" />
@@ -781,7 +781,7 @@
   <Bond from="CE3" to="CZ3" order="1" />
   <Bond from="CE3" to="HE3" order="1" />
   <Bond from="CH2" to="CZ2" order="1" />
-  <Bond from="CH2" to="CZ3" order="1" />
+  <Bond from="CH2" to="CZ3" order="2" />
   <Bond from="CH2" to="HH2" order="1" />
   <Bond from="CZ2" to="HZ2" order="1" />
   <Bond from="CZ3" to="HZ3" order="1" />
@@ -803,7 +803,7 @@
   <Bond from="CB" to="HB2" order="1" />
   <Bond from="CB" to="HB3" order="1" />
   <Bond from="CD1" to="CE1" order="1" />
-  <Bond from="CD1" to="CG" order="1" />
+  <Bond from="CD1" to="CG" order="2" />
   <Bond from="CD1" to="HD1" order="1" />
   <Bond from="CD2" to="CE2" order="2" />
   <Bond from="CD2" to="CG" order="1" />
@@ -826,7 +826,7 @@
   <Bond from="C1'" to="N1" order="1" />
   <Bond from="C1'" to="O4'" order="1" />
   <Bond from="C2" to="N1" order="1" />
-  <Bond from="C2" to="N3" order="2" />
+  <Bond from="C2" to="N3" order="1" />
   <Bond from="C2" to="O2" order="2" />
   <Bond from="C2'" to="C3'" order="1" />
   <Bond from="C2'" to="H2'" order="1" />
@@ -834,8 +834,8 @@
   <Bond from="C3'" to="C4'" order="1" />
   <Bond from="C3'" to="H3'" order="1" />
   <Bond from="C3'" to="O3'" order="1" />
-  <Bond from="C4" to="C5" order="2" />
-  <Bond from="C4" to="N3" order="2" />
+  <Bond from="C4" to="C5" order="1" />
+  <Bond from="C4" to="N3" order="1" />
   <Bond from="C4" to="O4" order="2" />
   <Bond from="C4'" to="C5'" order="1" />
   <Bond from="C4'" to="H4'" order="1" />
@@ -846,7 +846,7 @@
   <Bond from="C5'" to="H5''" order="1" />
   <Bond from="C5'" to="O5'" order="1" />
   <Bond from="C6" to="H6" order="1" />
-  <Bond from="C6" to="N1" order="2" />
+  <Bond from="C6" to="N1" order="1" />
   <Bond from="H3" to="N3" order="1" />
   <Bond from="HO2'" to="O2'" order="1" />
   <Bond from="HO3'" to="O3'" order="1" />
