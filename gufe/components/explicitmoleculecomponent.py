@@ -111,7 +111,7 @@ class ExplicitMoleculeComponent(Component):
         atoms = [
             (atom.atomic_number,
              atom.name,
-             atom.formal_charge.m_as(unit.elementary_charge),
+             atom.formal_charge, #.m_as(unit.elementary_charge),
              atom.is_aromatic,
              atom.stereochemistry or '')
             for atom in m.atoms
@@ -129,7 +129,7 @@ class ExplicitMoleculeComponent(Component):
                                "least 1 conformer")
 
         conformers = [
-            serialize_numpy(conf.m_as(unit.angstrom))
+            serialize_numpy(conf) #.m_as(unit.angstrom)
             for conf in m.conformers
         ]
 

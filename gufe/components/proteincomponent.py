@@ -4,7 +4,7 @@ from openff.toolkit.topology import Molecule
 
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
-from openmm.app import PDBFile
+from openff.units import unit
 
 from gufe.components.explicitmoleculecomponent import ExplicitMoleculeComponent
 from .sub_files.pdbfile import PDBFile
@@ -15,7 +15,8 @@ bond_types = {  1 : BondType.SINGLE,
                 3 : BondType.TRIPLE ,
                None :  BondType.UNSPECIFIED,
                }
-          
+negative_ions = ["CL"]
+positive_ions = ["NA", "MG"]       
                     
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
@@ -81,8 +82,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         -------
         _type_
             _description_
-        """   
-                        
+        """              
         periodicTable = Chem.GetPeriodicTable()
         mol_topology = openmm_PDBFile.topology
 
@@ -152,14 +152,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
         netcharge = 0
         for a in atoms:
             atomic_num = a.GetAtomicNum()
+            atom_name = a.GetProp("name")
+
             connectivity = sum([int(bond.GetBondType()) for bond in a.GetBonds()]) #
             
             default_valence = periodicTable.GetDefaultValence(atomic_num)
             
-            #fix His resonance
+            # HISTIDINE FIX  resonance
             # Due to the resonance of the Ns in His (which are frequently de/protonating in proteins), there can be bond type changes between ND1-CE1-NE2. 
             if("HIS" == a.GetProp("resName") and "N" in a.GetProp("name") and len(a.GetProp("name"))>1):
-                atom_name = a.GetProp("name")
                 resi = int(a.GetProp("resId"))
 
                 histidine_atoms = histidine_resi_atoms[resi]
@@ -179,26 +180,25 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     bond_change.SetBondType(bond_types[2])  
                 connectivity = sum([int(bond.GetBondType()) for bond in a.GetBonds()])
 
-
-
-            if(atomic_num == 11 and connectivity == 0):
-                fc = 1  #Sodium ions
+            ### HISTIDINE FIX DONE
+            
+            if(connectivity == 0): #ions:
+                if(atom_name in positive_ions):
+                    fc = default_valence  #e.g. Sodium ions
+                elif(atom_name in negative_ions):
+                    fc = -default_valence  #e.g. Chlorine ions
+                else:
+                    raise ValueError("I don't know this Ion! \t"+atom_name)     
             elif(default_valence > connectivity):
                 fc = -(default_valence-connectivity) # negative charge
             elif(default_valence < connectivity):
                 fc = +(connectivity-default_valence) # positive charge
             else:
                 fc = 0 # neutral
-                
+
             a.SetFormalCharge(fc)
             a.UpdatePropertyCache(strict=True)
             
-
-            if(fc!=0): #Os => atomic_num==8; Ns => atomic_num==7; Na => atomic_num == 11
-                print(a.GetProp("resName"), a.GetProp("resId"), 
-                    a.GetProp("name"), a.GetIdx(),
-                    fc, connectivity, default_valence)
-
             netcharge+=fc
             
         rd_mol.SetDoubleProp("NetCharge", netcharge)
