@@ -7,7 +7,7 @@ from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 from openmm.app import PDBFile
 
 from gufe.components.explicitmoleculecomponent import ExplicitMoleculeComponent
-from .subfiles.PDBFile import PDBFile
+from .sub_files.pdbfile import PDBFile
 
 
 bond_types = {  1 : BondType.SINGLE,
