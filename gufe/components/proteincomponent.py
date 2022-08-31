@@ -15,6 +15,7 @@ bond_types = {  1 : BondType.SINGLE,
                 3 : BondType.TRIPLE ,
                None :  BondType.UNSPECIFIED,
                }
+
 negative_ions = ["CL"]
 positive_ions = ["NA", "MG"]       
                     
@@ -31,7 +32,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         This is the primary serialization mechanism for this class.
 
         """
-        Chem.MolToPDBFile(pdb_file_path)
+        Chem.MolToPDBFile(self._rdkit, pdb_file_path)
         return pdb_file_path
     
     @classmethod
