@@ -104,6 +104,15 @@ class DummyProtocol(Protocol):
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
+        # rip apart `extend_from` if needed to feed into `InitializeUnit`
+        if extend_from is not None:
+            # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
+            # any ProtocolUnits below, since this could create dependency hell;
+            # instead, extract what's needed from it for starting point here
+            starting_point = extend_from['final_positions']
+        else:
+            starting_point = None
+
         # convert protocol inputs into starting points for independent simulations
         alpha = InitializeUnit(
             name="the beginning",
@@ -111,7 +120,7 @@ class DummyProtocol(Protocol):
             stateA=stateA,
             stateB=stateB,
             mapping=mapping,
-            start=extend_from,
+            start=starting_point,
             some_dict={'a': 2, 'b': 12})
 
         # create several units that would each run an independent simulation

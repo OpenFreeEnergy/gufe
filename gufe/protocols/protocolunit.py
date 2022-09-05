@@ -216,8 +216,6 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
     inputs : Dict[str, Any]
         Inputs to the `ProtocolUnit`. Includes any `ProtocolUnit`s this
         `ProtocolUnit` is dependent on.
-    dependencies : List[ProtocolUnit]
-        A list of the `ProtocolUnit`s depended upon.
 
     """
 
@@ -225,7 +223,6 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         self,
         *,
         name: Optional[str] = None,
-        _key: GufeKey = None,
         **inputs
     ):
         """Create an instance of a ProtocolUnit.
@@ -234,18 +231,12 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         ----------
         name : str
             Custom name to give this 
-        _key : GufeKey
-            Used by deserialization to set UUID-based key for this
-            `ProtocolUnit` before creation.
         **inputs 
             Keyword arguments, which can include other `ProtocolUnit`s on which
             this `ProtocolUnit` is dependent. Should be either `gufe` objects
             or JSON-serializables.
 
         """
-        if _key is not None:
-            self._key = _key
-
         self._name = name
         self._inputs = inputs
 
@@ -270,9 +261,13 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
 
     @classmethod
     def _from_dict(cls, dct: Dict):
-        return cls(name=dct['name'],
-                   _key=dct['_key'],
-                   **dct['inputs'])
+        _key = dct.pop('_key')
+
+        obj = cls(name=dct['name'],
+                  **dct['inputs'])
+        obj._key = _key
+
+        return obj
 
     @property
     def name(self):
