@@ -3,6 +3,8 @@
 import json, ast
 from collections import defaultdict
 
+from openmm import Vec3
+from openmm import app
 from openmm import unit as omm_unit
 
 from rdkit import Chem
@@ -132,6 +134,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         _residue_atom_map = defaultdict(list)
         histidine_resi_atoms = defaultdict(list)
         _residue_icode = defaultdict(str)
+        _residue_index = defaultdict(int)
         
         # Add Atoms
         for atom in mol_topology.atoms():
@@ -139,6 +142,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atomPosIndex = int(atom.index)
             resn = atom.residue.name
             resi = int(atom.residue.id)
+            resind = int(atom.residue.index)
             chainn = str(atom.residue.chain.id)
             chaini = int(atom.residue.chain.index)
             icode = str(atom.residue.insertionCode)
@@ -153,6 +157,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             a.SetProp("resName", resn)
             a.SetIntProp("resId", resi)
+            a.SetIntProp("resInd", resind)
             a.SetProp("insertionCode", icode)
 
             a.SetProp("chainName", chainn)
@@ -166,7 +171,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 histidine_resi_atoms[dict_key].append(atom.name)
             _residue_atom_map[dict_key].append(atomID)
             if(dict_key not in _residue_icode): _residue_icode[dict_key] = icode
-            
+            if(dict_key not in _residue_index): _residue_index[dict_key] = resind
+
             editable_rdmol.AddAtom(a)
 
         # Add Bonds
@@ -260,7 +266,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         res_seq = " ".join([r.name for r in mol_topology.residues()])
         rd_mol.SetProp("sequence", res_seq)
         rd_mol.SetProp("_residue_atom_map", str(dict(_residue_atom_map)))
+        rd_mol.SetProp("_residue_index", str(dict(_residue_index)))
         rd_mol.SetProp("_residue_icode", str(dict(_residue_icode)))
+
 
         # Box dimensions
         pbcVs = list(map(list, mol_topology.getPeriodicBoxVectors()._value)) #unit: nm
@@ -277,6 +285,77 @@ class ProteinComponent(ExplicitMoleculeComponent):
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
         raise NotImplementedError()
+
+    def to_openmm_topology(self)->app.Topology:
+        dict_prot = self.to_dict()
+
+        top = app.Topology()
+
+        # Chains
+        chains = []
+        for chain_name in dict_prot['molecules']["chain_names"]:
+            c = top.addChain(id=chain_name) 
+            chains.append(c)
+            
+        # Residues:
+        residues ={}
+        for res_lab, resind in sorted(dict_prot['molecules']["_residue_index"].items(), key=lambda x:x[1]):
+            resi, resn = res_lab.split("_")
+            
+            resind = dict_prot['molecules']["_residue_index"][res_lab]
+            icode = dict_prot['molecules']["_residue_icode"][res_lab]
+            resi = int(resi)
+            
+            part_of = [i for i, v in enumerate(dict_prot['molecules']["_chain_residues"]) if(resi in v)]
+            chain_id = int([i for i, v in enumerate(dict_prot['molecules']["_chain_residues"]) if(resind in v)][0])
+            chain =  chains[chain_id]
+            
+            #print(resi, resn, chain_id, chain)
+
+            r=top.addResidue(name=resn, id=resind, chain=chain,  insertionCode=icode)
+            residues.update({chain.id+"_"+str(resi):r})
+
+
+        # Atoms
+        atoms = {}
+        for atom in sorted(dict_prot['atoms'], key=lambda x: x[5]["id"]):   
+            key = atom[5]["chainName"]+"_"+str(atom[5]["resId"])
+            r= residues[key]
+            aid = atom[5]["id"]
+            atom = top.addAtom(name=atom[1],
+                        residue=r,
+                        id=aid,
+                        element= app.Element.getByAtomicNumber(atom[0])
+                        )
+            atoms[atom.index]=atom #true?
+            
+        # Bonds
+        for bond in dict_prot['bonds']:
+            top.addBond(atom1=atoms[bond[0]],
+                        atom2=atoms[bond[1]], 
+                        type=bond[2],
+                        order=bond[2])
+        
+        return top
+    
+    def to_pdbFile(self, out_path:str=None)->str:
+        # get top:
+        top = self.to_openmm_topology()
+        
+        # get pos:
+        np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
+        openmm_pos = list(map(lambda x: Vec3(*x), np_pos))*omm_unit.angstrom
+
+        #write file
+        if(isinstance(out_path, str)):
+            out_file = open(out_path,"r")
+        else:
+            out_file = out_path
+        
+        PDBFile.writeFile(topology=top, positions=openmm_pos, file=out_path)
+        
+        return out_path
+
 
     @classmethod
     def _from_dict(cls, ser_dict:dict, name=""):
@@ -354,6 +433,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             
         return cls(rdkit=rd_mol, name=name)        
 
+
     def _to_dict(self) -> dict:
                
         # Standards:
@@ -387,9 +467,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         chains = ast.literal_eval(self._rdkit.GetProp("_chain_residues"))       
         chain_names = ast.literal_eval(self._rdkit.GetProp("chain_names"))
  
-        #Residue info
         residue_atom_map = json.loads(self._rdkit.GetProp("_residue_atom_map").replace("'", "\""))
         residue_icode_map = json.loads(self._rdkit.GetProp("_residue_icode").replace("'", "\""))
+        residue_index_map = json.loads(self._rdkit.GetProp("_residue_index").replace("'", "\""))
 
         residue_name_id = dict([key.split("_") for key in residue_atom_map.keys()])
         residue_sequence = self._rdkit.GetProp("sequence").split()
@@ -404,7 +484,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 "sequence": residue_sequence,
                 "_residue_atom_map": residue_atom_map,
                 "_residue_icode": residue_icode_map,
-                "residue_name_id": residue_name_id,
+                "_residue_index": residue_index_map,
+                "_residue_name_id": residue_name_id,
                 "chain_names": chain_names,
                 "_chain_residues": chains
                 }
