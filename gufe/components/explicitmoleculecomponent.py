@@ -1,13 +1,16 @@
-from .component import Component
+import json
 import warnings
 from rdkit import Chem
+
+from .component import Component
 from .. import __version__
 from ..molhashing import hashmol, deserialize_numpy, serialize_numpy
-from openff.units import unit
 
 # typing
 from openff.toolkit.topology import Molecule as OFFMolecule
 from ..custom_typing import RDKitMol, OEMol
+
+from openff.units import unit
 
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
@@ -56,7 +59,7 @@ class ExplicitMoleculeComponent(Component):
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
-        elif ( n_confs = len(conformers) ) > 1:
+        elif ( n_confs:= len(conformers) ) > 1:
             warnings.warn(f"Molecule provided with {n_confs} conformers. "
                           "Only the first will be used.")
 
