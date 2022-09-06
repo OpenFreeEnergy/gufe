@@ -62,7 +62,9 @@ for residue in tree.getroot().findall('Residue'):
         c2 = bond.get("to")
         bond_atoms = tuple(sorted([c1, c2]))
         if(bond_atoms in exception_bond_keys and (exception_bond_keys[bond_atoms]["resns"] == "all" or resn in exception_bond_keys[bond_atoms]["resns"])):
-            bond.set("order", str(exception_bond_keys[bond_atoms]["order"]))
+            bond.set(
+                "order", str(
+                    exception_bond_keys[bond_atoms]["order"]))
         else:
             bond.set("order", str(1))
         #if(resn == "PHE"): print(bond_atoms, bond.get("order"))

@@ -193,10 +193,16 @@ class Topology(object):
         """
         if len(
                 chain._residues) > 0 and self._numResidues != chain._residues[-1].index + 1:
-            raise ValueError('All residues within a chain must be contiguous')
+            raise ValueError(
+                'All residues within a chain must be contiguous')
         if id is None:
             id = str(self._numResidues + 1)
-        residue = Residue(name, self._numResidues, chain, id, insertionCode)
+        residue = Residue(
+            name,
+            self._numResidues,
+            chain,
+            id,
+            insertionCode)
         self._numResidues += 1
         chain._residues.append(residue)
         return residue
@@ -223,7 +229,8 @@ class Topology(object):
         """
         if len(
                 residue._atoms) > 0 and self._numAtoms != residue._atoms[-1].index + 1:
-            raise ValueError('All atoms within a residue must be contiguous')
+            raise ValueError(
+                'All atoms within a residue must be contiguous')
         if id is None:
             id = str(self._numAtoms + 1)
         atom = Atom(name, element, self._numAtoms, residue, id)

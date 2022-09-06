@@ -320,7 +320,8 @@ class PDBFile(object):
                 elif name == 'Protein':
                     PDBFile._parseResidueAtoms(residue, proteinResidues)
                 elif name == 'Nucleic':
-                    PDBFile._parseResidueAtoms(residue, nucleicAcidResidues)
+                    PDBFile._parseResidueAtoms(
+                        residue, nucleicAcidResidues)
             for atom in allResidues:
                 proteinResidues[atom] = allResidues[atom]
                 nucleicAcidResidues[atom] = allResidues[atom]

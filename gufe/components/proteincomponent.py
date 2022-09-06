@@ -379,7 +379,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 dict_prot['molecules']["_chain_residues"]) if(resind in v)][0])
             chain = chains[chain_id]
 
-            #print(resi, resn, chain_id, chain)
+            # print(resi, resn, chain_id, chain)
 
             r = top.addResidue(name=resn, id=resind,
                                chain=chain, insertionCode=icode)
@@ -544,7 +544,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
         raise NotImplementedError()
-        #from openmm.app.pdxfile import PDBxFile
-        #openmm_PDBFile = PDBxFile(pdbfile)
+        # from openmm.app.pdxfile import PDBxFile
+        # openmm_PDBFile = PDBxFile(pdbfile)
         # return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile,
         # name=name)

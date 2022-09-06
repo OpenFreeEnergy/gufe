@@ -519,7 +519,8 @@ class Chain(object):
                     atom.insertion_code,
                     atom.alternate_location_indicator))
         elif self._current_residue.name_with_spaces == atom.residue_name_with_spaces:
-            # This is a normal case: number, name, and iCode have not changed
+            # This is a normal case: number, name, and iCode have not
+            # changed
             pass
         elif atom.alternate_location_indicator != ' ':
             # OK - this is a point mutation, Residue._add_atom will know what
@@ -730,7 +731,8 @@ class Residue(object):
         for atom in self.iter_atoms():
             yield atom
 
-    # Three possibilities: primary alt_loc, certain alt_loc, or all alt_locs
+    # Three possibilities: primary alt_loc, certain alt_loc, or all
+    # alt_locs
     def iter_atoms(self, alt_loc=None):
         if alt_loc is None:
             locs = [self.primary_location_id]
@@ -923,7 +925,8 @@ class Atom(object):
             [x, y, z]), unit.angstroms), occupancy, temperature_factor, self.residue_name_with_spaces)
         self.locations[alternate_location_indicator] = loc
         self.default_location_id = alternate_location_indicator
-        # segment id, element_symbol, and formal_charge are not always present
+        # segment id, element_symbol, and formal_charge are not always
+        # present
         self.segment_id = pdb_line[72:76].strip()
         self.element_symbol = pdb_line[76:78].strip()
         try:
@@ -1005,7 +1008,8 @@ class Atom(object):
 
     def get_alternate_location_indicator(self):
         return self.location.alternate_location_indicator
-    alternate_location_indicator = property(get_alternate_location_indicator)
+    alternate_location_indicator = property(
+        get_alternate_location_indicator)
 
     def get_occupancy(self):
         return self.location.occupancy
@@ -1247,7 +1251,10 @@ if __name__ == '__main__':
                 if not os.path.isdir(full_subdir):
                     continue
                 for pdb_file in os.listdir(full_subdir):
-                    if not re.match("pdb.%2s.\\.ent\\.gz" % subdir, pdb_file):
+                    if not re.match(
+                        "pdb.%2s.\\.ent\\.gz" %
+                        subdir,
+                            pdb_file):
                         continue
                     full_pdb_file = os.path.join(full_subdir, pdb_file)
                     parse_one_pdb(full_pdb_file)
