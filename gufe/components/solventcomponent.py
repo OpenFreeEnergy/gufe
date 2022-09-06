@@ -5,7 +5,7 @@ from __future__ import annotations
 from openff.units import unit
 from typing import Optional, Tuple
 
-from gufe import Component
+from .component import Component
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
@@ -31,7 +31,7 @@ class SolventComponent(Component):
                  positive_ion: str = 'Na+',
                  negative_ion: str = 'Cl-',
                  neutralize: bool = True,
-                 ion_concentration: unit.Quantity = None):
+                 ion_concentration: unit.Quantity = 0.0 * unit.molar):
         """
         Parameters
         ----------
@@ -69,15 +69,15 @@ class SolventComponent(Component):
         self._negative_ion = negative_ion
 
         self._neutralize = neutralize
-        if ion_concentration is not None:
-            if (not isinstance(ion_concentration, unit.Quantity) or
-               not ion_concentration.is_compatible_with(unit.molar)):
-                raise ValueError(f"ion_concentration must be given in units of"
-                                 f" concentration, got {ion_concentration}")
-            # concentration requires both ions be given
-            if ion_concentration > 0:
-                if self._negative_ion is None or self._positive_ion is None:
-                    raise ValueError("Ions must be given for concentration")
+
+        if (not isinstance(ion_concentration, unit.Quantity)
+            or not ion_concentration.is_compatible_with(unit.molar)):
+            raise ValueError(f"ion_concentration must be given in units of"
+                             f" concentration, got: {ion_concentration}")
+        if ion_concentration.m < 0:
+            raise ValueError(f"ion_concentration must be positive, "
+                             f"got: {ion_concentration}")
+
         self._ion_concentration = ion_concentration
 
     @property
@@ -114,34 +114,22 @@ class SolventComponent(Component):
         """Solvents don't have a formal charge defined so this returns None"""
         return None
 
-    def __eq__(self, other):
-        if not isinstance(other, SolventComponent):
-            return NotImplemented
-        return (self.smiles == other.smiles and
-                self.positive_ion == other.positive_ion and
-                self.negative_ion == other.negative_ion and
-                self.ion_concentration == other.ion_concentration)
-
-    def __hash__(self):
-        return hash((self.smiles, self.positive_ion, self.negative_ion,
-                     self.ion_concentration))
-
     @classmethod
-    def from_dict(cls, d):
+    def _from_dict(cls, d):
         """Deserialize from dict representation"""
         ion_conc = d['ion_concentration']
-        if ion_conc:
-            d['ion_concentration'] = unit.Quantity.from_tuple(ion_conc)
+        d['ion_concentration'] = unit.parse_expression(ion_conc)
 
         return cls(**d)
 
-    def to_dict(self):
+    def _to_dict(self):
         """For serialization"""
-        ion_conc = self.ion_concentration
-        if ion_conc:
-            ion_conc = ion_conc.to_tuple()
+        ion_conc = str(self.ion_concentration)
 
         return {'smiles': self.smiles, 'positive_ion': self.positive_ion,
                 'negative_ion': self.negative_ion,
                 'ion_concentration': ion_conc,
                 'neutralize': self._neutralize}
+
+    def _defaults(self):
+        return super()._defaults()

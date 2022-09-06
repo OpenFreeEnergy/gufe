@@ -8,8 +8,8 @@ except ImportError:
 else:
     HAS_OPENMM = True
 
-from gufe import Component
-from gufe.custom_typing import RDKitMol, OEMol
+from .component import Component
+from ..custom_typing import RDKitMol, OEMol
 
 
 class ProteinComponent(Component):
@@ -71,19 +71,16 @@ class ProteinComponent(Component):
     def to_openeye(self) -> OEMol:
         raise NotImplementedError()
 
-    def to_dict(self) -> dict:
-        raise NotImplementedError()
+    def _to_dict(self) -> dict:
+        return {'name': self.name}
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict):
         raise NotImplementedError()
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
 
     @property
     def total_charge(self):
         return None
+
+    def _defaults(self):
+        return super()._defaults()

@@ -5,12 +5,12 @@ from collections import abc
 from typing import Dict, Optional
 
 import numpy as np
-from openff.toolkit.utils.serialization import Serializable
 
-from .component import Component
+from .tokenize import GufeTokenizable
+from .components import Component
 
 
-class ChemicalSystem(Serializable, abc.Mapping):
+class ChemicalSystem(abc.Mapping, GufeTokenizable):
     """A node of an alchemical network.
 
     Attributes
@@ -33,7 +33,7 @@ class ChemicalSystem(Serializable, abc.Mapping):
         self,
         components: Dict[str, Component],
         box_vectors: Optional[np.ndarray] = None,
-        name: Optional[str] = None,
+        name: Optional[str] = "",
     ):
         """Create a node for an alchemical network.
 
@@ -53,6 +53,8 @@ class ChemicalSystem(Serializable, abc.Mapping):
             chemical state is added to an `AlchemicalNetwork`.
 
         """
+        super().__init__()
+
         self._components = components
         self._name = name
 
@@ -91,24 +93,20 @@ class ChemicalSystem(Serializable, abc.Mapping):
             )
         )
 
-    # TODO: broken without a `Component` registry of some kind
-    # should then be changed to use the registry
-    def to_dict(self):
+    def _to_dict(self):
         return {
             "components": {
-                key: value.to_dict() for key, value in self.components.items()
+                key: value for key, value in self.components.items()
             },
             "box_vectors": self.box_vectors.tolist(),
             "name": self.name,
         }
 
-    # TODO: broken without a `Component` registry of some kind
-    # should then be changed to use the registry
     @classmethod
-    def from_dict(cls, d):
+    def _from_dict(cls, d):
         return cls(
             components={
-                key: Component.from_dict(value) for key, value in d["components"]
+                key: value for key, value in d["components"].items()
             },
             box_vectors=np.array(d["box_vectors"]),
             name=d["name"],
@@ -160,3 +158,6 @@ class ChemicalSystem(Serializable, abc.Mapping):
         """ """
         # alternate initializer for typical ligand+solvent system
         ...
+
+    def _defaults(self):
+        return super()._defaults()
