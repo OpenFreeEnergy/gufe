@@ -29,7 +29,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from __future__ import print_function, division, absolute_import
-__author__ = "Peter Eastman" # was true but now riesben vendored this code
+__author__ = "Peter Eastman" # was true but now riesben vendored this! HarrHarr
 __version__ = "1.0"
 
 import os

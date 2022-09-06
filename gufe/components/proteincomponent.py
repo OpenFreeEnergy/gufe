@@ -268,13 +268,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
         rd_mol.SetProp("_residue_atom_map", str(dict(_residue_atom_map)))
         rd_mol.SetProp("_residue_index", str(dict(_residue_index)))
         rd_mol.SetProp("_residue_icode", str(dict(_residue_icode)))
+        residue_name_id = dict([key.split("_") for key in _residue_atom_map.keys()])
+        rd_mol.SetProp("_residue_name_id", str(dict(residue_name_id)))
 
 
         # Box dimensions
         pbcVs = list(map(list, mol_topology.getPeriodicBoxVectors()._value)) #unit: nm
         unitCellDim = list(map(float, mol_topology.getUnitCellDimensions()._value)) #unit: nm
-        rd_mol.SetProp("PeriodicBoxVectors", str(pbcVs))
-        rd_mol.SetProp("UnitCellDimensions", str(unitCellDim))
+        rd_mol.SetProp("periodic_box_vectors", str(pbcVs))
+        rd_mol.SetProp("unit_cell_dimensions", str(unitCellDim))
 
         
         rd_mol.UpdatePropertyCache(strict=True)
@@ -335,6 +337,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
                         atom2=atoms[bond[1]], 
                         type=bond[2],
                         order=bond[2])
+            
+        # Geometrics        
+        top.setPeriodicBoxVectors(dict_prot['molecules']["periodic_box_vectors"]*omm_unit.angstrom)
+        top.setUnitCellDimensions(dict_prot['molecules']['unit_cell_dimensions']*omm_unit.angstrom)
         
         return top
     
@@ -348,11 +354,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         #write file
         if(isinstance(out_path, str)):
-            out_file = open(out_path,"r")
+            out_file = open(out_path,"w")
         else:
             out_file = out_path
         
-        PDBFile.writeFile(topology=top, positions=openmm_pos, file=out_path)
+        PDBFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
         
         return out_path
 
@@ -462,33 +468,28 @@ class ProteinComponent(ExplicitMoleculeComponent):
             for conf in self._rdkit.GetConformers()
         ]
         
-        # Additional Information
-        #Get Chains
-        chains = ast.literal_eval(self._rdkit.GetProp("_chain_residues"))       
-        chain_names = ast.literal_eval(self._rdkit.GetProp("chain_names"))
- 
-        residue_atom_map = json.loads(self._rdkit.GetProp("_residue_atom_map").replace("'", "\""))
-        residue_icode_map = json.loads(self._rdkit.GetProp("_residue_icode").replace("'", "\""))
-        residue_index_map = json.loads(self._rdkit.GetProp("_residue_index").replace("'", "\""))
-
-        residue_name_id = dict([key.split("_") for key in residue_atom_map.keys()])
-        residue_sequence = self._rdkit.GetProp("sequence").split()
-        
-        
+        # Additional Information for the mol:
+        molecule_props = {}
+        for prop_key, prop_value in self._rdkit.GetPropsAsDict(includePrivate=True).items():
+            if(prop_key == "sequence"):
+                residue_sequence = prop_value.split()
+                molecule_props["sequence"] = residue_sequence
+            elif(isinstance(prop_value, str) and prop_value.startswith("{")):
+                val = json.loads(prop_value.replace("'", "\""))
+                molecule_props[prop_key] = val
+            elif(isinstance(prop_value, str) and prop_value.startswith("[")):
+                val = ast.literal_eval(prop_value)
+                molecule_props[prop_key] = val
+            else:
+                molecule_props[prop_key] = prop_value
+                
+        # Result
         d = {
             'atoms' : atoms,
             'bonds' : bonds,
             'name' : self.name,
             'conformers' : conformers,
-            "molecules" : {
-                "sequence": residue_sequence,
-                "_residue_atom_map": residue_atom_map,
-                "_residue_icode": residue_icode_map,
-                "_residue_index": residue_index_map,
-                "_residue_name_id": residue_name_id,
-                "chain_names": chain_names,
-                "_chain_residues": chains
-                }
+            "molecules" : molecule_props
             }
 
         return d
