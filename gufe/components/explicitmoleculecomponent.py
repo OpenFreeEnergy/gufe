@@ -20,7 +20,7 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     except KeyError:
         rdkit_name = ""
 
-    try:
+    try: 
         rdkit_name = mol.GetProp("ofe-name")
     except KeyError:
         pass
@@ -82,7 +82,6 @@ class ExplicitMoleculeComponent(Component):
     @classmethod
     def from_openeye(cls, oemol: OEMol, name: str = ""):
         raise NotImplementedError
-
 
     def to_openff(self):
         """OpenFF Toolkit representation of this molecule"""

@@ -40,24 +40,31 @@ from openmm.unit import nanometers, is_quantity, norm, dot, radians
 
 def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
     """Convert lengths and angles to periodic box vectors.
-    
+
     Lengths should be given in nanometers and angles in radians (or as Quantity
     instances)
     """
 
-    if is_quantity(a_length): a_length = a_length.value_in_unit(nanometers)
-    if is_quantity(b_length): b_length = b_length.value_in_unit(nanometers)
-    if is_quantity(c_length): c_length = c_length.value_in_unit(nanometers)
-    if is_quantity(alpha): alpha = alpha.value_in_unit(radians)
-    if is_quantity(beta): beta = beta.value_in_unit(radians)
-    if is_quantity(gamma): gamma = gamma.value_in_unit(radians)
+    if is_quantity(a_length):
+        a_length = a_length.value_in_unit(nanometers)
+    if is_quantity(b_length):
+        b_length = b_length.value_in_unit(nanometers)
+    if is_quantity(c_length):
+        c_length = c_length.value_in_unit(nanometers)
+    if is_quantity(alpha):
+        alpha = alpha.value_in_unit(radians)
+    if is_quantity(beta):
+        beta = beta.value_in_unit(radians)
+    if is_quantity(gamma):
+        gamma = gamma.value_in_unit(radians)
 
     # Compute the vectors.
 
     a = [a_length, 0, 0]
     b = [b_length*math.cos(gamma), b_length*math.sin(gamma), 0]
     cx = c_length*math.cos(beta)
-    cy = c_length*(math.cos(alpha)-math.cos(beta)*math.cos(gamma))/math.sin(gamma)
+    cy = c_length*(math.cos(alpha)-math.cos(beta) *
+                   math.cos(gamma))/math.sin(gamma)
     cz = math.sqrt(c_length*c_length-cx*cx-cy*cy)
     c = [cx, cy, cz]
 
@@ -81,6 +88,7 @@ def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
     b = b - a*round(b[0]/a[0])
     return (a, b, c)*nanometers
 
+
 def reducePeriodicBoxVectors(periodicBoxVectors):
     """ Reduces the representation of the PBC. periodicBoxVectors is expected to
     be an unpackable iterable of length-3 iterables
@@ -98,6 +106,7 @@ def reducePeriodicBoxVectors(periodicBoxVectors):
     b = b - a*round(b[0]/a[0])
 
     return (a, b, c) * nanometers
+
 
 def computeLengthsAndAngles(periodicBoxVectors):
     """Convert periodic box vectors to lengths and angles.

@@ -43,26 +43,34 @@ import openmm.unit as unit
 from openmm.unit import nanometers, is_quantity, radians
 from .element import get_by_symbol
 
+
 def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
     """Convert lengths and angles to periodic box vectors.
-    
+
     Lengths should be given in nanometers and angles in radians (or as Quantity
     instances)
     """
 
-    if is_quantity(a_length): a_length = a_length.value_in_unit(nanometers)
-    if is_quantity(b_length): b_length = b_length.value_in_unit(nanometers)
-    if is_quantity(c_length): c_length = c_length.value_in_unit(nanometers)
-    if is_quantity(alpha): alpha = alpha.value_in_unit(radians)
-    if is_quantity(beta): beta = beta.value_in_unit(radians)
-    if is_quantity(gamma): gamma = gamma.value_in_unit(radians)
+    if is_quantity(a_length):
+        a_length = a_length.value_in_unit(nanometers)
+    if is_quantity(b_length):
+        b_length = b_length.value_in_unit(nanometers)
+    if is_quantity(c_length):
+        c_length = c_length.value_in_unit(nanometers)
+    if is_quantity(alpha):
+        alpha = alpha.value_in_unit(radians)
+    if is_quantity(beta):
+        beta = beta.value_in_unit(radians)
+    if is_quantity(gamma):
+        gamma = gamma.value_in_unit(radians)
 
     # Compute the vectors.
 
     a = [a_length, 0, 0]
     b = [b_length*math.cos(gamma), b_length*math.sin(gamma), 0]
     cx = c_length*math.cos(beta)
-    cy = c_length*(math.cos(alpha)-math.cos(beta)*math.cos(gamma))/math.sin(gamma)
+    cy = c_length*(math.cos(alpha)-math.cos(beta) *
+                   math.cos(gamma))/math.sin(gamma)
     cz = math.sqrt(c_length*c_length-cx*cx-cy*cy)
     c = [cx, cy, cz]
 
@@ -167,7 +175,6 @@ class PdbStructure(object):
     methods.
     """
 
-
     def __init__(self, input_stream, load_all_models=False, extraParticleIdentifier='EP'):
         """Create a PDB model from a PDB file stream.
 
@@ -206,10 +213,11 @@ class PdbStructure(object):
             command = pdb_line[:6]
             # Look for atoms
             if command == "ATOM  " or command == "HETATM":
-                self._add_atom(Atom(pdb_line, self, self.extraParticleIdentifier))
+                self._add_atom(
+                    Atom(pdb_line, self, self.extraParticleIdentifier))
             elif command == "CONECT":
                 atoms = [int(pdb_line[6:11])]
-                for pos in (11,16,21,26):
+                for pos in (11, 16, 21, 26):
                     try:
                         atoms.append(int(pdb_line[pos:pos+5]))
                     except:
@@ -240,14 +248,16 @@ class PdbStructure(object):
                 alpha = float(pdb_line[33:40])*math.pi/180.0
                 beta = float(pdb_line[40:47])*math.pi/180.0
                 gamma = float(pdb_line[47:54])*math.pi/180.0
-                self._periodic_box_vectors = computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma)
+                self._periodic_box_vectors = computePeriodicBoxVectors(
+                    a_length, b_length, c_length, alpha, beta, gamma)
             elif command == "SEQRES":
                 chain_id = pdb_line[11]
                 if len(self.sequences) == 0 or chain_id != self.sequences[-1].chain_id:
                     self.sequences.append(Sequence(chain_id))
                 self.sequences[-1].residues.extend(pdb_line[19:].split())
             elif command == "MODRES":
-                self.modified_residues.append(ModifiedResidue(pdb_line[16], int(pdb_line[18:22]), pdb_line[12:15].strip(), pdb_line[24:27].strip()))
+                self.modified_residues.append(ModifiedResidue(pdb_line[16], int(
+                    pdb_line[18:22]), pdb_line[12:15].strip(), pdb_line[24:27].strip()))
         self._finalize()
 
     def _reset_atom_numbers(self):
@@ -292,7 +302,7 @@ class PdbStructure(object):
 
     def __iter__(self):
         for model in self.models:
-                yield model
+            yield model
 
     def iter_models(self, use_all_models=False):
         if use_all_models:
@@ -355,12 +365,15 @@ class PdbStructure(object):
 
 class Sequence(object):
     """Sequence holds the sequence of a chain, as specified by SEQRES records."""
+
     def __init__(self, chain_id):
         self.chain_id = chain_id
         self.residues = []
 
+
 class ModifiedResidue(object):
     """ModifiedResidue holds information about a modified residue, as specified by a MODRES record."""
+
     def __init__(self, chain_id, number, residue_name, standard_name):
         self.chain_id = chain_id
         self.number = number
@@ -374,6 +387,7 @@ class Model(object):
     NMR structures usually have multiple models.  This represents one
     of them.
     """
+
     def __init__(self, model_number=1):
         self.number = model_number
         self.chains = []
@@ -447,9 +461,9 @@ class Model(object):
         for chain in self.chains:
             chain._finalize()
 
-
     class AtomSerialNumber(object):
         """pdb.Model inner class for pass-by-reference incrementable serial number"""
+
         def __init__(self, val):
             self.val = val
 
@@ -471,22 +485,27 @@ class Chain(object):
         """
         # Create a residue if none have been created
         if len(self.residues) == 0:
-            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number, atom.insertion_code, atom.alternate_location_indicator))
+            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number,
+                              atom.insertion_code, atom.alternate_location_indicator))
         # Create a residue if the residue information has changed
         elif self._current_residue.number != atom.residue_number:
-            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number, atom.insertion_code, atom.alternate_location_indicator))
+            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number,
+                              atom.insertion_code, atom.alternate_location_indicator))
         elif self._current_residue.insertion_code != atom.insertion_code:
-            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number, atom.insertion_code, atom.alternate_location_indicator))
+            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number,
+                              atom.insertion_code, atom.alternate_location_indicator))
         elif self._current_residue.name_with_spaces == atom.residue_name_with_spaces:
             # This is a normal case: number, name, and iCode have not changed
             pass
         elif atom.alternate_location_indicator != ' ':
             # OK - this is a point mutation, Residue._add_atom will know what to do
             pass
-        else: # Residue name does not match
+        else:  # Residue name does not match
             # Only residue name does not match
-            warnings.warn("WARNING: two consecutive residues with same number (%s, %s)" % (atom, self._current_residue.atoms[-1]))
-            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number, atom.insertion_code, atom.alternate_location_indicator))
+            warnings.warn("WARNING: two consecutive residues with same number (%s, %s)" % (
+                atom, self._current_residue.atoms[-1]))
+            self._add_residue(Residue(atom.residue_name_with_spaces, atom.residue_number,
+                              atom.insertion_code, atom.alternate_location_indicator))
         self._current_residue._add_atom(atom)
 
     def _add_residue(self, residue):
@@ -506,7 +525,8 @@ class Chain(object):
             residue.write(next_serial_number, output_stream)
         if self.has_ter_record:
             r = self.residues[-1]
-            print("TER   %5d      %3s %1s%4d%1s" % (next_serial_number.val, r.name_with_spaces, self.chain_id, r.number, r.insertion_code), file=output_stream)
+            print("TER   %5d      %3s %1s%4d%1s" % (next_serial_number.val, r.name_with_spaces,
+                  self.chain_id, r.number, r.insertion_code), file=output_stream)
             next_serial_number.increment()
 
     def _add_ter_record(self):
@@ -534,7 +554,7 @@ class Chain(object):
     def iter_atoms(self):
         for res in self:
             for atom in res:
-                yield atom;
+                yield atom
 
     def iter_positions(self, include_alt_loc=False):
         for res in self:
@@ -571,7 +591,8 @@ class Residue(object):
         """
         alt_loc = atom.alternate_location_indicator
         if alt_loc not in self.locations:
-            self.locations[alt_loc] = Residue.Location(alt_loc, atom.residue_name_with_spaces)
+            self.locations[alt_loc] = Residue.Location(
+                alt_loc, atom.residue_name_with_spaces)
         assert atom.residue_number == self.number
         assert atom.insertion_code == self.insertion_code
         # Check whether this is an existing atom with another position
@@ -579,18 +600,19 @@ class Residue(object):
             old_atom = self.atoms_by_name[atom.name_with_spaces]
             # Unless this is a duplicated atom (warn about file error)
             if atom.alternate_location_indicator in old_atom.locations:
-                warnings.warn("WARNING: duplicate atom (%s, %s)" % (atom, old_atom._pdb_string(old_atom.serial_number, atom.alternate_location_indicator)))
+                warnings.warn("WARNING: duplicate atom (%s, %s)" % (atom, old_atom._pdb_string(
+                    old_atom.serial_number, atom.alternate_location_indicator)))
             else:
                 for alt_loc, position in atom.locations.items():
                     old_atom.locations[alt_loc] = position
-                return # no new atom added
+                return  # no new atom added
         # actually use new atom
         self.atoms_by_name[atom.name] = atom
         self.atoms_by_name[atom.name_with_spaces] = atom
         self.atoms.append(atom)
         self._current_atom = atom
 
-    def write(self, next_serial_number, output_stream=sys.stdout, alt_loc = "*"):
+    def write(self, next_serial_number, output_stream=sys.stdout, alt_loc="*"):
         for atom in self.atoms:
             atom.write(next_serial_number, output_stream, alt_loc)
 
@@ -610,12 +632,14 @@ class Residue(object):
         loc = self.locations[alt_loc]
         loc.name_with_spaces = name
         loc.name = name.strip()
+
     def get_name_with_spaces(self, alt_loc=None):
         if alt_loc is None:
             alt_loc = self.primary_location_id
         loc = self.locations[alt_loc]
         return loc.name_with_spaces
-    name_with_spaces = property(get_name_with_spaces, set_name_with_spaces, doc='four-character residue name including spaces')
+    name_with_spaces = property(get_name_with_spaces, set_name_with_spaces,
+                                doc='four-character residue name including spaces')
 
     def get_name(self, alt_loc=None):
         if alt_loc is None:
@@ -671,10 +695,10 @@ class Residue(object):
             locs = list(alt_loc)
         # If an atom has any location in alt_loc, emit the atom
         for atom in self.atoms:
-            use_atom = False # start pessimistic
+            use_atom = False  # start pessimistic
             for loc2 in atom.locations.keys():
                 # print "#%s#%s" % (loc2,locs)
-                if locs is None: # means all locations
+                if locs is None:  # means all locations
                     use_atom = True
                 elif loc2 in locs:
                     use_atom = True
@@ -723,6 +747,7 @@ class Residue(object):
         """
         Inner class of residue to allow different residue names for different alternate_locations.
         """
+
         def __init__(self, alternate_location_indicator, residue_name_with_spaces):
             self.alternate_location_indicator = alternate_location_indicator
             self.residue_name_with_spaces = residue_name_with_spaces
@@ -731,6 +756,7 @@ class Residue(object):
 class Atom(object):
     """Atom represents one atom in a PDB structure.
     """
+
     def __init__(self, pdb_line, pdbstructure=None, extraParticleIdentifier='EP'):
         """Create a new pdb.Atom from an ATOM or HETATM line.
 
@@ -831,18 +857,22 @@ class Atom(object):
         except:
             occupancy = 1.0
         try:
-            temperature_factor = unit.Quantity(float(pdb_line[60:66]), unit.angstroms**2)
+            temperature_factor = unit.Quantity(
+                float(pdb_line[60:66]), unit.angstroms**2)
         except:
             temperature_factor = unit.Quantity(0.0, unit.angstroms**2)
         self.locations = {}
-        loc = Atom.Location(alternate_location_indicator, unit.Quantity(np.array([x,y,z]), unit.angstroms), occupancy, temperature_factor, self.residue_name_with_spaces)
+        loc = Atom.Location(alternate_location_indicator, unit.Quantity(np.array(
+            [x, y, z]), unit.angstroms), occupancy, temperature_factor, self.residue_name_with_spaces)
         self.locations[alternate_location_indicator] = loc
         self.default_location_id = alternate_location_indicator
         # segment id, element_symbol, and formal_charge are not always present
         self.segment_id = pdb_line[72:76].strip()
         self.element_symbol = pdb_line[76:78].strip()
-        try: self.formal_charge = int(pdb_line[78:80])
-        except ValueError: self.formal_charge = None
+        try:
+            self.formal_charge = int(pdb_line[78:80])
+        except ValueError:
+            self.formal_charge = None
         # figure out atom element
         if self.element_symbol == extraParticleIdentifier:
             self.element = 'EP'
@@ -898,18 +928,22 @@ class Atom(object):
         if id is None:
             id = self.default_location_id
         return self.locations[id]
+
     def set_location(self, new_location, location_id=None):
         id = location_id
         if id is None:
             id = self.default_location_id
         self.locations[id] = new_location
-    location = property(get_location, set_location, doc='default Atom.Location object')
+    location = property(get_location, set_location,
+                        doc='default Atom.Location object')
 
     def get_position(self):
         return self.location.position
+
     def set_position(self, coords):
         self.location.position = coords
-    position = property(get_position, set_position, doc='orthogonal coordinates')
+    position = property(get_position, set_position,
+                        doc='orthogonal coordinates')
 
     def get_alternate_location_indicator(self):
         return self.location.alternate_location_indicator
@@ -947,26 +981,27 @@ class Atom(object):
             long_res_name += " "
         assert len(long_res_name) == 4
         names = "%-6s%5d %4s%1s%4s%1s%4d%1s   " % (
-            self.record_name, serial_number, \
-            self.name_with_spaces, alternate_location_indicator, \
-            long_res_name, self.chain_id, \
+            self.record_name, serial_number,
+            self.name_with_spaces, alternate_location_indicator,
+            long_res_name, self.chain_id,
             self.residue_number, self.insertion_code)
         numbers = "%8.3f%8.3f%8.3f%6.2f%6.2f      " % (
-            self.x.value_in_unit(unit.angstroms), \
-            self.y.value_in_unit(unit.angstroms), \
-            self.z.value_in_unit(unit.angstroms), \
-            self.occupancy, \
+            self.x.value_in_unit(unit.angstroms),
+            self.y.value_in_unit(unit.angstroms),
+            self.z.value_in_unit(unit.angstroms),
+            self.occupancy,
             self.temperature_factor.value_in_unit(unit.angstroms * unit.angstroms))
-        end =  "%-4s%2s" % (\
+        end = "%-4s%2s" % (
             self.segment_id, self.element_symbol)
         formal_charge = "  "
-        if (self.formal_charge != None): formal_charge = "%+2d" % self.formal_charge
+        if (self.formal_charge != None):
+            formal_charge = "%+2d" % self.formal_charge
         return names+numbers+end+formal_charge
 
     def __str__(self):
         return self._pdb_string(self.serial_number, self.alternate_location_indicator)
 
-    def write(self, next_serial_number, output_stream=sys.stdout, alt_loc = "*"):
+    def write(self, next_serial_number, output_stream=sys.stdout, alt_loc="*"):
         """
         alt_loc = "*" means write all alternate locations
         alt_loc = None means write just the primary location
@@ -982,16 +1017,19 @@ class Atom(object):
         else:
             locs = list(alt_loc)
         for loc_id in locs:
-            print(self._pdb_string(next_serial_number.val, loc_id), file=output_stream)
+            print(self._pdb_string(next_serial_number.val, loc_id),
+                  file=output_stream)
             next_serial_number.increment()
 
     def set_name_with_spaces(self, name):
         assert len(name) == 4
         self._name_with_spaces = name
         self._name = name.strip()
+
     def get_name_with_spaces(self):
         return self._name_with_spaces
-    name_with_spaces = property(get_name_with_spaces, set_name_with_spaces, doc='four-character residue name including spaces')
+    name_with_spaces = property(get_name_with_spaces, set_name_with_spaces,
+                                doc='four-character residue name including spaces')
 
     def get_name(self):
         return self._name
@@ -1001,6 +1039,7 @@ class Atom(object):
         """
         Inner class of Atom for holding alternate locations
         """
+
         def __init__(self, alt_loc, position, occupancy, temperature_factor, residue_name):
             self.alternate_location_indicator = alt_loc
             self.position = position
@@ -1030,9 +1069,10 @@ class Atom(object):
 
 
 # run module directly for testing
-if __name__=='__main__':
+if __name__ == '__main__':
     # Test the examples in the docstrings
-    import doctest, sys
+    import doctest
+    import sys
     doctest.testmod(sys.modules[__name__])
 
     import os
@@ -1053,7 +1093,7 @@ if __name__=='__main__':
     assert a.residue_number == 299
     assert a.insertion_code == " "
     assert a.alternate_location_indicator == " "
-    assert a.x ==  6.167 * unit.angstroms
+    assert a.x == 6.167 * unit.angstroms
     assert a.y == 22.607 * unit.angstroms
     assert a.z == 20.046 * unit.angstroms
     assert a.occupancy == 1.00
@@ -1067,11 +1107,14 @@ if __name__=='__main__':
 
     # misaligned residue name - bad
     try:
-        a = Atom("ATOM   2209  CB   TYRA 299       6.167  22.607  20.046  1.00  8.12           C")
+        a = Atom(
+            "ATOM   2209  CB   TYRA 299       6.167  22.607  20.046  1.00  8.12           C")
         assert(False)
-    except ValueError: pass
+    except ValueError:
+        pass
     # four character residue name -- not so bad
-    a = Atom("ATOM   2209  CB  NTYRA 299       6.167  22.607  20.046  1.00  8.12           C")
+    a = Atom(
+        "ATOM   2209  CB  NTYRA 299       6.167  22.607  20.046  1.00  8.12           C")
 
     atom_count = 0
     residue_count = 0
@@ -1111,24 +1154,26 @@ if __name__=='__main__':
         if parse_one_file:
             pdb_id = "2aed"
             middle_two = pdb_id[1:3]
-            full_pdb_file = os.path.join(pdb_dir, middle_two, "pdb%s.ent.gz" % pdb_id)
+            full_pdb_file = os.path.join(
+                pdb_dir, middle_two, "pdb%s.ent.gz" % pdb_id)
             parse_one_pdb(full_pdb_file)
         if parse_one_division:
             subdir = "ae"
             full_subdir = os.path.join(pdb_dir, subdir)
             for pdb_file in os.listdir(full_subdir):
-                if not re.match("pdb.%2s.\.ent\.gz" % subdir , pdb_file):
+                if not re.match("pdb.%2s.\.ent\.gz" % subdir, pdb_file):
                     continue
                 full_pdb_file = os.path.join(full_subdir, pdb_file)
                 parse_one_pdb(full_pdb_file)
         if parse_entire_pdb:
             for subdir in os.listdir(pdb_dir):
-                if not len(subdir) == 2: continue
+                if not len(subdir) == 2:
+                    continue
                 full_subdir = os.path.join(pdb_dir, subdir)
                 if not os.path.isdir(full_subdir):
                     continue
                 for pdb_file in os.listdir(full_subdir):
-                    if not re.match("pdb.%2s.\.ent\.gz" % subdir , pdb_file):
+                    if not re.match("pdb.%2s.\.ent\.gz" % subdir, pdb_file):
                         continue
                     full_pdb_file = os.path.join(full_subdir, pdb_file)
                     parse_one_pdb(full_pdb_file)
@@ -1146,4 +1191,3 @@ if __name__=='__main__':
         print("%d chains found" % chain_count)
         print("%d models found" % model_count)
         print("%d structures found" % structure_count)
-

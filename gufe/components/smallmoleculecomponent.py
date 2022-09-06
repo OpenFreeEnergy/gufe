@@ -11,6 +11,8 @@ from rdkit import Chem
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..custom_typing import RDKitMol, OEMol
+
+
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
     """A molecule wrapper suitable for small molecules
 
