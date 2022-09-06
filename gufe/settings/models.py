@@ -5,11 +5,13 @@ Pydantic models used for storing settings.
 from datetime import date
 from typing import Literal, Union
 
+from openff.models.models import DefaultModel
+from openff.models.types import FloatQuantity
 from pydantic import BaseModel, Extra, FilePath, PositiveFloat
 from typing_extensions import TypedDict
 
 
-class SettingsBaseModel(BaseModel):
+class SettingsBaseModel(DefaultModel):
     """
     Settings and modifications we want for all settings classes.
     """
@@ -48,8 +50,8 @@ class VdWSettings(SettingsBaseModel):
     potential: Literal["Lennard-Jones-12-6"]
     scale: vdWScale
     long_range_dispersion: Literal["isotropic"]
-    cutoff: float  # angstrom
-    switch_width: float  # angstrom
+    cutoff: FloatQuantity["nanometer"]
+    switch_width: FloatQuantity["nanometer"]
     method: Literal["cutoff"]
 
 
@@ -63,8 +65,8 @@ class ElectrostaticSettings(SettingsBaseModel):
     nonperiodic_potential: Union[Literal["Coulomb"], str]
     exception_potential: Union[Literal["Coulomb"], str]
     scale: ElectrostaticScale
-    cutoff: Union[float, None]
-    switch_width: Union[float, None]
+    cutoff: FloatQuantity["nanometer"] #opt
+    switch_width: FloatQuantity["nanometer"] #opt
     solvent_dielectric: Union[float, None]
 
 
@@ -98,8 +100,8 @@ class ThermoSettings(SettingsBaseModel):
     Settings for thermodynamic parameters
     """
 
-    temperature: PositiveFloat  # Θ
-    pressure: PositiveFloat  # M L**−1 T**−2
+    temperature: FloatQuantity["kelvin"]
+    pressure: FloatQuantity["standard_atmosphere"]
     ph: Union[PositiveFloat, None]
     redox_potential: Union[float, None]
 
