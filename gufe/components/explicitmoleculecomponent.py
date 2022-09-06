@@ -4,13 +4,10 @@ from rdkit import Chem
 
 from .component import Component
 from .. import __version__
-from ..molhashing import hashmol, deserialize_numpy, serialize_numpy
+from ..molhashing import hashmol
 
 # typing
-from openff.toolkit.topology import Molecule as OFFMolecule
-from ..custom_typing import RDKitMol, OEMol
-
-from openff.units import unit
+from ..custom_typing import RDKitMol
 
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
@@ -66,121 +63,19 @@ class ExplicitMoleculeComponent(Component):
         self._rdkit = rdkit
         self._hash = self._hashmol(name=name)
 
-    def _hashmol(self, name):
-        return hashmol(self._rdkit, name=name)
-
-    def to_rdkit(self) -> RDKitMol:
-        """Return an RDKit copied representation of this molecule"""
-        return Chem.Mol(self._rdkit)
-
-    @classmethod
-    def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
-        """Create a SmallMoleculeComponent, copying from an RDKit Mol"""
-        return cls(rdkit=Chem.Mol(rdkit), name=name)
-
-    def to_openeye(self) -> OEMol:
-        """OEChem representation of this molecule"""
-        return self.to_openff().to_openeye()
-
-    @classmethod
-    def from_openeye(cls, oemol: OEMol, name: str = ""):
-        raise NotImplementedError
-
-    def to_openff(self):
-        """OpenFF Toolkit representation of this molecule"""
-        m = OFFMolecule(self._rdkit, allow_undefined_stereo=True)
-        m.name = self.name
-
-        return m
-
-    @classmethod
-    def from_openff(cls, openff: OFFMolecule, name: str = ""):
-        """Construct from an OpenFF toolkit Molecule"""
-        return cls(openff.to_rdkit(), name=name)
-
-    def _to_dict(self) -> dict:
-        """Serialize to dict representation"""
-        # required attributes: (based on openff to_dict)
-        # for each atom:
-        #   element, name, formal charge, aromaticity, stereochemistry
-        # for each bond:
-        #   idx0, idx1, order, aromaticity, stereochemistry
-        # TODO: Do we care about fractional bond orders?
-        #       is aromaticity reperceived on creation?
-        # NOTE: Here we're implicitly using units of angstrom and elementary
-        # charge. We might want to explcitly include them in the stored dict.
-        m = self.to_openff()
-        atoms = [
-            (atom.atomic_number,
-             atom.name,
-             atom.formal_charge.m_as(unit.elementary_charge),
-             atom.is_aromatic,
-             atom.stereochemistry or '')
-            for atom in m.atoms
-        ]
-        bonds = [
-            (bond.atom1_index, bond.atom2_index, bond.bond_order,
-             bond.is_aromatic, bond.stereochemistry or '')
-            for bond in m.bonds
-        ]
-
-        if m.conformers is None:  # -no-cov-
-            # this should not be reachable; indicates that something went
-            # very wrong
-            raise RuntimeError(f"{self.__class__.__name__} must have at "
-                               "least 1 conformer")
-
-        conformers = [
-            serialize_numpy(conf.m_as(unit.angstrom))
-            for conf in m.conformers
-        ]
-
-        d = {
-            'atoms': atoms,
-            'bonds': bonds,
-            'name': self.name,
-            'conformers': conformers,
-        }
-
-        return d
-
-    @classmethod
-    def _from_dict(cls, d: dict):
-        """Deserialize from dict representation"""
-        # manually construct OpenFF molecule as in cookbook
-        m = OFFMolecule()
-        for (an, name, fc, arom, stereo) in d['atoms']:
-            m.add_atom(
-                atomic_number=an,
-                formal_charge=fc * unit.elementary_charge,
-                is_aromatic=arom,
-                stereochemistry=stereo or None,
-                name=name,
-            )
-
-        for (idx1, idx2, order, arom, stereo) in d['bonds']:
-            m.add_bond(
-                atom1=idx1,
-                atom2=idx2,
-                bond_order=order,
-                is_aromatic=arom,
-                stereochemistry=stereo or None,
-            )
-
-        for conf in d['conformers']:
-            m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
-
-        return cls.from_openff(m, name=d['name'])
-
-    def _defaults(self):
-        return super()._defaults()
-
     def __hash__(self):
         return hash(self._hash)
 
     def __eq__(self, other):
         return hash(self) == hash(other)
 
+    def _hashmol(self, name):
+        return hashmol(self._rdkit, name=name)
+
+    def _defaults(self):
+        return super()._defaults()
+
+    #Props
     @property
     def name(self) -> str:
         return self._hash.name
@@ -189,14 +84,34 @@ class ExplicitMoleculeComponent(Component):
     def smiles(self) -> str:
         return self._hash.smiles
 
+    @property
+    def total_charge(self):
+        return Chem.GetFormalCharge(self._rdkit)
+
+    #TO
+    def to_rdkit(self) -> RDKitMol:
+        """Return an RDKit copied representation of this molecule"""
+        return Chem.Mol(self._rdkit)
+
     def to_json(self):
         return json.dumps(self.to_dict())
 
+    #From
     @classmethod
     def from_json(cls, json_str):
         dct = json.loads(json_str)
         return cls.from_dict(dct)
+    
+    @classmethod
+    def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
+        """Create a SmallMoleculeComponent, copying from an RDKit Mol"""
+        return cls(rdkit=Chem.Mol(rdkit), name=name)
+    
+    # Not Implemented - interface Functions:
+    @classmethod
+    def _from_dict(cls, d: dict):
+        """Deserialize from dict representation"""
+        raise NotImplemented()
 
-    @property
-    def total_charge(self):
-        return Chem.GetFormalCharge(self._rdkit)
+    def _to_dict(self) -> dict:
+        raise NotImplemented()

@@ -17,7 +17,7 @@ from openff.toolkit.topology import Molecule as OFFMolecule
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from .sub_files.pdbfile import PDBFile
-from ..molhashing import hashmol, deserialize_numpy, serialize_numpy
+from ..molhashing import deserialize_numpy, serialize_numpy
 from ..custom_typing import OEMol
 
 
@@ -263,10 +263,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         rd_mol.SetProp("_residue_name_id", str(dict(residue_name_id)))
 
         # Box dimensions
-        # unit: nm
-        pbcVs = list(map(list, mol_topology.getPeriodicBoxVectors()._value))
-        unitCellDim = list(
-            map(float, mol_topology.getUnitCellDimensions()._value))  # unit: nm
+        pbcVs = mol_topology.getPeriodicBoxVectors()
+        if(pbcVs is not None):
+            pbcVs = list(map(list, pbcVs.value_in_unit(omm_unit.angstrom)._value))
+
+        unitCellDim = mol_topology.getUnitCellDimensions()
+        if(unitCellDim is not None):
+            unitCellDim = list(map(float, unitCellDim.value_in_unit(omm_unit.angstrom)._value))  # unit: nm
+
         rd_mol.SetProp("periodic_box_vectors", str(pbcVs))
         rd_mol.SetProp("unit_cell_dimensions", str(unitCellDim))
 
@@ -415,13 +419,18 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return top
 
-    def to_pdbFile(self, out_path: str = None) -> str:
-        # get top:
-        top = self.to_openmm_topology()
-
-        # get pos:
+    def to_openmm_positions(self) -> omm_unit.Quantity:
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
         openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
+        
+        return openmm_pos
+        
+    def to_pdbFile(self, out_path: str = None) -> str:
+        # get top:
+        openmm_top = self.to_openmm_topology()
+
+        # get pos:
+        openmm_pos = self.to_openmm_positions()
 
         # write file
         if(isinstance(out_path, str)):
@@ -429,7 +438,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         else:
             out_file = out_path
 
-        PDBFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
+        PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
 
         return out_path
 
@@ -507,7 +516,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return d
 
     # NOT implemented:
-
     def to_openeye(self) -> OEMol:
         """OEChem representation of this molecule"""
         raise NotImplementedError()
@@ -544,7 +552,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
         raise NotImplementedError()
+        #This should work, But I have no test case
         # from openmm.app.pdxfile import PDBxFile
-        # openmm_PDBFile = PDBxFile(pdbfile)
-        # return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile,
+        # openmm_PDBxFile = PDBxFile(pdbxfile)
+        # return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile,
         # name=name)
