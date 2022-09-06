@@ -38,7 +38,13 @@ import numpy as np
 from openmm.unit import nanometers, is_quantity, norm, dot, radians
 
 
-def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
+def computePeriodicBoxVectors(
+        a_length,
+        b_length,
+        c_length,
+        alpha,
+        beta,
+        gamma):
     """Convert lengths and angles to periodic box vectors.
 
     Lengths should be given in nanometers and angles in radians (or as Quantity
@@ -61,11 +67,11 @@ def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
     # Compute the vectors.
 
     a = [a_length, 0, 0]
-    b = [b_length*math.cos(gamma), b_length*math.sin(gamma), 0]
-    cx = c_length*math.cos(beta)
-    cy = c_length*(math.cos(alpha)-math.cos(beta) *
-                   math.cos(gamma))/math.sin(gamma)
-    cz = math.sqrt(c_length*c_length-cx*cx-cy*cy)
+    b = [b_length * math.cos(gamma), b_length * math.sin(gamma), 0]
+    cx = c_length * math.cos(beta)
+    cy = c_length * (math.cos(alpha) - math.cos(beta) *
+                     math.cos(gamma)) / math.sin(gamma)
+    cz = math.sqrt(c_length * c_length - cx * cx - cy * cy)
     c = [cx, cy, cz]
 
     # If any elements are very close to 0, set them to exactly 0.
@@ -83,10 +89,10 @@ def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
 
     # Make sure they're in the reduced form required by OpenMM.
 
-    c = c - b*round(c[1]/b[1])
-    c = c - a*round(c[0]/a[0])
-    b = b - a*round(b[0]/a[0])
-    return (a, b, c)*nanometers
+    c = c - b * round(c[1] / b[1])
+    c = c - a * round(c[0] / a[0])
+    b = b - a * round(b[0] / a[0])
+    return (a, b, c) * nanometers
 
 
 def reducePeriodicBoxVectors(periodicBoxVectors):
@@ -101,9 +107,9 @@ def reducePeriodicBoxVectors(periodicBoxVectors):
     b = np.array(b)
     c = np.array(c)
 
-    c = c - b*round(c[1]/b[1])
-    c = c - a*round(c[0]/a[0])
-    b = b - a*round(b[0]/a[0])
+    c = c - b * round(c[1] / b[1])
+    c = c - a * round(c[0] / a[0])
+    b = b - a * round(b[0] / a[0])
 
     return (a, b, c) * nanometers
 
@@ -120,7 +126,7 @@ def computeLengthsAndAngles(periodicBoxVectors):
     a_length = norm(a)
     b_length = norm(b)
     c_length = norm(c)
-    alpha = math.acos(dot(b, c)/(b_length*c_length))
-    beta = math.acos(dot(c, a)/(c_length*a_length))
-    gamma = math.acos(dot(a, b)/(a_length*b_length))
+    alpha = math.acos(dot(b, c) / (b_length * c_length))
+    beta = math.acos(dot(c, a) / (c_length * a_length))
+    gamma = math.acos(dot(a, b) / (a_length * b_length))
     return (a_length, b_length, c_length, alpha, beta, gamma)

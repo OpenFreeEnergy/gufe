@@ -11,7 +11,7 @@ exception_bond_keys = {
 
     ## Carbonyls in R
     ("CZ", "NH2"): {"order": 2, "resns": ("ARG")},
-    ("CG", "OD1"): {"order": 2, "resns":  ("ASP", "ASN")},
+    ("CG", "OD1"): {"order": 2, "resns": ("ASP", "ASN")},
     ("CD", "OE1"): {"order": 2, "resns": ("GLN", "GLU")},
     ("CD", "OE"): {"order": 2, "resns": ("PCA")},
 
@@ -46,7 +46,10 @@ exception_bond_keys = {
 }
 # sort keys :
 exception_bond_keys = {
-    tuple(sorted(list(key))): value for key, value in exception_bond_keys.items()}
+    tuple(
+        sorted(
+            list(key))): value for key,
+    value in exception_bond_keys.items()}
 # print(exception_bond_keys)
 
 

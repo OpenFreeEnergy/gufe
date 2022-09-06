@@ -20,7 +20,7 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     except KeyError:
         rdkit_name = ""
 
-    try: 
+    try:
         rdkit_name = mol.GetProp("ofe-name")
     except KeyError:
         pass
@@ -56,7 +56,7 @@ class ExplicitMoleculeComponent(Component):
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
-        elif (n_confs := len(conformers)) > 1:
+        elif (n_confs = len(conformers)) > 1 :
             warnings.warn(f"Molecule provided with {n_confs} conformers. "
                           "Only the first will be used.")
 

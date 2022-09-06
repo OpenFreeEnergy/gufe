@@ -24,7 +24,7 @@ from ..custom_typing import OEMol
 bond_types = {1: BondType.SINGLE,
               2: BondType.DOUBLE,
               3: BondType.TRIPLE,
-              None:  BondType.UNSPECIFIED,
+              None: BondType.UNSPECIFIED,
               }
 
 negative_ions = ["CL"]
@@ -68,15 +68,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
             _description_
         """
         openmm_PDBFile = PDBFile(pdbfile)
-        return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
+        return cls._from_openmmPDBFile(
+            openmm_PDBFile=openmm_PDBFile, name=name)
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str):
         """
-        This Function serializes openmmPDBFile to 
+        This Function serializes openmmPDBFile to
         AA - Protonations
 
-        Test:        
+        Test:
          - 1.5 serialization test
          - check out files
          - check obj
@@ -135,7 +136,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a.SetProp("hetatom", str(False))
 
             # For histidine fixes
-            dict_key = str(resi)+"_"+resn
+            dict_key = str(resi) + "_" + resn
             if("HIS" == atom.residue.name):
                 histidine_resi_atoms[dict_key].append(atom.name)
             _residue_atom_map[dict_key].append(atomID)
@@ -150,7 +151,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond in mol_topology.bonds():
             bond_order = bond_types[bond.order]
             editable_rdmol.AddBond(
-                beginAtomIdx=bond.atom1.index, endAtomIdx=bond.atom2.index, order=bond_order)
+                beginAtomIdx=bond.atom1.index,
+                endAtomIdx=bond.atom2.index,
+                order=bond_order)
 
         # Set Positions
         rd_mol = editable_rdmol.GetMol()
@@ -178,10 +181,12 @@ class ProteinComponent(ExplicitMoleculeComponent):
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             # HISTIDINE FIX  resonance
-            # Due to the resonance of the Ns in His (which are frequently de/protonating in proteins), there can be bond type changes between ND1-CE1-NE2.
+            # Due to the resonance of the Ns in His (which are frequently
+            # de/protonating in proteins), there can be bond type changes
+            # between ND1-CE1-NE2.
             if("HIS" == resn and "N" in atom_name and len(atom_name) > 1):
                 resi = int(a.GetProp("resId"))
-                dict_key = str(resi)+"_"+resn
+                dict_key = str(resi) + "_" + resn
 
                 histidine_atoms = histidine_resi_atoms[dict_key]
                 own_prot = atom_name.replace("N", "H") in histidine_atoms
@@ -191,14 +196,20 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
                 if(own_prot and not other_prot and connectivity != default_valence):
                     # change bond-order
-                    bond_change = [bond for bond in a.GetBonds() if("CE1" in (bond.GetBeginAtom().GetProp("name"),
-                                                                              bond.GetEndAtom().GetProp("name")))][0]
+                    bond_change = [
+                        bond for bond in a.GetBonds() if(
+                            "CE1" in (
+                                bond.GetBeginAtom().GetProp("name"),
+                                bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[1])
 
                     alternate_atom = [atomB for atomB in rd_mol.GetAtoms() if(atomB.GetProp(
                         "resId") == str(resi) and atomB.GetProp("name") == str(other_N))][0]
-                    bond_change = [bond for bond in alternate_atom.GetBonds() if("CE1" in (bond.GetBeginAtom().GetProp("name"),
-                                                                                           bond.GetEndAtom().GetProp("name")))][0]
+                    bond_change = [
+                        bond for bond in alternate_atom.GetBonds() if(
+                            "CE1" in (
+                                bond.GetBeginAtom().GetProp("name"),
+                                bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[2])
                 connectivity = sum([int(bond.GetBondType())
                                    for bond in a.GetBonds()])
@@ -211,11 +222,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 elif(atom_name in negative_ions):
                     fc = -default_valence  # e.g. Chlorine ions
                 else:
-                    raise ValueError("I don't know this Ion! \t"+atom_name)
+                    raise ValueError("I don't know this Ion! \t" + atom_name)
             elif(default_valence > connectivity):
-                fc = -(default_valence-connectivity)  # negative charge
+                fc = -(default_valence - connectivity)  # negative charge
             elif(default_valence < connectivity):
-                fc = +(connectivity-default_valence)  # positive charge
+                fc = +(connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
 
@@ -354,7 +365,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Residues:
         residues = {}
-        for res_lab, resind in sorted(dict_prot['molecules']["_residue_index"].items(), key=lambda x: x[1]):
+        for res_lab, resind in sorted(
+                dict_prot['molecules']["_residue_index"].items(), key=lambda x: x[1]):
             resi, resn = res_lab.split("_")
 
             resind = dict_prot['molecules']["_residue_index"][res_lab]
@@ -370,13 +382,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
             #print(resi, resn, chain_id, chain)
 
             r = top.addResidue(name=resn, id=resind,
-                               chain=chain,  insertionCode=icode)
-            residues.update({chain.id+"_"+str(resi): r})
+                               chain=chain, insertionCode=icode)
+            residues.update({chain.id + "_" + str(resi): r})
 
         # Atoms
         atoms = {}
         for atom in sorted(dict_prot['atoms'], key=lambda x: x[5]["id"]):
-            key = atom[5]["chainName"]+"_"+str(atom[5]["resId"])
+            key = atom[5]["chainName"] + "_" + str(atom[5]["resId"])
             r = residues[key]
             aid = atom[5]["id"]
             atom = top.addAtom(name=atom[1],
@@ -395,9 +407,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Geometrics
         top.setPeriodicBoxVectors(
-            dict_prot['molecules']["periodic_box_vectors"]*omm_unit.angstrom)
+            dict_prot['molecules']["periodic_box_vectors"] *
+            omm_unit.angstrom)
         top.setUnitCellDimensions(
-            dict_prot['molecules']['unit_cell_dimensions']*omm_unit.angstrom)
+            dict_prot['molecules']['unit_cell_dimensions'] *
+            omm_unit.angstrom)
 
         return top
 
@@ -407,7 +421,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # get pos:
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = list(map(lambda x: Vec3(*x), np_pos))*omm_unit.angstrom
+        openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
 
         # write file
         if(isinstance(out_path, str)):
@@ -425,7 +439,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # get pos:
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = list(map(lambda x: Vec3(*x), np_pos))*omm_unit.angstrom
+        openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
 
         # write file
         if(isinstance(out_path, str)):
@@ -467,7 +481,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Additional Information for the mol:
         molecule_props = {}
-        for prop_key, prop_value in self._rdkit.GetPropsAsDict(includePrivate=True).items():
+        for prop_key, prop_value in self._rdkit.GetPropsAsDict(
+                includePrivate=True).items():
             if(prop_key == "sequence"):
                 residue_sequence = prop_value.split()
                 molecule_props["sequence"] = residue_sequence
@@ -531,4 +546,5 @@ class ProteinComponent(ExplicitMoleculeComponent):
         raise NotImplementedError()
         #from openmm.app.pdxfile import PDBxFile
         #openmm_PDBFile = PDBxFile(pdbfile)
-        # return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
+        # return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile,
+        # name=name)

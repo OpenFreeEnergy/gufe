@@ -166,7 +166,7 @@ class Topology(object):
              the newly created Chain
         """
         if id is None:
-            id = str(len(self._chains)+1)
+            id = str(len(self._chains) + 1)
         chain = Chain(len(self._chains), self, id)
         self._chains.append(chain)
         return chain
@@ -191,10 +191,11 @@ class Topology(object):
         Residue
              the newly created Residue
         """
-        if len(chain._residues) > 0 and self._numResidues != chain._residues[-1].index+1:
+        if len(
+                chain._residues) > 0 and self._numResidues != chain._residues[-1].index + 1:
             raise ValueError('All residues within a chain must be contiguous')
         if id is None:
-            id = str(self._numResidues+1)
+            id = str(self._numResidues + 1)
         residue = Residue(name, self._numResidues, chain, id, insertionCode)
         self._numResidues += 1
         chain._residues.append(residue)
@@ -220,10 +221,11 @@ class Topology(object):
         Atom
              the newly created Atom
         """
-        if len(residue._atoms) > 0 and self._numAtoms != residue._atoms[-1].index+1:
+        if len(
+                residue._atoms) > 0 and self._numAtoms != residue._atoms[-1].index + 1:
             raise ValueError('All atoms within a residue must be contiguous')
         if id is None:
-            id = str(self._numAtoms+1)
+            id = str(self._numAtoms + 1)
         atom = Atom(name, element, self._numAtoms, residue, id)
         self._numAtoms += 1
         residue._atoms.append(atom)
@@ -277,14 +279,16 @@ class Topology(object):
         """Set the vectors defining the periodic box."""
         if vectors is not None:
             if not is_quantity(vectors[0][0]):
-                vectors = vectors*nanometers
-            if vectors[0][1] != 0*nanometers or vectors[0][2] != 0*nanometers:
+                vectors = vectors * nanometers
+            if vectors[0][1] != 0 * \
+                    nanometers or vectors[0][2] != 0 * nanometers:
                 raise ValueError(
                     "First periodic box vector must be parallel to x.")
-            if vectors[1][2] != 0*nanometers:
+            if vectors[1][2] != 0 * nanometers:
                 raise ValueError(
                     "Second periodic box vector must be in the x-y plane.")
-            if vectors[0][0] <= 0*nanometers or vectors[1][1] <= 0*nanometers or vectors[2][2] <= 0*nanometers or vectors[0][0] < 2*abs(vectors[1][0]) or vectors[0][0] < 2*abs(vectors[2][0]) or vectors[1][1] < 2*abs(vectors[2][1]):
+            if vectors[0][0] <= 0 * nanometers or vectors[1][1] <= 0 * nanometers or vectors[2][2] <= 0 * nanometers or vectors[0][0] < 2 * \
+                    abs(vectors[1][0]) or vectors[0][0] < 2 * abs(vectors[2][0]) or vectors[1][1] < 2 * abs(vectors[2][1]):
                 raise ValueError(
                     "Periodic box vectors must be in reduced form.")
         self._periodicBoxVectors = deepcopy(vectors)
@@ -299,7 +303,7 @@ class Topology(object):
         xsize = self._periodicBoxVectors[0][0].value_in_unit(nanometers)
         ysize = self._periodicBoxVectors[1][1].value_in_unit(nanometers)
         zsize = self._periodicBoxVectors[2][2].value_in_unit(nanometers)
-        return np.array([xsize, ysize, zsize])*nanometers
+        return np.array([xsize, ysize, zsize]) * nanometers
 
     def setUnitCellDimensions(self, dimensions):
         """Set the dimensions of the crystallographic unit cell.
@@ -312,7 +316,7 @@ class Topology(object):
             if is_quantity(dimensions):
                 dimensions = dimensions.value_in_unit(nanometers)
             self._periodicBoxVectors = (np.array([dimensions[0], 0, 0]), np.array(
-                [0, dimensions[1], 0]), np.array([0, 0, dimensions[2]]))*nanometers
+                [0, dimensions[1], 0]), np.array([0, 0, dimensions[2]])) * nanometers
 
     @staticmethod
     def loadBondDefinitions(file):
@@ -331,7 +335,8 @@ class Topology(object):
             Topology._standardBonds[residue.attrib['name']] = bonds
             for bond in residue.findall('Bond'):
                 bonds.append(
-                    (bond.attrib['from'], bond.attrib['to'], bond_type, int(bond.attrib['order'])))
+                    (bond.attrib['from'], bond.attrib['to'], bond_type, int(
+                        bond.attrib['order'])))
 
     def createStandardBonds(self):
         """Create bonds based on the atom and residue names for all standard residue types.
@@ -362,19 +367,19 @@ class Topology(object):
                 if name in Topology._standardBonds:
                     for bond in Topology._standardBonds[name]:
                         if bond[0].startswith('-') and i > 0:
-                            fromResidue = i-1
+                            fromResidue = i - 1
                             fromAtom = bond[0][1:]
                         elif bond[0].startswith('+') and i < len(chain._residues):
-                            fromResidue = i+1
+                            fromResidue = i + 1
                             fromAtom = bond[0][1:]
                         else:
                             fromResidue = i
                             fromAtom = bond[0]
                         if bond[1].startswith('-') and i > 0:
-                            toResidue = i-1
+                            toResidue = i - 1
                             toAtom = bond[1][1:]
                         elif bond[1].startswith('+') and i < len(chain._residues):
-                            toResidue = i+1
+                            toResidue = i + 1
                             toAtom = bond[1][1:]
                         else:
                             toResidue = i
@@ -383,7 +388,10 @@ class Topology(object):
                         bond_order = bond[3]
                         if fromAtom in atomMaps[fromResidue] and toAtom in atomMaps[toResidue]:
                             self.addBond(
-                                atomMaps[fromResidue][fromAtom], atomMaps[toResidue][toAtom], type=bond_type, order=bond_order)
+                                atomMaps[fromResidue][fromAtom],
+                                atomMaps[toResidue][toAtom],
+                                type=bond_type,
+                                order=bond_order)
 
     def createDisulfideBonds(self, positions):
         """Identify disulfide bonds based on proximity and add them to the
@@ -414,14 +422,15 @@ class Topology(object):
         for i in range(len(cyx)):
             sg1 = cyx[i]._atoms[atomNames[i].index('SG')]
             pos1 = positions[sg1.index]
-            candidate_distance, candidate_atom = 0.3*nanometers, None
+            candidate_distance, candidate_atom = 0.3 * nanometers, None
             for j in range(i):
                 sg2 = cyx[j]._atoms[atomNames[j].index('SG')]
                 pos2 = positions[sg2.index]
-                delta = [x-y for (x, y) in zip(pos1, pos2)]
-                distance = sqrt(delta[0]*delta[0] + delta[1]
-                                * delta[1] + delta[2]*delta[2])
-                if distance < candidate_distance and not isDisulfideBonded(sg2):
+                delta = [x - y for (x, y) in zip(pos1, pos2)]
+                distance = sqrt(delta[0] * delta[0] + delta[1]
+                                * delta[1] + delta[2] * delta[2])
+                if distance < candidate_distance and not isDisulfideBonded(
+                        sg2):
                     candidate_distance = distance
                     candidate_atom = sg2
             # Assign bond to closest pair.
@@ -482,21 +491,25 @@ class Residue(object):
 
     def bonds(self):
         """Iterate over all Bonds involving any atom in this residue."""
-        return (bond for bond in self.chain.topology.bonds() if ((bond[0] in self._atoms) or (bond[1] in self._atoms)))
+        return (bond for bond in self.chain.topology.bonds() if (
+            (bond[0] in self._atoms) or (bond[1] in self._atoms)))
 
     def internal_bonds(self):
         """Iterate over all internal Bonds."""
-        return (bond for bond in self.chain.topology.bonds() if ((bond[0] in self._atoms) and (bond[1] in self._atoms)))
+        return (bond for bond in self.chain.topology.bonds() if (
+            (bond[0] in self._atoms) and (bond[1] in self._atoms)))
 
     def external_bonds(self):
         """Iterate over all Bonds to external atoms."""
-        return (bond for bond in self.chain.topology.bonds() if ((bond[0] in self._atoms) != (bond[1] in self._atoms)))
+        return (bond for bond in self.chain.topology.bonds() if (
+            (bond[0] in self._atoms) != (bond[1] in self._atoms)))
 
     def __len__(self):
         return len(self._atoms)
 
     def __repr__(self):
-        return "<Residue %d (%s) of chain %d>" % (self.index, self.name, self.chain.index)
+        return "<Residue %d (%s) of chain %d>" % (
+            self.index, self.name, self.chain.index)
 
 
 class Atom(object):
@@ -516,7 +529,8 @@ class Atom(object):
         self.id = id
 
     def __repr__(self):
-        return "<Atom %d (%s) of chain %d residue %d (%s)>" % (self.index, self.name, self.residue.chain.index, self.residue.index, self.residue.name)
+        return "<Atom %d (%s) of chain %d residue %d (%s)>" % (
+            self.index, self.name, self.residue.chain.index, self.residue.index, self.residue.name)
 
 
 class Bond(namedtuple('Bond', ['atom1', 'atom2'])):
