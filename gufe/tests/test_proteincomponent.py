@@ -114,4 +114,4 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         print("IN: ", str(PDB_thrombin_path))
         m1 = self.cls.from_pdbfile(PDB_thrombin_path)
 
-        assert m1.total_charge == 0
+        assert m1.total_charge == -2

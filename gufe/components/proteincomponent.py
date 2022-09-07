@@ -232,7 +232,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 fc = +(connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
-            print(atom_name, resn, connectivity, "\t", fc)
+
             
             a.SetFormalCharge(fc)
             a.UpdatePropertyCache(strict=True)
@@ -269,11 +269,12 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Box dimensions
         pbcVs = mol_topology.getPeriodicBoxVectors()
         if(pbcVs is not None):
-            pbcVs = list(map(list, pbcVs.value_in_unit(omm_unit.angstrom)._value))
+            pbcVs = list(map(list, pbcVs.value_in_unit(omm_unit.angstrom)))
+
 
         unitCellDim = mol_topology.getUnitCellDimensions()
         if(unitCellDim is not None):
-            unitCellDim = list(map(float, unitCellDim.value_in_unit(omm_unit.angstrom)._value))  # unit: nm
+            unitCellDim = list(map(float, unitCellDim.value_in_unit(omm_unit.angstrom)))
 
         rd_mol.SetProp("periodic_box_vectors", str(pbcVs))
         rd_mol.SetProp("unit_cell_dimensions", str(unitCellDim))
