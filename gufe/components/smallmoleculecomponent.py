@@ -104,7 +104,7 @@ class SmallMoleculeComponent(Component):
     def from_openeye(cls, oemol: OEMol, name: str = ""):
         raise NotImplementedError
 
-    def to_openff(self) -> "OFFMolecule":
+    def to_openff(self):
         """OpenFF Toolkit representation of this molecule"""
         from openff.toolkit.topology import Molecule as OFFMolecule
 
@@ -114,7 +114,7 @@ class SmallMoleculeComponent(Component):
         return m
 
     @classmethod
-    def from_openff(cls, openff: "OFFMolecule", name: str = ""):
+    def from_openff(cls, openff, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(rdkit=openff.to_rdkit(), name=name)
 
