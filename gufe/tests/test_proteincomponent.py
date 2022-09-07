@@ -224,7 +224,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
                 decimal=6,
                 err_msg="the pbcVs are not equal")
 
-            v1 = gufe_openmm_top.getUnitCellDimensions() .value_in_unit(unit.nanometer)
+            v1 = gufe_openmm_top.getUnitCellDimensions().value_in_unit(unit.nanometer)
             v2 = openmm_top.getUnitCellDimensions().value_in_unit(unit.nanometer)
             assert_almost_equal(
                 actual=v1,
