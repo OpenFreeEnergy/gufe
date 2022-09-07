@@ -2,7 +2,9 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import ast
 import json
+import io
 import numpy as np
+from typing import Union
 from collections import defaultdict
 
 from openmm import Vec3
@@ -49,54 +51,60 @@ def assign_correct_prop_type(rd_obj, prop_name, prop_value):
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
 
-    This representation is immutable.  If you want to make any modifications,
-    do this in an appropriate toolkit then remake this class.
+        .. note::
+        This class is a read-only representation of a protein, if you want to
+        edit the molecule do this in an appropriate toolkit **before** creating
+        an instance from this class.
+
+        Parameters
+        ----------
+        rdkit : rdkit.Mol
+            rdkit representation of the protein
+        name : str, optional
+           of the protein, by default ""
     """
+ 
 
     # FROM
     @classmethod
-    def from_pdbfile(cls, pdbfile: str, name=""):
+    def from_pdbfile(cls, pdbfile: str, name: str=""):
         """
-        _summary_
+        Create ``ProteinComponent`` from PDB-formatted string.
+
+        This is the primary deserialization mechanism for this class.
 
         Parameters
         ----------
         pdbfile : str
-            _description_
+            path to the pdb file.
         name : str, optional
-            _description_, by default ""
+            name of the input protein, by default ""
 
         Returns
         -------
-        _type_
-            _description_
+        ProteinComponent
+            the deserialized molecule
         """
         openmm_PDBFile = PDBFile(pdbfile)
         return cls._from_openmmPDBFile(
             openmm_PDBFile=openmm_PDBFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str):
+    def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str=""):
         """
-        This Function serializes openmmPDBFile to
-        AA - Protonations
-
-        Test:
-         - 1.5 serialization test
-         - check out files
-         - check obj
-
+        This Function deserializes openmmPDBFile
+        
         Parameters
         ----------
         openmm_PDBFile : PDBFile
-            _description_
+            object of the protein
         name : str
-            _description_
+            name of the protein
 
         Returns
         -------
-        _type_
-            _description_
+        ProteinComponent
+            the deserialized molecule
         """
         periodicTable = Chem.GetPeriodicTable()
         mol_topology = openmm_PDBFile.getTopology()
@@ -290,7 +298,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls(rdkit=rd_mol, name=name)
 
     @classmethod
-    def _from_dict(cls, ser_dict: dict, name=""):
+    def _from_dict(cls, ser_dict: dict, name: str=""):
+        """Deserialize from dict representation"""     
 
         # Mol
         rd_mol = Mol()
@@ -367,6 +376,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     # TO
     def to_openmm_topology(self) -> app.Topology:
+        """
+        serialize the topology of the protein to openmm.app.Topology
+
+        Returns
+        -------
+        app.Topology
+            resulting topology obj.
+        """
         dict_prot = self.to_dict()
 
         top = app.Topology()
@@ -420,23 +437,46 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Geometrics
         if(dict_prot['molecules']["periodic_box_vectors"]!="None"):
+            from openmm import Vec3
             top.setPeriodicBoxVectors(
-                dict_prot['molecules']["periodic_box_vectors"] *
+                list(map(lambda x: Vec3(*x), dict_prot['molecules']["periodic_box_vectors"])) *
                 omm_unit.angstrom)
         if(dict_prot['molecules']["unit_cell_dimensions"]!="None"):
             top.setUnitCellDimensions(
-                dict_prot['molecules']['unit_cell_dimensions'] *
+                Vec3(*dict_prot['molecules']["unit_cell_dimensions"]) *
                 omm_unit.angstrom)
 
         return top
 
     def to_openmm_positions(self) -> omm_unit.Quantity:
+        """
+        serialize the positions to openmm.unit.Quantity
+        ! only one frame at the moment!
+
+        Returns
+        -------
+        omm_unit.Quantity
+            Quantity containing protein atom positions
+        """
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
         openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
         
         return openmm_pos
         
-    def to_pdbFile(self, out_path: str = None) -> str:
+    def to_pdbFile(self, out_path: Union[str, io.FileIO] = None) -> str:
+        """
+        serialize protein to pdb file.
+
+        Parameters
+        ----------
+        out_path : str, optional
+            provide path or FileIO to the resulting file, by default None
+
+        Returns
+        -------
+        str
+            string path to the resulting pdb.
+        """
         # get top:
         openmm_top = self.to_openmm_topology()
         
@@ -454,7 +494,19 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def to_pdbxFile(self, out_path: str = None) -> str:
-        
+        """
+            serialize protein to pdbx file.
+
+            Parameters
+            ----------
+            out_path : str, optional
+                provide path or FileIO to the resulting file, by default None
+
+            Returns
+            -------
+            str
+                string path to the resulting pdbx.
+        """
         # get top:
         top = self.to_openmm_topology()
 
@@ -473,6 +525,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def _to_dict(self) -> dict:
+        """Serialize to dict representation"""
 
         atoms = []
         for atom in  self._rdkit.GetAtoms():
