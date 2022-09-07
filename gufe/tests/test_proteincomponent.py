@@ -197,19 +197,28 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
             assert openmm_top.getNumBonds() == gufe_openmm_top.getNumBonds()
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
-            assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
 
-            v1 = gufe_openmm_top.getPeriodicBoxVectors().value_in_unit(unit.nanometer)
-            v2 = openmm_top.getPeriodicBoxVectors().value_in_unit(unit.nanometer)
+            nresis1 = openmm_top.getNumResidues() 
+            nresi2 = gufe_openmm_top.getNumResidues()
+            assert nresis1 == nresi2
+            
+            pbvs1 = gufe_openmm_top.getPeriodicBoxVectors()
+            pbvs2 = openmm_top.getPeriodicBoxVectors()
+            v1 = pbvs1.value_in_unit(unit.nanometer)
+            v2 = pbvs2.value_in_unit(unit.nanometer)
             assert_almost_equal(
                 actual=v1,
                 desired=v2,
                 decimal=6,
                 err_msg="the pbcVs are not equal")
 
-            v1 = gufe_openmm_top.getUnitCellDimensions().value_in_unit(unit.nanometer)
-            v2 = openmm_top.getUnitCellDimensions().value_in_unit(unit.nanometer)
+            uD = gufe_openmm_top.getUnitCellDimensions()
+            v1 = uD.value_in_unit(unit.nanometer)
+
+            uD2 = openmm_top.getUnitCellDimensions()
+            v2 = uD2.value_in_unit(unit.nanometer)
+
             assert_almost_equal(
                 actual=v1,
                 desired=v2,

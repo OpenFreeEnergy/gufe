@@ -151,9 +151,9 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         #   idx0, idx1, order, aromaticity, stereochemistry
         # NOTE: Here we're implicitly using units of angstrom and elementary
         # charge. We might want to explcitly include them in the stored dict.
-        
+
         m = self.to_openff()
-        
+
         atoms = [
             (atom.atomic_number,
              atom.name,
@@ -162,7 +162,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
              atom.stereochemistry or '')
             for atom in m.atoms
         ]
-        
+
         bonds = [
             (bond.atom1_index, bond.atom2_index, bond.bond_order,
              bond.is_aromatic, bond.stereochemistry or '')
@@ -174,7 +174,6 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             # very wrong
             raise RuntimeError(f"{self.__class__.__name__} must have at "
                                "least 1 conformer")
-
 
         conformers = [
             serialize_numpy(conf.m_as(openff_unit.angstrom))
@@ -189,7 +188,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         }
 
         return d
-    
+
     @classmethod
     def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""

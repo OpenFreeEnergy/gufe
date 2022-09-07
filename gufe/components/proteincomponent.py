@@ -181,7 +181,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Formal Charge
         atoms = rd_mol.GetAtoms()
         netcharge = 0
-        _charged_resi : defaultdict = defaultdict(int)
+        _charged_resi: defaultdict = defaultdict(int)
         for a in atoms:
             atomic_num = a.GetAtomicNum()
             atom_name = a.GetProp("name")
@@ -208,7 +208,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     x) > 1 and not atom_name == x, histidine_atoms))[0]
                 other_prot = other_N.replace("N", "H") in histidine_atoms
 
-                if(own_prot and not other_prot and 
+                if(own_prot and not other_prot and
                    connectivity != default_valence):
                     # change bond-order
                     bond_change = [
@@ -218,9 +218,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                 bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[1])
 
-                    alternate_atom = [atomB for atomB in rd_mol.GetAtoms()
-                                      if(atomB.GetProp("resInd") == str(resind)
-                                         and atomB.GetProp("name") == str(other_N))][0]
+                    alternate_atom = []
+                    for atomB in rd_mol.GetAtoms():
+                        if(atomB.GetProp("resInd") == str(resind)
+                            and atomB.GetProp("name") == str(other_N)):
+                            alternate_atom.append(atomB)
+                            
+                    alternate_atom = alternate_atom[0]
+
                     bond_change = [
                         bond for bond in alternate_atom.GetBonds() if(
                             "CE1" in (
@@ -397,7 +402,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Residues:
         residues = {}
         for res_lab, resind in sorted(
-                dict_prot['molecules']["_residue_index"].items(), key=lambda x: x[1]):
+                dict_prot['molecules']["_residue_index"].items(),
+                key=lambda x: x[1]):
             resi, resn = res_lab.split("_")
 
             resind = dict_prot['molecules']["_residue_index"][res_lab]
@@ -444,11 +450,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         if(dict_prot['molecules']["periodic_box_vectors"] != "None"):
             top.setPeriodicBoxVectors(
-                list(map(lambda x: Vec3(*x), dict_prot['molecules']["periodic_box_vectors"])) *
+                list(map(lambda x: Vec3(*x),
+                         dict_prot['molecules']["periodic_box_vectors"])) *
                 omm_unit.angstrom)
         else:
             top.setPeriodicBoxVectors(None)
-
 
         return top
 
@@ -501,7 +507,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbxFile(self, out_path:  Union[str, io.TextIOWrapper] = None) -> str:
+    def to_pdbxFile(self, 
+                    out_path: Union[str, io.TextIOWrapper] = None) -> str:
         """
             serialize protein to pdbx file.
 
@@ -627,6 +634,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
         raise NotImplemented
-        #openmm_PDBxFile = PDBxFile(pdbxfile)
-        #return cls._from_openmmPDBFile(
+        # openmm_PDBxFile = PDBxFile(pdbxfile)
+        # return cls._from_openmmPDBFile(
         #    openmm_PDBFile=openmm_PDBxFile, name=name)

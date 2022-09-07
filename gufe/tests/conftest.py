@@ -43,23 +43,24 @@ def PDB_181L_path():
 
 @pytest.fixture
 def PDB_181L_OpenMMClean_path():
-    with importlib.resources.path('gufe.tests.data', 
+    with importlib.resources.path('gufe.tests.data',
                                   '181l_openmmClean.pdb') as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDB_thrombin_path():
-    with importlib.resources.path('gufe.tests.data', 
+    with importlib.resources.path('gufe.tests.data',
                                   'thrombin_protein.pdb') as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDBx_181L_path():
-    with importlib.resources.path('gufe.tests.data', 
+    with importlib.resources.path('gufe.tests.data',
                                   '181l.cif') as f:
         yield str(f)
+
 
 @pytest.fixture
 def PDB_benchmarkFiles():
