@@ -496,9 +496,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if(isinstance(out_path, str)):
             out_file = open(out_path, "w")
-        else:
+        elif(isinstance(out_path,  io.TextIOWrapper)):
             out_file = out_path
             out_path = str(out_file.name)
+        else:
+            raise ValueError("Out path type was not as expected!")
 
         PDBFile.writeFile(
             topology=openmm_top,
@@ -532,9 +534,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if(isinstance(out_path, str)):
             out_file = open(out_path, "w")
-        else:
+        elif(isinstance(out_path,  io.TextIOWrapper)):
             out_file = out_path
             out_path = str(out_file.name)
+        else:
+            raise ValueError("Out path type was not as expected!")
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
 
