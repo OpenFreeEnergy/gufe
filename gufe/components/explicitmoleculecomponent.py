@@ -56,7 +56,7 @@ class ExplicitMoleculeComponent(Component):
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
-        elif ( n_confs:= len(conformers) ) > 1:
+        elif (n_confs := len(conformers) ) > 1:
             warnings.warn(f"Molecule provided with {n_confs} conformers. "
                           "Only the first will be used.")
 
@@ -75,7 +75,7 @@ class ExplicitMoleculeComponent(Component):
     def _defaults(self):
         return super()._defaults()
 
-    #Props
+    # Props
     @property
     def name(self) -> str:
         return self._hash.name
@@ -88,7 +88,7 @@ class ExplicitMoleculeComponent(Component):
     def total_charge(self):
         return Chem.GetFormalCharge(self._rdkit)
 
-    #TO
+    # TO
     def to_rdkit(self) -> RDKitMol:
         """Return an RDKit copied representation of this molecule"""
         return Chem.Mol(self._rdkit)
@@ -96,17 +96,17 @@ class ExplicitMoleculeComponent(Component):
     def to_json(self):
         return json.dumps(self.to_dict())
 
-    #From
+    # From
     @classmethod
     def from_json(cls, json_str):
         dct = json.loads(json_str)
         return cls.from_dict(dct)
-    
+
     @classmethod
     def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
         """Create a SmallMoleculeComponent, copying from an RDKit Mol"""
         return cls(rdkit=Chem.Mol(rdkit), name=name)
-    
+
     # Not Implemented - interface Functions:
     @classmethod
     def _from_dict(cls, d: dict):

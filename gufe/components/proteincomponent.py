@@ -46,7 +46,6 @@ def assign_correct_prop_type(rd_obj, prop_name, prop_value):
         rd_obj.SetProp(prop_name, str(prop_value))
 
 
-#TODO: send from rdkit through openmm.PDBFile
 
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
@@ -63,11 +62,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
         name : str, optional
            of the protein, by default ""
     """
- 
 
     # FROM
     @classmethod
-    def from_pdbfile(cls, pdbfile: str, name: str=""):
+    def from_pdbfile(cls, pdbfile: str, name: str = ""):
         """
         Create ``ProteinComponent`` from PDB-formatted string.
 
@@ -90,10 +88,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
             openmm_PDBFile=openmm_PDBFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str=""):
+    def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str = ""):
         """
         This Function deserializes openmmPDBFile
-        
+
         Parameters
         ----------
         openmm_PDBFile : PDBFile
@@ -191,7 +189,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             resn = a.GetProp("resName")
             resind = int(a.GetProp("resInd"))
             dict_key = str(resind) + "_" + resn
-            
+
             connectivity = sum([int(bond.GetBondType())
                                for bond in a.GetBonds()])
 
@@ -210,7 +208,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 other_N = list(filter(lambda x: x.startswith("N") and len(
                     x) > 1 and not atom_name == x, histidine_atoms))[0]
                 other_prot = other_N.replace("N", "H") in histidine_atoms
-                                
+
                 if(own_prot and not other_prot and connectivity != default_valence):
                     # change bond-order
                     bond_change = [
@@ -228,10 +226,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                 bond.GetBeginAtom().GetProp("name"),
                                 bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[2])
-                    
-                    #update_new connectivity
+
+                    # update_new connectivity
                     connectivity = sum([int(bond.GetBondType())
-                                    for bond in a.GetBonds()])
+                                        for bond in a.GetBonds()])
             # HISTIDINE FIX DONE
 
             if(connectivity == 0):  # ions:
@@ -247,10 +245,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 fc = +(connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
-            
+
             a.SetFormalCharge(fc)
             a.UpdatePropertyCache(strict=True)
-            if(fc!=0): _charged_resi[dict_key]+=fc
+            if(fc != 0):
+                _charged_resi[dict_key] += fc
             netcharge += fc
 
         # Molecule props
@@ -284,10 +283,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
         if(pbcVs is not None):
             pbcVs = list(map(list, pbcVs.value_in_unit(omm_unit.angstrom)))
 
-
         unitCellDim = mol_topology.getUnitCellDimensions()
         if(unitCellDim is not None):
-            unitCellDim = list(map(float, unitCellDim.value_in_unit(omm_unit.angstrom)))
+            unitCellDim = list(
+                map(float, unitCellDim.value_in_unit(omm_unit.angstrom)))
 
         rd_mol.SetProp("periodic_box_vectors", str(pbcVs))
         rd_mol.SetProp("unit_cell_dimensions", str(unitCellDim))
@@ -298,8 +297,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls(rdkit=rd_mol, name=name)
 
     @classmethod
-    def _from_dict(cls, ser_dict: dict, name: str=""):
-        """Deserialize from dict representation"""     
+    def _from_dict(cls, ser_dict: dict, name: str = ""):
+        """Deserialize from dict representation"""
 
         # Mol
         rd_mol = Mol()
@@ -405,7 +404,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             resi = int(resi)
 
             chain_id = int([i for i, v in enumerate(
-                dict_prot['molecules']["_chain_residues"]) if(resind in v)][0])            
+                dict_prot['molecules']["_chain_residues"]) if(resind in v)][0])
             chain = chains[chain_id]
 
             # print(resi, resn, chain_id, chain)
@@ -414,7 +413,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                chain=chain, insertionCode=icode)
             residues.update({chain.id + "_" + str(resi): r})
 
-        
         # Atoms
         atoms = {}
         for atom in sorted(dict_prot['atoms'], key=lambda x: x[5]["id"]):
@@ -436,16 +434,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
                         order=bond[2])
 
         # Geometrics
-        if(dict_prot['molecules']["unit_cell_dimensions"]!="None"):
+        if(dict_prot['molecules']["unit_cell_dimensions"] != "None"):
             top.setUnitCellDimensions(
                 Vec3(*dict_prot['molecules']["unit_cell_dimensions"]) *
                 omm_unit.angstrom)
-            
-        if(dict_prot['molecules']["periodic_box_vectors"]!="None"):
+
+        if(dict_prot['molecules']["periodic_box_vectors"] != "None"):
             top.setPeriodicBoxVectors(
                 list(map(lambda x: Vec3(*x), dict_prot['molecules']["periodic_box_vectors"])) *
                 omm_unit.angstrom)
-
 
         return top
 
@@ -461,9 +458,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         """
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
         openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
-        
+
         return openmm_pos
-        
+
     def to_pdbFile(self, out_path: Union[str, io.FileIO] = None) -> str:
         """
         serialize protein to pdb file.
@@ -480,7 +477,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         """
         # get top:
         openmm_top = self.to_openmm_topology()
-        
+
         # get pos:
         openmm_pos = self.to_openmm_positions()
 
@@ -490,7 +487,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
         else:
             out_file = out_path
 
-        PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
+        PDBFile.writeFile(
+            topology=openmm_top,
+            positions=openmm_pos,
+            file=out_file)
 
         return out_path
 
@@ -529,14 +529,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
         """Serialize to dict representation"""
 
         atoms = []
-        for atom in  self._rdkit.GetAtoms():
+        for atom in self._rdkit.GetAtoms():
             # Standards:
             try:
                 name = atom.GetProp("name")
             except KeyError:  # this is default fallback if ff atom name was not stored. mainly used if an rdkit structure is passed.
                 name = atom.GetSymbol()
 
-        
             atoms.append(
                 (atom.GetAtomicNum(),
                     name,
@@ -598,7 +597,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def to_gmx(self, out_gmx_top: str, out_gmx_gro: str):
         raise NotImplementedError()
 
-    def to_amber(self, out_path:str):
+    def to_amber(self, out_path: str):
         raise NotImplementedError()
 
     @classmethod
@@ -621,4 +620,5 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def from_pdbxfile(cls, pdbxfile: str, name=""):
         raise NotImplemented()
         openmm_PDBxFile = PDBxFile(pdbxfile)
-        return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
+        return cls._from_openmmPDBFile(
+            openmm_PDBFile=openmm_PDBxFile, name=name)
