@@ -42,7 +42,7 @@ def line_by_line_comparison(in_file_path, out_file_path):
         not_equal_found = len(not_equal)>0
         if(not_equal_found): 
             print("not Equals") 
-            print("\n".join(map(lambda x: "in: "+x[0]+"\nout: "+x[1]))) 
+            print("\n".join(map(lambda x: "in: "+x[0]+"\nout: "+x[1], not_equal))) 
             
         
         if(not_equal_found):
@@ -72,7 +72,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
             assert isinstance(p, ProteinComponent)
             assert p.name == 'Steve'
-            #assert p.to_rdkit().GetNumAtoms() == 2639
        
     def test_from_pdbfile_ValueError(self, PDBx_181L_path):
         with pytest.raises(ValueError):
@@ -102,24 +101,64 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert isinstance(rdkitmol, Chem.Mol)
         assert rdkitmol.GetNumAtoms() == 2639
 
-    def test_to_pdbxfile(self, PDB_181L_path):
+    def test_to_pdbxfile(self, PDB_181L_path, tmp_path):
         p = self.cls.from_pdbfile(str(PDB_181L_path), name='Bob')
-        p.to_pdbxFile("./tmp_file.pdb")
+        out_path_prefix = "tmp_181L_pdbx.cif"
+        out_file = tmp_path / out_path_prefix
+        p.to_pdbxFile(str(out_file))
     
-    def test_to_pdbfile(self, PDB_181L_path):
+    def test_to_pdbfile(self, PDB_181L_path, tmp_path):
         p = self.cls.from_pdbfile(str(PDB_181L_path), name='Wuff')
-        p.to_pdbFile("./tmp_file.pdb")
+        out_path_prefix = "tmp_181L_pdb.pdb"
+        out_file = tmp_path / out_path_prefix
+        p.to_pdbFile(str(out_file))
     
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
-            out_path_prefix = "tmp_"+os.path.basename(PDB_181L_OpenMMClean_path)
-            out_file = tmp_path / out_path_prefix
-            print(str(out_file), type(out_file))
-            
-            p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
-            _ = p.to_pdbFile(str(out_file))            
+        out_path_prefix = "tmp_"+os.path.basename(PDB_181L_OpenMMClean_path)
+        out_file = tmp_path / out_path_prefix
         
-            assert line_by_line_comparison(PDB_181L_OpenMMClean_path, str(out_file))    
-              
+        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        _ = p.to_pdbFile(str(out_file))            
+    
+        assert line_by_line_comparison(PDB_181L_OpenMMClean_path, str(out_file))    
+    
+    def test_to_openmm(self, PDB_181L_OpenMMClean_path, tmp_path):
+        from openmm.app import pdbfile
+        openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
+        openmm_top = openmm_pdb.topology
+        
+        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        gufe_openmm_top = p.to_openmm_topology()
+        
+        assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
+        assert openmm_top.getNumBonds() == gufe_openmm_top.getNumBonds()
+        assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
+        assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
+        assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
+        assert openmm_top.getPeriodicBoxVectors() == gufe_openmm_top.getPeriodicBoxVectors() 
+        assert openmm_top.getUnitCellDimensions() == gufe_openmm_top.getUnitCellDimensions() 
+
+
+    def test_to_openmm_bench(self, PDB_benchmarkFiles):
+        from openmm.app import pdbfile
+        for in_pdb_path in PDB_benchmarkFiles:
+
+            openmm_pdb = pdbfile.PDBFile(open(in_pdb_path, "r"))
+            openmm_top = openmm_pdb.topology
+            
+            p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
+            gufe_openmm_top = p.to_openmm_topology()
+            
+            # assert openmm_top == gufe_openmm_top
+            assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
+            assert openmm_top.getNumBonds() == gufe_openmm_top.getNumBonds()
+            assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
+            assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
+            assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
+            assert openmm_top.getPeriodicBoxVectors() == gufe_openmm_top.getPeriodicBoxVectors() 
+            assert openmm_top.getUnitCellDimensions() == gufe_openmm_top.getUnitCellDimensions() 
+
+        
     def test_io_pdb_comparison_bench(self, PDB_benchmarkFiles,tmp_path):
         failures = []
         for in_pdb_path in PDB_benchmarkFiles:
@@ -129,7 +168,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             try:
                 p = self.cls.from_pdbfile(in_pdb_path, name="bench")
                 _ = p.to_pdbFile(str(out_file))            
-            
                 
                 assert line_by_line_comparison(in_pdb_path, str(out_file))  
             except KeyError as err:
@@ -145,19 +183,16 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert m1 == m2
 
-
     def test_hash_eq(self, PDB_181L_path):
         m1 = self.cls.from_pdbfile(PDB_181L_path)
         m2 = self.cls.from_pdbfile(PDB_181L_path)
 
         assert hash(m1) == hash(m2)
 
-
     def test_neq(self, PDB_181L_path, PDB_181L_mutant):
         m1 = self.cls.from_pdbfile(PDB_181L_path)
 
         assert m1 != PDB_181L_mutant
-
 
     def test_neq_name(self, PDB_181L_path):
         m1 = self.cls.from_pdbfile(PDB_181L_path, name='This')
@@ -165,12 +200,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert m1 != m2
 
-
     def test_hash_neq(self, PDB_181L_path, PDB_181L_mutant):
         m1 = self.cls.from_pdbfile(PDB_181L_path)
 
         assert hash(m1) != hash(PDB_181L_mutant)
-
 
     def test_hash_neq_name(self, PDB_181L_path):
         m1 = self.cls.from_pdbfile(PDB_181L_path, name='This')
@@ -178,12 +211,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert hash(m1) != hash(m2)
 
-
     def test_protein_total_charge(self, PDB_181L_path):
         m1 = self.cls.from_pdbfile(PDB_181L_path)
 
         assert m1.total_charge == 7
-        
         
     def test_protein_total_charge_thromb(self, PDB_thrombin_path):
         m1 = self.cls.from_pdbfile(PDB_thrombin_path)
