@@ -41,11 +41,13 @@ from copy import copy
 from datetime import date
 
 # WIP: REMOVE OPENMM As Far As Poissible
-from .pdbstructure import PdbStructure
-from .unitcell import computeLengthsAndAngles
+#from .pdbstructure import PdbStructure
+from openmm.app.internal.pdbstructure import PdbStructure
+
 from .topology import Topology
 from .element import chlorine, sodium, magnesium, beryllium, lithium, potassium, zinc, calcium, get_by_symbol
-
+from openmm import Vec3, Platform
+from openmm.app.internal.unitcell import computeLengthsAndAngles
 
 from openmm.unit import nanometers, angstroms, is_quantity, norm, Quantity
 
@@ -235,7 +237,7 @@ class PDBFile(object):
                             continue
                         processedAtomNames.add(atom.get_name())
                         pos = atom.get_position().value_in_unit(nanometers)
-                        coords.append(np.array([pos[0], pos[1], pos[2]]))
+                        coords.append(Vec3(pos[0], pos[1], pos[2]))
             self._positions.append(coords * nanometers)
         # The atom positions read from the PDB file.  If the file contains
         # multiple frames, these are the positions in the first frame.

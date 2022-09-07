@@ -30,7 +30,7 @@ bond_types = {1: BondType.SINGLE,
               }
 
 negative_ions = ["CL"]
-positive_ions = ["NA", "MG"]
+positive_ions = ["NA", "MG", 'ZN']
 
 
 def assign_correct_prop_type(rd_obj, prop_name, prop_value):
@@ -174,11 +174,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Formal Charge
         atoms = rd_mol.GetAtoms()
         netcharge = 0
+        _charged_resi = defaultdict(int)
         for a in atoms:
             atomic_num = a.GetAtomicNum()
             atom_name = a.GetProp("name")
             resn = a.GetProp("resName")
-
+            resi = int(a.GetProp("resId"))
+            dict_key = str(resi) + "_" + resn
+            
             connectivity = sum([int(bond.GetBondType())
                                for bond in a.GetBonds()])
 
@@ -232,11 +235,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 fc = +(connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
-
             
             a.SetFormalCharge(fc)
             a.UpdatePropertyCache(strict=True)
-
+            if(fc!=0): _charged_resi[dict_key]+=fc
             netcharge += fc
 
         # Molecule props
@@ -262,6 +264,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         rd_mol.SetProp("_residue_atom_map", str(dict(_residue_atom_map)))
         rd_mol.SetProp("_residue_index", str(dict(_residue_index)))
         rd_mol.SetProp("_residue_icode", str(dict(_residue_icode)))
+        rd_mol.SetProp("_charged_res", str(dict(_charged_resi)))
         residue_name_id = dict([key.split("_")
                                for key in _residue_atom_map.keys()])
         rd_mol.SetProp("_residue_name_id", str(dict(residue_name_id)))
@@ -382,10 +385,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
             icode = dict_prot['molecules']["_residue_icode"][res_lab]
             resi = int(resi)
 
-            part_of = [i for i, v in enumerate(
-                dict_prot['molecules']["_chain_residues"]) if(resi in v)]
             chain_id = int([i for i, v in enumerate(
-                dict_prot['molecules']["_chain_residues"]) if(resind in v)][0])
+                dict_prot['molecules']["_chain_residues"]) if(resind in v)][0])            
             chain = chains[chain_id]
 
             # print(resi, resn, chain_id, chain)
@@ -394,6 +395,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                chain=chain, insertionCode=icode)
             residues.update({chain.id + "_" + str(resi): r})
 
+        
         # Atoms
         atoms = {}
         for atom in sorted(dict_prot['atoms'], key=lambda x: x[5]["id"]):
@@ -415,12 +417,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
                         order=bond[2])
 
         # Geometrics
-        top.setPeriodicBoxVectors(
-            dict_prot['molecules']["periodic_box_vectors"] *
-            omm_unit.angstrom)
-        top.setUnitCellDimensions(
-            dict_prot['molecules']['unit_cell_dimensions'] *
-            omm_unit.angstrom)
+        if(dict_prot['molecules']["periodic_box_vectors"]!="None"):
+            top.setPeriodicBoxVectors(
+                dict_prot['molecules']["periodic_box_vectors"] *
+                omm_unit.angstrom)
+        if(dict_prot['molecules']["unit_cell_dimensions"]!="None"):
+            top.setUnitCellDimensions(
+                dict_prot['molecules']['unit_cell_dimensions'] *
+                omm_unit.angstrom)
 
         return top
 
@@ -433,7 +437,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def to_pdbFile(self, out_path: str = None) -> str:
         # get top:
         openmm_top = self.to_openmm_topology()
-
+        
         # get pos:
         openmm_pos = self.to_openmm_positions()
 
@@ -448,6 +452,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def to_pdbxFile(self, out_path: str = None) -> str:
+        
         # get top:
         top = self.to_openmm_topology()
 
@@ -537,7 +542,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def to_gmx(self, out_gmx_top: str, out_gmx_gro: str):
         raise NotImplementedError()
 
-    def to_amber(self):
+    def to_amber(self, out_path:str):
         raise NotImplementedError()
 
     @classmethod
@@ -549,19 +554,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
         raise NotImplementedError()
 
     @classmethod
-    def from_openff(cls, openff: OFFMolecule, name: str = ""):
-        raise NotImplementedError()
-
-    @classmethod
     def from_gmx(cls, gmx_top: str, gmx_gro: str):
         raise NotImplementedError()
 
     @classmethod
-    def from_amber(cls):
+    def from_amber(cls, name=""):
         raise NotImplementedError()
 
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
-        #This should work, But I have no test case
+        raise NotImplemented()
         openmm_PDBxFile = PDBxFile(pdbxfile)
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)

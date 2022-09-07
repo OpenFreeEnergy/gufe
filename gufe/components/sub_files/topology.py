@@ -442,7 +442,7 @@ class Topology(object):
                     candidate_atom = sg2
             # Assign bond to closest pair.
             if candidate_atom:
-                self.addBond(sg1, candidate_atom)
+                self.addBond(sg1, candidate_atom, type=None, order=1)
 
 
 class Chain(object):
