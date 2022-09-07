@@ -141,7 +141,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
             gufe_dict = p.to_dict()
     
-    def test_to_openmm_positions(self, PDB_181L_OpenMMClean_path, tmp_path):
+    def test_to_openmm_positions(self, PDB_181L_OpenMMClean_path):
         openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
         openmm_pos = openmm_pdb.positions
         
@@ -153,7 +153,20 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
         
+    def test_to_openmm_positions_bench(self, PDB_benchmarkFiles):
+        for pdb_path in PDB_benchmarkFiles:
+            openmm_pdb = pdbfile.PDBFile(open(pdb_path, "r"))
+            openmm_pos = openmm_pdb.positions
             
+            p = self.cls.from_pdbfile(pdb_path, name="BobThePudel")
+            gufe_openmm_pos = p.to_openmm_positions()
+            
+            v1= gufe_openmm_pos.value_in_unit(unit.nanometer)
+            v2 = openmm_pos.value_in_unit(unit.nanometer)
+            
+            assert_almost_equal(actual=v1, desired=v2, decimal=6)
+        
+                 
     def test_to_openmm_topology(self, PDB_181L_OpenMMClean_path, tmp_path):
         openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
         openmm_top = openmm_pdb.topology
@@ -186,12 +199,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
             openmm_pdb = pdbfile.PDBFile(open(in_pdb_path, "r"))
             openmm_top = openmm_pdb.topology
-            pbcVs1=openmm_top.getPeriodicBoxVectors()
 
             p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
             gufe_openmm_top = p.to_openmm_topology()
             
-            print(openmm_top.getPeriodicBoxVectors())
             assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
             assert openmm_top.getNumBonds() == gufe_openmm_top.getNumBonds()
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
