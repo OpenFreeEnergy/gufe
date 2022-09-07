@@ -17,6 +17,8 @@ from openff.toolkit.topology import Molecule as OFFMolecule
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from .sub_files.pdbfile import PDBFile
+from openmm.app.pdbxfile import PDBxFile
+
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..custom_typing import OEMol
 
@@ -41,6 +43,8 @@ def assign_correct_prop_type(rd_obj, prop_name, prop_value):
     else:
         rd_obj.SetProp(prop_name, str(prop_value))
 
+
+#TODO: send from rdkit through openmm.PDBFile
 
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
@@ -213,7 +217,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     bond_change.SetBondType(bond_types[2])
                 connectivity = sum([int(bond.GetBondType())
                                    for bond in a.GetBonds()])
-
             # HISTIDINE FIX DONE
 
             if(connectivity == 0):  # ions:
@@ -229,7 +232,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 fc = +(connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
-
+            print(atom_name, resn, connectivity, "\t", fc)
+            
             a.SetFormalCharge(fc)
             a.UpdatePropertyCache(strict=True)
 
@@ -462,16 +466,22 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     def _to_dict(self) -> dict:
 
-        # Standards:
-        atoms = [
-            (atom.GetAtomicNum(),
-                atom.GetProp("name"),
-                atom.GetFormalCharge(),
-                atom.GetIsAromatic(),
-                '',
-                atom.GetPropsAsDict())  # stereoCenter
-            for atom in self._rdkit.GetAtoms()
-        ]
+        atoms = []
+        for atom in  self._rdkit.GetAtoms():
+            # Standards:
+            try:
+                name = atom.GetProp("name")
+            except KeyError:  # this is default fallback if ff atom name was not stored. mainly used if an rdkit structure is passed.
+                name = atom.GetSymbol()
+
+        
+            atoms.append(
+                (atom.GetAtomicNum(),
+                    name,
+                    atom.GetFormalCharge(),
+                    atom.GetIsAromatic(),
+                    '',
+                    atom.GetPropsAsDict()))  # stereoCenter
 
         bonds = [
             (bond.GetBeginAtomIdx(),
@@ -551,9 +561,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
-        raise NotImplementedError()
         #This should work, But I have no test case
-        # from openmm.app.pdxfile import PDBxFile
-        # openmm_PDBxFile = PDBxFile(pdbxfile)
-        # return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile,
-        # name=name)
+        openmm_PDBxFile = PDBxFile(pdbxfile)
+        return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
