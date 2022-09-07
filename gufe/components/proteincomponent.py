@@ -436,15 +436,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
                         order=bond[2])
 
         # Geometrics
-        if(dict_prot['molecules']["periodic_box_vectors"]!="None"):
-            from openmm import Vec3
-            top.setPeriodicBoxVectors(
-                list(map(lambda x: Vec3(*x), dict_prot['molecules']["periodic_box_vectors"])) *
-                omm_unit.angstrom)
         if(dict_prot['molecules']["unit_cell_dimensions"]!="None"):
             top.setUnitCellDimensions(
                 Vec3(*dict_prot['molecules']["unit_cell_dimensions"]) *
                 omm_unit.angstrom)
+            
+        if(dict_prot['molecules']["periodic_box_vectors"]!="None"):
+            top.setPeriodicBoxVectors(
+                list(map(lambda x: Vec3(*x), dict_prot['molecules']["periodic_box_vectors"])) *
+                omm_unit.angstrom)
+
 
         return top
 

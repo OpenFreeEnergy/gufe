@@ -8,6 +8,9 @@ from gufe import ProteinComponent
 
 from .test_tokenize import GufeTokenizableTestsMixin
 
+from openmm.app import pdbfile
+from openmm import unit
+from numpy.testing import assert_almost_equal
 
 @pytest.fixture
 def PDB_181L_mutant(PDB_181L_path):
@@ -122,8 +125,36 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
     
         assert line_by_line_comparison(PDB_181L_OpenMMClean_path, str(out_file))    
     
-    def test_to_openmm(self, PDB_181L_OpenMMClean_path, tmp_path):
-        from openmm.app import pdbfile
+    def test_dummy_from_dict(self, PDB_181L_OpenMMClean_path):
+        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        gufe_dict = p.to_dict()
+        p2 = self.cls.from_dict(gufe_dict)
+        
+        assert p == p2
+        
+    def test_to_dict(self, PDB_181L_OpenMMClean_path):
+        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        gufe_dict = p.to_dict()
+            
+    def test_to_dict_bench(self, PDB_benchmarkFiles):
+        for in_pdb_path in PDB_benchmarkFiles:            
+            p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
+            gufe_dict = p.to_dict()
+    
+    def test_to_openmm_positions(self, PDB_181L_OpenMMClean_path, tmp_path):
+        openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
+        openmm_pos = openmm_pdb.positions
+        
+        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        gufe_openmm_pos = p.to_openmm_positions()
+        
+        v1= gufe_openmm_pos.value_in_unit(unit.nanometer)
+        v2 = openmm_pos.value_in_unit(unit.nanometer)
+        
+        assert_almost_equal(actual=v1, desired=v2, decimal=6)
+        
+            
+    def test_to_openmm_topology(self, PDB_181L_OpenMMClean_path, tmp_path):
         openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
         openmm_top = openmm_pdb.topology
         
@@ -135,30 +166,46 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
         assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
         assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
-        assert openmm_top.getPeriodicBoxVectors() == gufe_openmm_top.getPeriodicBoxVectors() 
-        assert openmm_top.getUnitCellDimensions() == gufe_openmm_top.getUnitCellDimensions() 
+        
+        v1 = gufe_openmm_top.getPeriodicBoxVectors() .value_in_unit(unit.nanometer)
+        v2 = openmm_top.getPeriodicBoxVectors().value_in_unit(unit.nanometer)
+        assert_almost_equal(actual=v1, desired=v2, decimal=6, err_msg="the pbcVs are not equal")            
+        
+        v1= gufe_openmm_top.getUnitCellDimensions() .value_in_unit(unit.nanometer)
+        v2 = openmm_top.getUnitCellDimensions().value_in_unit(unit.nanometer)
+        assert_almost_equal(actual=v1, desired=v2, decimal=6, err_msg="the unitcellDims are not equal")
 
 
-    def test_to_openmm_bench(self, PDB_benchmarkFiles):
+
+
+    def test_to_openmm_topology_bench(self, PDB_benchmarkFiles):
         from openmm.app import pdbfile
+        from openmm import unit
+        from numpy.testing import assert_almost_equal
         for in_pdb_path in PDB_benchmarkFiles:
 
             openmm_pdb = pdbfile.PDBFile(open(in_pdb_path, "r"))
             openmm_top = openmm_pdb.topology
-            
+            pbcVs1=openmm_top.getPeriodicBoxVectors()
+
             p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
             gufe_openmm_top = p.to_openmm_topology()
             
-            # assert openmm_top == gufe_openmm_top
+            print(openmm_top.getPeriodicBoxVectors())
             assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
             assert openmm_top.getNumBonds() == gufe_openmm_top.getNumBonds()
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
             assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
-            assert openmm_top.getPeriodicBoxVectors() == gufe_openmm_top.getPeriodicBoxVectors() 
-            assert openmm_top.getUnitCellDimensions() == gufe_openmm_top.getUnitCellDimensions() 
+            
+            v1 = gufe_openmm_top.getPeriodicBoxVectors() .value_in_unit(unit.nanometer)
+            v2 = openmm_top.getPeriodicBoxVectors().value_in_unit(unit.nanometer)
+            assert_almost_equal(actual=v1, desired=v2, decimal=6, err_msg="the pbcVs are not equal")            
+            
+            v1= gufe_openmm_top.getUnitCellDimensions() .value_in_unit(unit.nanometer)
+            v2 = openmm_top.getUnitCellDimensions().value_in_unit(unit.nanometer)
+            assert_almost_equal(actual=v1, desired=v2, decimal=6, err_msg="the unitcellDims are not equal")
 
-        
     def test_io_pdb_comparison_bench(self, PDB_benchmarkFiles,tmp_path):
         failures = []
         for in_pdb_path in PDB_benchmarkFiles:
@@ -175,7 +222,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         
         if(len(failures)>0):
             raise Exception("IFailed: "+str(failures))
-
     # Functionality
     def test_eq(self, PDB_181L_path):
         m1 = self.cls.from_pdbfile(PDB_181L_path)
