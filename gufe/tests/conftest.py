@@ -39,6 +39,11 @@ def multi_molecule_sdf():
 def PDB_181L_path():
     with importlib.resources.path('gufe.tests.data', '181l.pdb') as f:
         yield str(f)
+        
+@pytest.fixture
+def PDB_181L_OpenMMClean_path():
+    with importlib.resources.path('gufe.tests.data', '181l_openmmClean.pdb') as f:
+        yield str(f)
 
 
 @pytest.fixture
@@ -52,6 +57,26 @@ def PDBx_181L_path():
     with importlib.resources.path('gufe.tests.data', '181l.cif') as f:
         yield str(f)
 
+@pytest.fixture
+def PDB_benchmarkFiles():
+
+    pdb_filenames = [
+        "cmet_protein_openmmClean.pdb",
+        "hif2a_protein_openmmClean.pdb",
+        "mcl1_protein_openmmClean.pdb",
+        "p38_protein_openmmClean.pdb",
+        "ptp1b_protein_openmmClean.pdb",
+        "syk_protein_openmmClean.pdb",
+        "thrombin_protein_openmmClean.pdb",
+        "tnsk2_protein_openmmClean.pdb",
+        "tyk2_protein_openmmClean.pdb",
+        ]
+    
+    pdb_paths = []
+    for pdb_path in pdb_filenames:
+        with importlib.resources.path('gufe.tests.data', pdb_path) as f:
+            pdb_paths.append(str(f))
+    yield pdb_paths
 
 ## RDKit molecules
 
