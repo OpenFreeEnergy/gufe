@@ -199,7 +199,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
             assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
 
-            nresis1 = openmm_top.getNumResidues() 
+            nresis1 = openmm_top.getNumResidues()
             nresi2 = gufe_openmm_top.getNumResidues()
             assert nresis1 == nresi2
 
