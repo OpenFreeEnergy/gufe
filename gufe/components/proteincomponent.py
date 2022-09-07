@@ -181,7 +181,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Formal Charge
         atoms = rd_mol.GetAtoms()
         netcharge = 0
-        _charged_resi = defaultdict(int)
+        _charged_resi : defaultdict = defaultdict(int)
         for a in atoms:
             atomic_num = a.GetAtomicNum()
             atom_name = a.GetProp("name")
@@ -439,11 +439,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
             top.setUnitCellDimensions(
                 Vec3(*dict_prot['molecules']["unit_cell_dimensions"]) *
                 omm_unit.angstrom)
+        else:
+            top.setUnitCellDimensions(None)
 
         if(dict_prot['molecules']["periodic_box_vectors"] != "None"):
             top.setPeriodicBoxVectors(
                 list(map(lambda x: Vec3(*x), dict_prot['molecules']["periodic_box_vectors"])) *
                 omm_unit.angstrom)
+        else:
+            top.setPeriodicBoxVectors(None)
+
 
         return top
 
@@ -462,7 +467,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdbFile(self, out_path: Union[str, io.FileIO] = None) -> str:
+    def to_pdbFile(self, out_path: Union[str, io.TextIOWrapper] = None) -> str:
         """
         serialize protein to pdb file.
 
@@ -487,6 +492,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             out_file = open(out_path, "w")
         else:
             out_file = out_path
+            out_path = str(out_file.name)
 
         PDBFile.writeFile(
             topology=openmm_top,
@@ -495,7 +501,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbxFile(self, out_path: str = None) -> str:
+    def to_pdbxFile(self, out_path:  Union[str, io.TextIOWrapper] = None) -> str:
         """
             serialize protein to pdbx file.
 
@@ -521,6 +527,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             out_file = open(out_path, "w")
         else:
             out_file = out_path
+            out_path = str(out_file.name)
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
 
@@ -590,36 +597,36 @@ class ProteinComponent(ExplicitMoleculeComponent):
     # NOT implemented:
     def to_openeye(self) -> OEMol:
         """OEChem representation of this molecule"""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def to_openff(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def to_gmx(self, out_gmx_top: str, out_gmx_gro: str):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def to_amber(self, out_path: str):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def from_openeye(cls, oemol: OEMol, name: str = ""):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def from_openff(cls, openff: OFFMolecule, name: str = ""):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def from_gmx(cls, gmx_top: str, gmx_gro: str):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def from_amber(cls, name=""):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
-        raise NotImplemented()
-        openmm_PDBxFile = PDBxFile(pdbxfile)
-        return cls._from_openmmPDBFile(
-            openmm_PDBFile=openmm_PDBxFile, name=name)
+        raise NotImplemented
+        #openmm_PDBxFile = PDBxFile(pdbxfile)
+        #return cls._from_openmmPDBFile(
+        #    openmm_PDBFile=openmm_PDBxFile, name=name)
