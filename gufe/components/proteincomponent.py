@@ -218,13 +218,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                 bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[1])
 
-                    alternate_atom = []
+                    alternate_atoms = []
                     for atomB in rd_mol.GetAtoms():
                         if(atomB.GetProp("resInd") == str(resind)
                              and atomB.GetProp("name") == str(other_N)):
-                            alternate_atom.append(atomB)
+                            alternate_atoms.append(atomB)
 
-                    alternate_atom: Chem.rdchem.Atom = alternate_atom[0]
+                    alternate_atom: Chem.rdchem.Atom = alternate_atoms[0]
 
                     bond_change = [
                         bond for bond in alternate_atom.GetBonds() if(

@@ -61,45 +61,7 @@ class Singleton(object):
 
 # Enumerated values for bond type
 
-
-class Single(Singleton):
-    def __repr__(self):
-        return 'Single'
-
-
-Single:Single = Single()
-
-
-class Double(Singleton):
-    def __repr__(self):
-        return 'Double'
-
-
-Double:Double = Double()
-
-
-class Triple(Singleton):
-    def __repr__(self):
-        return 'Triple'
-
-
-Triple:Triple = Triple()
-
-
-class Aromatic(Singleton):
-    def __repr__(self):
-        return 'Aromatic'
-
-
-Aromatic:Aromatic = Aromatic()
-
-
-class Amide(Singleton):
-    def __repr__(self):
-        return 'Amide'
-
-
-Amide:Amide = Amide()
+from openmm.app.topology import Single, Double, Triple, Aromatic, Amide
 
 
 class Topology(object):
