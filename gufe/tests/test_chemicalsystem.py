@@ -137,6 +137,7 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
         return ChemicalSystem(
             {'solvent': solv_comp,
              'ligand': toluene_ligand_comp},
+            box_vectors=np.array([10, 10, 10, 90, 90, 90.]),
             )
 
     def test_key_roundtrip(self, instance):
