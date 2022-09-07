@@ -144,7 +144,7 @@ class DummyProtocol(Protocol):
                     outputs['logs'].append(pur.outputs['log'])
                     outputs['key_results'].append(pur.outputs['key_results'])
 
-        return dict(data=outputs)
+        return dict(outputs)
 
 
 class BrokenSimulationUnit(SimulationUnit):

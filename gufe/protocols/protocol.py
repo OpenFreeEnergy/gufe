@@ -39,7 +39,7 @@ class ProtocolResult(GufeTokenizable):
 
     """
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, **data):
         self._data = data
 
     def _defaults(self):
@@ -132,6 +132,12 @@ class Protocol(GufeTokenizable):
     @classmethod
     @abc.abstractmethod
     def _default_settings(cls) -> "ProtocolSettings":     # type: ignore
+        """Method to override in custom `Protocol` subclasses.
+
+        Gives a usable instance of `ProtocolSettings` that function as
+        reasonable defaults for this `Protocol` subclass.
+
+        """
         ...
 
     @classmethod
@@ -152,8 +158,29 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
-        """WE NEED INSTRUCTIONS FOR DEVELOPERS ON WHAT THIS METHOD SHOULD DO,
-        WHAT IT RETURNS, ETC.
+        """Method to override in custom `Protocol` subclasses.
+
+        This method should take two `ChemicalSystem`s, and optionally a
+        `Mapping`, and prepare a collection of `ProtocolUnit` instances that
+        when executed in order give sufficient information to estimate the
+        free energy difference between those two `ChemicalSystem`s.
+
+        This method should return a list of `ProtocolUnit` instances.
+        For an instance in which another `ProtocolUnit` is given as a parameter
+        on init, the former instance will be executed only *after* the latter,
+        with the latter's `ProtocolUnitResult` provided as corresponding input
+        to the former's `execute` method.
+
+        In this way, the list of `ProtocolUnit`s returned by this method give an
+        implicit dependency DAG (directed, acyclic graph).
+
+        This method can optionally support extension from an existing
+        `ProtocolDAGResult` by extracting the information needed to use it as a
+        starting point for any simulations required by the `Protocol`.
+
+        See also
+        --------
+        :meth:`Protocol.create`
 
         """
         ...
@@ -174,7 +201,7 @@ class Protocol(GufeTokenizable):
         completed.
 
         A `ProtocolDAG` can be passed to a `Scheduler` for execution on its
-        resources. A `ProtocolResult` can be retrieved from the `Scheduler`
+        resources. A `ProtocolDAGResult` can be retrieved from the `Scheduler`
         upon completion of all `ProtocolUnit`s in the `ProtocolDAG`.
 
         Parameters
@@ -231,4 +258,19 @@ class Protocol(GufeTokenizable):
     def _gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
     ) -> Dict[str, Any]:
+        """Method to override in custom `Protocol` subclasses.
+
+        This method should take any number of `ProtocolDAGResult`s produced
+        by this `Protocol` for a pair of `ChemicalSystem`s and extract the
+        quantities necessary to calculate aggregated estimates of the free
+        energy difference between them.
+
+        This method returns a dict, which becomes the `data` attribute of this
+        `Protocol` subclass's corresponding `ProtocolResult` subclass.
+
+        See also
+        --------
+        :meth:`Protocol.gather`
+
+        """
         ...
