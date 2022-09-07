@@ -109,7 +109,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         histidine_resi_atoms = defaultdict(list)
         _residue_icode = defaultdict(str)
         _residue_index = defaultdict(int)
-
+        _residue_id = defaultdict(int)
         # Add Atoms
         for atom in mol_topology.atoms():
             atomID = int(atom.id)
@@ -140,7 +140,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a.SetProp("hetatom", str(False))
 
             # For histidine fixes
-            dict_key = str(resi) + "_" + resn
+            dict_key = str(resind) + "_" + resn
             if("HIS" == atom.residue.name):
                 histidine_resi_atoms[dict_key].append(atom.name)
             _residue_atom_map[dict_key].append(atomID)
@@ -148,6 +148,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 _residue_icode[dict_key] = icode
             if(dict_key not in _residue_index):
                 _residue_index[dict_key] = resind
+            if(dict_key not in _residue_id):
+                _residue_id[dict_key] = resi
 
             editable_rdmol.AddAtom(a)
 
@@ -179,8 +181,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atomic_num = a.GetAtomicNum()
             atom_name = a.GetProp("name")
             resn = a.GetProp("resName")
-            resi = int(a.GetProp("resId"))
-            dict_key = str(resi) + "_" + resn
+            resind = int(a.GetProp("resInd"))
+            dict_key = str(resind) + "_" + resn
             
             connectivity = sum([int(bond.GetBondType())
                                for bond in a.GetBonds()])
@@ -192,8 +194,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
             # de/protonating in proteins), there can be bond type changes
             # between ND1-CE1-NE2.
             if("HIS" == resn and "N" in atom_name and atom_name != "N"):
-                resi = int(a.GetProp("resId"))
-                dict_key = str(resi) + "_" + resn
+                resind = int(a.GetProp("resInd"))
+                dict_key = str(resind) + "_" + resn
 
                 histidine_atoms = histidine_resi_atoms[dict_key]
                 own_prot = atom_name.replace("N", "H") in histidine_atoms
@@ -211,7 +213,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     bond_change.SetBondType(bond_types[1])
 
                     alternate_atom = [atomB for atomB in rd_mol.GetAtoms() if(atomB.GetProp(
-                        "resId") == str(resi) and atomB.GetProp("name") == str(other_N))][0]
+                        "resInd") == str(resind) and atomB.GetProp("name") == str(other_N))][0]
                     bond_change = [
                         bond for bond in alternate_atom.GetBonds() if(
                             "CE1" in (
@@ -265,11 +267,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         rd_mol.SetProp("sequence", res_seq)
         rd_mol.SetProp("_residue_atom_map", str(dict(_residue_atom_map)))
         rd_mol.SetProp("_residue_index", str(dict(_residue_index)))
+        rd_mol.SetProp("_residue_id", str(dict(_residue_id)))
         rd_mol.SetProp("_residue_icode", str(dict(_residue_icode)))
         rd_mol.SetProp("_charged_res", str(dict(_charged_resi)))
-        residue_name_id = dict([key.split("_")
-                               for key in _residue_atom_map.keys()])
-        rd_mol.SetProp("_residue_name_id", str(dict(residue_name_id)))
 
         # Box dimensions
         pbcVs = mol_topology.getPeriodicBoxVectors()
@@ -401,7 +401,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Atoms
         atoms = {}
         for atom in sorted(dict_prot['atoms'], key=lambda x: x[5]["id"]):
-            key = atom[5]["chainName"] + "_" + str(atom[5]["resId"])
+            key = atom[5]["chainName"] + "_" + str(atom[5]["resInd"])
             r = residues[key]
             aid = atom[5]["id"]
             atom = top.addAtom(name=atom[1],
