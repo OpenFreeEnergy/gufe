@@ -139,12 +139,28 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
              'ligand': toluene_ligand_comp},
             )
 
-    def test_to_dict_itemised(self, instance):
-        ser = instance.to_dict()
-        deser = self.cls.from_dict(ser)
+    def test_key_roundtrip(self, instance):
+        other = self.cls.from_dict(instance.to_dict())
 
-        assert instance.name == deser.name
-        assert np.array_equal(instance.box_vectors, deser.box_vectors,
-                              equal_nan=True)
-        for k in instance.components:
-            assert instance.components[k] == deser.components[k]
+        assert instance.key == other.key
+
+    def test_key_roundtrip_debug(self, instance):
+        other = self.cls.from_dict(instance.to_dict())
+
+        assert instance.__class__.__qualname__ == other.__class__.__qualname__
+
+        from gufe.tokenization import normalize, tokenize
+
+        n1 = normalize(instance)
+        n2 = normalize(other)
+
+        # strip these out
+        n1 = [(k, v) for k, v in n1 if not k == 'box_vectors']
+        n2 = [(k, v) for k, v in n2 if not k == 'box_vectors']
+
+        assert n1 == n2
+
+        t1 = tokenize(instance)
+        t2 = tokenize(other)
+
+        assert t1 == t2
