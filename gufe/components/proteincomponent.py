@@ -191,7 +191,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             # Due to the resonance of the Ns in His (which are frequently
             # de/protonating in proteins), there can be bond type changes
             # between ND1-CE1-NE2.
-            if("HIS" == resn and "N" in atom_name and len(atom_name) > 1):
+            if("HIS" == resn and "N" in atom_name and atom_name != "N"):
                 resi = int(a.GetProp("resId"))
                 dict_key = str(resi) + "_" + resn
 
@@ -200,7 +200,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 other_N = list(filter(lambda x: x.startswith("N") and len(
                     x) > 1 and not atom_name == x, histidine_atoms))[0]
                 other_prot = other_N.replace("N", "H") in histidine_atoms
-
+                                
                 if(own_prot and not other_prot and connectivity != default_valence):
                     # change bond-order
                     bond_change = [
@@ -218,8 +218,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                 bond.GetBeginAtom().GetProp("name"),
                                 bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[2])
-                connectivity = sum([int(bond.GetBondType())
-                                   for bond in a.GetBonds()])
+                    
+                    #update_new connectivity
+                    connectivity = sum([int(bond.GetBondType())
+                                    for bond in a.GetBonds()])
             # HISTIDINE FIX DONE
 
             if(connectivity == 0):  # ions:
