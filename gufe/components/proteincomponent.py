@@ -221,9 +221,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     alternate_atom = []
                     for atomB in rd_mol.GetAtoms():
                         if(atomB.GetProp("resInd") == str(resind)
-                            and atomB.GetProp("name") == str(other_N)):
+                             and atomB.GetProp("name") == str(other_N)):
                             alternate_atom.append(atomB)
-                            
+  
                     alternate_atom = alternate_atom[0]
 
                     bond_change = [
@@ -507,7 +507,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbxFile(self, 
+    def to_pdbxFile(self,
                     out_path: Union[str, io.TextIOWrapper] = None) -> str:
         """
             serialize protein to pdbx file.

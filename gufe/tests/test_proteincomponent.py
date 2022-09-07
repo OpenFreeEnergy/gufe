@@ -202,7 +202,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             nresis1 = openmm_top.getNumResidues() 
             nresi2 = gufe_openmm_top.getNumResidues()
             assert nresis1 == nresi2
-            
+
             pbvs1 = gufe_openmm_top.getPeriodicBoxVectors()
             pbvs2 = openmm_top.getPeriodicBoxVectors()
             v1 = pbvs1.value_in_unit(unit.nanometer)
