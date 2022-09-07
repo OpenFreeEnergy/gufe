@@ -36,6 +36,7 @@ import os
 import sys
 import math
 import numpy as np
+from typing import Dict
 import xml.etree.ElementTree as etree
 from copy import copy
 from datetime import date
@@ -46,7 +47,7 @@ from openmm import Vec3, Platform
 from openmm.app.internal.unitcell import computeLengthsAndAngles
 from openmm.app.internal.pdbstructure import PdbStructure
 
-from . import element as elem
+from openmm.app import element as elem
 try:
     import numpy
 except ImportError:
@@ -61,8 +62,8 @@ class PDBFile(object):
     writeFile().  You also can create files that contain multiple models.  To do this, first call writeHeader(),
     then writeModel() once for each model in the file, and finally writeFooter() to complete the file."""
 
-    _residueNameReplacements = {}
-    _atomNameReplacements = {}
+    _residueNameReplacements:Dict[str, str] = {}
+    _atomNameReplacements:Dict[str, str] = {}
     _standardResidues = [
         'ALA',
         'ASN',

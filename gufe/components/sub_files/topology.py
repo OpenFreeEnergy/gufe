@@ -29,6 +29,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from __future__ import absolute_import
+from typing import Dict, Tuple
 from openmm.unit import nanometers, sqrt, is_quantity
 from copy import deepcopy
 import xml.etree.ElementTree as etree
@@ -66,7 +67,7 @@ class Single(Singleton):
         return 'Single'
 
 
-Single = Single()
+Single:Single = Single()
 
 
 class Double(Singleton):
@@ -74,7 +75,7 @@ class Double(Singleton):
         return 'Double'
 
 
-Double = Double()
+Double:Double = Double()
 
 
 class Triple(Singleton):
@@ -82,7 +83,7 @@ class Triple(Singleton):
         return 'Triple'
 
 
-Triple = Triple()
+Triple:Triple = Triple()
 
 
 class Aromatic(Singleton):
@@ -90,7 +91,7 @@ class Aromatic(Singleton):
         return 'Aromatic'
 
 
-Aromatic = Aromatic()
+Aromatic:Aromatic = Aromatic()
 
 
 class Amide(Singleton):
@@ -98,7 +99,7 @@ class Amide(Singleton):
         return 'Amide'
 
 
-Amide = Amide()
+Amide:Amide = Amide()
 
 
 class Topology(object):
@@ -112,8 +113,8 @@ class Topology(object):
     Atom and residue names should follow the PDB 3.0 nomenclature for all molecules for which one exists.
     """
 
-    _standardBonds = {}
-    _hasLoadedStandardBonds = False
+    _standardBonds:Dict[str, tuple] = {}
+    _hasLoadedStandardBonds:bool = False
 
     def __init__(self):
         """Create a new Topology object"""

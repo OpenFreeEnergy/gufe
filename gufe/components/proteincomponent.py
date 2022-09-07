@@ -224,7 +224,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                              and atomB.GetProp("name") == str(other_N)):
                             alternate_atom.append(atomB)
 
-                    alternate_atom = alternate_atom[0]
+                    alternate_atom: Chem.rdchem.Atom = alternate_atom[0]
 
                     bond_change = [
                         bond for bond in alternate_atom.GetBonds() if(
