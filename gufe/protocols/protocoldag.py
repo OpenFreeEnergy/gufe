@@ -88,18 +88,15 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._result_graph = self._build_graph(protocol_unit_results)
 
         # build mapping from protocol units to results
-        # we use results as the basis for this, so this works for
-        # `ProtocolDAGFailure` as well
+        # TODO: currently assumes only a single ProtocolUnitResult for each
+        # ProtocolUnit; will need to update this class if multiple failed
+        # ProtocolUnitResults for a given ProtocolUnitResult supported in this
+        # data structure
         keys_to_pu = {unit.key: unit for unit in self._protocol_units}
         self._unit_result_mapping = {keys_to_pu[result.source_key]: result
                                      for result in self._protocol_unit_results}
         self._result_unit_mapping = {result: unit for unit, result
                                      in self._unit_result_mapping.items()}
-
-        self._validate()
-
-    def _validate(self):
-        assert len(self._protocol_unit_results) == len(self._protocol_units)
 
     def _defaults(self):
         # not used by `ProtocolDAG`
@@ -107,8 +104,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     def _to_dict(self):
         return {'name': self.name,
-                'protocol_units': self.protocol_units,
-                'protocol_unit_results': self.protocol_unit_results}
+                'protocol_units': self._protocol_units,
+                'protocol_unit_results': self._protocol_unit_results}
 
     @classmethod
     def _from_dict(cls, dct: Dict):
@@ -125,6 +122,14 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     def protocol_unit_results(self):
         return list(self._iterate_dag_order(self.result_graph))
 
+    @property
+    def protocol_unit_failures(self):
+        """A list of `ProtocolUnitFailure`s corresponding to only failed
+        `ProtocolUnit`s.
+
+        """
+        return [r for r in self.protocol_unit_results if not r.ok()]
+
     def unit_to_result(self, protocol_unit: ProtocolUnit):
         try:
             return self._unit_result_mapping[protocol_unit]
@@ -138,40 +143,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
             raise KeyError("No such `protocol_unit_result` present")
 
     def ok(self) -> bool:
-        return True
-
-
-class ProtocolDAGFailure(ProtocolDAGResult):
-    """A failed `ProtocolDAGResult`.
-
-    """
-
-    def _validate(self):
-        assert len(self._protocol_unit_results) <= len(self._protocol_units)
-
-    def ok(self) -> bool:
-        return False
-
-    @property
-    def protocol_unit_failures(self):
-        """A list of `ProtocolUnitFailure`s corresponding to only failed
-        `ProtocolUnit`s.
-
-        """
-        return [r for r in self.protocol_unit_results if not r.ok()]
-
-    def _defaults(self):
-        # not used by `ProtocolDAG`
-        return {}
-
-    def _to_dict(self):
-        return {'name': self.name,
-                'protocol_units': self.protocol_units,
-                'protocol_unit_results': self.protocol_unit_results}
-
-    @classmethod
-    def _from_dict(cls, dct: Dict):
-        return cls(**dct)
+        # ensure that for every protocol unit, there is definitely a
+        # corresponding result
+        return set(self._protocol_units) == set(self._unit_result_mapping.keys())
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
@@ -234,7 +208,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def execute(protocoldag: ProtocolDAG, *, 
-            dag_scratch: PathLike = None) -> Union[ProtocolDAGResult, ProtocolDAGFailure]:
+            dag_scratch: PathLike = None) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
@@ -251,9 +225,8 @@ def execute(protocoldag: ProtocolDAG, *,
 
     Returns
     -------
-    Union[ProtocolDAGResult, ProtocolDAGFailure]
+    ProtocolDAGResult
         The result of executing the `ProtocolDAG`.
-        A `ProtocolDAGResult` on success; a `ProtocolDAGFailure` if failed.
 
     """
     if dag_scratch is None:
@@ -277,13 +250,7 @@ def execute(protocoldag: ProtocolDAG, *,
         results[unit.key] = result
 
         if not result.ok():
-            if dag_scratch is None:
-                dag_scratch_tmp.cleanup()
-
-            return ProtocolDAGFailure(
-                    name=protocoldag._name,
-                    protocol_units=protocoldag.protocol_units, 
-                    protocol_unit_results=list(results.values()))
+            break
 
     # TODO: change this part once we have clearer ideas on how to inject
     # persistent storage use

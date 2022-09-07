@@ -8,12 +8,13 @@ part of a `ProtocolDAG`.
 
 import abc
 from dataclasses import dataclass
+import sys
 import traceback
 import uuid
 from os import PathLike
 from pathlib import Path
 from copy import copy
-from typing import Iterable, List, Dict, Any, Optional, Union
+from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
 import tempfile
 
 from ..tokenization import GufeTokenizable, GufeKey, normalize
@@ -176,8 +177,10 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         `ProtocolUnitResult`.
     dependencies : List[ProtocolUnitResult]
         A list of the `ProtocolUnitResult`s depended upon.
-    exception : Exception
-        The exception raised during `ProtocolUnit` exectuion.
+    exception : Tuple[str, Tuple[Any, ...]]
+        A tuple giving details on the exception raised during `ProtocolUnit`
+        execution. The first element gives the type of exception raised; the
+        second element is a tuple giving the exception's `args` values.
     traceback : str
         The traceback given by the exception.
 
@@ -195,7 +198,7 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         return dct
 
     @property
-    def exception(self) -> Exception:
+    def exception(self) -> Tuple[str, Tuple[Any, ...]]:
         return self._exception
 
     @property
@@ -331,8 +334,8 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
                 source_key=self.key,
                 inputs=inputs,
                 outputs=dict(),
-                exception=e,
-                traceback=traceback.format_exc(),
+                exception=(str(type(e)), e.args),
+                traceback=traceback.format_exc()
             )
 
         # TODO: change this part once we have clearer ideas on how to inject

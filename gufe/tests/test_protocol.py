@@ -16,7 +16,6 @@ from gufe.protocols import (
     ProtocolUnit,
     ProtocolResult,
     ProtocolDAGResult,
-    ProtocolDAGFailure,
     ProtocolUnitResult,
     ProtocolUnitFailure,
 )
@@ -212,7 +211,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
         )
 
-        dagfailure: ProtocolDAGFailure = execute(dag)
+        dagfailure: ProtocolDAGResult = execute(dag)
 
         return protocol, dag, dagfailure
 
@@ -246,7 +245,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         protocol, dag, dagfailure = protocol_dag_broken
 
         assert not dagfailure.ok()
-        assert isinstance(dagfailure, ProtocolDAGFailure)
+        assert isinstance(dagfailure, ProtocolDAGResult)
 
         failed_units = dagfailure.protocol_unit_failures
 
@@ -254,7 +253,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert failed_units[0].name == "problem child"
 
         # parse exception arguments
-        assert failed_units[0].exception.args[1]['data'] == "lol"
+        assert failed_units[0].exception[1][1]['data'] == "lol"
         assert isinstance(failed_units[0], ProtocolUnitFailure)
 
         succeeded_units = dagfailure.protocol_unit_results
@@ -313,6 +312,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         @pytest.fixture
         def instance(self, protocol_dag):
             protocol, dag, dagresult = protocol_dag
+            assert dagresult.ok()
             return dagresult
 
         def test_protocol_unit_results(self, instance: ProtocolDAGResult):
@@ -349,15 +349,19 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 pu: ProtocolUnit = instance.result_to_unit(pur)
                 assert pu.key == pur.source_key
 
-    class TestProtocolDAGFailure(ProtocolDAGTestsMixin):
-        cls = ProtocolDAGFailure
+        def test_protocol_unit_failures(self, instance: ProtocolDAGResult):
+            assert len(instance.protocol_unit_failures) == 0
+
+    class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
+        cls = ProtocolDAGResult
 
         @pytest.fixture
         def instance(self, protocol_dag_broken):
             protocol, dag, dagfailure = protocol_dag_broken
+            assert not dagfailure.ok()
             return dagfailure
 
-        def test_protocol_unit_failures(self, instance: ProtocolDAGFailure):
+        def test_protocol_unit_failures(self, instance: ProtocolDAGResult):
             # protocolunitfailures should have no dependents
             for puf in instance.protocol_unit_failures:
 
@@ -368,11 +372,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 with pytest.raises(KeyError):
                     instance.result_graph.edges[node, puf]
 
-        def test_protocol_unit_failure_exception(self, instance: ProtocolDAGFailure):
+        def test_protocol_unit_failure_exception(self, instance: ProtocolDAGResult):
             for puf in instance.protocol_unit_failures:
                 isinstance(puf.exception, ValueError)
 
-        def test_protocol_unit_failure_traceback(self, instance: ProtocolDAGFailure):
+        def test_protocol_unit_failure_traceback(self, instance: ProtocolDAGResult):
             for puf in instance.protocol_unit_failures:
                 assert 'ValueError("I have failed my mission", ' in puf.traceback
 
