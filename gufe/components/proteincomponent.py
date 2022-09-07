@@ -473,7 +473,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         Parameters
         ----------
-        out_path : str, optional
+        out_path : str
             provide path or FileIO to the resulting file, by default None
 
         Returns
@@ -507,7 +507,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             Parameters
             ----------
-            out_path : str, optional
+            out_path : str
                 provide path or FileIO to the resulting file, by default None
 
             Returns
