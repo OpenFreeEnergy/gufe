@@ -26,8 +26,8 @@ class Context:
     `ProtocolUnit._execute`.
 
     """
-    unit_scratch: PathLike
-    dag_scratch: PathLike
+    scratch: PathLike
+    shared: PathLike
 
 
 class ProtocolUnitMixin:
@@ -290,18 +290,18 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         return self._dependencies     # type: ignore
 
     def execute(self, *, 
-            dag_scratch: PathLike, 
-            unit_scratch: Optional[PathLike] = None, 
+            shared: PathLike, 
+            scratch: Optional[PathLike] = None, 
             **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
-        dag_scratch : PathLike
+        shared : PathLike
            Path to scratch space that persists across whole DAG execution, but
            is removed after. Used by some `ProtocolUnit`s to pass file contents
            to dependent `ProtocolUnit`s.
-        unit_scratch : Optional[PathLike]
+        scratch : Optional[PathLike]
             Path to scratch space that persists during execution of this
             `ProtocolUnit`, but removed after.
             
@@ -313,14 +313,14 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         """
         result: Union[ProtocolUnitResult, ProtocolUnitFailure]
 
-        if unit_scratch is None:
-            unit_scratch_tmp = tempfile.TemporaryDirectory()
-            unit_scratch_ = Path(unit_scratch_tmp.name)
+        if scratch is None:
+            scratch_tmp = tempfile.TemporaryDirectory()
+            scratch_ = Path(scratch_tmp.name)
         else:
-            unit_scratch_ = Path(unit_scratch)
+            scratch_ = Path(scratch)
 
-        context = Context(dag_scratch=dag_scratch,
-                          unit_scratch=unit_scratch_)
+        context = Context(shared=shared,
+                          scratch=scratch_)
 
         try:
             outputs = self._execute(context, **inputs)
@@ -340,8 +340,8 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
 
         # TODO: change this part once we have clearer ideas on how to inject
         # persistent storage use
-        if unit_scratch is None:
-            unit_scratch_tmp.cleanup()
+        if scratch is None:
+            scratch_tmp.cleanup()
 
         return result
 

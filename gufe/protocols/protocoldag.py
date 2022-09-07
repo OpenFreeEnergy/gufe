@@ -208,7 +208,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def execute(protocoldag: ProtocolDAG, *, 
-            dag_scratch: PathLike = None) -> ProtocolDAGResult:
+            shared: PathLike = None) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
@@ -218,7 +218,7 @@ def execute(protocoldag: ProtocolDAG, *,
     ----------
     protocoldag : ProtocolDAG
         The `ProtocolDAG` to execute.
-    dag_scratch : Optional[PathLike]
+    shared : Optional[PathLike]
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
@@ -229,11 +229,11 @@ def execute(protocoldag: ProtocolDAG, *,
         The result of executing the `ProtocolDAG`.
 
     """
-    if dag_scratch is None:
-        dag_scratch_tmp = tempfile.TemporaryDirectory()
-        dag_scratch_ = Path(dag_scratch_tmp.name)
+    if shared is None:
+        shared_tmp = tempfile.TemporaryDirectory()
+        shared_ = Path(shared_tmp.name)
     else:
-        dag_scratch_ = Path(dag_scratch)
+        shared_ = Path(shared)
 
     # iterate in DAG order
     results: Dict[GufeKey, ProtocolUnitResult] = {}
@@ -244,7 +244,7 @@ def execute(protocoldag: ProtocolDAG, *,
         inputs = _pu_to_pur(unit.inputs, results)
 
         # execute
-        result = unit.execute(dag_scratch=dag_scratch_, **inputs)
+        result = unit.execute(shared=shared_, **inputs)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
@@ -254,8 +254,8 @@ def execute(protocoldag: ProtocolDAG, *,
 
     # TODO: change this part once we have clearer ideas on how to inject
     # persistent storage use
-    if dag_scratch is None:
-        dag_scratch_tmp.cleanup()
+    if shared is None:
+        shared_tmp.cleanup()
 
     return ProtocolDAGResult(
             name=protocoldag.name, 

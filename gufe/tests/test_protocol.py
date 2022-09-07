@@ -44,8 +44,8 @@ class SimulationUnit(ProtocolUnit):
             log=output,
             window=inputs["window"],
             key_result=(100 - (inputs["window"] - 10)**2),
-            unit_scratch=ctx.unit_scratch,
-            dag_scratch=ctx.dag_scratch
+            scratch=ctx.scratch,
+            shared=ctx.shared
         )
 
 
@@ -108,7 +108,7 @@ class DummyProtocol(Protocol):
             # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
             # any ProtocolUnits below, since this could create dependency hell;
             # instead, extract what's needed from it for starting point here
-            starting_point = extend_from['final_positions']
+            starting_point = extend_from.protocol_unit_results[-1].outputs['final_positions']
         else:
             starting_point = None
 
@@ -235,11 +235,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # check that we have as many units as we expect in resulting graph
         assert len(dagresult.graph) == 23
         
-        # check that dag_scratch directory the same for all simulations
-        assert len(set(i.outputs['dag_scratch'] for i in simulationresults)) == 1
+        # check that shared directory the same for all simulations
+        assert len(set(i.outputs['shared'] for i in simulationresults)) == 1
 
-        # check that unit_scratch directory is different for all simulations
-        assert len(set(i.outputs['unit_scratch'] for i in simulationresults)) == len(simulationresults)
+        # check that scratch directory is different for all simulations
+        assert len(set(i.outputs['scratch'] for i in simulationresults)) == len(simulationresults)
 
     def test_dag_execute_failure(self, protocol_dag_broken):
         protocol, dag, dagfailure = protocol_dag_broken
