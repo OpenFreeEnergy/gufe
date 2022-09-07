@@ -138,3 +138,13 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
             {'solvent': solv_comp,
              'ligand': toluene_ligand_comp},
             )
+
+    def test_to_dict_itemised(self, instance):
+        ser = instance.to_dict()
+        deser = self.cls.from_dict(ser)
+
+        assert instance.name == deser.name
+        assert np.array_equal(instance.box_vectors, deser.box_vectors,
+                              equal_nan=True)
+        for k in instance.components:
+            assert instance.components[k] == deser.components[k]
