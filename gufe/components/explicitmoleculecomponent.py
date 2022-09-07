@@ -56,7 +56,9 @@ class ExplicitMoleculeComponent(Component):
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
-        elif (n_confs := len(conformers) ) > 1:
+        
+        n_confs = len(conformers)
+        if n_confs > 1:
             warnings.warn(f"Molecule provided with {n_confs} conformers. "
                           "Only the first will be used.")
 

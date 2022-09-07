@@ -46,7 +46,6 @@ def assign_correct_prop_type(rd_obj, prop_name, prop_value):
         rd_obj.SetProp(prop_name, str(prop_value))
 
 
-
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
 
@@ -209,7 +208,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     x) > 1 and not atom_name == x, histidine_atoms))[0]
                 other_prot = other_N.replace("N", "H") in histidine_atoms
 
-                if(own_prot and not other_prot and connectivity != default_valence):
+                if(own_prot and not other_prot and 
+                   connectivity != default_valence):
                     # change bond-order
                     bond_change = [
                         bond for bond in a.GetBonds() if(
@@ -218,8 +218,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                 bond.GetEndAtom().GetProp("name")))][0]
                     bond_change.SetBondType(bond_types[1])
 
-                    alternate_atom = [atomB for atomB in rd_mol.GetAtoms() if(atomB.GetProp(
-                        "resInd") == str(resind) and atomB.GetProp("name") == str(other_N))][0]
+                    alternate_atom = [atomB for atomB in rd_mol.GetAtoms()
+                                      if(atomB.GetProp("resInd") == str(resind)
+                                         and atomB.GetProp("name") == str(other_N))][0]
                     bond_change = [
                         bond for bond in alternate_atom.GetBonds() if(
                             "CE1" in (
@@ -533,7 +534,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             # Standards:
             try:
                 name = atom.GetProp("name")
-            except KeyError:  # this is default fallback if ff atom name was not stored. mainly used if an rdkit structure is passed.
+            except KeyError:  # this is default fallback
                 name = atom.GetSymbol()
 
             atoms.append(

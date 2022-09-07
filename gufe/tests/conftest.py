@@ -39,22 +39,26 @@ def multi_molecule_sdf():
 def PDB_181L_path():
     with importlib.resources.path('gufe.tests.data', '181l.pdb') as f:
         yield str(f)
-        
+
+
 @pytest.fixture
 def PDB_181L_OpenMMClean_path():
-    with importlib.resources.path('gufe.tests.data', '181l_openmmClean.pdb') as f:
+    with importlib.resources.path('gufe.tests.data', 
+                                  '181l_openmmClean.pdb') as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDB_thrombin_path():
-    with importlib.resources.path('gufe.tests.data', 'thrombin_protein.pdb') as f:
+    with importlib.resources.path('gufe.tests.data', 
+                                  'thrombin_protein.pdb') as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDBx_181L_path():
-    with importlib.resources.path('gufe.tests.data', '181l.cif') as f:
+    with importlib.resources.path('gufe.tests.data', 
+                                  '181l.cif') as f:
         yield str(f)
 
 @pytest.fixture
@@ -71,7 +75,7 @@ def PDB_benchmarkFiles():
         "tnsk2_protein_openmmClean.pdb",
         "tyk2_protein_openmmClean.pdb",
         ]
-    
+
     pdb_paths = []
     for pdb_path in pdb_filenames:
         with importlib.resources.path('gufe.tests.data', pdb_path) as f:
