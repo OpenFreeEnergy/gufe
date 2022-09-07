@@ -40,15 +40,17 @@ import xml.etree.ElementTree as etree
 from copy import copy
 from datetime import date
 
-# WIP: REMOVE OPENMM As Far As Poissible
-#from .pdbstructure import PdbStructure
-from openmm.app.internal.pdbstructure import PdbStructure
 
 from .topology import Topology
-from .element import chlorine, sodium, magnesium, beryllium, lithium, potassium, zinc, calcium, get_by_symbol
 from openmm import Vec3, Platform
 from openmm.app.internal.unitcell import computeLengthsAndAngles
+from openmm.app.internal.pdbstructure import PdbStructure
 
+from . import element as elem
+try:
+    import numpy
+except ImportError:
+    pass
 from openmm.unit import nanometers, angstroms, is_quantity, norm, Quantity
 
 
@@ -201,26 +203,26 @@ class PDBFile(object):
                         while len(upper) > 1 and upper[0].isdigit():
                             upper = upper[1:]
                         if upper.startswith('CL'):
-                            element = chlorine
+                            element = elem.chlorine
                         elif upper.startswith('NA'):
-                            element = sodium
+                            element = elem.sodium
                         elif upper.startswith('MG'):
-                            element = magnesium
+                            element = elem.magnesium
                         elif upper.startswith('BE'):
-                            element = beryllium
+                            element = elem.beryllium
                         elif upper.startswith('LI'):
-                            element = lithium
+                            element = elem.lithium
                         elif upper.startswith('K'):
-                            element = potassium
+                            element = elem.potassium
                         elif upper.startswith('ZN'):
-                            element = zinc
+                            element = elem.zinc
                         elif len(residue) == 1 and upper.startswith('CA'):
-                            element = calcium
+                            element = elem.calcium
                         elif upper.startswith('D') and any(a.name == atomName[1:] for a in residue.iter_atoms()):
                             pass  # A Drude particle
                         else:
                             try:
-                                element = get_by_symbol(upper[0])
+                                element = elem.get_by_symbol(upper[0])
                             except KeyError:
                                 pass
                     newAtom = top.addAtom(
@@ -302,7 +304,7 @@ class PDBFile(object):
                 self._numpyPositions = [None] * len(self._positions)
             if self._numpyPositions[frame] is None:
                 self._numpyPositions[frame] = Quantity(
-                    np.array(self._positions[frame].value_in_unit(nanometers)), nanometers)
+                    numpy.array(self._positions[frame].value_in_unit(nanometers)), nanometers)
             return self._numpyPositions[frame]
         return self._positions[frame]
 
