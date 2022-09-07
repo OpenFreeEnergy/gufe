@@ -140,28 +140,16 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
             box_vectors=np.array([10, 10, 10, 90, 90, 90.]),
             )
 
-    def test_key_roundtrip(self, instance):
-        other = self.cls.from_dict(instance.to_dict())
 
-        assert instance.key == other.key
+@pytest.mark.xfail
+class TestChemicalSystemNanBox(GufeTokenizableTestsMixin):
 
-    def test_key_roundtrip_debug(self, instance):
-        other = self.cls.from_dict(instance.to_dict())
+    cls = ChemicalSystem
 
-        assert instance.__class__.__qualname__ == other.__class__.__qualname__
-
-        from gufe.tokenization import normalize, tokenize
-
-        n1 = normalize(instance)
-        n2 = normalize(other)
-
-        # strip these out
-        n1 = [(k, v) for k, v in n1 if not k == 'box_vectors']
-        n2 = [(k, v) for k, v in n2 if not k == 'box_vectors']
-
-        assert n1 == n2
-
-        t1 = tokenize(instance)
-        t2 = tokenize(other)
-
-        assert t1 == t2
+    @pytest.fixture
+    def instance(self, solv_comp, toluene_ligand_comp):
+        return ChemicalSystem(
+            {'solvent': solv_comp,
+             'ligand': toluene_ligand_comp},
+            box_vectors=np.array([np.nan, 10, 10, 90, 90, 90.]),
+            )
