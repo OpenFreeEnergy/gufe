@@ -4,8 +4,10 @@
 The machinery for tokenizing gufe objects live in this module.
 """
 import abc
+import datetime
 import hashlib
 import importlib
+from pathlib import Path
 import inspect
 import copy
 from typing import Dict, Any, Callable, Union, List, Tuple
@@ -58,10 +60,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            raise NotImplementedError("Object comparisons must be of the same "
-                                  "type")
+            return False
 
-        return self.to_dict() == other.to_dict()
+        return self.to_keyed_dict() == other.to_keyed_dict()
 
     def __hash__(self):
         return hash(self.key)
@@ -70,7 +71,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
-        return sorted(self.to_dict(include_defaults=False).items(), key=str)
+        return normalize(self.to_dict(include_defaults=False))
 
     @property
     def key(self):
@@ -111,7 +112,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """This method should be overridden to provide the dict form of the
         `GufeTokenizable` subclass.
 
-        `GufeTokenizable` instances shoulds *not* be used as keys in dicts
+        `GufeTokenizable` instances should *not* be used as keys in dicts
         within this object; even though they are hashable, this makes
         serialization into e.g. JSON difficult.
 
@@ -293,7 +294,7 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
+def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=True):
     """
     Parameters
     ----------
@@ -302,26 +303,31 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, top=True):
         only iterables are list, and that no gufe objects are in the keys of
         dicts
     modifier : Callable[[GufeTokenizable], Any]
-        function that modifies any GufeTokenizable found
+        Function that modifies any GufeTokenizable found
     is_mine : Callable[Any, bool]
-        function that determines whether the given object should be
+        Function that determines whether the given object should be
         subjected to the modifier
+    mode : {'encode', 'decode'}
+        Whether this function is being used to encode a set of
+        `GufeTokenizable`s or decode them from dict or key-encoded forms.
+        Required to determine when to modify objects found in nested dict/list.
     top : bool
         If `True`, skip modifying `obj` itself; needed for recursive use to
         avoid early stopping on `obj`.
     """
-    obj = copy.deepcopy(obj)
-
-    if is_mine(obj) and not top:
+    if is_mine(obj) and not top and mode == 'encode':
         obj = modifier(obj)
 
     if isinstance(obj, dict):
-        obj = {key: modify_dependencies(value, modifier, is_mine, top=False)
+        obj = {key: modify_dependencies(value, modifier, is_mine, mode=mode, top=False)
                for key, value in obj.items()}
 
     elif isinstance(obj, list):
-        obj = [modify_dependencies(item, modifier, is_mine, top=False)
+        obj = [modify_dependencies(item, modifier, is_mine, mode=mode, top=False)
                for item in obj]
+
+    if is_mine(obj) and not top and mode == 'decode':
+        obj = modifier(obj)
 
     return obj
 
@@ -338,6 +344,7 @@ def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
         obj.to_shallow_dict(),
         to_dict,
         is_gufe_obj,
+        mode='encode',
         top=True
     )
 
@@ -347,18 +354,13 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
         obj.to_shallow_dict(),
         lambda obj: obj.key.to_dict(),
         is_gufe_obj,
+        mode='encode',
         top=True
     )
 
 
 # decode options
 def from_dict(dct) -> GufeTokenizable:
-    dct = copy.deepcopy(dct)
-
-    for key, val in dct.items():
-        if is_gufe_dict(val):
-            dct[key] = from_dict(val)
-
     obj = _from_dict(dct)
     thing = TOKENIZABLE_REGISTRY[obj.key]
 
@@ -379,7 +381,7 @@ def _from_dict(dct: Dict) -> GufeTokenizable:
 
 def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
     return from_dict(
-        modify_dependencies(dct, from_dict, is_gufe_dict, top=True)
+        modify_dependencies(dct, from_dict, is_gufe_dict, mode='decode', top=True)
     )
 
 
@@ -390,12 +392,63 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
         dct,
         lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])],
         is_gufe_key_dict,
+        mode='decode',
         top=True
     )
     return from_dict(dct)
 
 
-# inspired by `dask.base`
+## inspired by `dask.base`
+
+# TODO: make this more efficient with a dispatch mechanism
+# instead of a series of isinstance checks
+def normalize(o):
+
+    # dicts
+    if isinstance(o, dict):
+        dct = {key: normalize(value) 
+               for key, value in o.items()}
+        return normalize_dict(dct)
+
+    # lists and tuples
+    if isinstance(o, (list, tuple)):
+        return list(map(normalize, o))
+
+    # paths
+    if isinstance(o, Path):
+        return str(o)
+
+    # GufeTokenizable
+    method = getattr(o, "_gufe_tokenize", None)
+    if method is not None:
+        return method()
+
+    # primitives we support
+    if isinstance(o,
+        (int,
+        float,
+        str,
+        bytes,
+        type(None),
+        type,
+        slice,
+        complex,
+        type(Ellipsis),
+        datetime.date)):
+            return o
+
+    if isinstance(o, Exception):
+        return 
+
+    raise RuntimeError(
+        f"Object {str(o)} cannot be deterministically hashed."
+    )
+
+
+def normalize_dict(d):
+    return sorted(d.items(), key=str)
+
+
 def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a
     `GufeTokenizable` object.
@@ -411,5 +464,5 @@ def tokenize(obj: GufeTokenizable) -> str:
     True
 
     """
-    hasher = hashlib.md5(str(obj._gufe_tokenize()).encode(), usedforsecurity=False)
+    hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
     return hasher.hexdigest()

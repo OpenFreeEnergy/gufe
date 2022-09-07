@@ -2,7 +2,7 @@ import pytest
 import abc
 from unittest import mock
 
-from gufe.tokenize import (
+from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
     import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY,
 )
@@ -87,6 +87,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
         reser = deser.to_dict()
 
         assert instance == deser
+        assert instance is deser
 
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
@@ -193,8 +194,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         l1 = Leaf(4)
         l2 = Leaf2(4)
 
-        with pytest.raises(NotImplementedError):
-            l1 == l2
+        assert l1 != l2
 
 
 class Outer:
@@ -205,7 +205,7 @@ class Outer:
 @pytest.mark.parametrize('modname, qualname, expected', [
     (__name__, "Outer", Outer),
     (__name__, "Outer.Inner", Outer.Inner),
-    ("gufe.tokenize", 'import_qualname', import_qualname),
+    ("gufe.tokenization", 'import_qualname', import_qualname),
 ])
 def test_import_qualname(modname, qualname, expected):
     assert import_qualname(modname, qualname) is expected
@@ -240,5 +240,5 @@ def test_import_qualname_error_none(modname, qualname):
     {(__name__, "Outer.Inner"): Outer.Inner},
 ])
 def test_get_class(cls_reg):
-    with mock.patch.dict("gufe.tokenize.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
+    with mock.patch.dict("gufe.tokenization.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
         assert get_class(__name__, "Outer.Inner") is Outer.Inner
