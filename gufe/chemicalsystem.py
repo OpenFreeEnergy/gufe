@@ -76,15 +76,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             return False
         if self._name != other.name:
             return False
-        
-        #CI DEBUG TODO: REMOVE!
-        print("here is a beautiful nan comp", 
-              not np.array_equal(self._box_vectors, other.box_vectors,
-                              equal_nan=True))
-        for x,y in zip(self._box_vectors, other.box_vectors,):
-            print("comp elementwise: ", x, y, "equal: ", x==y)
-            print("elements are nan", np.isnan(x), np.isnan(y) )
-        
         if not np.array_equal(self._box_vectors, other.box_vectors,
                               equal_nan=True):  # nan usually compares to false
             return False
