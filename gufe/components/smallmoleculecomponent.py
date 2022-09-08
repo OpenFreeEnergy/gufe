@@ -6,8 +6,7 @@ logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
 import warnings
-from openmm import unit  # TODO: waiting on off-tk 0.11
-# from openff.units import unit  # off-tk 0.11
+from openff.units import unit
 
 from rdkit import Chem
 
@@ -141,11 +140,9 @@ class SmallMoleculeComponent(Component):
         # charge. We might want to explcitly include them in the stored dict.
         m = self.to_openff()
         atoms = [
-            (atom.element.atomic_number,
+            (atom.atomic_number,
              atom.name,
-             # off-tk 0.11 changes formal charge:
-             atom.formal_charge.value_in_unit(unit.elementary_charge),
-             # atom.formal_charge.m_as(unit.elementary_charge),
+             atom.formal_charge.m_as(unit.elementary_charge),
              atom.is_aromatic,
              atom.stereochemistry or '')
             for atom in m.atoms
@@ -163,8 +160,7 @@ class SmallMoleculeComponent(Component):
                                "least 1 conformer")
 
         conformers = [
-            serialize_numpy(conf.value_in_unit(unit.angstrom))  # off-tk 0.11
-            # serialize_numpy(conf.m_as(unit.angstrom))
+            serialize_numpy(conf.m_as(unit.angstrom))
             for conf in m.conformers
         ]
 

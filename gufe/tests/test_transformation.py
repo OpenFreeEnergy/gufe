@@ -4,6 +4,7 @@
 import pytest
 
 from gufe.transformations import Transformation, NonTransformation
+from gufe.protocols.protocoldag import execute
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
 
@@ -36,7 +37,7 @@ class TestTransformation:
         assert isinstance(tnf.protocol, DummyProtocol)
 
         protocoldag = tnf.create()
-        protocoldagresult = protocoldag.execute()
+        protocoldagresult = execute(protocoldag)
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -84,7 +85,7 @@ class TestNonTransformation:
         assert isinstance(ntnf.protocol, DummyProtocol)
 
         protocoldag = ntnf.create()
-        protocoldagresult = protocoldag.execute()
+        protocoldagresult = execute(protocoldag)
 
         protocolresult = ntnf.gather([protocoldagresult])
 

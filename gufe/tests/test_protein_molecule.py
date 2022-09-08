@@ -6,7 +6,7 @@ from rdkit import Chem
 
 from gufe import ProteinComponent
 
-from .test_tokenize import GufeTokenizableTestsMixin
+from .test_tokenization import GufeTokenizableTestsMixin
 
 
 @pytest.fixture

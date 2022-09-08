@@ -6,7 +6,7 @@ import numpy as np
 
 from gufe import ChemicalSystem
 
-from .test_tokenize import GufeTokenizableTestsMixin
+from .test_tokenization import GufeTokenizableTestsMixin
 
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
     # sanity checks on construction
@@ -137,4 +137,19 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
         return ChemicalSystem(
             {'solvent': solv_comp,
              'ligand': toluene_ligand_comp},
+            box_vectors=np.array([10, 10, 10, 90, 90, 90.]),
+            )
+
+
+@pytest.mark.xfail
+class TestChemicalSystemNanBox(GufeTokenizableTestsMixin):
+
+    cls = ChemicalSystem
+
+    @pytest.fixture
+    def instance(self, solv_comp, toluene_ligand_comp):
+        return ChemicalSystem(
+            {'solvent': solv_comp,
+             'ligand': toluene_ligand_comp},
+            box_vectors=np.array([np.nan, 10, 10, 90, 90, 90.]),
             )
