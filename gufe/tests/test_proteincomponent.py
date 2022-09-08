@@ -37,6 +37,8 @@ def line_by_line_comparison(in_file_path, out_file_path):
     assert len(in_lines) == len(out_lines)
 
     for i, in_line in enumerate(in_lines):
+        if(in_line.startswith("CREATED WITH OPENMM")):
+            continue
         out_line = out_lines[i]
         if(in_line == out_line):
             continue
