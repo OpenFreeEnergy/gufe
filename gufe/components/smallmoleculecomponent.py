@@ -9,6 +9,7 @@ logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
 from openff.units import unit as openff_unit
 
+
 from rdkit import Chem
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
