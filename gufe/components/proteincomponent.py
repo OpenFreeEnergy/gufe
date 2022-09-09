@@ -7,7 +7,6 @@ import numpy as np
 from typing import Union
 from collections import defaultdict
 
-from openmm import Vec3
 from openmm import app
 from openmm import unit as omm_unit
 from openmm.app.pdbxfile import PDBxFile
@@ -31,8 +30,8 @@ bond_types = {1: BondType.SINGLE,
               None: BondType.UNSPECIFIED,
               }
 
-negative_ions = ["CL"]
-positive_ions = ["NA", "MG", 'ZN']
+negative_ions = ["F", "CL", "Br", "I"]
+positive_ions = ["NA", "MG", "ZN"]
 
 
 def assign_correct_prop_type(rd_obj, prop_name, prop_value):
@@ -111,7 +110,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Build Topology
         _residue_atom_map = defaultdict(list)
-        histidine_resi_atoms = defaultdict(list)
         _residue_icode = defaultdict(str)
         _residue_index = defaultdict(int)
         _residue_id = defaultdict(int)
@@ -144,10 +142,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             a.SetProp("hetatom", str(False))
 
-            # For histidine fixes
+            # For molecule props
             dict_key = str(resind) + "_" + resn
-            if("HIS" == atom.residue.name):
-                histidine_resi_atoms[dict_key].append(atom.name)
             _residue_atom_map[dict_key].append(atomID)
             if(dict_key not in _residue_icode):
                 _residue_icode[dict_key] = icode
@@ -191,52 +187,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             connectivity = sum([int(bond.GetBondType())
                                for bond in a.GetBonds()])
-
             default_valence = periodicTable.GetDefaultValence(atomic_num)
-
-            # HISTIDINE FIX  resonance
-            # Due to the resonance of the Ns in His (which are frequently
-            # de/protonating in proteins), there can be bond type changes
-            # between ND1-CE1-NE2.
-            if("HIS" == resn and "N" in atom_name and atom_name != "N"):
-                resind = int(a.GetProp("resInd"))
-                dict_key = str(resind) + "_" + resn
-
-                histidine_atoms = histidine_resi_atoms[dict_key]
-                own_prot = atom_name.replace("N", "H") in histidine_atoms
-                other_N = list(filter(lambda x: x.startswith("N") and len(
-                    x) > 1 and not atom_name == x, histidine_atoms))[0]
-                other_prot = other_N.replace("N", "H") in histidine_atoms
-
-                if(own_prot and not other_prot and
-                   connectivity != default_valence):
-                    # change bond-order
-                    bond_change = [
-                        bond for bond in a.GetBonds() if(
-                            "CE1" in (
-                                bond.GetBeginAtom().GetProp("name"),
-                                bond.GetEndAtom().GetProp("name")))][0]
-                    bond_change.SetBondType(bond_types[1])
-
-                    alternate_atoms = []
-                    for atomB in rd_mol.GetAtoms():
-                        if(atomB.GetProp("resInd") == str(resind)
-                             and atomB.GetProp("name") == str(other_N)):
-                            alternate_atoms.append(atomB)
-
-                    alternate_atom: Chem.rdchem.Atom = alternate_atoms[0]
-
-                    bond_change = [
-                        bond for bond in alternate_atom.GetBonds() if(
-                            "CE1" in (
-                                bond.GetBeginAtom().GetProp("name"),
-                                bond.GetEndAtom().GetProp("name")))][0]
-                    bond_change.SetBondType(bond_types[2])
-
-                    # update_new connectivity
-                    connectivity = sum([int(bond.GetBondType())
-                                        for bond in a.GetBonds()])
-            # HISTIDINE FIX DONE
 
             if(connectivity == 0):  # ions:
                 if(atom_name in positive_ions):
@@ -443,14 +394,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Geometrics
         if(dict_prot['molecules']["unit_cell_dimensions"] != "None"):
             top.setUnitCellDimensions(
-                Vec3(*dict_prot['molecules']["unit_cell_dimensions"]) *
+                np.array(dict_prot['molecules']["unit_cell_dimensions"]) *
                 omm_unit.angstrom)
         else:
             top.setUnitCellDimensions(None)
 
         if(dict_prot['molecules']["periodic_box_vectors"] != "None"):
             top.setPeriodicBoxVectors(
-                list(map(lambda x: Vec3(*x),
+                list(map(lambda x: np.array(x),
                          dict_prot['molecules']["periodic_box_vectors"])) *
                 omm_unit.angstrom)
         else:
@@ -469,7 +420,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             Quantity containing protein atom positions
         """
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
+        openmm_pos = list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
 
         return openmm_pos
 
@@ -529,7 +480,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # get pos:
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = list(map(lambda x: Vec3(*x), np_pos)) * omm_unit.angstrom
+        openmm_pos = list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
 
         # write file
         if(isinstance(out_path, str)):
@@ -638,6 +589,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
         raise NotImplemented
-        # openmm_PDBxFile = PDBxFile(pdbxfile)
-        # return cls._from_openmmPDBFile(
+        #openmm_PDBxFile = PDBxFile(pdbxfile)
+        #return cls._from_openmmPDBFile(
         #    openmm_PDBFile=openmm_PDBxFile, name=name)
