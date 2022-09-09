@@ -1,20 +1,20 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-# openff complains about oechem being missing, shhh
-import logging
-logger = logging.getLogger('openff.toolkit')
-logger.setLevel(logging.ERROR)
-
-from openff.toolkit.topology import Molecule as OFFMolecule
-from openff.units import unit as openff_unit
-
-
 from rdkit import Chem
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..custom_typing import OEMol
 from ..molhashing import deserialize_numpy, serialize_numpy
+
+# openff complains about oechem being missing, shhh
+import logging
+
+logger = logging.getLogger('openff.toolkit')
+logger.setLevel(logging.ERROR)
+
+from openff.toolkit.topology import Molecule as OFFMolecule
+from openff.units import unit as openff_unit
 
 
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
@@ -47,6 +47,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         are used, a name must be given to differentiate these.  This name
         will be used in the hash.
     """
+    
     def to_sdf(self) -> str:
         """Create a string based on SDF.
 
@@ -156,17 +157,24 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m = self.to_openff()
 
         atoms = [
-            (atom.atomic_number,
-             atom.name,
-             atom.formal_charge.m_as(openff_unit.elementary_charge),
-             atom.is_aromatic,
-             atom.stereochemistry or '')
+            (
+                atom.atomic_number,
+                atom.name,
+                atom.formal_charge.m_as(openff_unit.elementary_charge),
+                atom.is_aromatic,
+                atom.stereochemistry or ''
+             )
             for atom in m.atoms
         ]
 
         bonds = [
-            (bond.atom1_index, bond.atom2_index, bond.bond_order,
-             bond.is_aromatic, bond.stereochemistry or '')
+            (
+                bond.atom1_index, 
+                bond.atom2_index, 
+                bond.bond_order,
+                bond.is_aromatic, 
+                bond.stereochemistry or ''
+            )
             for bond in m.bonds
         ]
 

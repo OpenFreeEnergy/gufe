@@ -26,8 +26,10 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
         pass
 
     if name and rdkit_name and rdkit_name != name:
-        warnings.warn(f"SmallMoleculeComponent being renamed from {rdkit_name}"
-                      f"to {name}.")
+        warnings.warn(
+            f"SmallMoleculeComponent being renamed from {rdkit_name}"
+            f"to {name}."
+        )
     elif name == "":
         name = rdkit_name
 
@@ -50,6 +52,7 @@ class ExplicitMoleculeComponent(Component):
     We default to use SMILES as the basis of the hash, but this can be
     overridden using the `_hashmol` method.
     """
+
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
         _ensure_ofe_version(rdkit)
@@ -59,8 +62,10 @@ class ExplicitMoleculeComponent(Component):
 
         n_confs = len(conformers)
         if n_confs > 1:
-            warnings.warn(f"Molecule provided with {n_confs} conformers. "
-                          "Only the first will be used.")
+            warnings.warn(
+                f"Molecule provided with {n_confs} conformers. "
+                f"Only the first will be used."
+            )
 
         self._rdkit = rdkit
         self._hash = self._hashmol(name=name)
