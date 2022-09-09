@@ -113,6 +113,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         _residue_icode = defaultdict(str)
         _residue_index = defaultdict(int)
         _residue_id = defaultdict(int)
+        
         # Add Atoms
         for atom in mol_topology.atoms():
             atomID = int(atom.id)
@@ -123,25 +124,33 @@ class ProteinComponent(ExplicitMoleculeComponent):
             chainn = str(atom.residue.chain.id)
             chaini = int(atom.residue.chain.index)
             icode = str(atom.residue.insertionCode)
-
+            ishetatom = False
+            
             # WIP: get HETATOMS,
             a = Atom(atom.element.atomic_number)
             a.SetAtomMapNum(atomID)
 
-            a.SetProp("name", atom.name)
             a.SetIntProp("id", atomID)
+            a.SetIntProp("resId", resi) 
             a.SetIntProp("_posIndex", atomPosIndex)
 
-            a.SetProp("resName", resn)
-            a.SetIntProp("resId", resi)
-            a.SetIntProp("resInd", resind)
-            a.SetProp("insertionCode", icode)
-
-            a.SetProp("chainName", chainn)
-            a.SetIntProp("chainId", chaini)
-
-            a.SetProp("hetatom", str(False))
-
+            atom_monomerInfo = Chem.AtomPDBResidueInfo()
+            atom_monomerInfo.SetChainId(chainn)
+            atom_monomerInfo.SetSegmentNumber(chaini)
+            atom_monomerInfo.SetInsertionCode(icode)
+            atom_monomerInfo.SetName(atom.name)
+            atom_monomerInfo.SetResidueName(resn)
+            atom_monomerInfo.SetResidueNumber(resind)
+            atom_monomerInfo.SetIsHeteroAtom(ishetatom)
+            
+            a.SetMonomerInfo(atom_monomerInfo) 
+                      
+            # additonally possible:
+            # mi.SetSerialNumber
+            # mi.SetSecondaryStructure
+            # mi.SetMonomerType
+            # mi.SetAltLoc
+            
             # For molecule props
             dict_key = str(resind) + "_" + resn
             _residue_atom_map[dict_key].append(atomID)
@@ -180,9 +189,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         _charged_resi: defaultdict = defaultdict(int)
         for a in atoms:
             atomic_num = a.GetAtomicNum()
-            atom_name = a.GetProp("name")
-            resn = a.GetProp("resName")
-            resind = int(a.GetProp("resInd"))
+            atom_name = a.GetMonomerInfo().GetName() 
+            resn = a.GetMonomerInfo().GetResidueName() 
+            resind = int(a.GetMonomerInfo().GetResidueNumber())
             dict_key = str(resind) + "_" + resn
 
             connectivity = sum([int(bond.GetBondType())
@@ -269,12 +278,21 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atomic_arom = eval(str(atom[3]))
             atomic_ste = atom[4]
             atomic_props = atom[5]
-
+            atom_mi_dict = atom[6]
+            
             a = Atom(atomic_num)
             a.SetAtomMapNum(atomic_props["id"])
             a.SetFormalCharge(atomic_fc)
             a.SetIsAromatic(atomic_arom)
             # a.SetChiralTag(atomic_ste)
+            
+            # put mi_dict back to class            
+            atom_monomerInfo = Chem.AtomPDBResidueInfo()
+            for key,val in atom_mi_dict.items():
+                f = getattr(atom_monomerInfo, "Set"+str(key))
+                f(val)
+                
+            a.SetMonomerInfo(atom_monomerInfo)
 
             for prop_name, prop_value in atomic_props.items():
                 assign_correct_prop_type(rd_obj=a,
@@ -374,15 +392,20 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Atoms
         atoms = {}
         for atom in sorted(dict_prot['atoms'], key=lambda x: x[5]["id"]):
-            key = atom[5]["chainName"] + "_" + str(atom[5]["resInd"])
-            r = residues[key]
             aid = atom[5]["id"]
+            atom_mi_dict = atom[6]
+            chainn = atom_mi_dict['ChainId']
+            resInd = atom_mi_dict['ResidueNumber']      
+            
+            key = str(chainn) + "_" + str(resInd)
+            r = residues[key]
+
             atom = top.addAtom(name=atom[1],
                                residue=r,
                                id=aid,
                                element=app.Element.getByAtomicNumber(atom[0])
                                )
-            atoms[atom.index] = atom  # true?
+            atoms[atom.index] = atom
 
         # Bonds
         for bond in dict_prot['bonds']:
@@ -501,18 +524,29 @@ class ProteinComponent(ExplicitMoleculeComponent):
         atoms = []
         for atom in self._rdkit.GetAtoms():
             # Standards:
-            try:
-                name = atom.GetProp("name")
-            except KeyError:  # this is default fallback
+            name = atom.GetMonomerInfo().GetName()
+
+            if(name == ""):
                 name = atom.GetSymbol()
+
+            # collapse monomer info to dict
+            atom_monomer_info = atom.GetMonomerInfo()
+            mi_dict={}
+            for f in dir(atom_monomer_info):
+                if("Get" in f):
+                    val = getattr(atom_monomer_info, f)()
+                    mi_dict[f.replace("Get","")]=val
 
             atoms.append(
                 (atom.GetAtomicNum(),
                     name,
                     atom.GetFormalCharge(),
                     atom.GetIsAromatic(),
-                    '',
-                    atom.GetPropsAsDict()))  # stereoCenter
+                    '', #Stereocent in Smallcomponent
+                    atom.GetPropsAsDict(),
+                    mi_dict,
+                    )
+                )
 
         bonds = [
             (bond.GetBeginAtomIdx(),
