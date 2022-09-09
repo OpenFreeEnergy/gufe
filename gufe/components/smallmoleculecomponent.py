@@ -10,11 +10,11 @@ from ..molhashing import deserialize_numpy, serialize_numpy
 # openff complains about oechem being missing, shhh
 import logging
 
-logger = logging.getLogger('openff.toolkit')  # nopep8
-logger.setLevel(logging.ERROR)  # nopep8
+logger = logging.getLogger('openff.toolkit')
+logger.setLevel(logging.ERROR)
 
-from openff.toolkit.topology import Molecule as OFFMolecule  # nopep8
-from openff.units import unit as openff_unit  # nopep8
+from openff.toolkit.topology import Molecule as OFFMolecule
+from openff.units import unit as openff_unit
 
 
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
