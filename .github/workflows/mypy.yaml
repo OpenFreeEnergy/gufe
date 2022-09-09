@@ -41,4 +41,4 @@ jobs:
           mamba list
 
       - name: "Lint with mypy"
-        run: mypy gufe
+        run: mypy  --exclude components/sub_files/* gufe
