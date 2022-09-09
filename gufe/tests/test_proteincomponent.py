@@ -112,13 +112,24 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         p = self.cls.from_pdbfile(str(PDB_181L_path), name='Bob')
         out_path_prefix = "tmp_181L_pdbx.cif"
         out_file = tmp_path / out_path_prefix
-        p.to_pdbxFile(str(out_file))
+        out_file_path = str(out_file)
+
+        p.to_pdbxFile(str(out_file_path))
+        
+        out_file2 = open(out_file_path, "w")
+        p.to_pdbxFile(out_file2)
+        
 
     def test_to_pdbfile(self, PDB_181L_path, tmp_path):
         p = self.cls.from_pdbfile(str(PDB_181L_path), name='Wuff')
         out_path_prefix = "tmp_181L_pdb.pdb"
         out_file = tmp_path / out_path_prefix
-        p.to_pdbFile(str(out_file))
+        out_file_path = str(out_file)
+
+        p.to_pdbFile(str(out_file_path))
+        
+        out_file2 = open(out_file_path, "w")
+        p.to_pdbFile(out_file2)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
         out_path_prefix = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
