@@ -91,7 +91,7 @@ class AlchemicalNetwork(GufeTokenizable):
     def _from_dict(cls, d: dict):
         return cls(nodes=frozenset(d['nodes']),
                    edges=frozenset(d['edges']),
-                   name=d['name'])
+                   name=d.get('name'))
 
     def _defaults(self):
         return super()._defaults()
