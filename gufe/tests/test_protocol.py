@@ -20,43 +20,42 @@ from gufe.protocols import (
     ProtocolUnitFailure,
 )
 
-from gufe.protocols.protocoldag import execute
+from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
 class InitializeUnit(ProtocolUnit):
-    @staticmethod
-    def _execute(ctx, *, settings, stateA, stateB, mapping, start, **inputs):
+    def _execute(self, ctx, **dependencies):
         return dict(
             log="initialized",
         )
 
 
 class SimulationUnit(ProtocolUnit):
-    @staticmethod
-    def _execute(ctx, *, initialization, **inputs):
+    def _execute(self, ctx, **dependencies):
 
-        output = [initialization.outputs['log']]
-        output.append("running_md_{}".format(inputs["window"]))
+        output = [dependencies['initialization'].outputs['log']]
+        output.append("running_md_{}".format(self._inputs["window"]))
 
         return dict(
             log=output,
-            window=inputs["window"],
-            key_result=(100 - (inputs["window"] - 10)**2),
+            window=self._inputs["window"],
+            key_result=(100 - (self._inputs["window"] - 10)**2),
             scratch=ctx.scratch,
             shared=ctx.shared
         )
 
 
 class FinishUnit(ProtocolUnit):
-    @staticmethod
-    def _execute(ctx, *, simulations, **inputs):
+    def _execute(self, ctx, **dependencies):
+        # sims are given a string of numeric key, extract them in ascending order
+        _, sims = zip(*sorted(dependencies.items(), key=lambda x: int(x[0])))
 
-        output = [s.outputs['log'] for s in simulations]
+        output = [s.outputs['log'] for s in sims]
         output.append("assembling_results")
 
-        key_results = {s.inputs['window']: s.outputs['key_result'] for s in simulations}
+        key_results = {s.inputs['window']: s.outputs['key_result'] for s in sims}
 
         return dict(
             log=output,
@@ -120,15 +119,18 @@ class DummyProtocol(Protocol):
             stateB=stateB,
             mapping=mapping,
             start=starting_point,
-            some_dict={'a': 2, 'b': 12})
+            some_dict={'a': 2, 'b': 12}
+        )
 
         # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
-            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i,
+                           depedencies={'initialization': alpha}) for i in range(21)
         ]
 
         # gather results from simulations, finalize outputs
-        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
+        omega = FinishUnit(settings=self.settings, name="the end",
+                           dependencies={str(i): s for i, s in enumerate(simulations)})
 
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
@@ -160,7 +162,7 @@ class BrokenProtocol(DummyProtocol):
         stateB: ChemicalSystem,
         mapping: Optional[Mapping] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
-    ) -> nx.DiGraph:
+    ) -> list[ProtocolUnit]:
 
         # convert protocol inputs into starting points for independent simulations
         alpha = InitializeUnit(
@@ -173,14 +175,17 @@ class BrokenProtocol(DummyProtocol):
 
         # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
-            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i,
+                           dependencies={'initialization': alpha}) for i in range(21)
         ]
 
         # introduce a broken ProtocolUnit
-        simulations.append(BrokenSimulationUnit(settings=self.settings, window=21, name="problem child", initialization=alpha))
+        simulations.append(BrokenSimulationUnit(settings=self.settings, window=21, name="problem child",
+                                                dependencies={'initialization': alpha}))
 
         # gather results from simulations, finalize outputs
-        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
+        omega = FinishUnit(settings=self.settings, name="the end",
+                           dependencies={str(i): s for i, s in enumerate(simulations)})
 
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
@@ -200,7 +205,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run"
         )
-        dagresult: ProtocolDAGResult = execute(dag)
+        dagresult: ProtocolDAGResult = execute_DAG(dag)
 
         return protocol, dag, dagresult
 
@@ -211,7 +216,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
         )
 
-        dagfailure: ProtocolDAGResult = execute(dag)
+        dagfailure: ProtocolDAGResult = execute_DAG(dag)
 
         return protocol, dag, dagfailure
 

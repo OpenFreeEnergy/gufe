@@ -207,8 +207,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
-def execute(protocoldag: ProtocolDAG, *, 
-            shared: PathLike = None) -> ProtocolDAGResult:
+def execute_DAG(protocoldag: ProtocolDAG, *,
+                shared: PathLike = None) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
@@ -241,10 +241,12 @@ def execute(protocoldag: ProtocolDAG, *,
 
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
-        inputs = _pu_to_pur(unit.inputs, results)
+        reqd_deps = {
+            name: results[key] for name, key in unit.dependencies
+        }
 
         # execute
-        result = unit.execute(shared=shared_, **inputs)
+        result = unit.execute(shared=shared_, dependencies=reqd_deps)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
@@ -261,32 +263,4 @@ def execute(protocoldag: ProtocolDAG, *,
             name=protocoldag.name, 
             protocol_units=protocoldag.protocol_units, 
             protocol_unit_results=list(results.values()))
-
-
-def _pu_to_pur(
-        inputs: Union[Dict[str, Any], List[Any], ProtocolUnit],
-        mapping: Dict[GufeKey, ProtocolUnitResult]):
-    """Convert each `ProtocolUnit` found within `inputs` to its corresponding
-    `ProtocolUnitResult`.
-
-    Parameters
-    ----------
-    inputs
-        Arbitrarily-nested dict or list, with `ProtocolUnit`s present among
-        values/elements. Can also be a single `ProtocolUnit`.
-
-    Returns
-    -------
-    Data structure identical to `inputs`, except with each `ProtocolUnit`
-    replaced with its corresponding `ProtocolUnitResult`.
-
-    """
-    if isinstance(inputs, dict):
-        return {key: _pu_to_pur(value, mapping) for key, value in inputs.items()}
-    elif isinstance(inputs, list):
-        return [_pu_to_pur(value, mapping) for value in inputs]
-    elif isinstance(inputs, ProtocolUnit):
-        return mapping[inputs.key]
-    else:
-        return inputs
 
