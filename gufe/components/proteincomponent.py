@@ -17,8 +17,8 @@ from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 from openff.toolkit.topology import Molecule as OFFMolecule
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
-from .sub_files.pdbfile import PDBFile
-from openmm.app.pdbxfile import PDBxFile
+from ..vendor.pdb_file.pdbfile import PDBFile
+from ..vendor.pdb_file.pdbxfile import PDBFile
 
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..custom_typing import OEMol
