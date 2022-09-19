@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
-from openff.units import unit as offUnit
+from openff.units import unit as off_unit
 from typing import Optional, Tuple
 
 from .component import Component
