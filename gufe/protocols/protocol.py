@@ -138,7 +138,7 @@ class Protocol(GufeTokenizable):
         reasonable defaults for this `Protocol` subclass.
 
         """
-        ...
+        raise NotImplementedError()
 
     @classmethod
     def default_settings(cls) -> "ProtocolSettings":      # type: ignore
