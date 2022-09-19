@@ -636,7 +636,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
     # NOT implemented:
     def to_openeye(self) -> OEMol:
         """OEChem representation of this molecule"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def to_openff(self):
         raise NotImplementedError
