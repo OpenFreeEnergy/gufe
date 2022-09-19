@@ -48,31 +48,31 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
-        return self.cls.from_pdbfile(PDB_181L_path, name='Steve')
+        return self.cls.from_pdb_file(PDB_181L_path, name='Steve')
 
     # From
-    def test_from_pdbfile(self, PDB_181L_path):
-        p = self.cls.from_pdbfile(str(PDB_181L_path), name='Steve')
+    def test_from_pdb_file(self, PDB_181L_path):
+        p = self.cls.from_pdb_file(str(PDB_181L_path), name='Steve')
 
         assert isinstance(p, ProteinComponent)
         assert p.name == 'Steve'
         assert p.to_rdkit().GetNumAtoms() == 2639
 
-    def test_from_pdbfile_benchmark_files(self, PDB_benchmarkFiles):
+    def test_from_pdb_file_benchmark_files(self, PDB_benchmarkFiles):
         for pdb_path in PDB_benchmarkFiles:
-            p = self.cls.from_pdbfile(str(pdb_path), name='Steve')
+            p = self.cls.from_pdb_file(str(pdb_path), name='Steve')
 
             assert isinstance(p, ProteinComponent)
             assert p.name == 'Steve'
 
-    def test_from_pdbfile_ValueError(self, PDBx_181L_path):
+    def test_from_pdb_file_ValueError(self, PDBx_181L_path):
         with pytest.raises(ValueError):
-            _ = self.cls.from_pdbfile(PDBx_181L_path)
+            _ = self.cls.from_pdb_file(PDBx_181L_path)
 
     
     #@pytest.mark.xfail
-    def test_from_pdbxfile(self, PDBx_181L_path):
-        p = self.cls.from_pdbxfile(str(PDBx_181L_path), name='Steve')
+    def test_from_pdbx_file(self, PDBx_181L_path):
+        p = self.cls.from_pdbx_file(str(PDBx_181L_path), name='Steve')
 
         assert isinstance(p, ProteinComponent)
         assert p.name == 'Steve'
@@ -88,43 +88,43 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
     # To
     def test_to_rdkit(self, PDB_181L_path):
-        pm = self.cls.from_pdbfile(PDB_181L_path)
+        pm = self.cls.from_pdb_file(PDB_181L_path)
         rdkitmol = pm.to_rdkit()
 
         assert isinstance(rdkitmol, Chem.Mol)
         assert rdkitmol.GetNumAtoms() == 2639
 
-    def test_to_pdbxfile(self, PDB_181L_path, tmp_path):
-        p = self.cls.from_pdbfile(str(PDB_181L_path), name='Bob')
+    def test_to_pdbx_file(self, PDB_181L_path, tmp_path):
+        p = self.cls.from_pdb_file(str(PDB_181L_path), name='Bob')
         out_file_name = "tmp_181L_pdbx.cif"
         out_file = tmp_path / out_file_name
 
-        p.to_pdbxFile(str(out_file))        
+        p.to_pdbx_file(str(out_file))        
         with  open(str(out_file), "w") as out_file2:
-            p.to_pdbxFile(out_file2)
+            p.to_pdbx_file(out_file2)
         
 
-    def test_to_pdbfile(self, PDB_181L_path, tmp_path):
-        p = self.cls.from_pdbfile(str(PDB_181L_path), name='Wuff')
+    def test_to_pdb_file(self, PDB_181L_path, tmp_path):
+        p = self.cls.from_pdb_file(str(PDB_181L_path), name='Wuff')
         out_file_name = "tmp_181L_pdb.pdb"
         out_file = tmp_path / out_file_name
 
-        p.to_pdbFile(str(out_file))
+        p.to_pdb_file(str(out_file))
         
         with  open(str(out_file), "w") as out_file2:           
-            p.to_pdbFile(out_file2)
+            p.to_pdb_file(out_file2)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
         out_file_name = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
         out_file = tmp_path / out_file_name
 
-        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
-        _ = p.to_pdbFile(str(out_file))
+        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
+        _ = p.to_pdb_file(str(out_file))
 
         assert_same_pdb_lines(PDB_181L_OpenMMClean_path, str(out_file))
 
     def test_dummy_from_dict(self, PDB_181L_OpenMMClean_path):
-        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
         gufe_dict = p.to_dict()
         p2 = self.cls.from_dict(gufe_dict)
 
@@ -134,7 +134,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
         openmm_pos = openmm_pdb.positions
 
-        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
         gufe_openmm_pos = p.to_openmm_positions()
 
         v1 = gufe_openmm_pos.value_in_unit(unit.nanometer)
@@ -147,7 +147,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             openmm_pdb = pdbfile.PDBFile(open(pdb_path, "r"))
             openmm_pos = openmm_pdb.positions
 
-            p = self.cls.from_pdbfile(pdb_path, name="BobThePudel")
+            p = self.cls.from_pdb_file(pdb_path, name="BobThePudel")
             gufe_openmm_pos = p.to_openmm_positions()
 
             v1 = gufe_openmm_pos.value_in_unit(unit.nanometer)
@@ -159,7 +159,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
         openmm_top = openmm_pdb.topology
 
-        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
+        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
         gufe_openmm_top = p.to_openmm_topology()
 
         assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
@@ -177,7 +177,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             openmm_pdb = pdbfile.PDBFile(open(in_pdb_path, "r"))
             openmm_top = openmm_pdb.topology
 
-            p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
+            p = self.cls.from_pdb_file(in_pdb_path, name="Bob")
             gufe_openmm_top = p.to_openmm_topology()
 
             assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
@@ -218,8 +218,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             out_file = tmp_path / out_file_name
 
             try:
-                p = self.cls.from_pdbfile(in_pdb_path, name="bench")
-                _ = p.to_pdbFile(str(out_file))
+                p = self.cls.from_pdb_file(in_pdb_path, name="bench")
+                _ = p.to_pdb_file(str(out_file))
 
                 assert_same_pdb_lines(in_pdb_path, str(out_file))
             except KeyError as err:
@@ -230,45 +230,45 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
     # Functionality
 
     def test_eq(self, PDB_181L_path):
-        m1 = self.cls.from_pdbfile(PDB_181L_path)
-        m2 = self.cls.from_pdbfile(PDB_181L_path)
+        m1 = self.cls.from_pdb_file(PDB_181L_path)
+        m2 = self.cls.from_pdb_file(PDB_181L_path)
 
         assert m1 == m2
 
     def test_hash_eq(self, PDB_181L_path):
-        m1 = self.cls.from_pdbfile(PDB_181L_path)
-        m2 = self.cls.from_pdbfile(PDB_181L_path)
+        m1 = self.cls.from_pdb_file(PDB_181L_path)
+        m2 = self.cls.from_pdb_file(PDB_181L_path)
 
         assert hash(m1) == hash(m2)
 
     def test_neq(self, PDB_181L_path, PDB_181L_mutant):
-        m1 = self.cls.from_pdbfile(PDB_181L_path)
+        m1 = self.cls.from_pdb_file(PDB_181L_path)
 
         assert m1 != PDB_181L_mutant
 
     def test_neq_name(self, PDB_181L_path):
-        m1 = self.cls.from_pdbfile(PDB_181L_path, name='This')
-        m2 = self.cls.from_pdbfile(PDB_181L_path, name='Other')
+        m1 = self.cls.from_pdb_file(PDB_181L_path, name='This')
+        m2 = self.cls.from_pdb_file(PDB_181L_path, name='Other')
 
         assert m1 != m2
 
     def test_hash_neq(self, PDB_181L_path, PDB_181L_mutant):
-        m1 = self.cls.from_pdbfile(PDB_181L_path)
+        m1 = self.cls.from_pdb_file(PDB_181L_path)
 
         assert hash(m1) != hash(PDB_181L_mutant)
 
     def test_hash_neq_name(self, PDB_181L_path):
-        m1 = self.cls.from_pdbfile(PDB_181L_path, name='This')
-        m2 = self.cls.from_pdbfile(PDB_181L_path, name='Other')
+        m1 = self.cls.from_pdb_file(PDB_181L_path, name='This')
+        m2 = self.cls.from_pdb_file(PDB_181L_path, name='Other')
 
         assert hash(m1) != hash(m2)
 
     def test_protein_total_charge(self, PDB_181L_path):
-        m1 = self.cls.from_pdbfile(PDB_181L_path)
+        m1 = self.cls.from_pdb_file(PDB_181L_path)
 
         assert m1.total_charge == 7
 
     def test_protein_total_charge_thromb(self, PDB_thrombin_path):
-        m1 = self.cls.from_pdbfile(PDB_thrombin_path)
+        m1 = self.cls.from_pdb_file(PDB_thrombin_path)
 
         assert m1.total_charge == 6

@@ -64,7 +64,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     # FROM
     @classmethod
-    def from_pdbfile(cls, pdbfile: str, name: str = ""):
+    def from_pdb_file(cls, pdbfile: str, name: str = ""):
         """
         Create ``ProteinComponent`` from PDB-formatted string.
 
@@ -484,7 +484,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdbFile(self, out_path: Union[str, io.TextIOBase] = None) -> str:
+    def to_pdb_file(self, out_path: Union[str, io.TextIOBase] = None) -> str:
         """
         serialize protein to pdb file.
 
@@ -519,7 +519,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbxFile(
+    def to_pdbx_file(
         self, out_path: Union[str, io.TextIOBase] = None
     ) -> str:
         """
@@ -555,6 +555,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
 
+        out_file.close()
+        
         return out_path
 
     def _to_dict(self) -> dict:
@@ -634,7 +636,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return d
 
     @classmethod
-    def from_pdbxfile(cls, pdbxfile: str, name=""):
+    def from_pdbx_file(cls, pdbxfile: str, name=""):
         openmm_PDBxFile = PDBxFile(pdbxfile)
         return cls._from_openmmPDBFile(
             openmm_PDBFile=openmm_PDBxFile, name=name)
