@@ -9,19 +9,19 @@ from collections import defaultdict
 
 from openmm import app
 from openmm import unit as omm_unit
-from openmm.app.pdbxfile import PDBxFile
 
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 
-from openff.toolkit.topology import Molecule as OFFMolecule
-
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..vendor.pdb_file.pdbfile import PDBFile
-from ..vendor.pdb_file.pdbxfile import PDBFile
+
+#Not used at the moment (future will be used for from_pdbx_file)
+from ..vendor.pdb_file.pdbxfile import PDBxFile 
+from openmm.app.pdbxfile import PDBxFile
+
 
 from ..molhashing import deserialize_numpy, serialize_numpy
-from ..custom_typing import OEMol
 
 
 bond_types = {
@@ -148,10 +148,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a.SetMonomerInfo(atom_monomerInfo)
 
             # additonally possible:
-            # mi.SetSerialNumber
-            # mi.SetSecondaryStructure
-            # mi.SetMonomerType
-            # mi.SetAltLoc
+            # atom_monomerInfo.SetSerialNumber
+            # atom_monomerInfo.SetSecondaryStructure
+            # atom_monomerInfo.SetMonomerType
+            # atom_monomerInfo.SetAltLoc
 
             # For molecule props
             dict_key = str(resind) + "_" + resn
@@ -209,7 +209,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 elif atom_name in negative_ions:
                     fc = -default_valence  # e.g. Chlorine ions
                 else:
-                    raise ValueError("I don't know this Ion! \t" + atom_name)
+                    raise ValueError("I don't know this Ion! \t" + atom_name+ "\t"+resn+"-"+str(resind))
             elif default_valence > connectivity:
                 fc = -(default_valence - connectivity)  # negative charge
             elif default_valence < connectivity:
@@ -637,6 +637,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     @classmethod
     def from_pdbx_file(cls, pdbxfile: str, name=""):
+        raise NotImplementedError
         openmm_PDBxFile = PDBxFile(pdbxfile)
         return cls._from_openmmPDBFile(
             openmm_PDBFile=openmm_PDBxFile, name=name)

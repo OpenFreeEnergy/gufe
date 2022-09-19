@@ -70,7 +70,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             _ = self.cls.from_pdb_file(PDBx_181L_path)
 
     
-    #@pytest.mark.xfail
+    @pytest.mark.xfail
     def test_from_pdbx_file(self, PDBx_181L_path):
         p = self.cls.from_pdbx_file(str(PDBx_181L_path), name='Steve')
 
