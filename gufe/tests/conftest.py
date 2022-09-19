@@ -61,6 +61,11 @@ def PDBx_181L_path():
                                   '181l.cif') as f:
         yield str(f)
 
+@pytest.fixture
+def PDBx_181L_openMMClean_path():
+    with importlib.resources.path('gufe.tests.data',
+                                  '181l_openmmClean.cif') as f:
+        yield str(f)
 
 @pytest.fixture
 def PDB_benchmarkFiles():

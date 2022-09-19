@@ -15,7 +15,7 @@ from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..vendor.pdb_file.pdbfile import PDBFile
-from ..vendor.pdb_file.pdbxfile import PDBxFile 
+from ..vendor.pdb_file.pdbxfile import PDBxFile
 
 
 from ..molhashing import deserialize_numpy, serialize_numpy
@@ -83,7 +83,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls._from_openmmPDBFile(
             openmm_PDBFile=openmm_PDBFile, name=name
         )
-        
+
     @classmethod
     def from_pdbx_file(cls, pdbx_file: str, name=""):
         """
@@ -105,8 +105,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         """
         openmm_PDBxFile = PDBxFile(pdbx_file)
         return cls._from_openmmPDBFile(
-            openmm_PDBFile=openmm_PDBxFile, name=name)
-
+            openmm_PDBFile=openmm_PDBxFile, name=name
+        )
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str = ""):
@@ -230,7 +230,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 elif atom_name in negative_ions:
                     fc = -default_valence  # e.g. Chlorine ions
                 else:
-                    raise ValueError("I don't know this Ion or something really went wrong! \t" + atom_name+ "\t"+resn+"-"+str(resind)+"\tconnectivity: "+str(connectivity))
+                    raise ValueError(
+                        "I don't know this Ion or something really went wrong! \t"
+                        + atom_name
+                        + "\t"
+                        + resn
+                        + "-"
+                        + str(resind)
+                        + "\tconnectivity: "
+                        + str(connectivity)
+                    )
             elif default_valence > connectivity:
                 fc = -(default_valence - connectivity)  # negative charge
             elif default_valence < connectivity:
@@ -505,7 +514,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[str, io.TextIOBase] = None) -> str:
+    def to_pdb_file(self, out_path: Union[str, io.TextIOWrapper] = None) -> str:
         """
         serialize protein to pdb file.
 
@@ -528,11 +537,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if isinstance(out_path, str):
             out_file = open(out_path, "w")
-        elif isinstance(out_path, io.TextIOBase):
+        elif isinstance(out_path, io.TextIOWrapper):
             out_file = out_path
             out_path = str(out_file.name)
         else:
-            raise ValueError("Out path type was not as expected!")
+            raise ValueError("Out path type was not as expected! Got: "+str(out_path)+"\t"+str(type(out_path)))
 
         PDBFile.writeFile(
             topology=openmm_top, positions=openmm_pos, file=out_file
@@ -541,7 +550,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def to_pdbx_file(
-        self, out_path: Union[str, io.TextIOBase] = None
+        self, out_path: Union[str, io.TextIOWrapper] = None
     ) -> str:
         """
         serialize protein to pdbx file.
@@ -568,16 +577,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if isinstance(out_path, str):
             out_file = open(out_path, "w")
-        elif isinstance(out_path, io.TextIOBase):
+        elif isinstance(out_path, io.TextIOWrapper):
             out_file = out_path
             out_path = str(out_file.name)
         else:
-            raise ValueError("Out path type was not as expected!")
+            raise ValueError("Out path type was not as expected! Got: "+str(out_path)+"\t"+str(type(out_path)))
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
 
         out_file.close()
-        
+
         return out_path
 
     def _to_dict(self) -> dict:
@@ -655,4 +664,3 @@ class ProteinComponent(ExplicitMoleculeComponent):
         }
 
         return d
-
