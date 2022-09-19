@@ -121,4 +121,4 @@ class ExplicitMoleculeComponent(Component):
         raise NotImplementedError()
 
     def _to_dict(self) -> dict:
-        raise NotImplemented
+        raise NotImplementedError()
