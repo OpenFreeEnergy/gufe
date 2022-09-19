@@ -111,7 +111,7 @@ class ExplicitMoleculeComponent(Component):
 
     @classmethod
     def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
-        """Create a SmallMoleculeComponent, copying from an RDKit Mol"""
+        """Create a Component, copying from an RDKit Mol"""
         return cls(rdkit=Chem.Mol(rdkit), name=name)
 
     # Not Implemented - interface Functions:
