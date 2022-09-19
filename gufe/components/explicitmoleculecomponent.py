@@ -27,7 +27,7 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
 
     if name and rdkit_name and rdkit_name != name:
         warnings.warn(
-            f"SmallMoleculeComponent being renamed from {rdkit_name}"
+            f"Component being renamed from {rdkit_name}"
             f"to {name}."
         )
     elif name == "":
