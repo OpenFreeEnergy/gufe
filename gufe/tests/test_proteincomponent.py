@@ -25,36 +25,21 @@ def PDB_181L_mutant(PDB_181L_path):
     return ProteinComponent.from_rdkit(rdm)
 
 
-def line_by_line_comparison(in_file_path, out_file_path):
+def assert_same_pdb_lines(in_file_path, out_file_path):
 
     in_lines = []
-    with  open(out_file_path, "w") as out_file2:
-        in_pdb = open(in_file_path, "r")
+    with  open(in_file_path, "r") as in_pdb:
         in_lines = in_pdb.readlines()
     
     out_lines = []
-    with  open(out_file_path, "w") as out_pdb:
+    with  open(out_file_path, "r") as out_pdb:
         out_lines = out_pdb.readlines()
 
-    not_equal = []
-    assert len(in_lines) == len(out_lines)
+    
+    in_lines = in_lines[1:]
+    out_lines = out_lines[1:]
+    assert in_lines == out_lines
 
-    for i, in_line in enumerate(in_lines):
-        if("CREATED WITH OPENMM" in in_line):
-            continue
-        out_line = out_lines[i]
-        if(in_line == out_line):
-            continue
-        else:
-            not_equal.append((in_line, out_line))
-
-    if not_equal:
-        print("not Equals")
-        print("\n".join(map(lambda x: "in: " +
-              x[0] + "\nout: " + x[1], not_equal)))
-        return False
-    else:
-        return True
 
 
 class TestProteinComponent(GufeTokenizableTestsMixin):
@@ -84,7 +69,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         with pytest.raises(ValueError):
             _ = self.cls.from_pdbfile(PDBx_181L_path)
 
-    @pytest.mark.xfail
+    
+    #@pytest.mark.xfail
     def test_from_pdbxfile(self, PDBx_181L_path):
         p = self.cls.from_pdbxfile(str(PDBx_181L_path), name='Steve')
 
@@ -110,36 +96,32 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
     def test_to_pdbxfile(self, PDB_181L_path, tmp_path):
         p = self.cls.from_pdbfile(str(PDB_181L_path), name='Bob')
-        out_path_prefix = "tmp_181L_pdbx.cif"
-        out_file = tmp_path / out_path_prefix
-        out_file_path = str(out_file)
+        out_file_name = "tmp_181L_pdbx.cif"
+        out_file = tmp_path / out_file_name
 
-        p.to_pdbxFile(str(out_file_path))
-        
-        with  open(out_file_path, "w") as out_file2:
+        p.to_pdbxFile(str(out_file))        
+        with  open(str(out_file), "w") as out_file2:
             p.to_pdbxFile(out_file2)
         
 
     def test_to_pdbfile(self, PDB_181L_path, tmp_path):
         p = self.cls.from_pdbfile(str(PDB_181L_path), name='Wuff')
-        out_path_prefix = "tmp_181L_pdb.pdb"
-        out_file = tmp_path / out_path_prefix
-        out_file_path = str(out_file)
+        out_file_name = "tmp_181L_pdb.pdb"
+        out_file = tmp_path / out_file_name
 
-        p.to_pdbFile(str(out_file_path))
+        p.to_pdbFile(str(out_file))
         
-        with  open(out_file_path, "w") as out_file2:           
+        with  open(str(out_file), "w") as out_file2:           
             p.to_pdbFile(out_file2)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
-        out_path_prefix = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
-        out_file = tmp_path / out_path_prefix
+        out_file_name = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
+        out_file = tmp_path / out_file_name
 
         p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
         _ = p.to_pdbFile(str(out_file))
 
-        assert line_by_line_comparison(
-            PDB_181L_OpenMMClean_path, str(out_file))
+        assert_same_pdb_lines(PDB_181L_OpenMMClean_path, str(out_file))
 
     def test_dummy_from_dict(self, PDB_181L_OpenMMClean_path):
         p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
@@ -147,15 +129,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         p2 = self.cls.from_dict(gufe_dict)
 
         assert p == p2
-
-    def test_to_dict(self, PDB_181L_OpenMMClean_path):
-        p = self.cls.from_pdbfile(PDB_181L_OpenMMClean_path, name="Bob")
-        gufe_dict = p.to_dict()
-
-    def test_to_dict_bench(self, PDB_benchmarkFiles):
-        for in_pdb_path in PDB_benchmarkFiles:
-            p = self.cls.from_pdbfile(in_pdb_path, name="Bob")
-            gufe_dict = p.to_dict()
 
     def test_to_openmm_positions(self, PDB_181L_OpenMMClean_path):
         openmm_pdb = pdbfile.PDBFile(open(PDB_181L_OpenMMClean_path, "r"))
@@ -241,14 +214,14 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
     def test_io_pdb_comparison_bench(self, PDB_benchmarkFiles, tmp_path):
         failures = []
         for in_pdb_path in PDB_benchmarkFiles:
-            out_path_prefix = "tmp_" + os.path.basename(in_pdb_path)
-            out_file = tmp_path / out_path_prefix
+            out_file_name = "tmp_" + os.path.basename(in_pdb_path)
+            out_file = tmp_path / out_file_name
 
             try:
                 p = self.cls.from_pdbfile(in_pdb_path, name="bench")
                 _ = p.to_pdbFile(str(out_file))
 
-                assert line_by_line_comparison(in_pdb_path, str(out_file))
+                assert_same_pdb_lines(in_pdb_path, str(out_file))
             except KeyError as err:
                 failures.append((in_pdb_path, err))
 
