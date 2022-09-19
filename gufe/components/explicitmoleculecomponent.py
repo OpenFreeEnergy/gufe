@@ -118,7 +118,7 @@ class ExplicitMoleculeComponent(Component):
     @classmethod
     def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""
-        raise NotImplemented
+        raise NotImplementedError()
 
     def _to_dict(self) -> dict:
         raise NotImplemented
