@@ -633,39 +633,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return d
 
-    # NOT implemented:
-    def to_openeye(self) -> OEMol:
-        """OEChem representation of this molecule"""
-        raise NotImplementedError
-
-    def to_openff(self):
-        raise NotImplementedError
-
-    def to_gmx(self, out_gmx_top: str, out_gmx_gro: str):
-        raise NotImplementedError
-
-    def to_amber(self, out_path: str):
-        raise NotImplementedError
-
-    @classmethod
-    def from_openeye(cls, oemol: OEMol, name: str = ""):
-        raise NotImplementedError
-
-    @classmethod
-    def from_openff(cls, openff: OFFMolecule, name: str = ""):
-        raise NotImplementedError
-
-    @classmethod
-    def from_gmx(cls, gmx_top: str, gmx_gro: str):
-        raise NotImplementedError
-
-    @classmethod
-    def from_amber(cls, name=""):
-        raise NotImplementedError
-
     @classmethod
     def from_pdbxfile(cls, pdbxfile: str, name=""):
-        raise NotImplemented
-        # openmm_PDBxFile = PDBxFile(pdbxfile)
-        # return cls._from_openmmPDBFile(
-        #    openmm_PDBFile=openmm_PDBxFile, name=name)
+        openmm_PDBxFile = PDBxFile(pdbxfile)
+        return cls._from_openmmPDBFile(
+            openmm_PDBFile=openmm_PDBxFile, name=name)
