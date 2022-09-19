@@ -15,10 +15,7 @@ from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..vendor.pdb_file.pdbfile import PDBFile
-
-#Not used at the moment (future will be used for from_pdbx_file)
 from ..vendor.pdb_file.pdbxfile import PDBxFile 
-from openmm.app.pdbxfile import PDBxFile
 
 
 from ..molhashing import deserialize_numpy, serialize_numpy
@@ -64,9 +61,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     # FROM
     @classmethod
-    def from_pdb_file(cls, pdbfile: str, name: str = ""):
+    def from_pdb_file(cls, pdb_file: str, name: str = ""):
         """
-        Create ``ProteinComponent`` from PDB-formatted string.
+        Create ``ProteinComponent`` from PDB-formatted file.
 
         This is the primary deserialization mechanism for this class.
 
@@ -82,10 +79,34 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        openmm_PDBFile = PDBFile(pdbfile)
+        openmm_PDBFile = PDBFile(pdb_file)
         return cls._from_openmmPDBFile(
             openmm_PDBFile=openmm_PDBFile, name=name
         )
+        
+    @classmethod
+    def from_pdbx_file(cls, pdbx_file: str, name=""):
+        """
+        Create ``ProteinComponent`` from PDBX-formatted file.
+
+        This is the primary deserialization mechanism for this class.
+
+        Parameters
+        ----------
+        pdbxfile : str
+            path to the pdb file.
+        name : str, optional
+            name of the input protein, by default ""
+
+        Returns
+        -------
+        ProteinComponent
+            the deserialized molecule
+        """
+        openmm_PDBxFile = PDBxFile(pdbx_file)
+        return cls._from_openmmPDBFile(
+            openmm_PDBFile=openmm_PDBxFile, name=name)
+
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str = ""):
@@ -209,7 +230,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 elif atom_name in negative_ions:
                     fc = -default_valence  # e.g. Chlorine ions
                 else:
-                    raise ValueError("I don't know this Ion! \t" + atom_name+ "\t"+resn+"-"+str(resind))
+                    raise ValueError("I don't know this Ion or something really went wrong! \t" + atom_name+ "\t"+resn+"-"+str(resind)+"\tconnectivity: "+str(connectivity))
             elif default_valence > connectivity:
                 fc = -(default_valence - connectivity)  # negative charge
             elif default_valence < connectivity:
@@ -635,9 +656,3 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return d
 
-    @classmethod
-    def from_pdbx_file(cls, pdbxfile: str, name=""):
-        raise NotImplementedError
-        openmm_PDBxFile = PDBxFile(pdbxfile)
-        return cls._from_openmmPDBFile(
-            openmm_PDBFile=openmm_PDBxFile, name=name)
