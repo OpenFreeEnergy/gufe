@@ -484,14 +484,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdbFile(self, out_path: Union[str, io.TextIOWrapper] = None) -> str:
+    def to_pdbFile(self, out_path: Union[str, io.TextIOBase] = None) -> str:
         """
         serialize protein to pdb file.
 
         Parameters
         ----------
-        out_path : str
-            provide path or FileIO to the resulting file, by default None
+        out_path : Union[str, io.TextIOBase]
+            provide path or any string based stream (e.g. FileIO ) to the resulting file, by default None
 
         Returns
         -------
@@ -507,7 +507,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if isinstance(out_path, str):
             out_file = open(out_path, "w")
-        elif isinstance(out_path, io.TextIOWrapper):
+        elif isinstance(out_path, io.TextIOBase):
             out_file = out_path
             out_path = str(out_file.name)
         else:
@@ -520,7 +520,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def to_pdbxFile(
-        self, out_path: Union[str, io.TextIOWrapper] = None
+        self, out_path: Union[str, io.TextIOBase] = None
     ) -> str:
         """
         serialize protein to pdbx file.
@@ -547,7 +547,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if isinstance(out_path, str):
             out_file = open(out_path, "w")
-        elif isinstance(out_path, io.TextIOWrapper):
+        elif isinstance(out_path, io.TextIOBase):
             out_file = out_path
             out_path = str(out_file.name)
         else:

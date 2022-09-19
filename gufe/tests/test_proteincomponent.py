@@ -27,11 +27,14 @@ def PDB_181L_mutant(PDB_181L_path):
 
 def line_by_line_comparison(in_file_path, out_file_path):
 
-    in_pdb = open(in_file_path, "r")
-    out_pdb = open(out_file_path, "r")
-
-    in_lines = in_pdb.readlines()
-    out_lines = out_pdb.readlines()
+    in_lines = []
+    with  open(out_file_path, "w") as out_file2:
+        in_pdb = open(in_file_path, "r")
+        in_lines = in_pdb.readlines()
+    
+    out_lines = []
+    with  open(out_file_path, "w") as out_pdb:
+        out_lines = out_pdb.readlines()
 
     not_equal = []
     assert len(in_lines) == len(out_lines)
@@ -45,13 +48,10 @@ def line_by_line_comparison(in_file_path, out_file_path):
         else:
             not_equal.append((in_line, out_line))
 
-    not_equal_found = len(not_equal) > 0
-    if(not_equal_found):
+    if not_equal:
         print("not Equals")
         print("\n".join(map(lambda x: "in: " +
               x[0] + "\nout: " + x[1], not_equal)))
-
-    if(not_equal_found):
         return False
     else:
         return True
@@ -116,8 +116,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         p.to_pdbxFile(str(out_file_path))
         
-        out_file2 = open(out_file_path, "w")
-        p.to_pdbxFile(out_file2)
+        with  open(out_file_path, "w") as out_file2:
+            p.to_pdbxFile(out_file2)
         
 
     def test_to_pdbfile(self, PDB_181L_path, tmp_path):
@@ -128,8 +128,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         p.to_pdbFile(str(out_file_path))
         
-        out_file2 = open(out_file_path, "w")
-        p.to_pdbFile(out_file2)
+        with  open(out_file_path, "w") as out_file2:           
+            p.to_pdbFile(out_file2)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
         out_path_prefix = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)

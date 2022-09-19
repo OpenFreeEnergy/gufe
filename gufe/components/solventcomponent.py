@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
-from openff.units import unit as off_unit
+from openff.units import unit
 from typing import Optional, Tuple
 
 from .component import Component
@@ -24,14 +24,14 @@ class SolventComponent(Component):
     _positive_ion: Optional[str]
     _negative_ion: Optional[str]
     _neutralize: bool
-    _ion_concentration: offUnit.Quantity
+    _ion_concentration: unit.Quantity
 
     def __init__(self, *,  # force kwarg usage
                  smiles: str = 'O',
                  positive_ion: str = 'Na+',
                  negative_ion: str = 'Cl-',
                  neutralize: bool = True,
-                 ion_concentration: offUnit.Quantity = 0.0 * offUnit.molar):
+                 ion_concentration: unit.Quantity = 0.0 * unit.molar):
         """
         Parameters
         ----------
@@ -70,8 +70,8 @@ class SolventComponent(Component):
 
         self._neutralize = neutralize
 
-        if (not isinstance(ion_concentration, offUnit.Quantity)
-              or not ion_concentration.is_compatible_with(offUnit.molar)):
+        if (not isinstance(ion_concentration, unit.Quantity)
+              or not ion_concentration.is_compatible_with(unit.molar)):
             raise ValueError(f"ion_concentration must be given in units of"
                              f" concentration, got: {ion_concentration}")
         if ion_concentration.m < 0:
@@ -105,7 +105,7 @@ class SolventComponent(Component):
         return self._neutralize
 
     @property
-    def ion_concentration(self) -> offUnit.Quantity:
+    def ion_concentration(self) -> unit.Quantity:
         """Concentration of ions in the solvent state"""
         return self._ion_concentration
 
@@ -118,7 +118,7 @@ class SolventComponent(Component):
     def _from_dict(cls, d):
         """Deserialize from dict representation"""
         ion_conc = d['ion_concentration']
-        d['ion_concentration'] = offUnit.parse_expression(ion_conc)
+        d['ion_concentration'] = unit.parse_expression(ion_conc)
 
         return cls(**d)
 
