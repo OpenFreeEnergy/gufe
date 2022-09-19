@@ -59,7 +59,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
         # we should warn if rdkit properties are anything other than 'foo'
         # (expected) or the empty string (not set)
         assert len(recwarn) == 1
-        assert "SmallMoleculeComponent being renamed" in recwarn[0].message.args[0]
+        assert "Component being renamed" in recwarn[0].message.args[0]
     else:
         assert len(recwarn) == 0
 

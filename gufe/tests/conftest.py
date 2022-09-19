@@ -148,7 +148,7 @@ def ethane():
 
 @pytest.fixture
 def prot_comp(PDB_181L_path):
-    yield gufe.ProteinComponent.from_pdbfile(PDB_181L_path)
+    yield gufe.ProteinComponent.from_pdb_file(PDB_181L_path)
 
 
 @pytest.fixture
