@@ -1,7 +1,6 @@
 name: gufe
 channels:
   - jaimergp/label/unsupported-cudatoolkit-shim
-  - conda-forge/label/openff-toolkit_rc  # remove when 0.11 released
   - conda-forge
   - openeye
 dependencies:
