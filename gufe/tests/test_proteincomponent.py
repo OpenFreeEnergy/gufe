@@ -37,8 +37,8 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     with open(out_file_path, "r") as out_pdb:
         out_lines = out_pdb.readlines()
 
-    in_lines = in_lines[1:]
-    out_lines = out_lines[1:]
+    in_lines = in_lines[2:]
+    out_lines = out_lines[2:]
     assert in_lines == out_lines
 
 
