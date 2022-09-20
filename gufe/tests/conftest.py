@@ -2,11 +2,67 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import importlib.resources
+import urllib.request
+from urllib.error import URLError
+import io
+import functools
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
 import gufe
+
+try:
+    urllib.request.urlopen("https://google.com")
+except URLError:
+    HAS_INTERNET = False
+else:
+    HAS_INTERNET = True
+
+
+## helper functions
+
+
+def load_url_data(url, encoding='utf-8'):
+    if not HAS_INTERNET:
+        pytest.skip("Skipping because internet seems faulty")
+
+    req = urllib.request.urlopen(url)
+    # we convert to StringIO because req.read() returns bytes, not string
+    return io.StringIO(req.read().decode(encoding))
+
+
+def get_test_filename(filename):
+    with importlib.resources.path('gufe.tests.data', filename) as file:
+        return str(file)
+
+
+## PDBs for input/output testing
+
+
+_benchmark_pdb_names = [
+    '2019-09-23_thrombin'
+]
+
+_pl_benchmark_url_pattern = (
+    "https://github.com/openforcefield/protein-ligand-benchmark/blob/main/data/"
+    "{name}/01_protein/crd/protein.pdb?raw=true"
+)
+
+PDB_BENCHMARK_LOADERS = {
+    name: functools.partial(
+        load_url_data,
+        url=_pl_benchmark_url_pattern.format(name=name)
+    )
+    for name in _benchmark_pdb_names
+}
+
+PDB_FILE_LOADERS = {
+    name: lambda: get_test_filename(name)
+    for name in ["181l.pdb"]
+}
+
+ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
 
 
 ## data file paths

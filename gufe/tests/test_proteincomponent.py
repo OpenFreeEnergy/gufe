@@ -12,6 +12,8 @@ from openmm.app import pdbfile
 from openmm import unit
 from numpy.testing import assert_almost_equal
 
+from .conftest import ALL_PDB_LOADERS, HAS_INTERNET
+
 
 @pytest.fixture
 def PDB_181L_mutant(PDB_181L_path):
@@ -82,6 +84,12 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert p.name == "Steve"
         assert p.to_rdkit().GetNumAtoms() == 2639
 
+    @pytest.mark.parametrize('pdbname', ALL_PDB_LOADERS.keys())
+    def test_temp_smoketest_frompdb(self, pdbname):
+        pdb_source = ALL_PDB_LOADERS[pdbname]()
+        p = self.cls.from_pdb_file(pdb_source)
+
+
     # To
     def test_to_rdkit(self, PDB_181L_path):
         pm = self.cls.from_pdb_file(PDB_181L_path)
@@ -98,9 +106,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         p.to_pdbx_file(str(out_file))
         with open(str(out_file), "w") as out_file2:
             p.to_pdbx_file(out_file2)
-        
-        assert_same_pdb_lines(in_file_path=str(PDBx_181L_openMMClean_path), out_file_path=out_file)
-        assert_same_pdb_lines(in_file_path=str(PDBx_181L_openMMClean_path), out_file_path=out_file)
+
+        assert_same_pdb_lines(in_file_path=str(PDBx_181L_openMMClean_path),
+                              out_file_path=out_file)
+        assert_same_pdb_lines(in_file_path=str(PDBx_181L_openMMClean_path),
+                              out_file_path=out_file)
 
     def test_to_pdb_file(self, PDB_181L_OpenMMClean_path, tmp_path):
         p = self.cls.from_pdb_file(str(PDB_181L_OpenMMClean_path), name="Wuff")
@@ -109,12 +119,14 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         p.to_pdb_file(str(out_file))
 
-        assert_same_pdb_lines(in_file_path=str(PDB_181L_OpenMMClean_path), out_file_path=out_file)
+        assert_same_pdb_lines(in_file_path=str(PDB_181L_OpenMMClean_path),
+                              out_file_path=out_file)
 
         with open(str(out_file), "w") as out_file2:
             p.to_pdb_file(out_file2)
-            
-        assert_same_pdb_lines(in_file_path=str(PDB_181L_OpenMMClean_path), out_file_path=out_file)
+
+        assert_same_pdb_lines(in_file_path=str(PDB_181L_OpenMMClean_path),
+                              out_file_path=out_file)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
         out_file_name = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
