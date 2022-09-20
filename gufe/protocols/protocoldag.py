@@ -14,6 +14,7 @@ from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBa
 
 
 class DAGMixin:
+    _name: Optional[str]
     _graph: nx.DiGraph
 
     @staticmethod 
@@ -22,6 +23,7 @@ class DAGMixin:
         G = nx.DiGraph()
 
         for node in nodes:
+            G.add_node(node)
             for dep in node.dependencies:
                 G.add_edge(node, dep)
 
