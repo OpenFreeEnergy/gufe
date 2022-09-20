@@ -1,6 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
+import itertools
 from typing import Optional, Iterable, List, Dict, Any
 from collections import defaultdict
 
@@ -36,7 +37,6 @@ class InitializeUnit(ProtocolUnit):
 class SimulationUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx, *, initialization, **inputs):
-
         output = [initialization.outputs['log']]
         output.append("running_md_{}".format(inputs["window"]))
 
@@ -398,3 +398,73 @@ class TestProtocol(GufeTokenizableTestsMixin):
             )
     
             return SimulationUnit(name=f"simulation", initialization=alpha)
+
+
+class NoDepUnit(ProtocolUnit):
+    @staticmethod
+    def _execute(ctx, **inputs) -> Dict[str, Any]:
+        return {'local': inputs['val'] ** 2}
+
+
+class NoDepResults(ProtocolResult):
+    def get_estimate(self):
+        return sum(self.data['vals'])
+
+    def get_uncertainty(self):
+        return len(self.data['vals'])
+
+    def get_rate_of_convergence(self):
+        return 0.0
+
+
+class NoDepsProtocol(Protocol):
+    """A protocol without dependencies"""
+    result_cls = NoDepResults
+
+    @classmethod
+    def _defaults(cls):
+        return {}
+
+    @classmethod
+    def _default_settings(cls):
+        return {}
+
+    def _create(
+            self,
+            stateA: ChemicalSystem,
+            stateB: ChemicalSystem,
+            mapping: Optional[Mapping] = None,
+            extend_from: Optional[ProtocolDAGResult] = None,
+    ) -> List[ProtocolUnit]:
+        return [NoDepUnit(settings=self.settings,
+                          val=i)
+                for i in range(3)]
+
+    def _gather(self, dag_results):
+        return {
+            'vals': list(itertools.chain.from_iterable(
+                (d.outputs['local'] for d in dag.protocol_unit_results) for dag in dag_results)),
+        }
+
+
+class TestNoDepProtocol:
+    def test_create(self):
+        p = NoDepsProtocol()
+
+        dag = p.create(None, None)
+
+        assert len(dag.protocol_units) == 3
+
+    def test_gather(self):
+        p = NoDepsProtocol()
+
+        dag = p.create(None, None)
+
+        dag_result = execute(dag)
+
+        assert dag_result.ok()
+
+        result = p.gather([dag_result])
+
+        assert result.get_estimate() == 0 + 1 + 4
+        assert result.get_uncertainty() == 3
