@@ -3,7 +3,7 @@ Pydantic models used for storing settings.
 """
 
 from datetime import date
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
@@ -67,7 +67,7 @@ class ElectrostaticSettings(SettingsBaseModel):
     scale: ElectrostaticScale
     cutoff: FloatQuantity["nanometer"] #opt
     switch_width: FloatQuantity["nanometer"] #opt
-    solvent_dielectric: Union[float, None]
+    solvent_dielectric: Optional[float]
 
 
 class GBSASettings(SettingsBaseModel):
@@ -86,8 +86,8 @@ class ForcefieldSettings(SettingsBaseModel):
     """
 
     # Metadata
-    date: Union[date, None]
-    author: Union[str, None]
+    date: Optional[date]
+    author: Optional[str]
 
     # These should also allow None
     vdW: VdWSettings
@@ -103,7 +103,7 @@ class ThermoSettings(SettingsBaseModel):
     temperature: FloatQuantity["kelvin"]
     pressure: FloatQuantity["standard_atmosphere"]
     ph: Union[PositiveFloat, None]
-    redox_potential: Union[float, None]
+    redox_potential: Optional[float]
 
 
 class Settings(SettingsBaseModel):
