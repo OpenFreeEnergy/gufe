@@ -56,7 +56,7 @@ jobs:
       - name: "Select OFF tk version"
         if: ${{ matrix.old_offtk == true }}
         run: |
-          micromamba install -y -c conda-forge "openff-toolkit==0.10.6" "openff-toolkit-base==0.10.6"
+          mamba install -y -c conda-forge "openff-toolkit==0.10.6" "openff-toolkit-base==0.10.6"
 
       - name: "Install"
         run: python setup.py develop --no-deps
