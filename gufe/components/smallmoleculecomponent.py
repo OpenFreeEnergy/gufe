@@ -5,8 +5,28 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
+
+
+def _old_OFF() -> bool:
+    from openff.toolkit import topology
+
+    return hasattr(topology.Atom, 'element')
+
+USING_OLD_OFF = _old_OFF()
+
 import warnings
-from openff.units import unit
+if USING_OLD_OFF:
+    from openmm import unit
+    def get_value(quanity, u):
+        return quanity.value_in_unit(u)
+    def get_atomic_number(atom):
+        return atom.element.atomic_number
+else:
+    from openff.units import unit
+    def get_value(quanity, u):
+        return quanity.m_as(u)
+    def get_atomic_number(atom):
+        return atom.atomic_number
 
 from rdkit import Chem
 
@@ -140,13 +160,14 @@ class SmallMoleculeComponent(Component):
         # charge. We might want to explcitly include them in the stored dict.
         m = self.to_openff()
         atoms = [
-            (atom.atomic_number,
+            (get_atomic_number(atom),
              atom.name,
-             atom.formal_charge.m_as(unit.elementary_charge),
+             get_value(atom.formal_charge, unit.elementary_charge),
              atom.is_aromatic,
              atom.stereochemistry or '')
             for atom in m.atoms
         ]
+
         bonds = [
             (bond.atom1_index, bond.atom2_index, bond.bond_order,
              bond.is_aromatic, bond.stereochemistry or '')
@@ -160,7 +181,7 @@ class SmallMoleculeComponent(Component):
                                "least 1 conformer")
 
         conformers = [
-            serialize_numpy(conf.m_as(unit.angstrom))
+            serialize_numpy(get_value(conf, unit.angstrom))
             for conf in m.conformers
         ]
 
