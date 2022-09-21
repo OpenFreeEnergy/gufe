@@ -9,8 +9,14 @@ from pathlib import Path
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openff.toolkit.utils.exceptions import SMIRNOFFParseError
 
-from .models import (ElectrostaticSettings, ForcefieldSettings, GBSASettings,
-                     Settings, ThermoSettings, VdWSettings)
+from .models import (
+    ElectrostaticSettings,
+    ForcefieldSettings,
+    GBSASettings,
+    Settings,
+    ThermoSettings,
+    VdWSettings,
+)
 
 
 def ff_settings_from_offxml(force_field) -> ForcefieldSettings:

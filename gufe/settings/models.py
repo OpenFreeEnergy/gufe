@@ -3,11 +3,11 @@ Pydantic models used for storing settings.
 """
 
 from datetime import date
-from typing import Literal, Union, Optional
+from typing import Literal, Optional, Union
 
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
-from pydantic import BaseModel, Extra, FilePath, PositiveFloat
+from pydantic import Extra, FilePath, PositiveFloat
 from typing_extensions import TypedDict
 
 
@@ -65,8 +65,8 @@ class ElectrostaticSettings(SettingsBaseModel):
     nonperiodic_potential: Union[Literal["Coulomb"], str]
     exception_potential: Union[Literal["Coulomb"], str]
     scale: ElectrostaticScale
-    cutoff: FloatQuantity["nanometer"] #opt
-    switch_width: FloatQuantity["nanometer"] #opt
+    cutoff: FloatQuantity["nanometer"]  # opt
+    switch_width: FloatQuantity["nanometer"]  # opt
     solvent_dielectric: Optional[float]
 
 
