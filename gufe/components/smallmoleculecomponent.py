@@ -15,9 +15,18 @@ def _old_OFF() -> bool:
 USING_OLD_OFF = _old_OFF()
 
 import warnings
-from openff.units import unit as off_unit
-from openff.units.openmm import ensure_quantity
-from openmm import unit as omm_unit
+if USING_OLD_OFF:
+    from openmm import unit
+    def get_value(quanity, u):
+        return quanity.value_in_unit(u)
+    def get_atomic_number(atom):
+        return atom.element.atomic_number
+else:
+    from openff.units import unit
+    def get_value(quanity, u):
+        return quanity.m_as(u)
+    def get_atomic_number(atom):
+        return atom.atomic_number
 
 from rdkit import Chem
 
@@ -150,19 +159,14 @@ class SmallMoleculeComponent(Component):
         # NOTE: Here we're implicitly using units of angstrom and elementary
         # charge. We might want to explcitly include them in the stored dict.
         m = self.to_openff()
-        atoms = []
-        for atom in m.atoms:
-            atnum = atom.element.atomic_number if USING_OLD_OFF else atom.atomic_number
-            charge = ensure_quantity(atom.formal_charge, 'openff')
-            charge = charge.m_as(off_unit.elementary_charge)
-
-            atoms.append(
-                (atnum,
-                 atom.name,
-                 charge,
-                 atom.is_aromatic,
-                 atom.stereochemistry or '')
-            )
+        atoms = [
+            (get_atomic_number(atom),
+             atom.name,
+             get_value(atom.formal_charge, unit.elementary_charge),
+             atom.is_aromatic,
+             atom.stereochemistry or '')
+            for atom in m.atoms
+        ]
 
         bonds = [
             (bond.atom1_index, bond.atom2_index, bond.bond_order,
@@ -176,11 +180,10 @@ class SmallMoleculeComponent(Component):
             raise RuntimeError(f"{self.__class__.__name__} must have at "
                                "least 1 conformer")
 
-        conformers = []
-        for conf in m.conformers:
-            c = ensure_quantity(conf, 'openff').m_as(off_unit.angstrom)
-
-            conformers.append(serialize_numpy(c))
+        conformers = [
+            serialize_numpy(get_value(conf, unit.angstrom))
+            for conf in m.conformers
+        ]
 
         d = {
             'atoms': atoms,
@@ -199,7 +202,7 @@ class SmallMoleculeComponent(Component):
         for (an, name, fc, arom, stereo) in d['atoms']:
             m.add_atom(
                 atomic_number=an,
-                formal_charge=fc * omm_unit.elementary_charge if USING_OLD_OFF else fc * off_unit.elementary_charge,
+                formal_charge=fc * unit.elementary_charge,
                 is_aromatic=arom,
                 stereochemistry=stereo or None,
                 name=name,
@@ -215,10 +218,7 @@ class SmallMoleculeComponent(Component):
             )
 
         for conf in d['conformers']:
-            if USING_OLD_OFF:
-                m.add_conformer(deserialize_numpy(conf) * omm_unit.angstrom)
-            else:
-                m.add_conformer(deserialize_numpy(conf) * off_unit.angstrom)
+            m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
 
         return cls.from_openff(m, name=d['name'])
 
