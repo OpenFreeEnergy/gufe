@@ -157,3 +157,9 @@ def solvated_ligand(solv_comp, toluene_ligand_comp):
     return gufe.ChemicalSystem(
         {"ligand": toluene_ligand_comp, "solvent": solv_comp},
     )
+
+@pytest.fixture
+def vacuum_ligand(toluene_ligand_comp):
+    return gufe.ChemicalSystem(
+        {"ligand": toluene_ligand_comp},
+    )

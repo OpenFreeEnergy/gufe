@@ -4,14 +4,14 @@
 from typing import Optional, Iterable
 
 from openff.toolkit.utils.serialization import Serializable
-from ..tokenize import GufeTokenizable
+from ..tokenization import GufeTokenizable
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import Mapping
 
 
-class Transformation:  #(GufeTokenizable):
+class Transformation(GufeTokenizable):
     """An edge of an alchemical network.
 
     Connects two `ChemicalSystem`s, with directionality.
@@ -54,7 +54,7 @@ class Transformation:  #(GufeTokenizable):
         self._protocol = protocol
 
     def _defaults(self):
-        return super().defaults()
+        return super()._defaults()
 
     def __repr__(self):
         return f"{self.__class__.__name__}(stateA={self.stateA}, "\
@@ -118,26 +118,18 @@ class Transformation:  #(GufeTokenizable):
             )
         )
 
-    # TODO: broken without a `Protocol` registry of some kind
-    # should then be changed to use the registry
     def _to_dict(self) -> dict:
         return {
-            "stateA": self.stateA.to_dict(),
-            "stateB": self.stateB.to_dict(),
-            "protocol": self.protocol.to_dict(),
-            "mapping": self.mapping.to_dict(),
+            "stateA": self.stateA,
+            "stateB": self.stateB,
+            "protocol": self.protocol,
+            "mapping": self.mapping,
+            "name": self.name,
         }
 
-    # TODO: broken without a `Protocol` registry of some kind
-    # should then be changed to use the registry
     @classmethod
     def _from_dict(cls, d: dict):
-        return cls(
-            stateA=ChemicalSystem.from_dict(d["stateA"]),
-            stateB=ChemicalSystem.from_dict(d["stateB"]),
-            protocol=Protocol.from_dict(d["protocol"]),
-            mapping=Mapping.from_dict(d["mapping"]),
-        )
+        return cls(**d)
 
     def create(self) -> ProtocolDAG:
         """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
@@ -242,22 +234,16 @@ class NonTransformation(Transformation):
             )
         )
 
-    # TODO: broken without a `Protocol` registry of some kind
-    # should then be changed to use the registry
     def _to_dict(self) -> dict:
         return {
-            "system": self.system.to_dict(),
-            "protocol": self.protocol.to_dict(),  # TODO: include defaults?
+            "system": self.system,
+            "protocol": self.protocol,
+            "name": self.name,
         }
 
-    # TODO: broken without a `Protocol` registry of some kind
-    # should then be changed to use the registry
     @classmethod
     def _from_dict(cls, d: dict):
-        return cls(
-            system=ChemicalSystem.from_dict(d["system"]),
-            protocol=Protocol.from_dict(d["protocol"]),
-        )
+        return cls(**d)
 
     def create(self) -> ProtocolDAG:
         """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
