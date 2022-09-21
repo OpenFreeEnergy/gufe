@@ -8,18 +8,16 @@ from openff.toolkit.topology import Molecule as OFFMolecule
 
 
 def _old_OFF() -> bool:
-    from openff.toolkit import __version__ as OFF_VERSION
-    a, b, c = map(int, OFF_VERSION.split('.'))
-    return (a, b) < (0, 11)
+    from openff.toolkit import topology
 
+    return hasattr(topology.Atom, 'element')
 
 USING_OLD_OFF = _old_OFF()
 
 import warnings
-if USING_OLD_OFF:
-    from openmm import unit as omm_unit
-else:
-    from openff.units import unit as off_unit
+from openff.units import unit as off_unit
+from openff.units.openmm import ensure_quantity
+from openmm import unit as omm_unit
 
 from rdkit import Chem
 
@@ -155,14 +153,15 @@ class SmallMoleculeComponent(Component):
         atoms = []
         for atom in m.atoms:
             atnum = atom.element.atomic_number if USING_OLD_OFF else atom.atomic_number
-            charge = atom.formal_charge.value_in_unit(omm_unit.elementary_charge) if USING_OLD_OFF else atom.formal_charge.m_as(off_unit.elementary_charge)
+            charge = ensure_quantity(atom.formal_charge, 'openff')
+            charge = charge.m_as(off_unit.elementary_charge)
 
             atoms.append(
-            (atnum,
-             atom.name,
-             charge,
-             atom.is_aromatic,
-             atom.stereochemistry or '')
+                (atnum,
+                 atom.name,
+                 charge,
+                 atom.is_aromatic,
+                 atom.stereochemistry or '')
             )
 
         bonds = [
@@ -179,10 +178,7 @@ class SmallMoleculeComponent(Component):
 
         conformers = []
         for conf in m.conformers:
-            if USING_OLD_OFF:
-                c = conf.value_in_unit(omm_unit.angstrom)
-            else:
-                c = conf.m_as(off_unit.angstrom)
+            c = ensure_quantity(conf, 'openff').m_as(off_unit.angstrom)
 
             conformers.append(serialize_numpy(c))
 
