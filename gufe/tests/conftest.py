@@ -71,7 +71,7 @@ PDB_BENCHMARK_LOADERS = {
 }
 
 PDB_FILE_LOADERS = {
-    name: lambda: open(get_test_filename(name), "r")
+    name: lambda: get_test_filename(name)
     for name in ["181l.pdb"]
 }
 
