@@ -44,10 +44,23 @@ _benchmark_pdb_names = [
     '2019-09-23_thrombin'
 ]
 
+_benchmark_pdb_names = [
+        "cmet_protein",
+        "hif2a_protein",
+        "mcl1_protein",
+        "p38_protein",
+        "ptp1b_protein",
+        "syk_protein",
+        "thrombin_protein",
+        "tnsk2_protein",
+        "tyk2_protein",
+        ]
+
+
 _pl_benchmark_url_pattern = (
-    "https://github.com/openforcefield/protein-ligand-benchmark/blob/main/data/"
-    "{name}/01_protein/crd/protein.pdb?raw=true"
+    "https://github.com/OpenFreeEnergy/openfe-benchmarks/blob/main/openfe_benchmarks/data/{name}.pdb?raw=true"
 )
+
 
 PDB_BENCHMARK_LOADERS = {
     name: functools.partial(
@@ -58,7 +71,7 @@ PDB_BENCHMARK_LOADERS = {
 }
 
 PDB_FILE_LOADERS = {
-    name: lambda: get_test_filename(name)
+    name: lambda: open(get_test_filename(name), "r")
     for name in ["181l.pdb"]
 }
 
@@ -66,7 +79,6 @@ ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
 
 
 ## data file paths
-
 
 @pytest.fixture
 def serialization_template():
@@ -122,27 +134,6 @@ def PDBx_181L_openMMClean_path():
     with importlib.resources.path('gufe.tests.data',
                                   '181l_openmmClean.cif') as f:
         yield str(f)
-
-@pytest.fixture
-def PDB_benchmarkFiles():
-
-    pdb_filenames = [
-        "cmet_protein_openmmClean.pdb",
-        "hif2a_protein_openmmClean.pdb",
-        "mcl1_protein_openmmClean.pdb",
-        "p38_protein_openmmClean.pdb",
-        "ptp1b_protein_openmmClean.pdb",
-        "syk_protein_openmmClean.pdb",
-        "thrombin_protein_openmmClean.pdb",
-        "tnsk2_protein_openmmClean.pdb",
-        "tyk2_protein_openmmClean.pdb",
-        ]
-
-    pdb_paths = []
-    for pdb_path in pdb_filenames:
-        with importlib.resources.path('gufe.tests.data', pdb_path) as f:
-            pdb_paths.append(str(f))
-    yield pdb_paths
 
 ## RDKit molecules
 

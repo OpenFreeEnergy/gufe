@@ -4,6 +4,7 @@ import ast
 import json
 import io
 import numpy as np
+from os import PathLike
 from typing import Union
 from collections import defaultdict
 
@@ -514,7 +515,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[str, io.TextIOWrapper] = None) -> str:
+    def to_pdb_file(self, out_path: Union[Union[str, bytes, PathLike], io.TextIOBase] = None) -> str:
         """
         serialize protein to pdb file.
 
@@ -535,22 +536,32 @@ class ProteinComponent(ExplicitMoleculeComponent):
         openmm_pos = self.to_openmm_positions()
 
         # write file
-        if isinstance(out_path, str):
-            out_file = open(out_path, "w")
-        elif isinstance(out_path, io.TextIOWrapper):
-            out_file = out_path
-            out_path = str(out_file.name)
+        if not isinstance(out_path, io.TextIOBase):
+            # allows pathlike/str; we close on completion
+            out_file = open(out_path, mode='w')
+            must_close = True
         else:
-            raise ValueError("Out path type was not as expected! Got: "+str(out_path)+"\t"+str(type(out_path)))
+            out_file = out_path
+            must_close = False
+
+        try:
+            out_path = out_file.name
+        except AttributeError:
+            out_path = "<unknown>"
 
         PDBFile.writeFile(
             topology=openmm_top, positions=openmm_pos, file=out_file
         )
 
+        if must_close:
+            # we only close the file if we had to open it
+            out_file.close()
+       
+       
         return out_path
 
     def to_pdbx_file(
-        self, out_path: Union[str, io.TextIOWrapper] = None
+        self, out_path: Union[Union[str, bytes, PathLike], io.TextIOBase] = None
     ) -> str:
         """
         serialize protein to pdbx file.
@@ -575,17 +586,25 @@ class ProteinComponent(ExplicitMoleculeComponent):
         )
 
         # write file
-        if isinstance(out_path, str):
-            out_file = open(out_path, "w")
-        elif isinstance(out_path, io.TextIOWrapper):
-            out_file = out_path
-            out_path = str(out_file.name)
+        if not isinstance(out_path, io.TextIOBase):
+            # allows pathlike/str; we close on completion
+            out_file = open(out_path, mode='w')
+            must_close = True
         else:
-            raise ValueError("Out path type was not as expected! Got: "+str(out_path)+"\t"+str(type(out_path)))
+            out_file = out_path
+            must_close = False
+            
+            try:
+                out_path = out_file.name
+            except AttributeError:
+                out_path = "<unknown>"
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
 
-        out_file.close()
+
+        if must_close:
+            # we only close the file if we had to open it
+            out_file.close()
 
         return out_path
 
