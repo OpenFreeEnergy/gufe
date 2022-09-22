@@ -223,7 +223,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert m1.total_charge == 7
 
-    def test_protein_total_charge_thromb(self, PDB_thrombin_path):
-        m1 = self.cls.from_pdb_file(PDB_thrombin_path)
+    def test_protein_total_charge_thromb(self):
+        m1 = self.cls.from_pdb_file(ALL_PDB_LOADERS["thrombin_protein"]())
 
         assert m1.total_charge == 6

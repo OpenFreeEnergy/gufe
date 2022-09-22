@@ -75,8 +75,11 @@ PDB_FILE_LOADERS = {
     for name in ["181l.pdb"]
 }
 
-ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
-
+if(HAS_INTERNET):
+    ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
+else:
+    ALL_PDB_LOADERS = dict(**PDB_FILE_LOADERS)
+   
 
 ## data file paths
 
