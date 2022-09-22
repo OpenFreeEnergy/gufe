@@ -17,7 +17,9 @@ from copy import copy
 from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
 import tempfile
 
-from ..tokenization import GufeTokenizable, GufeKey, normalize
+from ..tokenization import (
+    GufeTokenizable, GufeKey, normalize, TOKENIZABLE_REGISTRY
+)
 
 
 @dataclass
@@ -33,7 +35,7 @@ class Context:
 class ProtocolUnitMixin:
 
     def _list_dependencies(self, cls):
-        deps = [] 
+        deps = []
         for key, value in self.inputs.items():
             if isinstance(value, dict):
                 for k, v in value.items():
@@ -49,10 +51,10 @@ class ProtocolUnitMixin:
 
 
 class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
-    def __init__(self, *, 
-            name: Optional[str] = None, 
-            source_key: GufeKey, 
-            inputs: Dict[str, Any], 
+    def __init__(self, *,
+            name: Optional[str] = None,
+            source_key: GufeKey,
+            inputs: Dict[str, Any],
             outputs: Dict[str, Any],
             _key: GufeKey = None
         ):
@@ -74,11 +76,10 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         _key : GufeKey
             Used by deserialization to set UUID-based key for this
             `ProtocolUnitResult` before creation.
-            
         """
         if _key is not None:
             self._key = _key
-            
+
         self._name = name
         self._source_key = source_key
         self._inputs = inputs
@@ -269,6 +270,7 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         obj = cls(name=dct['name'],
                   **dct['inputs'])
         obj._key = _key
+        TOKENIZABLE_REGISTRY.setdefault(_key, obj)
 
         return obj
 
