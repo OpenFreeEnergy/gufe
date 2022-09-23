@@ -515,13 +515,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[Union[str, bytes, PathLike], io.TextIOBase] = None) -> str:
+    def to_pdb_file(self, out_path: Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase] = None) -> str:
         """
         serialize protein to pdb file.
 
         Parameters
         ----------
-        out_path : Union[str, io.TextIOBase]
+        out_path :  Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]
             provide path or any string based stream (e.g. FileIO ) to the resulting file, by default None
 
         Returns
@@ -535,15 +535,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # get pos:
         openmm_pos = self.to_openmm_positions()
 
+
         # write file
         if not isinstance(out_path, io.TextIOBase):
             # allows pathlike/str; we close on completion
-            out_file = open(out_path, mode='w')
+            out_file = open(out_path, mode='w')  # type: ignore
             must_close = True
         else:
-            out_file = out_path
+            out_file = out_path  # type: ignore
             must_close = False
-
+            
         try:
             out_path = out_file.name
         except AttributeError:
@@ -561,14 +562,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def to_pdbx_file(
-        self, out_path: Union[Union[str, bytes, PathLike], io.TextIOBase] = None
+        self, out_path: Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase] = None
     ) -> str:
         """
         serialize protein to pdbx file.
 
         Parameters
         ----------
-        out_path : str
+        out_path : Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]
             provide path or FileIO to the resulting file, by default None
 
         Returns
@@ -588,16 +589,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if not isinstance(out_path, io.TextIOBase):
             # allows pathlike/str; we close on completion
-            out_file = open(out_path, mode='w')
+            out_file = open(out_path, mode='w')  # type: ignore
             must_close = True
         else:
-            out_file = out_path
+            out_file = out_path  # type: ignore
             must_close = False
             
-            try:
-                out_path = out_file.name
-            except AttributeError:
-                out_path = "<unknown>"
+        try:
+            out_path = out_file.name
+        except AttributeError:
+            out_path = "<unknown>"
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
 
