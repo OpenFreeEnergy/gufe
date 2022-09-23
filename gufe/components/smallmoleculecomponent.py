@@ -1,20 +1,40 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+import logging
+# openff complains about oechem being missing, shhh
+logger = logging.getLogger('openff.toolkit')
+logger.setLevel(logging.ERROR)
+from openff.toolkit.topology import Molecule as OFFMolecule
+
+
+def _old_OFF() -> bool:
+    from openff.toolkit import topology
+
+    return hasattr(topology.Atom, 'element')
+
+USING_OLD_OFF = _old_OFF()
+
+import warnings
+if USING_OLD_OFF:
+    from openmm import unit
+    def get_value(quanity, u):
+        return quanity.value_in_unit(u)
+    def get_atomic_number(atom):
+        return atom.element.atomic_number
+else:
+    from openff.units import unit
+    def get_value(quanity, u):
+        return quanity.m_as(u)
+    def get_atomic_number(atom):
+        return atom.atomic_number
+
 from rdkit import Chem
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..custom_typing import OEMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 
-# openff complains about oechem being missing, shhh
-import logging
-
-logger = logging.getLogger('openff.toolkit')
-logger.setLevel(logging.ERROR)
-
-from openff.toolkit.topology import Molecule as OFFMolecule
-from openff.units import unit as openff_unit
 
 
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
@@ -157,13 +177,12 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m = self.to_openff()
 
         atoms = [
-            (
-                atom.atomic_number,
-                atom.name,
-                atom.formal_charge.m_as(openff_unit.elementary_charge),
-                atom.is_aromatic,
-                atom.stereochemistry or ''
-             )
+            (get_atomic_number(atom),
+             atom.name,
+             get_value(atom.formal_charge, unit.elementary_charge),
+             atom.is_aromatic,
+             atom.stereochemistry or '')
+
             for atom in m.atoms
         ]
 
@@ -185,7 +204,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
                                "least 1 conformer")
 
         conformers = [
-            serialize_numpy(conf.m_as(openff_unit.angstrom))
+            serialize_numpy(get_value(conf, unit.angstrom))
             for conf in m.conformers
         ]
 
@@ -206,7 +225,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         for (an, name, fc, arom, stereo) in d['atoms']:
             m.add_atom(
                 atomic_number=an,
-                formal_charge=fc * openff_unit.elementary_charge,
+                formal_charge=fc * unit.elementary_charge,
                 is_aromatic=arom,
                 stereochemistry=stereo or None,
                 name=name,
@@ -222,6 +241,6 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             )
 
         for conf in d['conformers']:
-            m.add_conformer(deserialize_numpy(conf) * openff_unit.angstrom)
+            m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
 
         return cls.from_openff(m, name=d['name'])

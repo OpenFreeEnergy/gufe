@@ -13,8 +13,8 @@ dependencies:
   - pytest-xdist
   - pytest-cov
   - coverage
-  - openff-toolkit >=0.11
-  - openff-units
+  - openff-toolkit
+  - openff-units >=0.1.8
   - openeye-toolkits
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?

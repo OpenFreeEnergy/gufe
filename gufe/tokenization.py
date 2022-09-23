@@ -117,7 +117,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         serialization into e.g. JSON difficult.
 
         """
-        ...
+        raise NotImplementedError()
 
     @classmethod
     @abc.abstractmethod
@@ -126,7 +126,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         `GufeTokenizable` subclass and generate an instance from it.
 
         """
-        ...
+        raise NotImplementedError()
 
     def to_dict(self, include_defaults=True) -> dict:
         """Generate full dict representation, with all referenced
