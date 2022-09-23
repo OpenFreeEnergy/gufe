@@ -65,11 +65,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
 
-    @pytest.mark.parametrize('pdbname', ALL_PDB_LOADERS.keys())
-    def test_temp_smoketest_frompdb(self, pdbname):
-        pdb_source = ALL_PDB_LOADERS[pdbname]()
-        p = self.cls.from_pdb_file(pdb_source)
-        
     def test_from_pdbx_file(self, PDBx_181L_path):
         p = self.cls.from_pdbx_file(str(PDBx_181L_path), name="Steve")
 

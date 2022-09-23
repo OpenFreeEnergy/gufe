@@ -41,10 +41,6 @@ def get_test_filename(filename):
 
 
 _benchmark_pdb_names = [
-    '2019-09-23_thrombin'
-]
-
-_benchmark_pdb_names = [
         "cmet_protein",
         "hif2a_protein",
         "mcl1_protein",
@@ -75,11 +71,8 @@ PDB_FILE_LOADERS = {
     for name in ["181l.pdb"]
 }
 
-if(HAS_INTERNET):
-    ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
-else:
-    ALL_PDB_LOADERS = dict(**PDB_FILE_LOADERS)
-   
+ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
+
 
 ## data file paths
 
