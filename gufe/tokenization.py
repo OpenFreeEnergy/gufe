@@ -82,6 +82,23 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         return self._key
 
+    def _set_key(self, key: str):
+        """Manually set the key.
+
+        This should only be done when reloading an object whose key is not
+        deterministic.
+
+        Parameters
+        ----------
+        key : str
+            contents of the GufeKey for this object
+        """
+        if old_key := getattr(self, '_key', None):
+            TOKENIZABLE_REGISTRY.pop(old_key)
+
+        self._key = GufeKey(key)
+        TOKENIZABLE_REGISTRY.setdefault(self.key, self)
+
     @property
     def defaults(self):
         """Dict of default key-value pairs for this `GufeTokenizable` object.
