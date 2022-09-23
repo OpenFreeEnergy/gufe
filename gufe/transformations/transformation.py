@@ -137,7 +137,7 @@ class Transformation(GufeTokenizable):
             stateA=self.stateA,
             stateB=self.stateB,
             mapping=self.mapping,
-            name=str(self.__hash__()),
+            name=str(self.key),
         )
 
     def gather(
