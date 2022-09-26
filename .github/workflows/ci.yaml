@@ -28,7 +28,7 @@ jobs:
         os: ['ubuntu', 'macos']
         python-version:
           - 3.9
-        old_offtk: [true, false]
+        old_offtk: ['old-offtk', 'new-offtk']
 
     env:
       OE_LICENSE: ${{ github.workspace }}/oe_license.txt
@@ -54,7 +54,7 @@ jobs:
           python -c "import openeye; assert openeye.oechem.OEChemIsLicensed(), 'OpenEye license checks failed!'"
 
       - name: "Select OFF tk version"
-        if: ${{ matrix.old_offtk == true }}
+        if: ${{ matrix.old_offtk == 'old-offtk' }}
         run: |
           mamba install -y -c conda-forge "openff-toolkit==0.10.6" "openff-toolkit-base==0.10.6"
 
