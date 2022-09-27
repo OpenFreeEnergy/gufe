@@ -67,7 +67,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         are used, a name must be given to differentiate these.  This name
         will be used in the hash.
     """
-    
+
     def to_sdf(self) -> str:
         """Create a string based on SDF.
 
@@ -144,7 +144,8 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         return cls(rdkit=mol)  # name is obtained automatically
 
-    def to_openeye(self) -> OEMol:
+    def to_openeye(self) -> OEMol:  # type: ignore
+        # typing: see https://github.com/OpenFreeEnergy/gufe/pull/65#issuecomment-1259682099
         """OEChem representation of this molecule"""
         return self.to_openff().to_openeye()
 
