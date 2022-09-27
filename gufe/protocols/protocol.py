@@ -153,13 +153,6 @@ class Protocol(GufeTokenizable, abc.ABC):
         """
         return cls._default_settings()
 
-    def _to_dict(self):
-        return  {'settings': self.settings}
-
-    @classmethod
-    def _from_dict(cls, dct):
-        return cls(**dct)
-
     @abc.abstractmethod
     def _create(
         self,
