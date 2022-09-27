@@ -17,3 +17,4 @@ dependencies:
   - openff-units >=0.1.8
   - openeye-toolkits
   - typing-extensions
+  - ambertools >=22.0  # why were we getting old ones?
