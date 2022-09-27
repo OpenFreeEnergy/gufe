@@ -2,7 +2,7 @@ import pytest
 from unittest import mock
 
 from gufe.storage.externalresource import MemoryStorage
-from gufe.base import TOKENIZABLE_REGISTRY
+from gufe.tokenization import TOKENIZABLE_REGISTRY
 from gufe.storage.resultclient import (
     ResultClient, TransformationResult, CloneResult, ExtensionResult
 )
@@ -175,7 +175,7 @@ class TestResultClient(_ResultContainerTest):
         assert store._data != {}
         # make it look like we have an empty cache, as if this was a
         # different process
-        with mock.patch.dict("gufe.base.TOKENIZABLE_REGISTRY", {}):
+        with mock.patch.dict("gufe.tokenization.TOKENIZABLE_REGISTRY", {}):
             reload = client.load_transformation(transformation.key)
             assert reload == transformation
             assert reload is not transformation
