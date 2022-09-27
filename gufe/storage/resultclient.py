@@ -8,7 +8,7 @@ from typing import Any
 from .resultserver import ResultServer
 from .metadatastore import JSONMetadataStore
 
-from ..base import (
+from ..tokenization import (
     is_gufe_obj, key_decode_dependencies, modify_dependencies
 )
 
@@ -21,7 +21,8 @@ def get_all_gufe_objs(obj):
         results.add(o)
         return o.to_shallow_dict()
 
-    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj)
+    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj,
+                            mode='encode')
     return results
 ############################################################################
 
