@@ -14,7 +14,9 @@ except ImportError:
 else:
     HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
-from gufe.components.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe_version
+from gufe.components.explicitmoleculecomponent import (
+    _ensure_ofe_name, _ensure_ofe_version
+)
 import gufe
 import json
 from rdkit import Chem
@@ -57,7 +59,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
         # we should warn if rdkit properties are anything other than 'foo'
         # (expected) or the empty string (not set)
         assert len(recwarn) == 1
-        assert "SmallMoleculeComponent being renamed" in recwarn[0].message.args[0]
+        assert "Component being renamed" in recwarn[0].message.args[0]
     else:
         assert len(recwarn) == 0
 
