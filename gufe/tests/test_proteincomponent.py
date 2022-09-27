@@ -29,19 +29,25 @@ def PDB_181L_mutant(PDB_181L_path):
 
 
 def assert_same_pdb_lines(in_file_path, out_file_path):
-
     in_lines = []
-    if(hasattr(in_file_path, "readlines")):
+    if hasattr(in_file_path, "readlines"):
         in_file = in_file_path
     else:
         in_file =  open(in_file_path, "r")
 
+    if isinstance(out_file_path, io.StringIO):
+        out_file = out_file_path
+        must_close = False
+    else:
+        out_file = open(out_file_path, mode='r')
+        must_close = True
+
 
     in_lines = in_file.readlines()
+    out_lines = out_file.readlines()
 
-    out_lines = []
-    with open(out_file_path, "r") as out_pdb:
-        out_lines = out_pdb.readlines()
+    if must_close:
+        out_file.close()
 
     in_lines = in_lines[2:]
     out_lines = out_lines[2:]
@@ -79,7 +85,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
         assert p.to_rdkit().GetNumAtoms() == 2639
-        
+
     # To
     def test_to_rdkit(self, PDB_181L_path):
         pm = self.cls.from_pdb_file(PDB_181L_path)
@@ -88,22 +94,58 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert isinstance(rdkitmol, Chem.Mol)
         assert rdkitmol.GetNumAtoms() == 2639
 
-    def test_to_pdbx_file(self, PDBx_181L_openMMClean_path, tmp_path):
+    def _test_file_output(self, input_path, output_path, input_type,
+                          output_func):
+        if input_type == "filename":
+            inp = str(output_path)
+        elif input_type == "Path":
+            inp = output_path
+        elif input_type == "StringIO":
+            inp = io.StringIO()
+        elif input_type == "TextIOWrapper":
+            inp = open(output_path, mode='w')
+
+        output_func(inp)
+
+        if input_type == "StringIO":
+            inp.seek(0)
+            output_path = inp
+
+        if input_type == "TextIOWrapper":
+            inp.close()
+
+        assert_same_pdb_lines(in_file_path=str(input_path),
+                              out_file_path=output_path)
+
+    @pytest.mark.parametrize('input_type', ['filename', 'Path', 'StringIO',
+                                            'TextIOWrapper'])
+    def test_to_pdbx_file(self, PDBx_181L_openMMClean_path, tmp_path,
+                          input_type):
         p = self.cls.from_pdbx_file(str(PDBx_181L_openMMClean_path), name="Bob")
         out_file_name = "tmp_181L_pdbx.cif"
         out_file = tmp_path / out_file_name
 
-        p.to_pdbx_file(str(out_file))
-        with open(str(out_file), "w") as out_file2:
-            p.to_pdbx_file(out_file2)
-        
-        assert_same_pdb_lines(in_file_path=str(PDBx_181L_openMMClean_path), out_file_path=out_file)
-        assert_same_pdb_lines(in_file_path=str(PDBx_181L_openMMClean_path), out_file_path=out_file)
+        self._test_file_output(
+            input_path=PDBx_181L_openMMClean_path,
+            output_path=out_file,
+            input_type=input_type,
+            output_func=p.to_pdbx_file
+        )
 
 
-    def test_to_pdb_input_types(self):
-        pass
-    
+    @pytest.mark.parametrize('input_type', ['filename', 'Path', 'StringIO',
+                                            'TextIOWrapper'])
+    def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path,
+                                input_type):
+        p = self.cls.from_pdb_file(str(PDB_181L_OpenMMClean_path), name="Bob")
+
+        self._test_file_output(
+            input_path=PDB_181L_OpenMMClean_path,
+            output_path=tmp_path / "tmp_181L.pdb",
+            input_type=input_type,
+            output_func=p.to_pdb_file
+        )
+
     @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
     def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
@@ -115,7 +157,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         p.to_pdb_file(str(out_file))
 
         ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        
+
         #generate openMM reference file:
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
         out_ref_file_name = "tmp_"+in_pdb_path+"_openmm_ref.pdb"

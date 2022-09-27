@@ -230,16 +230,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     fc = default_valence  # e.g. Sodium ions
                 elif atom_name in negative_ions:
                     fc = -default_valence  # e.g. Chlorine ions
-                else:
+                else:  # -no-cov-
                     raise ValueError(
-                        "I don't know this Ion or something really went wrong! \t"
-                        + atom_name
-                        + "\t"
-                        + resn
-                        + "-"
-                        + str(resind)
-                        + "\tconnectivity: "
-                        + str(connectivity)
+                        "I don't know this Ion or something really went "
+                        f"wrong! \t{atom_name}\t{resn}\t-{resind}\t"
+                        f"connectivity{connectivity}"
                     )
             elif default_valence > connectivity:
                 fc = -(default_valence - connectivity)  # negative charge
