@@ -9,7 +9,7 @@ from .resultserver import ResultServer
 from .metadatastore import JSONMetadataStore
 
 from ..tokenization import (
-    is_gufe_obj, key_decode_dependencies, modify_dependencies
+    is_gufe_obj, key_decode_dependencies, modify_dependencies, from_dict
 )
 
 ############## MOVE TO BASE? ###############################################
@@ -148,8 +148,10 @@ class ResultClient(_ResultContainer):
         regex = re.compile(
             '":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"'
         )
+        registry = {}
 
         def recursive_build_object_cache(gufe_key):
+            """DFS to rebuild object heirarchy"""
             # This implementation is a bit fragile, because ensuring that we
             # don't duplicate objects in memory depends on the fact that
             # `key_decode_dependencies` gets keyencoded objects from a cache
@@ -173,7 +175,18 @@ class ResultClient(_ResultContainer):
                 # generating the objects and adding them to the registry
                 recursive_build_object_cache(key)
 
-            return key_decode_dependencies(dct)
+            if len(key_encoded) == 0:
+                # fast path for objects that don't contain other gufe
+                # objects (these tend to be larger dicts; avoid walking
+                # them)
+                obj = from_dict(dct)
+            else:
+                # objects that contain other gufe objects need be walked to
+                # replace everything
+                obj = key_decode_dependencies(dct, registry)
+
+            registry[obj.key] = obj
+            return obj
 
         return recursive_build_object_cache(gufe_key)
 
