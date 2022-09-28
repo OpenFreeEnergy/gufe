@@ -515,12 +515,15 @@ def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
     )
 
 
-def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
+def key_decode_dependencies(
+    dct: Dict,
+    registry=TOKENIZABLE_REGISTRY
+) -> GufeTokenizable:
     # this version requires that all dependent objects are already registered
     # responsibility of the storage system that uses this to do so
     dct = modify_dependencies(
         dct,
-        lambda d: TOKENIZABLE_REGISTRY[GufeKey(d[":gufe-key:"])],
+        lambda d: registry[GufeKey(d[":gufe-key:"])],
         is_gufe_key_dict,
         mode='decode',
         top=True

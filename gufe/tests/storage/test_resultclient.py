@@ -175,8 +175,10 @@ class TestResultClient(_ResultContainerTest):
         assert store._data != {}
         # make it look like we have an empty cache, as if this was a
         # different process
-        with mock.patch.dict("gufe.tokenization.TOKENIZABLE_REGISTRY", {}):
-            reload = client.load_transformation(transformation.key)
+        key = transformation.key
+        registry_dict = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(registry_dict, {}, clear=True):
+            reload = client.load_transformation(key)
             assert reload == transformation
             assert reload is not transformation
 
