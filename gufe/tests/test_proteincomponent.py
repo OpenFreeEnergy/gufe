@@ -183,7 +183,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert p == p2
 
     #parametrize
-    
+
     @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
     def test_to_openmm_positions(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()

@@ -12,7 +12,9 @@ from openmm import app
 from openmm import unit as omm_unit
 
 from rdkit import Chem
-from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
+from rdkit.Chem.rdchem import (
+    Mol, Atom, Conformer, EditableMol, BondType, AtomMonomerType
+)
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..vendor.pdb_file.pdbfile import PDBFile
@@ -330,6 +332,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
             # put mi_dict back to class
             atom_monomerInfo = Chem.AtomPDBResidueInfo()
             for key, val in atom_mi_dict.items():
+                if key == "MonomerType":
+                    # DANGER: this risks tying serialization to specific
+                    # RDKit versions
+                    val = AtomMonomerType.values[val]
+
                 f = getattr(atom_monomerInfo, "Set" + str(key))
                 f(val)
 
@@ -346,7 +353,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond in ser_dict["bonds"]:
             atomBeginIdx = bond[0]
             atomEndIdx = bond[1]
-            bondType = bond[2]
+            bondType = BondType.values[bond[2]]
             editable_rdmol.AddBond(
                 beginAtomIdx=atomBeginIdx,
                 endAtomIdx=atomEndIdx,
@@ -539,7 +546,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         else:
             out_file = out_path  # type: ignore
             must_close = False
-            
+
         try:
             out_path = out_file.name
         except AttributeError:
@@ -552,8 +559,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         if must_close:
             # we only close the file if we had to open it
             out_file.close()
-       
-       
+
         return out_path
 
     def to_pdbx_file(
@@ -589,14 +595,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
         else:
             out_file = out_path  # type: ignore
             must_close = False
-            
+
         try:
             out_path = out_file.name
         except AttributeError:
             out_path = "<unknown>"
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
-
 
         if must_close:
             # we only close the file if we had to open it
