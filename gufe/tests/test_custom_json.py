@@ -4,9 +4,10 @@
 # Permissions are the same as those listed in the gufe LICENSE
 
 from gufe.custom_json import (
-    JSONSerializerDeserializer, custom_json_factory, JSONCodec
+    JSONSerializerDeserializer, custom_json_factory, JSONCodec, PATH_CODEC
 )
 import json
+import pathlib
 import pytest
 
 import numpy as np
@@ -126,3 +127,19 @@ class TestNumpyCoding(CustomJSONCodingTest):
             npt.assert_array_equal(reconstructed, obj)
             json_str_2 = json.dumps(obj, cls=encoder)
             assert json_str == json_str_2
+
+
+class TestPathCodec(CustomJSONCodingTest):
+    def setup(self):
+        self.codec = PATH_CODEC
+        self.objs = [
+            pathlib.Path("foo/bar"),
+        ]
+        self.dcts = [
+            {
+                ":is_custom:": True,
+                "__class__": "Path",
+                "__module__": 'pathlib',
+                'path': "foo/bar"
+            }
+        ]
