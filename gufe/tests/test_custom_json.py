@@ -1,3 +1,8 @@
+# This file was originally part of OpenPathSampling/SimStore, which is
+# distributed under the MIT license.
+# Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
+# Permissions are the same as those listed in the gufe LICENSE
+
 from gufe.custom_json import (
     JSONSerializerDeserializer, custom_json_factory, JSONCodec
 )
@@ -39,6 +44,12 @@ class TestJSONSerializerDeserializer(object):
         assert len(serialization.codecs) == 2
         reconstructed = serialization.deserializer(serialized)
         npt.assert_equal(obj, reconstructed)
+
+    def test_add_existing_codec(self):
+        serialization = JSONSerializerDeserializer([bytes_codec])
+        assert len(serialization.codecs) == 1
+        serialization.add_codec(bytes_codec)
+        assert len(serialization.codecs) == 1
 
 
 class CustomJSONCodingTest(object):
