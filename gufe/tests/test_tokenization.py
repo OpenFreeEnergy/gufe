@@ -1,10 +1,11 @@
 import pytest
 import abc
 from unittest import mock
+import json
 
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
-    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY,
+    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER
 )
 
 
@@ -242,3 +243,13 @@ def test_import_qualname_error_none(modname, qualname):
 def test_get_class(cls_reg):
     with mock.patch.dict("gufe.tokenization.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
         assert get_class(__name__, "Outer.Inner") is Outer.Inner
+
+def test_path_to_json():
+    import pathlib
+    p = pathlib.Path("foo/bar")
+    ser = json.dumps(p, cls=JSON_HANDLER.encoder)
+    deser = json.loads(ser, cls=JSON_HANDLER.decoder)
+    reser = json.dumps(deser, cls=JSON_HANDLER.encoder)
+    assert ser == reser
+    assert p == deser
+
