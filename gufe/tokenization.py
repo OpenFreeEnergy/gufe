@@ -362,7 +362,10 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
 # decode options
 def from_dict(dct) -> GufeTokenizable:
     obj = _from_dict(dct)
-    thing = TOKENIZABLE_REGISTRY[obj.key]
+    try:
+        thing = TOKENIZABLE_REGISTRY[obj.key]
+    except KeyError:
+        thing = None
 
     # weakref will return None if the object was deleted
     if thing is None:

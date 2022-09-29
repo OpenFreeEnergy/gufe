@@ -93,6 +93,15 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # include `np.nan`s
         #assert ser == reser
 
+    def test_to_dict_roundtrip_clear_registry(self, instance):
+        ser = instance.to_dict()
+        TOKENIZABLE_REGISTRY.clear()
+        deser = self.cls.from_dict(ser)
+        reser = deser.to_dict()
+
+        assert instance == deser
+        assert instance is not deser
+
     def test_to_keyed_dict_roundtrip(self, instance):
         ser = instance.to_keyed_dict()
         deser = self.cls.from_keyed_dict(ser)
