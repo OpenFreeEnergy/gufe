@@ -5,6 +5,7 @@
 
 import json
 import functools
+import pathlib
 
 
 class JSONSerializerDeserializer(object):
@@ -160,3 +161,10 @@ class JSONCodec(object):
             obj = self.from_dict(dct)
             return obj
         return dct
+
+
+PATH_CODEC = JSONCodec(
+    cls=pathlib.Path,
+    to_dict=lambda p: {'path': str(p)},
+    from_dict=lambda dct: pathlib.Path(dct['path'])
+)
