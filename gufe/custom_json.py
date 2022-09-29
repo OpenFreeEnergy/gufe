@@ -1,9 +1,10 @@
-# This file was originally part of OpenPathSampling/SimStore.
+# This file was originally part of OpenPathSampling/SimStore, which is
+# distributed under the MIT license.
+# Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
+# Permissions are the same as those listed in the gufe LICENSE
 
 import json
 import functools
-import inspect
-from collections import namedtuple, defaultdict
 
 
 class JSONSerializerDeserializer(object):
@@ -26,8 +27,7 @@ class JSONSerializerDeserializer(object):
     codecs : list of :class:`.JSONCodec`s
         codecs supported
     """
-    def __init__(self, codecs, named_codecs=None):
-        self.named_codecs = {} if named_codecs is None else named_codecs
+    def __init__(self, codecs):
         self.codecs = []
         for codec in codecs:
             self.add_codec(codec)
@@ -56,9 +56,6 @@ class JSONSerializerDeserializer(object):
 
         self.encoder, self.decoder = self._set_serialization()
 
-    def replace_named_codec(self, codec_name, codec):
-        self.named_codecs[codec_name] = codec
-        self.add_codec(None)
 
     def serializer(self, obj):
         """Callable that dumps to JSON"""
