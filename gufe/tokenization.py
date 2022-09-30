@@ -362,12 +362,15 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
 # decode options
 def from_dict(dct) -> GufeTokenizable:
     obj = _from_dict(dct)
-    try:
-        thing = TOKENIZABLE_REGISTRY[obj.key]
-    except KeyError:
-        thing = None
+    # When __new__ is called to create ``obj``, it should be added to the
+    # TOKENIZABLE_REGISTRY. However, there seems to be some case (race
+    # condition?) where this doesn't happen, leading to a KeyError inside
+    # the dictionary if we use []. (When you drop into PDB and run the same
+    # line that gave the error, you get the object back.) With ``get``,
+    # ``thing`` becomes None, which is also what it would be if the weakref
+    # was to a deleted object.
+    thing = TOKENIZABLE_REGISTRY.get(obj.key)
 
-    # weakref will return None if the object was deleted
     if thing is None:
         return obj
     else:
