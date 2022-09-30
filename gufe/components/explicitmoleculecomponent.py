@@ -68,16 +68,7 @@ class ExplicitMoleculeComponent(Component):
             )
 
         self._rdkit = rdkit
-        self._hash = self._hashmol(name=name)
-
-    def __hash__(self):
-        return hash(self._hash)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def _hashmol(self, name):
-        return hashmol(self._rdkit, name=name)
+        self._hash = hashmol(self._rdkit, name=name)
 
     def _defaults(self):
         return super()._defaults()
