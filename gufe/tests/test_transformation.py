@@ -3,6 +3,7 @@
 
 import pytest
 
+from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from gufe.transformations import Transformation, NonTransformation
 from gufe.protocols.protocoldag import execute
 
@@ -24,7 +25,13 @@ def complex_equilibrium(solvated_complex):
     return NonTransformation(solvated_complex, protocol=DummyProtocol(settings=None))
 
 
-class TestTransformation:
+class TestTransformation(GufeTokenizableTestsMixin):
+    cls = Transformation
+
+    @pytest.fixture
+    def instance(self, absolute_transformation):
+        return absolute_transformation
+
     def test_init(self, absolute_transformation, solvated_ligand, solvated_complex):
         tnf = absolute_transformation
 
