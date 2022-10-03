@@ -110,7 +110,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         )
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile, name: str = ""):
+    def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile],
+                            name: str = ""):
         """
         This Function deserializes openmmPDBFile
 
