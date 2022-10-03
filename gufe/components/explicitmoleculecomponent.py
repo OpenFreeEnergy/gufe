@@ -1,6 +1,7 @@
 import json
 import warnings
 from rdkit import Chem
+from typing import Optional
 
 from .component import Component
 from .. import __version__
@@ -64,7 +65,7 @@ class ExplicitMoleculeComponent(Component):
             )
 
         self._rdkit = rdkit
-        self._smiles = None
+        self._smiles: Optional[str] = None
         self._name = name
 
     def _defaults(self):
@@ -78,7 +79,7 @@ class ExplicitMoleculeComponent(Component):
     @property
     def smiles(self) -> str:
         if self._smiles is None:
-            self._smiles = Chem.MolToSmiles(self._rdkit)
+            self._smiles = Chem.MolToSmiles(Chem.RemoveHs(self._rdkit))
 
         return self._smiles
 
