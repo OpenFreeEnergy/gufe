@@ -68,9 +68,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
             f"{self.__class__.__name__}(name={self.name}, components={self.components})"
         )
 
-    def __lt__(self, other):
-        return hash(self) < hash(other)
-
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
@@ -96,7 +93,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
     def _to_dict(self):
         return {
             "components": {
-                key: value for key, value in self.components.items()
+                key: value for key, value in sorted(self.components.items())
             },
             "box_vectors": self.box_vectors.tolist(),
             "name": self.name,

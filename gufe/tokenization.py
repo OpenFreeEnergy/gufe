@@ -56,7 +56,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     *across different Python sessions*.
     """
     def __lt__(self, other):
-        return hash(self) < hash(other)
+        return self.key < other.key
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -71,7 +71,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
-        return normalize(self.to_dict(include_defaults=False))
+        return normalize(self.to_keyed_dict(include_defaults=False))
 
     @property
     def key(self):
@@ -167,7 +167,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return dict_decode_dependencies(dct)
 
-    def to_keyed_dict(self) -> Dict:
+    def to_keyed_dict(self, include_defaults=True) -> Dict:
         """Generate keyed dict representation, with all referenced
         `GufeTokenizable` objects given in keyed representations.
 
@@ -186,7 +186,14 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         :meth:`GufeTokenizable.to_shallow_dict`
 
         """
-        return key_encode_dependencies(self)
+        dct = key_encode_dependencies(self)
+
+        if not include_defaults:
+            for key, value in self.defaults.items():
+                if dct.get(key) == value:
+                    dct.pop(key)
+
+        return dct
 
     @classmethod
     def from_keyed_dict(cls, dct: Dict):
