@@ -6,6 +6,7 @@ from openff.units import unit
 from typing import Optional, Tuple
 
 from .component import Component
+from ..tokenization import module_qualname
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
@@ -133,3 +134,14 @@ class SolventComponent(Component):
 
     def _defaults(self):
         return super()._defaults()
+
+    def to_dict(self, include_defaults=True) -> dict:
+        dct = self._to_dict()
+        dct.update(module_qualname(self))
+
+        if not include_defaults:
+            for key, value in self.defaults.items():
+                if dct.get(key) == value:
+                    dct.pop(key)
+
+        return dct
