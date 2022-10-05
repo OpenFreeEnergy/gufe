@@ -93,6 +93,7 @@ def test_bad_inputs(pos, neg):
 class TestSolventComponent(GufeTokenizableTestsMixin):
 
     cls = SolventComponent
+    key = "SolventComponent-187d235ef3c2035d8505083c8ad7d0a0"
 
     @pytest.fixture
     def instance(self):
