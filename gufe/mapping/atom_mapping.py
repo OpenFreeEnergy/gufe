@@ -14,14 +14,6 @@ class AtomMapping(ComponentMapping, abc.ABC):
     _molB: gufe.Component
 
     """A mapping between two different atom-based Components"""
-    @abc.abstractmethod
-    def _to_dict(self) -> dict:
-        ...
-
-    @classmethod
-    @abc.abstractmethod
-    def _from_dict(cls, d: dict):
-        ...
 
     @property
     @abc.abstractmethod

@@ -3,7 +3,7 @@
 import abc
 
 import gufe
-from gufe.base import GufeTokenizable
+from gufe.tokenization import GufeTokenizable
 
 
 class ComponentMapping(GufeTokenizable, abc.ABC):
