@@ -74,7 +74,7 @@ def benzene_variants_star_map(
 class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
 
     cls = AlchemicalNetwork
-    key = "AlchemicalNetwork-d364c260af467cac11d65b554555b6d6"
+    key = "AlchemicalNetwork-5cda6f7150b2421ba5cc5f49e0b24a98"
 
     @pytest.fixture
     def instance(self, benzene_variants_star_map):

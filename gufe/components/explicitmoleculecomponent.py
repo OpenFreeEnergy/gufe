@@ -117,6 +117,21 @@ class ExplicitMoleculeComponent(Component):
         raise NotImplementedError()
 
     def to_dict(self, include_defaults=True) -> dict:
+        """Generate full dict representation, with all referenced
+        `GufeTokenizable` objects also given in full dict representations.
+
+        Parameters
+        ----------
+        include_defaults : bool
+            If `False`, strip keys from dict representation with values equal
+            to those in `defaults`.
+
+        See also
+        --------
+        :meth:`GufeTokenizable.to_shallow_dict`
+        :meth:`GufeTokenizable.to_keyed_dict`
+
+        """
         dct = self._to_dict()
         dct.update(module_qualname(self))
 
