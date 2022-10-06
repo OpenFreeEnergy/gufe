@@ -10,6 +10,9 @@ from .componentmapping import ComponentMapping
 
 
 class AtomMapping(ComponentMapping, abc.ABC):
+    _molA: gufe.Component
+    _molB: gufe.Component
+
     """A mapping between two different atom-based Components"""
     @abc.abstractmethod
     def _to_dict(self) -> dict:
@@ -24,13 +27,13 @@ class AtomMapping(ComponentMapping, abc.ABC):
     @abc.abstractmethod
     def molA(self) -> gufe.Component:
         """A copy of the first Component in the mapping"""
-        return self.stateA
+        return self._molA
 
     @property
     @abc.abstractmethod
     def molB(self) -> gufe.Component:
         """A copy of the second Component in the mapping"""
-        return self.stateB
+        return self._molB
 
     @property
     @abc.abstractmethod
