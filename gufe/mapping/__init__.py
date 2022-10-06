@@ -4,4 +4,3 @@
 from .componentmapping import ComponentMapping
 from .atom_mapping import AtomMapping
 from .atom_mapper import AtomMapper
-from .systemmapping import SystemMapping
