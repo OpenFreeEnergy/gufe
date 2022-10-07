@@ -655,9 +655,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Additional Information for the mol:
         molecule_props = {}
-        for prop_key, prop_value in self._rdkit.GetPropsAsDict(
+        for prop_key, prop_value in sorted(self._rdkit.GetPropsAsDict(
             includePrivate=True
-        ).items():
+        ).items()):
             if prop_key == "sequence":
                 residue_sequence = prop_value.split()
                 molecule_props["sequence"] = residue_sequence

@@ -57,7 +57,7 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
 class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
-    key = "ProteinComponent-fc8ca54cf6a64e72dfd14c8fd02afa2d"
+    key = "ProteinComponent-64f82d3cc366813879446525c5cbd794"
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
