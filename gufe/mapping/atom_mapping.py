@@ -1,4 +1,4 @@
-# This code is part of OpenFE and is licensed under the MIT license.
+# This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
@@ -16,13 +16,11 @@ class AtomMapping(ComponentMapping, abc.ABC):
     """A mapping between two different atom-based Components"""
 
     @property
-    @abc.abstractmethod
     def molA(self) -> gufe.Component:
         """A copy of the first Component in the mapping"""
         return self._molA
 
     @property
-    @abc.abstractmethod
     def molB(self) -> gufe.Component:
         """A copy of the second Component in the mapping"""
         return self._molB
