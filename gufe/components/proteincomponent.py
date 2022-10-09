@@ -32,22 +32,22 @@ _BONDORDERS_RDKIT_TO_OPENMM = {
     v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
 }
 
+# builtin dict of strings to enum members, boy I hope this is stable
+_BONDORDER_STR_TO_RDKIT = Chem.BondType.names
+_BONDORDER_RDKIT_TO_STR = {v: k for k, v in _BONDORDER_STR_TO_RDKIT}
+
+_CHIRALITY_RDKIT_TO_STR = {
+    Chem.CHI_TETRAHEDRAL_CW: 'CW',
+    Chem.CHI_TETRAHEDRAL_CCW: 'CCW',
+    Chem.CHI_UNSPECIFIED: 'U',
+}
+_CHIRALITY_STR_TO_RDKIT = {
+    v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()
+}
+
+
 negative_ions = ["F", "CL", "Br", "I"]
 positive_ions = ["NA", "MG", "ZN"]
-
-
-def assign_correct_prop_type(rd_obj, prop_name, prop_value):
-    if isinstance(prop_value, int):
-        rd_obj.SetIntProp(prop_name, prop_value)
-    elif isinstance(prop_value, float):
-        rd_obj.SetDoubleProp(prop_name, prop_value)
-    elif isinstance(prop_value, bool):
-        rd_obj.SetBoolProp(prop_name, prop_value)
-    else:
-        rd_obj.SetProp(prop_name, str(prop_value))
-
-
-
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
@@ -232,31 +232,19 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Add Atoms
         for atom in ser_dict["atoms"]:
             atomic_num = int(atom[0])
-            atomic_name = atom[1]
-            atomic_fc = atom[2]
-            atomic_arom = eval(str(atom[3]))
-            atomic_ste = atom[4]
-            atomic_props = atom[5]
-            atom_mi_dict = atom[6]
 
             a = Atom(atomic_num)
-            a.SetAtomMapNum(atomic_props["id"])
-            a.SetFormalCharge(atomic_fc)
-            a.SetIsAromatic(atomic_arom)
-            # a.SetChiralTag(atomic_ste)
+            mi = Chem.AtomPDBResidueInfo()
 
-            # put mi_dict back to class
-            atom_monomerInfo = Chem.AtomPDBResidueInfo()
-            for key, val in atom_mi_dict.items():
-                f = getattr(atom_monomerInfo, "Set" + str(key))
-                f(val)
-
-            a.SetMonomerInfo(atom_monomerInfo)
-
-            for prop_name, prop_value in atomic_props.items():
-                assign_correct_prop_type(
-                    rd_obj=a, prop_name=prop_name, prop_value=prop_value
-                )
+            mi.SetChainId(atom[1])
+            mi.SetSerialNumber(atom[2])
+            mi.SetSegmentNumber(atom[3])
+            mi.SetInsertionCode(atom[4])
+            mi.SetName(atom[5])
+            mi.SetResidueName(atom[6])
+            mi.SetResidueNumber(int(atom[7]))
+            mi.SetIsHeteroAtom(atom[8] == 'Y')
+            atom.SetFormalCharge(atom[9])
 
             editable_rdmol.AddAtom(a)
 
@@ -264,7 +252,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond in ser_dict["bonds"]:
             atomBeginIdx = bond[0]
             atomEndIdx = bond[1]
-            bondType = bond[2]
+            bondType = _BONDORDER_STR_TO_RDKIT(bond[2]),
             editable_rdmol.AddBond(
                 beginAtomIdx=atomBeginIdx,
                 endAtomIdx=atomEndIdx,
@@ -283,26 +271,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Adding missing bond info
         for bond_id, bond in enumerate(rd_mol.GetBonds()):
-            bond_info = ser_dict["bonds"][bond_id]
-            bondArom = bond_info[3]
-            bondStereo = bond_info[4]
-            bondProp = bond_info[5]
-
-            bond.SetIsAromatic(bondArom)
-            # bond.SetStereo(bondStereo)
-
-            for prop_name, prop_value in bondProp.items():
-                assign_correct_prop_type(
-                    rd_obj=bond, prop_name=prop_name, prop_value=prop_value
-                )
-
-        # Add Mol Informations
-        for mol_prop, mol_value in ser_dict["molecules"].items():
-            if mol_prop == "sequence":
-                mol_value = " ".join(mol_value)
-            assign_correct_prop_type(
-                rd_obj=rd_mol, prop_name=mol_prop, prop_value=mol_value
-            )
+            # Can't set these on an editable mol, go round a second time
+            _, _, _, arom = ser_dict["bonds"][bond_id]
+            bond.SetIsAromatic(arom == 'Y')
 
         if "name" in ser_dict:
             name = ser_dict["name"]
@@ -484,29 +455,21 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         atoms = []
         for atom in self._rdkit.GetAtoms():
-            # Standards:
-            name = atom.GetMonomerInfo().GetName()
+            mi = atom.GetMonomerInfo()
 
-            if name == "":
-                name = atom.GetSymbol()
-
-            # collapse monomer info to dict
-            atom_monomer_info = atom.GetMonomerInfo()
-            mi_dict = {}
-            for f in dir(atom_monomer_info):
-                if "Get" in f:
-                    val = getattr(atom_monomer_info, f)()
-                    mi_dict[f.replace("Get", "")] = val
-
+            # TODO: Stereo?
             atoms.append(
                 (
                     atom.GetAtomicNum(),
-                    name,
+                    mi.GetChainId(),
+                    mi.GetSerialNumber(),
+                    mi.GetSegmentNumber(),
+                    mi.GetInsertionCode(),
+                    mi.GetName(),
+                    mi.GetResidueName(),
+                    mi.GetResidueNumber(),
+                    'Y' if mi.GetIsHetero() else 'N',
                     atom.GetFormalCharge(),
-                    atom.GetIsAromatic(),
-                    "",  # Stereocent in Smallcomponent
-                    atom.GetPropsAsDict(),
-                    mi_dict,
                 )
             )
 
@@ -514,10 +477,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
             (
                 bond.GetBeginAtomIdx(),
                 bond.GetEndAtomIdx(),
-                bond.GetBondType(),
-                bond.GetIsAromatic(),
-                bond.GetStereo() or "",
-                bond.GetPropsAsDict(),
+                _BONDORDER_RDKIT_TO_STR[bond.GetBondType()],
+                'Y' if bond.GetIsAromatic() else 'N',
+                # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
             )
             for bond in self._rdkit.GetBonds()
         ]
@@ -527,30 +489,12 @@ class ProteinComponent(ExplicitMoleculeComponent):
             for conf in self._rdkit.GetConformers()
         ]
 
-        # Additional Information for the mol:
-        molecule_props = {}
-        for prop_key, prop_value in self._rdkit.GetPropsAsDict(
-            includePrivate=True
-        ).items():
-            if prop_key == "sequence":
-                residue_sequence = prop_value.split()
-                molecule_props["sequence"] = residue_sequence
-            elif isinstance(prop_value, str) and prop_value.startswith("{"):
-                val = json.loads(prop_value.replace("'", '"'))
-                molecule_props[prop_key] = val
-            elif isinstance(prop_value, str) and prop_value.startswith("["):
-                val = ast.literal_eval(prop_value)
-                molecule_props[prop_key] = val
-            else:
-                molecule_props[prop_key] = prop_value
-
         # Result
         d = {
             "atoms": atoms,
             "bonds": bonds,
             "name": self.name,
             "conformers": conformers,
-            "molecules": molecule_props,
         }
 
         return d
