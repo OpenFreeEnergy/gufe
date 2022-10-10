@@ -304,6 +304,19 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 m.GetInsertionCode()
             )
 
+        def chainkey(m):
+            """key for chains
+
+            uses (chain.id, chain.index)
+
+            using .index catches where TER records in openmm have caused a new
+            chain to be used (with identical .id)
+            """
+            return (
+                m.GetChainId(),
+                m.GetSegmentNumber(),
+            )
+
         current_chainid = None
         c = None  # current chain
         current_resid = None
@@ -314,8 +327,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         top = app.Topology()
         for atom in self._rdkit.GetAtoms():
             mi = atom.GetMonomerInfo()
-            if (new_chainid := mi.GetChainId()) != current_chainid:
-                c = top.addChain(new_chainid)
+            if (new_chainid := chainkey(mi)) != current_chainid:
+                chainid, _ = new_chainid
+                c = top.addChain(chainid)
                 current_chainid = new_chainid
 
             if (new_resid := reskey(mi)) != current_resid:
@@ -324,11 +338,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
                                    chain=c,
                                    id=str(resnum),
                                    insertionCode=icode)
+                current_resid = new_resid
+
             a = top.addAtom(
                 name=mi.GetName(),
                 element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
-                id=mi.GetSerialNumber(),
+                id=str(mi.GetSerialNumber()),
             )
 
             atom_lookup[atom.GetIdx()] = a
