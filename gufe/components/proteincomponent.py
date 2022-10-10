@@ -244,15 +244,17 @@ class ProteinComponent(ExplicitMoleculeComponent):
             mi.SetResidueName(atom[6])
             mi.SetResidueNumber(int(atom[7]))
             mi.SetIsHeteroAtom(atom[8] == 'Y')
-            atom.SetFormalCharge(atom[9])
+            a.SetFormalCharge(atom[9])
+
+            a.SetMonomerInfo(mi)
 
             editable_rdmol.AddAtom(a)
 
         # Add Bonds
         for bond in ser_dict["bonds"]:
-            atomBeginIdx = bond[0]
-            atomEndIdx = bond[1]
-            bondType = _BONDORDER_STR_TO_RDKIT(bond[2]),
+            atomBeginIdx = int(bond[0])
+            atomEndIdx = int(bond[1])
+            bondType = _BONDORDER_STR_TO_RDKIT[bond[2]]
             editable_rdmol.AddBond(
                 beginAtomIdx=atomBeginIdx,
                 endAtomIdx=atomEndIdx,
@@ -468,7 +470,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     mi.GetName(),
                     mi.GetResidueName(),
                     mi.GetResidueNumber(),
-                    'Y' if mi.GetIsHetero() else 'N',
+                    'Y' if mi.GetIsHeteroAtom() else 'N',
                     atom.GetFormalCharge(),
                 )
             )
