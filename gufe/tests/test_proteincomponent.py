@@ -50,9 +50,9 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
         out_file.close()
 
     in_lines = [l for l in in_lines
-                if not l.startswith(('REMARK', 'CRYST'))]
+                if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
     out_lines = [l for l in out_lines
-                 if not l.startswith(('REMARK', 'CRYST'))]
+                 if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
 
     assert in_lines == out_lines
 
