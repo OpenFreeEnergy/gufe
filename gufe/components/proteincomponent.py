@@ -34,7 +34,7 @@ _BONDORDERS_RDKIT_TO_OPENMM = {
 
 # builtin dict of strings to enum members, boy I hope this is stable
 _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
-_BONDORDER_RDKIT_TO_STR = {v: k for k, v in _BONDORDER_STR_TO_RDKIT}
+_BONDORDER_RDKIT_TO_STR = {v: k for k, v in _BONDORDER_STR_TO_RDKIT.items()}
 
 _CHIRALITY_RDKIT_TO_STR = {
     Chem.CHI_TETRAHEDRAL_CW: 'CW',
