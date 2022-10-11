@@ -23,4 +23,4 @@ dependencies:
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?
   - pip:
-    - git+https://github.com/mattwthompson/openff-models.git
+    - git+https://github.com/mikemhenry/openff-models.git@support_nested_models
