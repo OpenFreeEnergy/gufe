@@ -14,11 +14,14 @@ except ImportError:
 else:
     HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
-from gufe.components.smallmoleculecomponent import _ensure_ofe_name, _ensure_ofe_version
+from gufe.components.explicitmoleculecomponent import (
+    _ensure_ofe_name, _ensure_ofe_version
+)
 import gufe
 import json
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from gufe.tokenization import TOKENIZABLE_REGISTRY
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -57,7 +60,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
         # we should warn if rdkit properties are anything other than 'foo'
         # (expected) or the empty string (not set)
         assert len(recwarn) == 1
-        assert "SmallMoleculeComponent being renamed" in recwarn[0].message.args[0]
+        assert "Component being renamed" in recwarn[0].message.args[0]
     else:
         assert len(recwarn) == 0
 
@@ -177,6 +180,15 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         mol = SmallMoleculeComponent.from_rdkit(rdkit, "ethane")
         assert mol == named_ethane
         assert mol.to_rdkit() is not rdkit
+
+    def test_serialization_cycle_smiles(self, named_ethane):
+        # check a regression against the smiles changing on serialization
+        dct = named_ethane.to_dict()
+        TOKENIZABLE_REGISTRY.clear()
+        copy = SmallMoleculeComponent.from_dict(dct)
+        assert named_ethane == copy
+        assert named_ethane is not copy
+        assert named_ethane.smiles == copy.smiles
 
 
 class TestSmallMoleculeComponentConversion:

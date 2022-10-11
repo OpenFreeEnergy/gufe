@@ -21,5 +21,6 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - typing-extensions
+  - ambertools >=22.0  # why were we getting old ones?
   - pip:
     - git+https://github.com/mattwthompson/openff-models.git

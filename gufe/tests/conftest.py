@@ -2,15 +2,79 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import importlib.resources
+import urllib.request
+from urllib.error import URLError
+import io
+import functools
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
 import gufe
 
+try:
+    urllib.request.urlopen("https://google.com")
+except URLError:
+    HAS_INTERNET = False
+else:
+    HAS_INTERNET = True
+
+
+## helper functions
+
+
+def load_url_data(url, encoding='utf-8'):
+    if not HAS_INTERNET:
+        pytest.skip("Skipping because internet seems faulty")
+
+    req = urllib.request.urlopen(url)
+    # we convert to StringIO because req.read() returns bytes, not string
+    return io.StringIO(req.read().decode(encoding))
+
+
+def get_test_filename(filename):
+    with importlib.resources.path('gufe.tests.data', filename) as file:
+        return str(file)
+
+
+## PDBs for input/output testing
+
+
+_benchmark_pdb_names = [
+        "cmet_protein",
+        "hif2a_protein",
+        "mcl1_protein",
+        "p38_protein",
+        "ptp1b_protein",
+        "syk_protein",
+        "thrombin_protein",
+        "tnsk2_protein",
+        "tyk2_protein",
+        ]
+
+
+_pl_benchmark_url_pattern = (
+    "https://github.com/OpenFreeEnergy/openfe-benchmarks/blob/main/openfe_benchmarks/data/{name}.pdb?raw=true"
+)
+
+
+PDB_BENCHMARK_LOADERS = {
+    name: functools.partial(
+        load_url_data,
+        url=_pl_benchmark_url_pattern.format(name=name)
+    )
+    for name in _benchmark_pdb_names
+}
+
+PDB_FILE_LOADERS = {
+    name: lambda: get_test_filename(name)
+    for name in ["181l.pdb"]
+}
+
+ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
+
 
 ## data file paths
-
 
 @pytest.fixture
 def serialization_template():
@@ -42,15 +106,15 @@ def PDB_181L_path():
 
 
 @pytest.fixture
-def PDBx_181L_path():
-    with importlib.resources.path('gufe.tests.data', '181l.cif') as f:
+def PDB_181L_OpenMMClean_path():
+    with importlib.resources.path('gufe.tests.data',
+                                  '181l_openmmClean.pdb') as f:
         yield str(f)
 
 
 @pytest.fixture
 def offxml_settings_path():
     with importlib.resources.path('gufe.tests.data', 'offxml_settings.json') as f:
-        yield str(f)
 
 
 @pytest.fixture
@@ -60,8 +124,28 @@ def all_settings_path():
 
 
 @pytest.fixture
+def PDB_thrombin_path():
+    with importlib.resources.path('gufe.tests.data',
+                                  'thrombin_protein.pdb') as f:
+        yield str(f)
+
+
+@pytest.fixture
 def dummy_xml_path():
     with importlib.resources.path('gufe.tests.data', 'note.xml') as f:
+
+
+@pytest.fixture
+def PDBx_181L_path():
+    with importlib.resources.path('gufe.tests.data',
+                                  '181l.cif') as f:
+        yield str(f)
+
+
+@pytest.fixture
+def PDBx_181L_openMMClean_path():
+    with importlib.resources.path('gufe.tests.data',
+                                  '181l_openmmClean.cif') as f:
         yield str(f)
 
 ## RDKit molecules
@@ -124,7 +208,7 @@ def ethane():
 
 @pytest.fixture
 def prot_comp(PDB_181L_path):
-    yield gufe.ProteinComponent.from_pdbfile(PDB_181L_path)
+    yield gufe.ProteinComponent.from_pdb_file(PDB_181L_path)
 
 
 @pytest.fixture
