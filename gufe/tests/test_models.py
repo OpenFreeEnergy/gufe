@@ -27,4 +27,4 @@ def test_json_round_trip(all_settings_path, tmp_path):
     with open(d / "settings.json") as fd:
         settings_from_file = json.load(fd)
 
-    assert settings == Settings(**settings_from_file)
+    assert settings == Settings.parse_raw(settings_from_file)
