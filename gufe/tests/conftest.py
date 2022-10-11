@@ -115,6 +115,7 @@ def PDB_181L_OpenMMClean_path():
 @pytest.fixture
 def offxml_settings_path():
     with importlib.resources.path('gufe.tests.data', 'offxml_settings.json') as f:
+        yield str(f)
 
 
 @pytest.fixture
@@ -133,6 +134,7 @@ def PDB_thrombin_path():
 @pytest.fixture
 def dummy_xml_path():
     with importlib.resources.path('gufe.tests.data', 'note.xml') as f:
+        yield str(f)
 
 
 @pytest.fixture
