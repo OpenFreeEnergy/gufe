@@ -22,26 +22,32 @@ from ..vendor.pdb_file.pdbxfile import PDBxFile
 from ..molhashing import deserialize_numpy, serialize_numpy
 
 
-bond_types = {
+_BONDORDERS_OPENMM_TO_RDKIT = {
     1: BondType.SINGLE,
     2: BondType.DOUBLE,
     3: BondType.TRIPLE,
     None: BondType.UNSPECIFIED,
 }
+_BONDORDERS_RDKIT_TO_OPENMM = {
+    v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
+}
+
+# builtin dict of strings to enum members, boy I hope this is stable
+_BONDORDER_STR_TO_RDKIT = Chem.BondType.names
+_BONDORDER_RDKIT_TO_STR = {v: k for k, v in _BONDORDER_STR_TO_RDKIT.items()}
+
+_CHIRALITY_RDKIT_TO_STR = {
+    Chem.CHI_TETRAHEDRAL_CW: 'CW',
+    Chem.CHI_TETRAHEDRAL_CCW: 'CCW',
+    Chem.CHI_UNSPECIFIED: 'U',
+}
+_CHIRALITY_STR_TO_RDKIT = {
+    v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()
+}
+
 
 negative_ions = ["F", "CL", "Br", "I"]
 positive_ions = ["NA", "MG", "ZN"]
-
-
-def assign_correct_prop_type(rd_obj, prop_name, prop_value):
-    if isinstance(prop_value, int):
-        rd_obj.SetIntProp(prop_name, prop_value)
-    elif isinstance(prop_value, float):
-        rd_obj.SetDoubleProp(prop_name, prop_value)
-    elif isinstance(prop_value, bool):
-        rd_obj.SetBoolProp(prop_name, prop_value)
-    else:
-        rd_obj.SetProp(prop_name, str(prop_value))
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
@@ -70,7 +76,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         Parameters
         ----------
-        pdbfile : str
+        pdb_file : str
             path to the pdb file.
         name : str, optional
             name of the input protein, by default ""
@@ -112,12 +118,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile],
                             name: str = ""):
-        """
-        This Function deserializes openmmPDBFile
+        """Converts to our internal representation (rdkit Mol)
 
         Parameters
         ----------
-        openmm_PDBFile : PDBFile
+        openmm_PDBFile : PDBFile or PDBxFile
             object of the protein
         name : str
             name of the protein
@@ -133,64 +138,32 @@ class ProteinComponent(ExplicitMoleculeComponent):
         rd_mol = Mol()
         editable_rdmol = EditableMol(rd_mol)
 
-        # Build Topology
-        _residue_atom_map = defaultdict(list)
-        _residue_icode = defaultdict(str)
-        _residue_index = defaultdict(int)
-        _residue_id = defaultdict(int)
-
         # Add Atoms
         for atom in mol_topology.atoms():
-            atomID = int(atom.id)
-            atomPosIndex = int(atom.index)
-            resn = atom.residue.name
-            resi = int(atom.residue.id)
-            resind = int(atom.residue.index)
-            chainn = str(atom.residue.chain.id)
-            chaini = int(atom.residue.chain.index)
-            icode = str(atom.residue.insertionCode)
-            ishetatom = False
-
-            # WIP: get HETATOMS,
             a = Atom(atom.element.atomic_number)
-            a.SetAtomMapNum(atomID)
-
-            a.SetIntProp("id", atomID)
-            a.SetIntProp("resId", resi)
-            a.SetIntProp("_posIndex", atomPosIndex)
 
             atom_monomerInfo = Chem.AtomPDBResidueInfo()
-            atom_monomerInfo.SetChainId(chainn)
-            atom_monomerInfo.SetSegmentNumber(chaini)
-            atom_monomerInfo.SetInsertionCode(icode)
+            atom_monomerInfo.SetChainId(atom.residue.chain.id)
+            atom_monomerInfo.SetSerialNumber(int(atom.id))
+            atom_monomerInfo.SetSegmentNumber(int(atom.residue.chain.index))
+            atom_monomerInfo.SetInsertionCode(atom.residue.insertionCode)
             atom_monomerInfo.SetName(atom.name)
-            atom_monomerInfo.SetResidueName(resn)
-            atom_monomerInfo.SetResidueNumber(resind)
-            atom_monomerInfo.SetIsHeteroAtom(ishetatom)
+            atom_monomerInfo.SetResidueName(atom.residue.name)
+            atom_monomerInfo.SetResidueNumber(int(atom.residue.id))
+            atom_monomerInfo.SetIsHeteroAtom(False)  # TODO: Do hetatoms
 
             a.SetMonomerInfo(atom_monomerInfo)
 
             # additonally possible:
-            # atom_monomerInfo.SetSerialNumber
             # atom_monomerInfo.SetSecondaryStructure
             # atom_monomerInfo.SetMonomerType
             # atom_monomerInfo.SetAltLoc
-
-            # For molecule props
-            dict_key = str(resind) + "_" + resn
-            _residue_atom_map[dict_key].append(atomID)
-            if dict_key not in _residue_icode:
-                _residue_icode[dict_key] = icode
-            if dict_key not in _residue_index:
-                _residue_index[dict_key] = resind
-            if dict_key not in _residue_id:
-                _residue_id[dict_key] = resi
 
             editable_rdmol.AddAtom(a)
 
         # Add Bonds
         for bond in mol_topology.bonds():
-            bond_order = bond_types[bond.order]
+            bond_order = _BONDORDERS_OPENMM_TO_RDKIT[bond.order]
             editable_rdmol.AddBond(
                 beginAtomIdx=bond.atom1.index,
                 endAtomIdx=bond.atom2.index,
@@ -211,18 +184,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Add Additionals
         # Formal Charge
-        atoms = rd_mol.GetAtoms()
         netcharge = 0
-        _charged_resi: defaultdict = defaultdict(int)
-        for a in atoms:
+        for a in rd_mol.GetAtoms():
             atomic_num = a.GetAtomicNum()
             atom_name = a.GetMonomerInfo().GetName()
-            resn = a.GetMonomerInfo().GetResidueName()
-            resind = int(a.GetMonomerInfo().GetResidueNumber())
-            dict_key = str(resind) + "_" + resn
 
             connectivity = sum(
-                [int(bond.GetBondType()) for bond in a.GetBonds()]
+                int(bond.GetBondType()) for bond in a.GetBonds()
             )
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
@@ -230,77 +198,26 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 if atom_name in positive_ions:
                     fc = default_valence  # e.g. Sodium ions
                 elif atom_name in negative_ions:
-                    fc = -default_valence  # e.g. Chlorine ions
+                    fc = - default_valence  # e.g. Chlorine ions
                 else:  # -no-cov-
+                    resn = a.GetMonomerInfo().GetResidueName()
+                    resind = int(a.GetMonomerInfo().GetResidueNumber())
                     raise ValueError(
                         "I don't know this Ion or something really went "
                         f"wrong! \t{atom_name}\t{resn}\t-{resind}\t"
                         f"connectivity{connectivity}"
                     )
             elif default_valence > connectivity:
-                fc = -(default_valence - connectivity)  # negative charge
+                fc = - (default_valence - connectivity)  # negative charge
             elif default_valence < connectivity:
-                fc = +(connectivity - default_valence)  # positive charge
+                fc = + (connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
 
             a.SetFormalCharge(fc)
             a.UpdatePropertyCache(strict=True)
-            if fc != 0:
-                _charged_resi[dict_key] += fc
+
             netcharge += fc
-
-        # Molecule props
-        # Adding nums:
-        rd_mol.SetProp("ofe-name", name)
-        rd_mol.SetIntProp("NumAtoms", mol_topology.getNumAtoms())
-        rd_mol.SetIntProp("NumBonds", mol_topology.getNumBonds())
-        rd_mol.SetIntProp("NumChains", mol_topology.getNumChains())
-        rd_mol.SetDoubleProp("NetCharge", netcharge)
-
-        # Chains
-        rd_mol.SetProp(
-            "chain_names", str([c.id for c in mol_topology.chains()])
-        )
-        rd_mol.SetProp(
-            "chain_ids", str([c.index for c in mol_topology.chains()])
-        )
-
-        rd_mol.SetProp(
-            "_chain_residues",
-            str(
-                [
-                    [r.index for r in c.residues()]
-                    for c in mol_topology.chains()
-                ]
-            ),
-        )
-
-        # Residues
-        res_seq = " ".join([r.name for r in mol_topology.residues()])
-        rd_mol.SetProp("sequence", res_seq)
-        rd_mol.SetProp("_residue_atom_map", str(dict(_residue_atom_map)))
-        rd_mol.SetProp("_residue_index", str(dict(_residue_index)))
-        rd_mol.SetProp("_residue_id", str(dict(_residue_id)))
-        rd_mol.SetProp("_residue_icode", str(dict(_residue_icode)))
-        rd_mol.SetProp("_charged_res", str(dict(_charged_resi)))
-
-        # Box dimensions
-        pbcVs = mol_topology.getPeriodicBoxVectors()
-        if pbcVs is not None:
-            pbcVs = list(map(list, pbcVs.value_in_unit(omm_unit.angstrom)))
-
-        unitCellDim = mol_topology.getUnitCellDimensions()
-        if unitCellDim is not None:
-            unitCellDim = list(
-                map(float, unitCellDim.value_in_unit(omm_unit.angstrom))
-            )
-
-        rd_mol.SetProp("periodic_box_vectors", str(pbcVs))
-        rd_mol.SetProp("unit_cell_dimensions", str(unitCellDim))
-
-        rd_mol.UpdatePropertyCache(strict=True)
-        # Done
 
         return cls(rdkit=rd_mol, name=name)
 
@@ -315,39 +232,29 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Add Atoms
         for atom in ser_dict["atoms"]:
             atomic_num = int(atom[0])
-            atomic_name = atom[1]
-            atomic_fc = atom[2]
-            atomic_arom = eval(str(atom[3]))
-            atomic_ste = atom[4]
-            atomic_props = atom[5]
-            atom_mi_dict = atom[6]
 
             a = Atom(atomic_num)
-            a.SetAtomMapNum(atomic_props["id"])
-            a.SetFormalCharge(atomic_fc)
-            a.SetIsAromatic(atomic_arom)
-            # a.SetChiralTag(atomic_ste)
+            mi = Chem.AtomPDBResidueInfo()
 
-            # put mi_dict back to class
-            atom_monomerInfo = Chem.AtomPDBResidueInfo()
-            for key, val in atom_mi_dict.items():
-                f = getattr(atom_monomerInfo, "Set" + str(key))
-                f(val)
+            mi.SetChainId(atom[1])
+            mi.SetSerialNumber(atom[2])
+            mi.SetSegmentNumber(atom[3])
+            mi.SetInsertionCode(atom[4])
+            mi.SetName(atom[5])
+            mi.SetResidueName(atom[6])
+            mi.SetResidueNumber(int(atom[7]))
+            mi.SetIsHeteroAtom(atom[8] == 'Y')
+            a.SetFormalCharge(atom[9])
 
-            a.SetMonomerInfo(atom_monomerInfo)
-
-            for prop_name, prop_value in atomic_props.items():
-                assign_correct_prop_type(
-                    rd_obj=a, prop_name=prop_name, prop_value=prop_value
-                )
+            a.SetMonomerInfo(mi)
 
             editable_rdmol.AddAtom(a)
 
         # Add Bonds
         for bond in ser_dict["bonds"]:
-            atomBeginIdx = bond[0]
-            atomEndIdx = bond[1]
-            bondType = bond[2]
+            atomBeginIdx = int(bond[0])
+            atomEndIdx = int(bond[1])
+            bondType = _BONDORDER_STR_TO_RDKIT[bond[2]]
             editable_rdmol.AddBond(
                 beginAtomIdx=atomBeginIdx,
                 endAtomIdx=atomEndIdx,
@@ -366,26 +273,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Adding missing bond info
         for bond_id, bond in enumerate(rd_mol.GetBonds()):
-            bond_info = ser_dict["bonds"][bond_id]
-            bondArom = bond_info[3]
-            bondStereo = bond_info[4]
-            bondProp = bond_info[5]
-
-            bond.SetIsAromatic(bondArom)
-            # bond.SetStereo(bondStereo)
-
-            for prop_name, prop_value in bondProp.items():
-                assign_correct_prop_type(
-                    rd_obj=bond, prop_name=prop_name, prop_value=prop_value
-                )
-
-        # Add Mol Informations
-        for mol_prop, mol_value in ser_dict["molecules"].items():
-            if mol_prop == "sequence":
-                mol_value = " ".join(mol_value)
-            assign_correct_prop_type(
-                rd_obj=rd_mol, prop_name=mol_prop, prop_value=mol_value
-            )
+            # Can't set these on an editable mol, go round a second time
+            _, _, _, arom = ser_dict["bonds"][bond_id]
+            bond.SetIsAromatic(arom == 'Y')
 
         if "name" in ser_dict:
             name = ser_dict["name"]
@@ -394,103 +284,76 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     # TO
     def to_openmm_topology(self) -> app.Topology:
-        """
-        serialize the topology of the protein to openmm.app.Topology
+        """Convert to an openmm Topology object
 
         Returns
         -------
-        app.Topology
+        openmm.app.Topology
             resulting topology obj.
         """
-        dict_prot = self.to_dict()
+        def reskey(m):
+            """key for defining when a residue has changed from previous
+
+            this matches criteria used in openmm (pdbstructure), except altloc
+            ignored
+            """
+            return (
+                m.GetChainId(),
+                m.GetResidueName(),
+                m.GetResidueNumber(),
+                m.GetInsertionCode()
+            )
+
+        def chainkey(m):
+            """key for chains
+
+            uses (chain.id, chain.index)
+
+            using .index catches where TER records in openmm have caused a new
+            chain to be used (with identical .id)
+            """
+            return (
+                m.GetChainId(),
+                m.GetSegmentNumber(),
+            )
+
+        current_chainid = None
+        c = None  # current chain
+        current_resid = None
+        r = None  # current residue
+
+        atom_lookup = {}  # maps rdkit indices to openmm Atoms
 
         top = app.Topology()
+        for atom in self._rdkit.GetAtoms():
+            mi = atom.GetMonomerInfo()
+            if (new_chainid := chainkey(mi)) != current_chainid:
+                chainid, _ = new_chainid
+                c = top.addChain(chainid)
+                current_chainid = new_chainid
 
-        # Chains
-        chains = []
-        for chain_name in dict_prot["molecules"]["chain_names"]:
-            c = top.addChain(id=chain_name)
-            chains.append(c)
+            if (new_resid := reskey(mi)) != current_resid:
+                _, resname, resnum, icode = new_resid
+                r = top.addResidue(name=resname,
+                                   chain=c,
+                                   id=str(resnum),
+                                   insertionCode=icode)
+                current_resid = new_resid
 
-        # Residues:
-        residues = {}
-        for res_lab, resind in sorted(
-            dict_prot["molecules"]["_residue_index"].items(),
-            key=lambda x: x[1],
-        ):
-            resi, resn = res_lab.split("_")
-
-            resind = dict_prot["molecules"]["_residue_index"][res_lab]
-            icode = dict_prot["molecules"]["_residue_icode"][res_lab]
-            resi = int(resi)
-
-            chain_id = int(
-                [
-                    i
-                    for i, v in enumerate(
-                        dict_prot["molecules"]["_chain_residues"]
-                    )
-                    if (resind in v)
-                ][0]
-            )
-            chain = chains[chain_id]
-
-            # print(resi, resn, chain_id, chain)
-
-            r = top.addResidue(
-                name=resn, id=resind, chain=chain, insertionCode=icode
-            )
-            residues.update({chain.id + "_" + str(resi): r})
-
-        # Atoms
-        atoms = {}
-        for atom in sorted(dict_prot["atoms"], key=lambda x: x[5]["id"]):
-            aid = atom[5]["id"]
-            atom_mi_dict = atom[6]
-            chainn = atom_mi_dict["ChainId"]
-            resInd = atom_mi_dict["ResidueNumber"]
-
-            key = str(chainn) + "_" + str(resInd)
-            r = residues[key]
-
-            atom = top.addAtom(
-                name=atom[1],
+            a = top.addAtom(
+                name=mi.GetName(),
+                element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
-                id=aid,
-                element=app.Element.getByAtomicNumber(atom[0]),
-            )
-            atoms[atom.index] = atom
-
-        # Bonds
-        for bond in dict_prot["bonds"]:
-            top.addBond(
-                atom1=atoms[bond[0]],
-                atom2=atoms[bond[1]],
-                type=bond[2],
-                order=bond[2],
+                id=str(mi.GetSerialNumber()),
             )
 
-        # Geometrics
-        if dict_prot["molecules"]["unit_cell_dimensions"] != "None":
-            top.setUnitCellDimensions(
-                np.array(dict_prot["molecules"]["unit_cell_dimensions"])
-                * omm_unit.angstrom
-            )
-        else:
-            top.setUnitCellDimensions(None)
+            atom_lookup[atom.GetIdx()] = a
 
-        if dict_prot["molecules"]["periodic_box_vectors"] != "None":
-            top.setPeriodicBoxVectors(
-                list(
-                    map(
-                        lambda x: np.array(x),
-                        dict_prot["molecules"]["periodic_box_vectors"],
-                    )
-                )
-                * omm_unit.angstrom
-            )
-        else:
-            top.setPeriodicBoxVectors(None)
+        for bond in self._rdkit.GetBonds():
+            a1 = atom_lookup[bond.GetBeginAtomIdx()]
+            a2 = atom_lookup[bond.GetEndAtomIdx()]
+            top.addBond(a1, a2,
+                        order=_BONDORDERS_RDKIT_TO_OPENMM[bond.GetBondType()])
 
         return top
 
@@ -610,29 +473,21 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         atoms = []
         for atom in self._rdkit.GetAtoms():
-            # Standards:
-            name = atom.GetMonomerInfo().GetName()
+            mi = atom.GetMonomerInfo()
 
-            if name == "":
-                name = atom.GetSymbol()
-
-            # collapse monomer info to dict
-            atom_monomer_info = atom.GetMonomerInfo()
-            mi_dict = {}
-            for f in dir(atom_monomer_info):
-                if "Get" in f:
-                    val = getattr(atom_monomer_info, f)()
-                    mi_dict[f.replace("Get", "")] = val
-
+            # TODO: Stereo?
             atoms.append(
                 (
                     atom.GetAtomicNum(),
-                    name,
+                    mi.GetChainId(),
+                    mi.GetSerialNumber(),
+                    mi.GetSegmentNumber(),
+                    mi.GetInsertionCode(),
+                    mi.GetName(),
+                    mi.GetResidueName(),
+                    mi.GetResidueNumber(),
+                    'Y' if mi.GetIsHeteroAtom() else 'N',
                     atom.GetFormalCharge(),
-                    atom.GetIsAromatic(),
-                    "",  # Stereocent in Smallcomponent
-                    atom.GetPropsAsDict(),
-                    mi_dict,
                 )
             )
 
@@ -640,10 +495,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
             (
                 bond.GetBeginAtomIdx(),
                 bond.GetEndAtomIdx(),
-                bond.GetBondType(),
-                bond.GetIsAromatic(),
-                bond.GetStereo() or "",
-                bond.GetPropsAsDict(),
+                _BONDORDER_RDKIT_TO_STR[bond.GetBondType()],
+                'Y' if bond.GetIsAromatic() else 'N',
+                # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
             )
             for bond in self._rdkit.GetBonds()
         ]
@@ -653,30 +507,12 @@ class ProteinComponent(ExplicitMoleculeComponent):
             for conf in self._rdkit.GetConformers()
         ]
 
-        # Additional Information for the mol:
-        molecule_props = {}
-        for prop_key, prop_value in sorted(self._rdkit.GetPropsAsDict(
-            includePrivate=True
-        ).items()):
-            if prop_key == "sequence":
-                residue_sequence = prop_value.split()
-                molecule_props["sequence"] = residue_sequence
-            elif isinstance(prop_value, str) and prop_value.startswith("{"):
-                val = json.loads(prop_value.replace("'", '"'))
-                molecule_props[prop_key] = val
-            elif isinstance(prop_value, str) and prop_value.startswith("["):
-                val = ast.literal_eval(prop_value)
-                molecule_props[prop_key] = val
-            else:
-                molecule_props[prop_key] = prop_value
-
         # Result
         d = {
             "atoms": atoms,
             "bonds": bonds,
             "name": self.name,
             "conformers": conformers,
-            "molecules": molecule_props,
         }
 
         return d
