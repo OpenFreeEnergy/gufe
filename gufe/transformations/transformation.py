@@ -88,9 +88,6 @@ class Transformation(GufeTokenizable):
         """User-specified for the transformation; used as part of its hash."""
         return self._name
 
-    def __lt__(self, other):
-        return hash(self) < hash(other)
-
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False

@@ -77,6 +77,7 @@ def test_ensure_ofe_version():
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
+    key = "SmallMoleculeComponent-3a1b343b46ec93300bc74d83c133637a"
 
     @pytest.fixture
     def instance(self, named_ethane):
