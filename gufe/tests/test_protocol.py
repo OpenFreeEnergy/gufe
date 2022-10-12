@@ -387,7 +387,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_protocol_unit_failure_traceback(self, instance: ProtocolDAGResult):
             for puf in instance.protocol_unit_failures:
-                assert 'ValueError("I have failed my mission", ' in puf.traceback
+                assert "I have failed my mission" in puf.traceback
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit

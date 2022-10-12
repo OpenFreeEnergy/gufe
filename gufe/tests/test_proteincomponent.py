@@ -87,7 +87,7 @@ def assert_topology_equal(ref_top, top):
 class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
-    key = "ProteinComponent-64f82d3cc366813879446525c5cbd794"
+    key = "ProteinComponent-7338abda590510f1dae764e068a65fdc"
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
@@ -291,13 +291,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         m1 = self.cls.from_pdb_file(PDB_181L_path)
 
         assert m1.total_charge == 7
-
-    def test_stable_key(self, PDB_181L_path):
-        # this shouldn't change between platforms etc
-        # so this test isn't as daft as it looks
-        m = self.cls.from_pdb_file(PDB_181L_path)
-
-        assert m.key == 'ProteinComponent-ed292c97773658a7552c8fede5889b52'
 
     def test_protein_total_charge_thromb(self):
         m1 = self.cls.from_pdb_file(ALL_PDB_LOADERS["thrombin_protein"]())
