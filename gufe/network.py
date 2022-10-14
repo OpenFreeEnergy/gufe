@@ -83,8 +83,8 @@ class AlchemicalNetwork(GufeTokenizable):
         return self._name
 
     def _to_dict(self) -> dict:
-        return {"nodes": list(self.nodes),
-                "edges": list(self.edges),
+        return {"nodes": sorted(self.nodes),
+                "edges": sorted(self.edges),
                 "name": self.name}
 
     @classmethod

@@ -7,6 +7,7 @@ import networkx as nx
 from gufe import AlchemicalNetwork, ChemicalSystem, Transformation
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
+from .test_tokenization import GufeTokenizableTestsMixin
 
 
 @pytest.fixture
@@ -70,7 +71,15 @@ def benzene_variants_star_map(
     )
 
 
-class TestAlchemicalNetwork:
+class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
+
+    cls = AlchemicalNetwork
+    key = "AlchemicalNetwork-54aa4f41f09cb07ebe6febdc65f1c278"
+
+    @pytest.fixture
+    def instance(self, benzene_variants_star_map):
+        return benzene_variants_star_map
+
     def test_init(self, benzene_variants_star_map):
         alnet = benzene_variants_star_map
 
