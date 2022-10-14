@@ -6,14 +6,10 @@ channels:
 dependencies:
   - cachetools
   - coverage
-  - coverage
   - networkx
   - numpy
   - openeye-toolkits
-  - openeye-toolkits
   - openff-toolkit
-  - openff-toolkit
-  - openff-units
   - openff-units >=0.1.8
   - pip
   - pydantic
