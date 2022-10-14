@@ -2,6 +2,7 @@
 Pydantic models used for storing settings.
 """
 
+import abc
 from datetime import date
 from typing import Literal, Optional, Union
 
@@ -102,8 +103,20 @@ class ThermoSettings(SettingsBaseModel):
 
     temperature: FloatQuantity["kelvin"]
     pressure: FloatQuantity["standard_atmosphere"]
+    volume: FloatQuantity["nm**3"]
     ph: Union[PositiveFloat, None]
     redox_potential: Optional[float]
+
+    def _validator(self):
+        ...
+
+
+class ProtocolSettings(SettingsBaseModel, abc.ABC):
+    """Protocol-specific settings; this is a base class for protocol
+    developers to use for building any settings not included elsewhere.
+
+    """
+    ...
 
 
 class Settings(SettingsBaseModel):
@@ -116,3 +129,4 @@ class Settings(SettingsBaseModel):
     forcefield_file: Union[FilePath, str]
     forcefield_settings: ForcefieldSettings
     thermo_settings: ThermoSettings
+    protocol_settings: ProtocolSettings
