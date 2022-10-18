@@ -161,7 +161,7 @@ class Protocol(GufeTokenizable):
         """Method to override in custom `Protocol` subclasses.
 
         This method should take two `ChemicalSystem`s, and optionally a
-        dict of `Mapping`, and prepare a collection of `ProtocolUnit` instances
+        dict mapping string to ``ComponentMapping``, and prepare a collection of ``ProtocolUnit`` instances
         that when executed in order give sufficient information to estimate the
         free energy difference between those two `ChemicalSystem`s.
 
