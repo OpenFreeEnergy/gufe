@@ -30,17 +30,17 @@ class ExampleMapping(AtomMapping):
     def _from_dict(cls, d):
         return cls(**d)
 
-    def molA_to_molB(self):
+    def componentA_to_componentB(self):
         return self._mapping
 
-    def molB_to_molA(self):
+    def componentB_to_componentA(self):
         return {v: k for k, v in self._mapping}
 
-    def molA_unique(self):
+    def componentA_unique(self):
         return (i for i in range(self._molA.to_rdkit().GetNumAtoms())
                 if i not in self._mapping)
 
-    def molB_unique(self):
+    def componentB_unique(self):
         return (i for i in range(self._molB.to_rdkit().GetNumAtoms())
                 if i not in self._mapping.values())
 
@@ -60,5 +60,5 @@ class TestMappingAbstractClass(GufeTokenizableTestsMixin):
         assert phenol not in instance
 
     def test_component_access(self, instance, benzene, toluene):
-        assert instance.molA == benzene
-        assert instance.molB == toluene
+        assert instance.componentA == benzene
+        assert instance.componentB == toluene

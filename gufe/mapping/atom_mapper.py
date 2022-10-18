@@ -9,6 +9,7 @@ from .atom_mapping import AtomMapping
 
 class AtomMapper(abc.ABC):
     """A class for manufacturing mappings"""
+    @abc.abstractmethod
     def suggest_mappings(self, A: gufe.Component,
                          B: gufe.Component) -> Iterator[AtomMapping]:
         ...

@@ -10,24 +10,24 @@ from .componentmapping import ComponentMapping
 
 
 class AtomMapping(ComponentMapping, abc.ABC):
-    _molA: gufe.Component
-    _molB: gufe.Component
+    _componentA: gufe.Component
+    _componentB: gufe.Component
 
     """A mapping between two different atom-based Components"""
 
     @property
-    def molA(self) -> gufe.Component:
+    def componentA(self) -> gufe.Component:
         """A copy of the first Component in the mapping"""
-        return self._molA
+        return self._componentA
 
     @property
-    def molB(self) -> gufe.Component:
+    def componentB(self) -> gufe.Component:
         """A copy of the second Component in the mapping"""
-        return self._molB
+        return self._componentB
 
     @property
     @abc.abstractmethod
-    def molA_to_molB(self) -> Mapping[int, int]:
+    def componentA_to_componentB(self) -> Mapping[int, int]:
         """Maps the index of an item from Component A onto Component B
 
         Not all indices will be resolvable, these items are not mapped,
@@ -37,17 +37,17 @@ class AtomMapping(ComponentMapping, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def molB_to_molA(self) -> Mapping[int, int]:
+    def componentB_to_componentA(self) -> Mapping[int, int]:
         ...
 
     @property
     @abc.abstractmethod
-    def molA_unique(self) -> Iterable[int]:
+    def componentA_unique(self) -> Iterable[int]:
         """Indices of atoms in mol A that aren't mappable to B"""
         ...
 
     @property
     @abc.abstractmethod
-    def molB_unique(self) -> Iterable[int]:
+    def componentB_unique(self) -> Iterable[int]:
         """Indices of atoms in mol B that aren't mappable to A"""
         ...
