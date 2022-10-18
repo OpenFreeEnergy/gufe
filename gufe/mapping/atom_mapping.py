@@ -45,11 +45,11 @@ class AtomMapping(ComponentMapping, abc.ABC):
     @property
     @abc.abstractmethod
     def componentA_unique(self) -> Iterable[int]:
-        """Indices of atoms in mol A that aren't mappable to B"""
+        """Indices of atoms in component A that aren't mappable to B"""
         ...
 
     @property
     @abc.abstractmethod
     def componentB_unique(self) -> Iterable[int]:
-        """Indices of atoms in mol B that aren't mappable to A"""
+        """Indices of atoms in component B that aren't mappable to A"""
         ...
