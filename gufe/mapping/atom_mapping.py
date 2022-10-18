@@ -30,14 +30,16 @@ class AtomMapping(ComponentMapping, abc.ABC):
     def componentA_to_componentB(self) -> Mapping[int, int]:
         """Maps the index of an item from Component A onto Component B
 
-        Not all indices will be resolvable, these items are not mapped,
-        resulting in a KeyError
+        Not all indices will be resolvable, these items have no corresponding
+        entity in the other component (e.g. the atom disappears), therefore
+        resulting in a KeyError on query
         """
         ...
 
     @property
     @abc.abstractmethod
     def componentB_to_componentA(self) -> Mapping[int, int]:
+        """Similar to A to B, but reversed."""
         ...
 
     @property
