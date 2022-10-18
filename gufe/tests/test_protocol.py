@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 
 from gufe.chemicalsystem import ChemicalSystem
-from gufe.mapping import Mapping
+from gufe.mapping import ComponentMapping
 from gufe.protocols import (
     Protocol,
     ProtocolDAG,
@@ -99,7 +99,7 @@ class DummyProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
@@ -158,7 +158,7 @@ class BrokenProtocol(DummyProtocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
 
@@ -447,7 +447,7 @@ class NoDepsProtocol(Protocol):
             self,
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
-            mapping: Optional[Mapping] = None,
+            mapping: Optional[dict[str, ComponentMapping]] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings,
