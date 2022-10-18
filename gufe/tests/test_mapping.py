@@ -12,8 +12,7 @@ from .test_tokenization import GufeTokenizableTestsMixin
 class ExampleMapping(AtomMapping):
     def __init__(self, molA: gufe.SmallMoleculeComponent,
                  molB: gufe.SmallMoleculeComponent, mapping):
-        self._molA = molA
-        self._molB = molB
+        super().__init__(molA, molB)
         self._mapping = mapping
 
     def _defaults(self):
@@ -21,8 +20,8 @@ class ExampleMapping(AtomMapping):
 
     def _to_dict(self):
         return {
-            'molA': self._molA,
-            'molB': self._molB,
+            'molA': self._componentA,
+            'molB': self._componentB,
             'mapping': self._mapping,
         }
 
@@ -47,6 +46,7 @@ class ExampleMapping(AtomMapping):
 
 class TestMappingAbstractClass(GufeTokenizableTestsMixin):
     cls = ExampleMapping
+    key = 'ExampleMapping-43716e2d20e7c33b99ea470707c5832f'
 
     @pytest.fixture
     def instance(self, benzene, toluene):
