@@ -59,7 +59,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     *across different Python sessions*.
     """
     def __lt__(self, other):
-        return hash(self) < hash(other)
+        return self.key < other.key
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -74,7 +74,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
-        return normalize(self.to_dict(include_defaults=False))
+        return normalize(self.to_keyed_dict(include_defaults=False))
 
     @property
     def key(self):
@@ -170,7 +170,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return dict_decode_dependencies(dct)
 
-    def to_keyed_dict(self) -> Dict:
+    def to_keyed_dict(self, include_defaults=True) -> Dict:
         """Generate keyed dict representation, with all referenced
         `GufeTokenizable` objects given in keyed representations.
 
@@ -189,7 +189,14 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         :meth:`GufeTokenizable.to_shallow_dict`
 
         """
-        return key_encode_dependencies(self)
+        dct = key_encode_dependencies(self)
+
+        if not include_defaults:
+            for key, value in self.defaults.items():
+                if dct.get(key) == value:
+                    dct.pop(key)
+
+        return dct
 
     @classmethod
     def from_keyed_dict(cls, dct: Dict):
@@ -241,7 +248,7 @@ class GufeKey(str):
 
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
-TOKENIZABLE_REGISTRY: weakref.WeakKeyDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary() # type: ignore
+TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary()
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when
@@ -365,9 +372,15 @@ def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
 # decode options
 def from_dict(dct) -> GufeTokenizable:
     obj = _from_dict(dct)
-    thing = TOKENIZABLE_REGISTRY[obj.key]
+    # When __new__ is called to create ``obj``, it should be added to the
+    # TOKENIZABLE_REGISTRY. However, there seems to be some case (race
+    # condition?) where this doesn't happen, leading to a KeyError inside
+    # the dictionary if we use []. (When you drop into PDB and run the same
+    # line that gave the error, you get the object back.) With ``get``,
+    # ``thing`` becomes None, which is also what it would be if the weakref
+    # was to a deleted object.
+    thing = TOKENIZABLE_REGISTRY.get(obj.key)
 
-    # weakref will return None if the object was deleted
     if thing is None:
         return obj
     else:

@@ -21,6 +21,7 @@ import gufe
 import json
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from gufe.tokenization import TOKENIZABLE_REGISTRY
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -76,6 +77,7 @@ def test_ensure_ofe_version():
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
+    key = "SmallMoleculeComponent-3a1b343b46ec93300bc74d83c133637a"
 
     @pytest.fixture
     def instance(self, named_ethane):
@@ -179,6 +181,15 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         mol = SmallMoleculeComponent.from_rdkit(rdkit, "ethane")
         assert mol == named_ethane
         assert mol.to_rdkit() is not rdkit
+
+    def test_serialization_cycle_smiles(self, named_ethane):
+        # check a regression against the smiles changing on serialization
+        dct = named_ethane.to_dict()
+        TOKENIZABLE_REGISTRY.clear()
+        copy = SmallMoleculeComponent.from_dict(dct)
+        assert named_ethane == copy
+        assert named_ethane is not copy
+        assert named_ethane.smiles == copy.smiles
 
 
 class TestSmallMoleculeComponentConversion:

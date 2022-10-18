@@ -49,14 +49,45 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     if must_close:
         out_file.close()
 
-    in_lines = in_lines[2:]
-    out_lines = out_lines[2:]
+    in_lines = [l for l in in_lines
+                if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
+    out_lines = [l for l in out_lines
+                 if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
+
     assert in_lines == out_lines
+
+
+def assert_topology_equal(ref_top, top):
+    assert ref_top.getNumAtoms() == top.getNumAtoms()
+    for ref_atom, atom in zip(ref_top.atoms(), top.atoms()):
+        assert ref_atom.name == atom.name
+        assert ref_atom.element == atom.element
+        assert ref_atom.index == atom.index
+        assert ref_atom.id == atom.id
+        assert ref_atom.residue.id == atom.residue.id
+
+    assert ref_top.getNumResidues() == top.getNumResidues()
+    for ref_res, res in zip(ref_top.residues(), top.residues()):
+        assert len(ref_res) == len(res)
+        assert ref_res.name == res.name
+        assert ref_res.id == res.id
+        assert ref_res.insertionCode == res.insertionCode
+        assert ref_res.chain.id == res.chain.id
+
+    for ref_chain, chain in zip(ref_top.chains(), top.chains()):
+        assert len(ref_chain) == len(chain)
+        assert ref_chain.id == chain.id
+
+    assert ref_top.getNumBonds() == top.getNumBonds()
+    for ref_bond, bond in zip(ref_top.bonds(), top.bonds()):
+        assert ref_bond[0].index == bond[0].index
+        assert ref_bond[1].index == bond[1].index
 
 
 class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
+    key = "ProteinComponent-7338abda590510f1dae764e068a65fdc"
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
@@ -211,6 +242,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         p = self.cls.from_pdb_file(in_pdb_io, name="Bob")
         gufe_openmm_top = p.to_openmm_topology()
+        assert_topology_equal(openmm_top, gufe_openmm_top)
 
         assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
         assert openmm_top.getNumBonds() == gufe_openmm_top.getNumBonds()

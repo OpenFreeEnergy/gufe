@@ -12,7 +12,7 @@ import networkx as nx
 
 from ..tokenization import GufeTokenizable
 from ..chemicalsystem import ChemicalSystem
-from ..mapping import Mapping
+from ..mapping import ComponentMapping
 
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
@@ -155,14 +155,14 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         """Method to override in custom `Protocol` subclasses.
 
         This method should take two `ChemicalSystem`s, and optionally a
-        `Mapping`, and prepare a collection of `ProtocolUnit` instances that
-        when executed in order give sufficient information to estimate the
+        dict mapping string to ``ComponentMapping``, and prepare a collection of ``ProtocolUnit`` instances
+        that when executed in order give sufficient information to estimate the
         free energy difference between those two `ChemicalSystem`s.
 
         This method should return a list of `ProtocolUnit` instances.
@@ -189,7 +189,7 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
         name: str = None,
     ) -> ProtocolDAG:
@@ -210,9 +210,9 @@ class Protocol(GufeTokenizable):
             The starting `ChemicalSystem` for the transformation.
         stateB : ChemicalSystem
             The ending `ChemicalSystem` for the transformation.
-        mapping : Optional[Mapping]
-            Mapping of e.g. atoms between the `stateA` and `stateB`
-            `ChemicalSystem`s.
+        mapping : Optional[dict[str, ComponentMapping]]
+            Mappings of e.g. atoms between a labelled component in the
+             `stateA` and `stateB` `ChemicalSystem`s.
         extend_from : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for

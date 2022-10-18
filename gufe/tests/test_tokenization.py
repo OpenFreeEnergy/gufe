@@ -71,6 +71,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
+    key: str
 
     @pytest.fixture
     def instance(self):
@@ -93,6 +94,15 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
         #assert ser == reser
+
+    def test_to_dict_roundtrip_clear_registry(self, instance):
+        ser = instance.to_dict()
+        TOKENIZABLE_REGISTRY.clear()
+        deser = self.cls.from_dict(ser)
+        reser = deser.to_dict()
+
+        assert instance == deser
+        assert instance is not deser
 
     def test_to_keyed_dict_roundtrip(self, instance):
         ser = instance.to_keyed_dict()
@@ -118,10 +128,14 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # include `np.nan`s
         #assert ser == reser
 
+    def test_key_stable(self, instance):
+        assert self.key == instance.key
+
 
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     cls = Container
+    key = "Container-262ecded6cd03a619b99d667ded94c9e"
 
     @pytest.fixture
     def instance(self):
@@ -196,6 +210,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         l2 = Leaf2(4)
 
         assert l1 != l2
+
 
 
 class Outer:

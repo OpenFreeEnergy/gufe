@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 
 from gufe.chemicalsystem import ChemicalSystem
-from gufe.mapping import Mapping
+from gufe.mapping import ComponentMapping
 from gufe.protocols import (
     Protocol,
     ProtocolDAG,
@@ -99,7 +99,7 @@ class DummyProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
@@ -158,7 +158,7 @@ class BrokenProtocol(DummyProtocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
 
@@ -189,6 +189,7 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
+    key = "DummyProtocol-5660965464c9afdaac0ac4486a9566b3"
     
     @pytest.fixture
     def instance(self):
@@ -298,8 +299,14 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 for neighbor in instance.graph.neighbors(node):
                     assert neighbor in node.dependencies
 
+        def test_key_stable(self, instance):
+            # for the DAG system, keys for `ProtocolUnit`s are based on UUIDs,
+            # so keys aren't stable up through `ProtocolDAG`s
+            pass
+
     class TestProtocolDAG(ProtocolDAGTestsMixin):
         cls = ProtocolDAG
+        key = "..."
         
         @pytest.fixture
         def instance(self, protocol_dag):
@@ -308,6 +315,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAGResult(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
+        key = "..."
 
         @pytest.fixture
         def instance(self, protocol_dag):
@@ -354,6 +362,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
+        key = "..."
 
         @pytest.fixture
         def instance(self, protocol_dag_broken):
@@ -378,10 +387,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_protocol_unit_failure_traceback(self, instance: ProtocolDAGResult):
             for puf in instance.protocol_unit_failures:
-                assert 'ValueError("I have failed my mission", ' in puf.traceback
+                assert "I have failed my mission" in puf.traceback
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit
+        key = "..."
     
         @pytest.fixture
         def instance(self, vacuum_ligand, solvated_ligand):
@@ -399,6 +409,10 @@ class TestProtocol(GufeTokenizableTestsMixin):
     
             return SimulationUnit(name=f"simulation", initialization=alpha)
 
+        def test_key_stable(self, instance):
+            # for the DAG system, keys for `ProtocolUnit`s are based on UUIDs,
+            # so keys aren't stable up through `ProtocolDAG`s
+            pass
 
 class NoDepUnit(ProtocolUnit):
     @staticmethod
@@ -433,7 +447,7 @@ class NoDepsProtocol(Protocol):
             self,
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
-            mapping: Optional[Mapping] = None,
+            mapping: Optional[dict[str, ComponentMapping]] = None,
             extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings,

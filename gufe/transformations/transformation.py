@@ -8,7 +8,7 @@ from ..tokenization import GufeTokenizable
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
-from ..mapping import Mapping
+from ..mapping import ComponentMapping
 
 
 class Transformation(GufeTokenizable):
@@ -27,7 +27,7 @@ class Transformation(GufeTokenizable):
         Includes all details needed to perform required
         simulations/calculations and encodes the alchemical pathway used.
         May also correspond to an experimental result.
-    mapping : Optional[Mapping]
+    mapping : Optional[Dict[str, ComponentMapping]]
         Mapping of e.g. atoms between the `stateA` and `stateB`
         `ChemicalSystem`s.
     name : Optional[str]
@@ -42,7 +42,7 @@ class Transformation(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[Mapping] = None,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
         name: Optional[str] = None,
     ):
 
@@ -87,9 +87,6 @@ class Transformation(GufeTokenizable):
     def name(self):
         """User-specified for the transformation; used as part of its hash."""
         return self._name
-
-    def __lt__(self, other):
-        return hash(self) < hash(other)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):

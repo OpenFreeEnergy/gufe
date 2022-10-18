@@ -1,10 +1,10 @@
 import json
 import warnings
 from rdkit import Chem
+from typing import Optional
 
 from .component import Component
 from .. import __version__
-from ..molhashing import hashmol
 
 # typing
 from ..custom_typing import RDKitMol
@@ -48,9 +48,6 @@ class ExplicitMoleculeComponent(Component):
     This provides basic serialization and conversion to different
     representations. Specific file formats, such as SDF for small molecules
     or PDB for proteins, should be implemented in subclasses.
-
-    We default to use SMILES as the basis of the hash, but this can be
-    overridden using the `_hashmol` method.
     """
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
@@ -68,16 +65,8 @@ class ExplicitMoleculeComponent(Component):
             )
 
         self._rdkit = rdkit
-        self._hash = self._hashmol(name=name)
-
-    def __hash__(self):
-        return hash(self._hash)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def _hashmol(self, name):
-        return hashmol(self._rdkit, name=name)
+        self._smiles: Optional[str] = None
+        self._name = name
 
     def _defaults(self):
         return super()._defaults()
@@ -85,11 +74,14 @@ class ExplicitMoleculeComponent(Component):
     # Props
     @property
     def name(self) -> str:
-        return self._hash.name
+        return self._name
 
     @property
     def smiles(self) -> str:
-        return self._hash.smiles
+        if self._smiles is None:
+            self._smiles = Chem.MolToSmiles(Chem.RemoveHs(self._rdkit))
+
+        return self._smiles
 
     @property
     def total_charge(self):

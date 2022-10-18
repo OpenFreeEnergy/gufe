@@ -5,17 +5,6 @@ import numpy as np
 from rdkit import Chem
 from typing import NamedTuple
 
-
-class MoleculeHash(NamedTuple):
-    smiles: str
-    name: str
-
-
-def hashmol(mol, name=""):
-    # MolToSMILES are canonical by default
-    return MoleculeHash(Chem.MolToSmiles(mol), name)
-
-
 def serialize_numpy(arr) -> str:
     npbytes = io.BytesIO()
     np.save(npbytes, arr, allow_pickle=False)
