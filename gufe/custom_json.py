@@ -85,7 +85,11 @@ class JSONCodec(object):
 def custom_json_factory(
     coding_methods: Iterable[JSONCodec]
 ) -> Tuple[Type[json.JSONEncoder], Type[json.JSONDecoder]]:
-    """Create JSONEncoder/JSONDecoder for special types
+    """Create JSONEncoder/JSONDecoder for special types.
+
+    Factory method. Dynamically creates classes that enable all the provided
+    ``coding_methods``. Returns classes, not instances, as classes are used
+    by the ``cls`` argument in ``json.loads`` / ``json.dumps``.
 
     Parameters
     ----------
@@ -94,29 +98,43 @@ def custom_json_factory(
 
     Returns
     -------
-    tuple[JSONEncoder, JSONDecoder]
+    Tuple[Type[JSONEncoder], Type[JSONDecoder]]
         subclasses of JSONEncoder/JSONDecoder that use support the provided
         codecs
     """
     class CustomJSONEncoder(json.JSONEncoder):
         def default(self, obj):
             for coding_method in coding_methods:
+                # If the coding method cannot handle this object, it returns
+                # the object (unchanged). So if the object is changed, we
+                # return that.
                 result = coding_method.default(obj)
                 if result is not obj:
                     return result
+
+            # if none of our methods are useful, use standard approaches
+            # (including providing standard error)
             return json.JSONEncoder.default(self, obj)
 
     class CustomJSONDecoder(json.JSONDecoder):
         def __init__(self, *args, **kwargs):
+            # technically, JSONDecoder doesn't come with an object_hook
+            # method, which is why we pass it to super here
             super(CustomJSONDecoder, self).__init__(
                 object_hook=self.object_hook, *args, **kwargs
             )
 
         def object_hook(self, dct):
             for coding_method in coding_methods:
+                # If the coding method cannot handle this dict, it returns
+                # the dict (unchanged). So if the dict is changed, we return
+                # that.
+                result = coding_method.default(obj)
                 result = coding_method.object_hook(dct)
                 if result is not dct:
                     return result
+
+            # if none of our methods are useful, just return the dict
             return dct
 
     return (CustomJSONEncoder, CustomJSONDecoder)
