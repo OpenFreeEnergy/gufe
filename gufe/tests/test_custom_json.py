@@ -4,8 +4,9 @@
 # Permissions are the same as those listed in the gufe LICENSE
 
 from gufe.custom_json import (
-    JSONSerializerDeserializer, custom_json_factory, JSONCodec, PATH_CODEC
+    JSONSerializerDeserializer, custom_json_factory, JSONCodec
 )
+from gufe.custom_codecs import PATH_CODEC, BYTES_CODEC, NUMPY_CODEC
 import json
 import pathlib
 import pytest
@@ -13,43 +14,25 @@ import pytest
 import numpy as np
 from numpy import testing as npt
 
-bytes_codec = JSONCodec(
-    cls=bytes,
-    to_dict=lambda obj: {'latin-1': obj.decode('latin-1')},
-    from_dict=lambda dct: dct['latin-1'].encode('latin-1'),
-)
-
-numpy_codec = JSONCodec(
-    cls=np.ndarray,
-    to_dict=lambda obj: {
-        'dtype': str(obj.dtype),
-        'shape': list(obj.shape),
-        'bytes': obj.tobytes()
-    },
-    from_dict=lambda dct: np.frombuffer(
-        dct['bytes'], dtype=np.dtype(dct['dtype'])
-    ).reshape(dct['shape'])
-)
-
 
 class TestJSONSerializerDeserializer(object):
     def test_add_codec(self):
         # without bytes codec, can't serialize numpy
-        serialization = JSONSerializerDeserializer([numpy_codec])
+        serialization = JSONSerializerDeserializer([NUMPY_CODEC])
         obj = np.array([[1.0, 0.0], [2.0, 3.2]])
         with pytest.raises(TypeError):
             serialization.serializer(obj)
         # add the codec and it will work
-        serialization.add_codec(bytes_codec)
+        serialization.add_codec(BYTES_CODEC)
         serialized = serialization.serializer(obj)
         assert len(serialization.codecs) == 2
         reconstructed = serialization.deserializer(serialized)
         npt.assert_equal(obj, reconstructed)
 
     def test_add_existing_codec(self):
-        serialization = JSONSerializerDeserializer([bytes_codec])
+        serialization = JSONSerializerDeserializer([BYTES_CODEC])
         assert len(serialization.codecs) == 1
-        serialization.add_codec(bytes_codec)
+        serialization.add_codec(BYTES_CODEC)
         assert len(serialization.codecs) == 1
 
 
@@ -95,7 +78,7 @@ class CustomJSONCodingTest(object):
 
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup(self):
-        self.codec = numpy_codec
+        self.codec = NUMPY_CODEC
         self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]),
                      np.array([1, 0])]
         shapes = [[2, 2], [2,]]
@@ -120,7 +103,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
             npt.assert_array_equal(reconstructed, obj)
 
     def test_round_trip(self):
-        encoder, decoder = custom_json_factory([self.codec, bytes_codec])
+        encoder, decoder = custom_json_factory([self.codec, BYTES_CODEC])
         for (obj, dct) in zip(self.objs, self.dcts):
             json_str = json.dumps(obj, cls=encoder)
             reconstructed = json.loads(json_str, cls=decoder)
