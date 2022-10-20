@@ -129,7 +129,6 @@ def custom_json_factory(
                 # If the coding method cannot handle this dict, it returns
                 # the dict (unchanged). So if the dict is changed, we return
                 # that.
-                result = coding_method.default(obj)
                 result = coding_method.object_hook(dct)
                 if result is not dct:
                     return result
