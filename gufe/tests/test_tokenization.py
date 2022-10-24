@@ -1,10 +1,11 @@
 import pytest
 import abc
 from unittest import mock
+import json
 
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
-    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY,
+    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER
 )
 
 
@@ -70,6 +71,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
+    key: str
 
     @pytest.fixture
     def instance(self):
@@ -92,6 +94,15 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
         #assert ser == reser
+
+    def test_to_dict_roundtrip_clear_registry(self, instance):
+        ser = instance.to_dict()
+        TOKENIZABLE_REGISTRY.clear()
+        deser = self.cls.from_dict(ser)
+        reser = deser.to_dict()
+
+        assert instance == deser
+        assert instance is not deser
 
     def test_to_keyed_dict_roundtrip(self, instance):
         ser = instance.to_keyed_dict()
@@ -117,10 +128,14 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # include `np.nan`s
         #assert ser == reser
 
+    def test_key_stable(self, instance):
+        assert self.key == instance.key
+
 
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     cls = Container
+    key = "Container-262ecded6cd03a619b99d667ded94c9e"
 
     @pytest.fixture
     def instance(self):
@@ -197,6 +212,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert l1 != l2
 
 
+
 class Outer:
     class Inner:
         pass
@@ -242,3 +258,13 @@ def test_import_qualname_error_none(modname, qualname):
 def test_get_class(cls_reg):
     with mock.patch.dict("gufe.tokenization.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
         assert get_class(__name__, "Outer.Inner") is Outer.Inner
+
+def test_path_to_json():
+    import pathlib
+    p = pathlib.Path("foo/bar")
+    ser = json.dumps(p, cls=JSON_HANDLER.encoder)
+    deser = json.loads(ser, cls=JSON_HANDLER.decoder)
+    reser = json.dumps(deser, cls=JSON_HANDLER.encoder)
+    assert ser == reser
+    assert p == deser
+
