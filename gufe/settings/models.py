@@ -8,7 +8,7 @@ from typing import Literal, Optional, Union
 
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
-from pydantic import Extra, FilePath, PositiveFloat
+from pydantic import Extra, FilePath, PositiveFloat, Field
 from typing_extensions import TypedDict
 
 
@@ -29,7 +29,7 @@ class SettingsBaseModel(DefaultModel):
 
 
 class vdWScale(TypedDict):
-    scale12: float
+    scale12: float = Field(..., description="See" )
     scale13: float
     scale14: float
     scale15: float
