@@ -13,8 +13,7 @@ from typing_extensions import TypedDict
 
 
 class SettingsBaseModel(DefaultModel):
-    """
-    Settings and modifications we want for all settings classes.
+    """Settings and modifications we want for all settings classes.
     """
 
     class Config:
@@ -51,8 +50,7 @@ class ElectrostaticScale(TypedDict):
 
 
 class VdWSettings(SettingsBaseModel):
-    """
-    Settings for van der Waals force.
+    """Settings for van der Waals force.
 
     See the `SMIRNOFF vdW specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
     for more details.
@@ -68,8 +66,7 @@ class VdWSettings(SettingsBaseModel):
 
 
 class ElectrostaticSettings(SettingsBaseModel):
-    """
-    Settings for electrostatics.
+    """Settings for electrostatics.
 
     See the `SMIRNOFF Electrostatics specification <https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics>`_
     for more details.
@@ -87,8 +84,7 @@ class ElectrostaticSettings(SettingsBaseModel):
 
 
 class GBSASettings(SettingsBaseModel):
-    """
-    Settings for Generalized-Born surface area (GBSA) implicit solvent parameters.
+    """Settings for Generalized-Born surface area (GBSA) implicit solvent parameters.
 
     See the `SMIRNOFF GBSA specification <https://openforcefield.github.io/standards/standards/smirnoff/#gbsa>`_
     for more details.
@@ -100,8 +96,7 @@ class GBSASettings(SettingsBaseModel):
 
 
 class ForcefieldSettings(SettingsBaseModel):
-    """
-    Settings for the forcefield.
+    """Settings for the forcefield.
     """
 
     # Metadata
@@ -115,8 +110,7 @@ class ForcefieldSettings(SettingsBaseModel):
 
 
 class ThermoSettings(SettingsBaseModel):
-    """
-    Settings for thermodynamic parameters.
+    """Settings for thermodynamic parameters.
 
     No checking is done to ensure a valid thermodynamic ensemble is possible.
     """
