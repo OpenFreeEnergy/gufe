@@ -30,7 +30,7 @@ class SettingsBaseModel(DefaultModel):
 
 class vdWScale(TypedDict):
     """
-    See the `SMIRNOFF specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
+    See the `SMIRNOFF vdW specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
     for more details.
     """
     scale12: float = 0.0
@@ -40,17 +40,21 @@ class vdWScale(TypedDict):
 
 
 class ElectrostaticScale(TypedDict):
-    scale12: float
-    scale13: float
-    scale14: float
-    scale15: float
+    """
+    See the `SMIRNOFF Electrostatics specification <https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics>`_
+    for more details.
+    """
+    scale12: float = 0.0
+    scale13: float = 0.0
+    scale14: float = 0.833333
+    scale15: float = 1.0
 
 
 class VdWSettings(SettingsBaseModel):
     """
     Settings for van der Waals force.
 
-    See the `SMIRNOFF specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
+    See the `SMIRNOFF vdW specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
     for more details.
     """
 
