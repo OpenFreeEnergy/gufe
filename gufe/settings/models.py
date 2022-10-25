@@ -29,7 +29,7 @@ class SettingsBaseModel(DefaultModel):
 
 
 class vdWScale(TypedDict):
-    scale12: float = Field(..., description="See" )
+    scale12: float
     scale13: float
     scale14: float
     scale15: float
@@ -44,14 +44,17 @@ class ElectrostaticScale(TypedDict):
 
 class VdWSettings(SettingsBaseModel):
     """
-    Settings for van der Waals force
+    Settings for van der Waals force.
+
+    See the `SMIRNOFF specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
+    for more details.
     """
 
     combining_rules: Literal["Lorentz-Berthelot"]
     potential: Literal["Lennard-Jones-12-6"]
     scale: vdWScale
     long_range_dispersion: Literal["isotropic"]
-    cutoff: FloatQuantity["nanometer"]
+    cutoff: FloatQuantity["nanometer"] = Field(..., description="Default units are nanometers")
     switch_width: FloatQuantity["nanometer"]
     method: Literal["cutoff"]
 
