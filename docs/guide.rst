@@ -8,4 +8,5 @@ Guide to GUFE
 
    guide/components_and_systems
    guide/protocols
+   guide/serialization
    guide/storage

@@ -20,8 +20,8 @@ Directed acylic graphs of work
 
 .. autoclass:: gufe.protocols.ProtocolDAGResult
 	       :members:
-		  
-		  
+
+
 Individual units of work
 ========================
 		  
