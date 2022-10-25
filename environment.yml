@@ -4,7 +4,6 @@ channels:
   - conda-forge
   - openeye
 dependencies:
-  - cachetools
   - coverage
   - networkx
   - numpy
