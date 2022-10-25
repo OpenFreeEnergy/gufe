@@ -62,14 +62,18 @@ class VdWSettings(SettingsBaseModel):
     potential: Literal["Lennard-Jones-12-6"]
     scale: vdWScale
     long_range_dispersion: Literal["isotropic"]
-    cutoff: FloatQuantity["nanometer"] = Field(..., description="Default units are nanometers")
-    switch_width: FloatQuantity["nanometer"]
+    cutoff: FloatQuantity["angstrom"] = Field(9.0, description="Default units are angstroms")
+    switch_width: FloatQuantity["angstrom"] = Field(1.0, description="Default units are angstroms")
     method: Literal["cutoff"]
 
 
 class ElectrostaticSettings(SettingsBaseModel):
     """
-    Settings for electrostatics
+    Settings for electrostatics.
+
+    See the `SMIRNOFF Electrostatics specification <https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics>`_
+    for more details.
+
     """
 
     # Tricky since this allows functions https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics
@@ -83,18 +87,21 @@ class ElectrostaticSettings(SettingsBaseModel):
 
 
 class GBSASettings(SettingsBaseModel):
-    """ "
-    Settings for Generalized-Born surface area (GBSA) implicit solvent parameters
+    """
+    Settings for Generalized-Born surface area (GBSA) implicit solvent parameters.
+
+    See the `SMIRNOFF GBSA specification <https://openforcefield.github.io/standards/standards/smirnoff/#gbsa>`_
+    for more details.
     """
 
-    gb_model: str
-    solvent_dielectric: float
-    solute_dielectric: float
+    gb_model: str = "OBC1"
+    solvent_dielectric: float = 78.5
+    solute_dielectric: float = 1
 
 
 class ForcefieldSettings(SettingsBaseModel):
     """
-    Settings for the forcefield
+    Settings for the forcefield.
     """
 
     # Metadata
@@ -109,17 +116,16 @@ class ForcefieldSettings(SettingsBaseModel):
 
 class ThermoSettings(SettingsBaseModel):
     """
-    Settings for thermodynamic parameters
+    Settings for thermodynamic parameters.
+
+    No checking is done to ensure a valid thermodynamic ensemble is possible.
     """
 
-    temperature: FloatQuantity["kelvin"]
-    pressure: FloatQuantity["standard_atmosphere"]
-    volume: FloatQuantity["nm**3"]
-    ph: Union[PositiveFloat, None]
-    redox_potential: Optional[float]
-
-    def _validator(self):
-        ...
+    temperature: FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
+    pressure: FloatQuantity["standard_atmosphere"] = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")
+    volume: FloatQuantity["nm**3"] = Field(None, description="Simulation volume, default units are cubic nanometres")
+    ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH, only used if MD engine supports constant pH")
+    redox_potential: Optional[float] = Field(None, description="Simulation redox potential, only used if MD engine supports constant E_h")
 
 
 class ProtocolSettings(SettingsBaseModel, abc.ABC):
