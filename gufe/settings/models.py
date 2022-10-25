@@ -78,8 +78,8 @@ class ElectrostaticSettings(SettingsBaseModel):
     nonperiodic_potential: Union[Literal["Coulomb"], str]
     exception_potential: Union[Literal["Coulomb"], str]
     scale: ElectrostaticScale
-    cutoff: FloatQuantity["nanometer"]  # opt
-    switch_width: FloatQuantity["nanometer"]  # opt
+    cutoff: FloatQuantity["angstrom"] = Field(None, description="Default units are in angstroms")
+    switch_width: FloatQuantity["angstrom"] = Field(None, description="Default units are in angstroms")
     solvent_dielectric: Optional[float]
 
 
