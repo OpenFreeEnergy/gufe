@@ -140,4 +140,4 @@ class Settings(SettingsBaseModel):
     forcefield_file: Union[FilePath, str]
     forcefield_settings: ForcefieldSettings
     thermo_settings: ThermoSettings
-    protocol_settings: ProtocolSettings
+    protocol_settings: Union[ProtocolSettings, None]
