@@ -132,12 +132,6 @@ def PDB_thrombin_path():
 
 
 @pytest.fixture
-def dummy_xml_path():
-    with importlib.resources.path('gufe.tests.data', 'note.xml') as f:
-        yield str(f)
-
-
-@pytest.fixture
 def PDBx_181L_path():
     with importlib.resources.path('gufe.tests.data',
                                   '181l.cif') as f:
