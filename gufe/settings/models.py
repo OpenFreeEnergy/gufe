@@ -29,10 +29,14 @@ class SettingsBaseModel(DefaultModel):
 
 
 class vdWScale(TypedDict):
-    scale12: float
-    scale13: float
-    scale14: float
-    scale15: float
+    """
+    See the `SMIRNOFF specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
+    for more details.
+    """
+    scale12: float = 0.0
+    scale13: float = 0.0
+    scale14: float = 0.5
+    scale15: float = 1.0
 
 
 class ElectrostaticScale(TypedDict):
