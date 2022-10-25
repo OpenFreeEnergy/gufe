@@ -27,7 +27,7 @@ class SettingsBaseModel(DefaultModel):
         smart_union = True
 
 
-class vdWScale(TypedDict):
+class vdWScale(SettingsBaseModel):
     """
     See the `SMIRNOFF vdW specification <https://openforcefield.github.io/standards/standards/smirnoff/#vdw>`_
     for more details.
@@ -38,7 +38,7 @@ class vdWScale(TypedDict):
     scale15: float = 1.0
 
 
-class ElectrostaticScale(TypedDict):
+class ElectrostaticScale(SettingsBaseModel):
     """
     See the `SMIRNOFF Electrostatics specification <https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics>`_
     for more details.
