@@ -90,7 +90,32 @@ tokenizables.
 
 When this happens, you will need to create and register a custom JSON
 codec. To do this, at a minimum you need to define a ``to_dict`` and
-``from_dict`` method for your type. Additionally, the  ???
+``from_dict`` function for your type. You can then give the class of your
+type and those functions to a :class:`.JSONCodec`.  As an example, consider
+the code for our codec for ``pathlib.Path`` objects:
+
+.. code::
+
+    PATH_CODEC = JSONCodec(
+        cls=pathlib.Path,
+        to_dict=lambda p: {'path': str(p)},
+        from_dict=lambda dct: pathlib.Path(dct['path'])
+    )
+
+Here the ``to_dict`` and ``from_dict`` are lambdas. The ideas of these are
+the same as the ``GufeTokenizable._to_dict`` and
+``GufeTokenizable._from_dict`` described above.
+
+In this default setup, the codec recognizes your object type by doing an
+``isinstance`` check on the ``cls`` you gave it. It updates the dictionary
+that comes from your ``to_dict`` with the class and module of the object,
+as well as a key to mark this dictionary as coming from this codec. The
+key-value pairs that it adds make it so that the codec can recognize the
+dictionary when it is deserializes (decodes) the data.
+
+Details of how the object is recognized for encoding or how the dictionary
+is recognized for decoding can be changed by passing functions to the
+``is_my_obj`` or ``is_my_dict`` parameters of :class:`.JSONCodec`.
 
 Dumping arbitrary objects to JSON
 ---------------------------------
