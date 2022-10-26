@@ -11,6 +11,14 @@ from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import ComponentMapping
 
 
+def ensure_filelike(fn, mode='r'):
+    # TODO: move this somewhere reusable
+    if isinstance(fn, io.RawIOBase):
+        return fn
+    else:
+        return open(fn, mode=mode)
+
+
 class Transformation(GufeTokenizable):
     """An edge of an alchemical network.
 
@@ -154,6 +162,23 @@ class Transformation(GufeTokenizable):
 
         """
         return self.protocol.gather(protocol_dag_results=protocol_dag_results)
+
+    def dump(self, file):
+        """Dump this Transformation to a JSON file.
+        """
+        with ensure_filelike(file, mode='w') as f:
+            json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder,
+                      sort_keys=True)
+
+    @classmethod
+    def load(cls, file):
+        """Create a Transformation from a JSON file.
+        """
+        with ensure_filelike(file, mode='r') as f:
+            dct = json.load(f, cls=JSON_HANDLER.decoder)
+
+        return cls.from_dict(dct)
+
 
 
 # we subclass `Transformation` here for typing simplicity
