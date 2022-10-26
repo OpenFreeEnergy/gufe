@@ -175,10 +175,7 @@ This gives the GUFE key a number of important properties:
   across minor versions of the code.
 
 These properties make the GUFE key a stable identifier for the object, which
-means that they can be used for store-by-reference.  When one
-GufeTokenizable contains another, the outer object can store the inner
-object's key. This allows us to reduce disk usage by only storing one copy
-of each object (deduplication).
+means that they can be used for store-by-reference.
 
 Deduplication of GufeTokenizables
 ---------------------------------
@@ -188,5 +185,56 @@ deduplicated on storage to disk because we store by reference to the gufe
 key. Additionally, objects are deduplicated in memory because we keep a
 registry of all instantiated GufeTokenizables.
 
-.. TODO: explain weird sides of that, like the fact that you get the same
-   object back when you create another one
+
+Deduplication in memory
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Memory deduplication means that only one object with a given GUFE ``key``
+will exist in any single Python session. We ensure this by maintaining a
+registry of all GufeTokenizables that gets updated any time a
+GufeTokenizable is created. (This is a mapping to weak references, which
+allows Python's garbage collection to clean up GufeTokenizables that are no
+longer needed.)
+
+This memory deduplication is ensured by the ``GufeTokenizable.from_dict``,
+which is typically used in deserialization. It will always use the first
+object in memory with that ``key``. This can lead to some unexpected
+behavior; for example, using the ``Foo`` class defined above:
+
+.. code::
+
+    >>> a = Foo(0)
+    >>> b = Foo(0)
+    >>> a is b
+    False
+    >>> c = Foo.from_dict(a.to_dict())
+    >>> c is a  # surprise!
+    True
+    >>> d = Foo.from_dict(b.to_dict())
+    >>> d is b
+    False
+    >>> d is a  # this is because `a` has the spot in the registry
+    True
+
+
+Deduplication on disk
+~~~~~~~~~~~~~~~~~~~~~
+
+Deduplication in disk storage is fundamentally the responsibility of the
+specific storage system, which falls outside the scope of ``gufe``. However,
+``gufe`` provides some tools to facilitate implementation of a storage
+system.
+
+The main idea is again to use the ``key`` to ensure uniqueness, and to use
+it as a label for the object's serialized representation.  Additionally, the
+``key``, as a simple string, can be used as a stand-in for the object, so
+when an outer GufeTokenizable contains an inner GufeTokenizable, the
+outer can store the key in place of the inner object.  That is, we can store
+by reference to the key.
+
+To convert a GufeTokenizable ``obj`` into a dictionary that references inner
+GufeTokenizables by key, use ``obj.to_keyed_dict()``. That method replaces
+each GufeTokenizable by a dict with a single key, ``':gufe-key:'``, mapping
+to the key of the object. Of course, you'll also need to do the same for all
+inner GufeTokenizables; to get a list of all of them, use
+:func:`.get_all_gufe_objs` on the outermost ``obj``.
