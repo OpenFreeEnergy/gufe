@@ -10,7 +10,7 @@ Looking to run a free energy calculation? You're probably looking for [openfe](h
 
 ## License
 
-This library is made available under the [MIT](https://opensource.org/licenses/MIT) open source license.
+This library is made available under the [MIT](LICENSE) open source license.
 
 ## Important note
 
