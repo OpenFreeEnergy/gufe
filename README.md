@@ -4,7 +4,8 @@
 
 # gufe - Grand Unified Free Energy
 
-GUFE is a toolkit for defining and manipulating alchemical free energy networks and calculations.
+GUFE is a toolkit for developers of software related to alchemical free energy calculations,
+containing data models and abstract base classes.
 
 Looking to run a free energy calculation? You're probably looking for [openfe](https://github.com/OpenFreeEnergy/openfe)
 
