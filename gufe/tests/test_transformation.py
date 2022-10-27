@@ -35,6 +35,9 @@ def complex_equilibrium(solvated_complex):
 ])
 def test_ensure_filelike(input_type, tmp_path):
     path = tmp_path / "foo.txt"
+    # we choose to use bytes for pathlib.Path just to mix things up;
+    # string filename or path can be either bytes or string, so we give one
+    # to each
     use_bytes = input_type in {'path', 'BytesIO'}
     filelike = input_type not in {'str', 'path'}
     dumper = {
@@ -90,14 +93,12 @@ def test_ensure_filelike_force_close(input_type, tmp_path):
         'BytesIO': open(path, mode='wb'),
         'StringIO': io.StringIO(),
     }[input_type]
-    mode = "wb" if input_type == "BytesIO" else "w"
     written = b"foo" if input_type == "BytesIO" else "foo"
 
     with ensure_filelike(dumper, force_close=True) as f:
         f.write(written)
 
     assert f.closed
-
 
 @pytest.mark.parametrize("input_type", ["TextIO", "BytesIO", "StringIO"])
 def test_ensure_filelike_mode_warning(input_type, tmp_path):
@@ -108,10 +109,16 @@ def test_ensure_filelike_mode_warning(input_type, tmp_path):
         'StringIO': io.StringIO(),
     }[input_type]
 
-    with pytest.warns(UserWarning, match="User-specified mode will be ignored"):
+    with pytest.warns(UserWarning,
+                      match="User-specified mode will be ignored"):
         _ = ensure_filelike(dumper, mode="w")
 
     dumper.close()
+
+def test_ensure_filelike_default_mode():
+    path = "foo.txt"
+    loader = ensure_filelike(path)
+    assert loader.mode == 'r'
 
 
 class TestTransformation(GufeTokenizableTestsMixin):
@@ -167,8 +174,10 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
     def test_dump_load_roundtrip(self, absolute_transformation):
         string = io.StringIO()
-        pytest.skip()
-
+        absolute_transformation.dump(string)
+        string.seek(0)
+        recreated = Transformation.load(string)
+        assert absolute_transformation == recreated
 
 
 class TestNonTransformation(GufeTokenizableTestsMixin):

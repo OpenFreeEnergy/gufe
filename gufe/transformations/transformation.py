@@ -2,12 +2,12 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from typing import Optional, Iterable
+import json
 import io
-import contextlib
 import warnings
 
 from openff.toolkit.utils.serialization import Serializable
-from ..tokenization import GufeTokenizable
+from ..tokenization import GufeTokenizable, JSON_HANDLER
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
@@ -49,8 +49,6 @@ class ensure_filelike:
             self.do_close = True
             self.context = None
 
-        self.fn = fn
-
         self.mode = mode
 
     def __enter__(self):
@@ -62,20 +60,6 @@ class ensure_filelike:
     def __exit__(self, type, value, traceback):
         if self.do_close:
             self.context.close()
-
-# def ensure_filelike(fn, mode=None):
-#     # TODO: move this somewhere reusable
-#     if isinstance(fn, (io.TextIOBase, io.RawIOBase, io.BufferedIOBase)):
-#         if mode is not None:
-#             warnings.warn(
-#                 f"mode='{mode}' specified with {fn.__class__.__name__}. "
-#                 "User-specified mode will be ignored."
-#             )
-#         return fn
-#     else:
-#         if mode is None:
-#             mode = 'r'  # effectively given the same implicit behavior
-#         return open(fn, mode=mode)
 
 
 class Transformation(GufeTokenizable):
@@ -224,6 +208,15 @@ class Transformation(GufeTokenizable):
 
     def dump(self, file):
         """Dump this Transformation to a JSON file.
+
+        Note that this is not space-efficient: for example, any
+        ``Component`` which is used in both ``ChemicalSystem``s will be
+        represented twice in the JSON output.
+
+        Parameters
+        ----------
+        file : Union[PathLike, FileLike]
+            a pathlike of filelike to save this transformation to.
         """
         with ensure_filelike(file, mode='w') as f:
             json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder,
@@ -232,6 +225,11 @@ class Transformation(GufeTokenizable):
     @classmethod
     def load(cls, file):
         """Create a Transformation from a JSON file.
+
+        Parameters
+        ----------
+        file : Union[PathLike, FileLike]
+            a pathlike or filelike to read this transformation from
         """
         with ensure_filelike(file, mode='r') as f:
             dct = json.load(f, cls=JSON_HANDLER.decoder)
