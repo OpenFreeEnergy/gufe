@@ -10,6 +10,7 @@ import importlib
 from pathlib import Path
 import inspect
 import copy
+import json
 from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
 from gufe.custom_json import JSONSerializerDeserializer
@@ -75,7 +76,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
-        return normalize(self.to_keyed_dict(include_defaults=False))
+        return tokenize(self)
+        # return normalize(self.to_keyed_dict(include_defaults=False))
 
     @property
     def key(self):
@@ -238,6 +240,15 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         return from_dict(dct)
+
+    def copy_with_replacements(self, **replacements):
+        dct = self._to_dict()
+        if invalid := set(replacements) - set(dct):
+            raise ValueError(f"Invalid replacement keys: {invalid}. "
+                             f"Allowed keys are: {set(dct)}")
+
+        dct.update(replacements)
+        return self._from_dict(dct)
 
 
 class GufeKey(str):
@@ -481,5 +492,8 @@ def tokenize(obj: GufeTokenizable) -> str:
     True
 
     """
-    hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
+    # hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
+    dumped = json.dumps(obj.to_keyed_dict(include_defaults=False),
+                        sort_keys=True, cls=JSON_HANDLER.encoder)
+    hasher = hashlib.md5(dumped.encode(), usedforsecurity=False)
     return hasher.hexdigest()
