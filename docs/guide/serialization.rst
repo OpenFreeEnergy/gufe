@@ -66,17 +66,25 @@ they must be functionally immutable. That is, they must have no mutable
 attributes that change their functionality. In most cases, this means that
 the object must be strictly immutable.
 
-As an example of a mutable attribute that does not change functionality,
-consider a flag to turn on or off usage of a cache of input-output pairs for
-some deterministic method. If the cache is turned on, you first try to
-return the value from it, and only perform the calculation if the inputs
-don't have a cached output associated. In this case, the flag is mutable,
-but this has no effect on the results.  Indeed, the cache itself may be
-implemented as a mutable attribute of the object, but again, this would not
-change the results that are returned.
+When an object is immutable, that means that none of its attributes change
+after initialization. So all attributes should be set when you create an
+object, and never changed after that. If your object is immutable, then it
+is suitable to be a :class:`.GufeTokenizable`.
+
+There is a special case of mutability that is also allowed, which is if the
+object is functionally immutable.  As an example, consider a flag to turn on
+or off usage of a cache of input-output pairs for some deterministic method.
+If the cache is turned on, you first try to return the value from it, and
+only perform the calculation if the inputs don't have a cached output
+associated. In this case, the flag is mutable, but this has no effect on the
+results. Indeed, the cache itself may be implemented as a mutable attribute
+of the object, but again, this would not change the results that are
+returned. It would also be recommended that an attribute like a cache, which
+is only used internally, should be marked private with a leading underscore.
 
 On the other hand, a flag that changes code path in a way that might
-change the results of any operation would not be allowed.
+change the results of any operation would mean that the object cannot be a
+:class:`.GufeTokenizable`.
 
 .. _customjson:
 
@@ -142,7 +150,7 @@ Similarly, you can reload the object with:
 
 Note that these objects are not space-efficient: that is, if you have
 the same object in memory stored at multiple locations (e.g., an identical
-``SolventComponent`` in more than one ``ChemicalSystem``), then you will
+``ProteinComponent`` in more than one ``ChemicalSystem``), then you will
 save multiple copies of its JSON representation.
 
 .. Using JSON codecs outside of JSON
@@ -184,7 +192,8 @@ Understanding the theory: The GUFE key
 
 One of the important concepts is that every GUFE object has a unique
 identifier, which we call its ``key``. The ``key`` is a string, typically
-in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``. For most objects, the
+in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``, e.g.,
+``ProteinComponent-7338abda590510f1dae764e068a65fdc``. For most objects, the
 hexadecimal label is generated based on the contents of the class -- in
 particular, it is based on contents of the ``_to_dict`` dictionary, filtered
 to remove anything that matches the ``_defaults`` dictionary.
@@ -197,10 +206,13 @@ This gives the GUFE key a number of important properties:
   different creation times, including across different hardware, across
   different Python sessions, and even within the same Python session.
 * Because the key is based on the non-default attributes, it is preserved
-  across minor versions of the code.
+  across minor versions of the code (since we follow `SemVer
+  <https://semver.org>`_). The developer-provided ``_defaults`` method is
+  used here.
 
-These properties make the GUFE key a stable identifier for the object, which
-means that they can be used for store-by-reference.
+These properties, in particular the stability across Python sessions,  make
+the GUFE key a stable identifier for the object, which means that they can
+be used for store-by-reference.
 
 Deduplication of GufeTokenizables
 ---------------------------------
@@ -219,7 +231,8 @@ will exist in any single Python session. We ensure this by maintaining a
 registry of all GufeTokenizables that gets updated any time a
 GufeTokenizable is created. (This is a mapping to weak references, which
 allows Python's garbage collection to clean up GufeTokenizables that are no
-longer needed.)
+longer needed.) This is essentially an implementation of the `flyweight
+pattern <https://en.wikipedia.org/wiki/Flyweight_pattern>`_.
 
 This memory deduplication is ensured by the ``GufeTokenizable.from_dict``,
 which is typically used in deserialization. It will always use the first
