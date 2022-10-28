@@ -6,7 +6,7 @@ import pytest
 import io
 import pathlib
 
-from utils import ensure_filelike
+from gufe.utils import ensure_filelike
 
 
 @pytest.mark.parametrize('input_type', [
