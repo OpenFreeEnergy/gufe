@@ -6,28 +6,7 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
-
-
-def _old_OFF() -> bool:
-    from openff.toolkit import topology
-
-    return hasattr(topology.Atom, 'element')
-
-USING_OLD_OFF = _old_OFF()
-
-import warnings
-if USING_OLD_OFF:
-    from openmm import unit
-    def get_value(quanity, u):
-        return quanity.value_in_unit(u)
-    def get_atomic_number(atom):
-        return atom.element.atomic_number
-else:
-    from openff.units import unit
-    def get_value(quanity, u):
-        return quanity.m_as(u)
-    def get_atomic_number(atom):
-        return atom.atomic_number
+from openff.units import unit
 
 from rdkit import Chem
 
@@ -178,9 +157,9 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m = self.to_openff()
 
         atoms = [
-            (get_atomic_number(atom),
+            (atom.atomic_number,
              atom.name,
-             get_value(atom.formal_charge, unit.elementary_charge),
+             atom.formal_charge.m_as(unit.elementary_charge),
              atom.is_aromatic,
              atom.stereochemistry or '')
 
@@ -205,7 +184,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
                                "least 1 conformer")
 
         conformers = [
-            serialize_numpy(get_value(conf, unit.angstrom))
+            serialize_numpy(conf.m_as(unit.angstrom))
             for conf in m.conformers
         ]
 
