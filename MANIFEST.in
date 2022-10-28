@@ -1,2 +1,4 @@
 include versioneer.py
 include gufe/_version.py
+
+include gufe/vendor/pdb_file/data/*.xml

@@ -12,7 +12,11 @@ import inspect
 import copy
 from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
+from gufe.custom_json import JSONSerializerDeserializer
+from gufe.custom_codecs import PATH_CODEC, NUMPY_CODEC, BYTES_CODEC
 
+_default_json_codecs = [PATH_CODEC, NUMPY_CODEC, BYTES_CODEC]
+JSON_HANDLER = JSONSerializerDeserializer(_default_json_codecs)
 
 # maps qualified name strings to the class
 TOKENIZABLE_CLASS_REGISTRY: Dict[Tuple[str, str], "GufeTokenizable"] = {}
