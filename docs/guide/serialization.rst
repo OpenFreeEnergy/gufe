@@ -58,6 +58,31 @@ As a very simple example, consider the following complete implementation:
         def _defaults(self):
             return {'baz': []}
 
+Testing your GufeTokenizable
+----------------------------
+
+We provide a convenience mix-in for testing that a
+:class:`.GufeTokenizable` will be correctly stored and reloaded. Here's an
+example of how to use it for the ``Foo`` class above:
+
+.. code::
+
+    import pytest
+    from gufe.tests.test_tokenization import GufeTokenizationTestsMixin
+
+    class TestFoo(GufeTokenizationTestsMixin):
+        cls = Foo
+        key = "Foo-8e7fd2803d73ef0cd9faceef751acfca"
+
+        @pytest.fixture
+        def instance(self):
+            return Foo(5, baz=['qux', 'quux', 'quuux'])
+
+You'll need to get the ``key`` from creating the ``instance`` once and
+recording ``str(obj.key)``-- since the key is stable, it shouldn't change
+(and, in fact, that is tested). This will add several tests to your test
+suite to ensure that you can save and reload your :class:`.GufeTokenizable`.
+
 .. TODO: add a section here about the various to_*_dict from_*_dict forms:
    shallow_dict; (deep) dict; keyed_dict
 
