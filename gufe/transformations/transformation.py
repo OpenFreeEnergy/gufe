@@ -2,9 +2,11 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from typing import Optional, Iterable
+import json
 
 from openff.toolkit.utils.serialization import Serializable
-from ..tokenization import GufeTokenizable
+from ..tokenization import GufeTokenizable, JSON_HANDLER
+from ..utils import ensure_filelike
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
@@ -154,6 +156,37 @@ class Transformation(GufeTokenizable):
 
         """
         return self.protocol.gather(protocol_dag_results=protocol_dag_results)
+
+    def dump(self, file):
+        """Dump this Transformation to a JSON file.
+
+        Note that this is not space-efficient: for example, any
+        ``Component`` which is used in both ``ChemicalSystem``s will be
+        represented twice in the JSON output.
+
+        Parameters
+        ----------
+        file : Union[PathLike, FileLike]
+            a pathlike of filelike to save this transformation to.
+        """
+        with ensure_filelike(file, mode='w') as f:
+            json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder,
+                      sort_keys=True)
+
+    @classmethod
+    def load(cls, file):
+        """Create a Transformation from a JSON file.
+
+        Parameters
+        ----------
+        file : Union[PathLike, FileLike]
+            a pathlike or filelike to read this transformation from
+        """
+        with ensure_filelike(file, mode='r') as f:
+            dct = json.load(f, cls=JSON_HANDLER.decoder)
+
+        return cls.from_dict(dct)
+
 
 
 # we subclass `Transformation` here for typing simplicity
