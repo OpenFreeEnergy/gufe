@@ -58,6 +58,9 @@ As a very simple example, consider the following complete implementation:
         def _defaults(self):
             return {'baz': []}
 
+.. TODO: add a section here about the various to_*_dict from_*_dict forms:
+   shallow_dict; (deep) dict; keyed_dict
+
 GufeTokenizables must be functionally immutable
 -----------------------------------------------
 
@@ -149,9 +152,12 @@ Similarly, you can reload the object with:
         obj = json.load(f, cls=JSON_HANDLER.decoder)
 
 Note that these objects are not space-efficient: that is, if you have
-the same object in memory stored at multiple locations (e.g., an identical
+the same object in memory referenced by multiple objects (e.g., an identical
 ``ProteinComponent`` in more than one ``ChemicalSystem``), then you will
 save multiple copies of its JSON representation.
+
+On reloading, tools that use the recommended ``from_dict`` method will undo
+do this duplication; see :ref:`gufe_memory_deduplication` for details.
 
 .. Using JSON codecs outside of JSON
 .. ---------------------------------
@@ -217,11 +223,12 @@ be used for store-by-reference.
 Deduplication of GufeTokenizables
 ---------------------------------
 
-There are two types of deduplication of GufeTokenizables. Objects are
+There are two types of deduplication of GufeTokenizables. Objects can be
 deduplicated on storage to disk because we store by reference to the gufe
 key. Additionally, objects are deduplicated in memory because we keep a
 registry of all instantiated GufeTokenizables.
 
+.. _gufe_memory-deduplication:
 
 Deduplication in memory
 ~~~~~~~~~~~~~~~~~~~~~~~
