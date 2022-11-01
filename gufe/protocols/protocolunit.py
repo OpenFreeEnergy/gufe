@@ -334,7 +334,7 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
                 source_key=self.key,
                 inputs=inputs,
                 outputs=dict(),
-                exception=(str(type(e)), e.args),
+                exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc()
             )
 
