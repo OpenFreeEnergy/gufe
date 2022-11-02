@@ -17,5 +17,10 @@ dependencies:
   - pytest-xdist
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?
+  # docs
+  - myst-parser
+  - pydata_sphinx_theme
+  - sphinx-jsonschema==1.15  # https://github.com/Zsailer/sphinx-pydantic/issues/5
+  - sphinx-pydantic
   - pip:
     - git+https://github.com/mikemhenry/openff-models.git@support_nested_models
