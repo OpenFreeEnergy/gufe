@@ -10,6 +10,7 @@ import importlib
 from pathlib import Path
 import inspect
 import copy
+import logging
 from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
 from gufe.custom_json import JSONSerializerDeserializer
@@ -76,6 +77,16 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         return normalize(self.to_keyed_dict(include_defaults=False))
+
+    @property
+    def logger(self):
+        if (logger := getattr(self, '_logger', None)) is None:
+            cls = self.__class__
+            logname = cls.__module__ + "." + cls.__qualname__
+            logger = logging.getLogger(logname)
+            self._logger = logger
+        return logger
+
 
     @property
     def key(self):
