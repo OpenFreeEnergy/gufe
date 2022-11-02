@@ -1,5 +1,7 @@
 import pytest
 import abc
+import logging
+import io
 from unittest import mock
 import json
 
@@ -11,6 +13,8 @@ from gufe.tokenization import (
 
 class Leaf(GufeTokenizable):
     def __init__(self, a, b=2):
+        self.logger.info(f"{a=}")
+        self.logger.debug(f"{b=}")
         self.a = a
         self.b = b
 
@@ -219,6 +223,30 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         assert l1 != l2
 
+    @pytest.mark.parametrize('level', ["DEBUG", "INFO", "CRITICAL"])
+    def test_logging(self, level):
+        stream = io.StringIO()
+        handler = logging.StreamHandler(stream)
+        fmt = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+        logger = logging.getLogger('gufe.tests.test_tokenization.Leaf')
+        logger.setLevel(getattr(logging, level))
+        handler.setFormatter(fmt)
+        logger.addHandler(handler)
+
+        _ = Leaf(10)
+
+        results = stream.getvalue()
+
+        info_log = "gufe.tests.test_tokenization.Leaf - INFO - a=10\n"
+        debug_log = "gufe.tests.test_tokenization.Leaf - DEBUG - b=2\n"
+
+        expected = ""
+        if level in {"DEBUG", "INFO"}:
+            expected += info_log
+        if level == "DEBUG":
+            expected += debug_log
+
+        assert results == expected
 
 
 class Outer:
