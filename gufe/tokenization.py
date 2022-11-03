@@ -80,6 +80,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @property
     def logger(self):
+        """Return logger named by this module and class qualname"""
         if (logger := getattr(self, '_logger', None)) is None:
             cls = self.__class__
             logname = cls.__module__ + "." + cls.__qualname__
