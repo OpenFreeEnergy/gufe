@@ -399,7 +399,7 @@ def from_dict(dct) -> GufeTokenizable:
     # was to a deleted object.
     thing = TOKENIZABLE_REGISTRY.get(obj.key)
 
-    if thing is None:
+    if thing is None:  # -no-cov-
         return obj
     else:
         return thing
