@@ -53,7 +53,8 @@ positive_ions = ["NA", "MG", "ZN"]
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
 
-    .. note::
+    Note
+    ----
     This class is a read-only representation of a protein, if you want to
     edit the molecule do this in an appropriate toolkit **before** creating
     an instance from this class.

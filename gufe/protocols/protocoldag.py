@@ -10,7 +10,9 @@ import tempfile
 import networkx as nx
 
 from ..tokenization import GufeTokenizable, GufeKey
-from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBase
+from .protocolunit import (
+    ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure,
+)
 
 
 class DAGMixin:
@@ -115,9 +117,6 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def result_graph(self) -> nx.DiGraph:
-        """DAG of `ProtocolUnitResult`s that compose this `ProtocolDAGResult`.
-
-        """
         return self._result_graph
 
     @property
@@ -125,11 +124,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return list(self._iterate_dag_order(self.result_graph))
 
     @property
-    def protocol_unit_failures(self):
-        """A list of `ProtocolUnitFailure`s corresponding to only failed
-        `ProtocolUnit`s.
-
-        """
+    def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
+        """A list of all failed units"""
         return [r for r in self.protocol_unit_results if not r.ok()]
 
     def unit_to_result(self, protocol_unit: ProtocolUnit):
@@ -151,12 +147,12 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
-    """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`s
+    """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`
     with dependencies specified.
 
     A single `ProtocolDAG` execution should yield sufficient information to
     calculate a free energy difference (though perhaps not converged) between
-    two `ChemicalSystem`s.
+    two `ChemicalSystem` objects.
     
     A `ProtocolDAG` yields a `ProtocolDAGResult` when executed.
 
