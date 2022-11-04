@@ -93,7 +93,7 @@ class Protocol(GufeTokenizable):
 
     result_cls: type[ProtocolResult]
 
-    def __init__(self, settings):
+    def __init__(self, settings=None):
         """Create a new `Protocol` instance.
 
         Parameters
