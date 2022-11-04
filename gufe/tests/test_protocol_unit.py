@@ -17,7 +17,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
     @pytest.fixture
     def instance(self, dummy_unit):
-        # TODO: switch this to _set_key
         dummy_unit._set_key("predetermined")
         return dummy_unit
 
