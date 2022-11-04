@@ -117,7 +117,6 @@ class ThermoSettings(SettingsBaseModel):
 
     temperature: FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
     pressure: FloatQuantity["standard_atmosphere"] = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")
-    volume: FloatQuantity["nm**3"] = Field(None, description="Simulation volume, default units are cubic nanometres")
     ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH")
     redox_potential: Optional[float] = Field(None, description="Simulation redox potential")
 
