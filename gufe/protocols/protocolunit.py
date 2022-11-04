@@ -5,6 +5,7 @@
 part of a `ProtocolDAG`.
 
 """
+from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
@@ -32,25 +33,23 @@ class Context:
     shared: PathLike
 
 
-class ProtocolUnitMixin:
-
-    def _list_dependencies(self, cls):
-        deps = []
-        for key, value in self.inputs.items():
-            if isinstance(value, dict):
-                for k, v in value.items():
-                    if isinstance(v, cls):
-                        deps.append(v)
-            elif isinstance(value, list):
-                for i in value:
-                    if isinstance(i, cls):
-                        deps.append(i)
-            elif isinstance(value, cls):
-                deps.append(value)
-        return deps
+def _list_dependencies(inputs, cls):
+    deps = []
+    for key, value in inputs.items():
+        if isinstance(value, dict):
+            for k, v in value.items():
+                if isinstance(v, cls):
+                    deps.append(v)
+        elif isinstance(value, list):
+            for i in value:
+                if isinstance(i, cls):
+                    deps.append(i)
+        elif isinstance(value, cls):
+            deps.append(value)
+    return deps
 
 
-class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
+class ProtocolUnitResultBase(GufeTokenizable):
     def __init__(self, *,
             name: Optional[str] = None,
             source_key: GufeKey,
@@ -122,12 +121,10 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         return self._outputs
 
     @property
-    def dependencies(self) -> List["ProtocolUnitResult"]:
-        """Generate a list of all `ProtocolUnitResult`s dependent on.
-
-        """
+    def dependencies(self) -> list[ProtocolUnitResult]:
+        """All results that this result was dependent on"""
         if self._dependencies is None:
-            self._dependencies = self._list_dependencies(ProtocolUnitResultBase)
+            self._dependencies = _list_dependencies(self._inputs, ProtocolUnitResultBase)
         return self._dependencies     # type: ignore
 
 
@@ -142,13 +139,13 @@ class ProtocolUnitResult(ProtocolUnitResultBase):
         Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
     inputs : Dict[str, Any]
         Inputs to the `ProtocolUnit` that produced this
-        `ProtocolUnitResult`. Includes any `ProtocolUnitResult`s this
-        `ProtocolUnitResult` is dependent on.
+        `ProtocolUnitResult`. Includes any `ProtocolUnitResult` objects this
+        `ProtocolUnitResult` was dependent on.
     outputs : Dict[str, Any]
-        Outputs from the `ProtocolUnit._execute` that generated this
+        Outputs from the `ProtocolUnit.execute` that generated this
         `ProtocolUnitResult`.
-    dependencies : List[ProtocolUnitResult]
-        A list of the `ProtocolUnitResult`s depended upon.
+    dependencies : list[ProtocolUnitResult]
+        A list of the `ProtocolUnitResult` objects depended upon.
 
     """
 
@@ -157,33 +154,30 @@ class ProtocolUnitResult(ProtocolUnitResultBase):
 
 
 class ProtocolUnitFailure(ProtocolUnitResultBase):
-    """Failed result for a single `ProtocolUnit` execution.
+    """Failed result for a single `ProtocolUnit` execution."""
 
-    Attributes
-    ----------
-    name : Optional[str]
-        Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
-    source_key : GufeKey
-        Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-    inputs : Dict[str, Any]
-        Inputs to the `ProtocolUnit` that produced this
-        `ProtocolUnitResult`. Includes any `ProtocolUnitResult`s this
-        `ProtocolUnitResult` is dependent on.
-    outputs : Dict[str, Any]
-        Outputs from the `ProtocolUnit._execute` that generated this
-        `ProtocolUnitResult`.
-    dependencies : List[ProtocolUnitResult]
-        A list of the `ProtocolUnitResult`s depended upon.
-    exception : Tuple[str, Tuple[Any, ...]]
-        A tuple giving details on the exception raised during `ProtocolUnit`
-        execution. The first element gives the type of exception raised; the
-        second element is a tuple giving the exception's `args` values.
-    traceback : str
-        The traceback given by the exception.
-
-    """
-
-    def __init__(self, *, name=None, source_key, inputs, outputs, exception, traceback):
+    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback):
+        """
+        Parameters
+        ----------
+        name : Optional[str]
+            Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
+        source_key : GufeKey
+            Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
+        inputs : Dict[str, Any]
+            Inputs to the `ProtocolUnit` that produced this
+            `ProtocolUnitResult`. Includes any `ProtocolUnitResult` this
+            `ProtocolUnitResult` was dependent on.
+        outputs : Dict[str, Any]
+            Outputs from the `ProtocolUnit._execute` that generated this
+            `ProtocolUnitResult`.
+        exception : Tuple[str, Tuple[Any, ...]]
+            A tuple giving details on the exception raised during `ProtocolUnit`
+            execution. The first element gives the type of exception raised; the
+            second element is a tuple giving the exception's `args` values.
+        traceback : str
+            The traceback given by the exception.
+        """
         self._exception = exception
         self._traceback = traceback
         super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs)
@@ -206,7 +200,7 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
         return False
 
 
-class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
+class ProtocolUnit(GufeTokenizable):
     """A unit of work within a ProtocolDAG.
 
     Attributes
@@ -218,6 +212,7 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         `ProtocolUnit` is dependent on.
 
     """
+    _dependencies: Optional[list[ProtocolUnit]]
 
     def __init__(
         self,
@@ -277,34 +272,32 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
         return copy(self._inputs)
 
     @property
-    def dependencies(self) -> List["ProtocolUnit"]:
-        """Generate a list of all `ProtocolUnit`s dependent on.
-
-        """
+    def dependencies(self) -> list[ProtocolUnit]:
+        """All units that this unit is dependent on (parents)"""
         if self._dependencies is None:
-            self._dependencies = self._list_dependencies(ProtocolUnit)
+            self._dependencies = _list_dependencies(self._inputs, ProtocolUnit)
         return self._dependencies     # type: ignore
 
     def execute(self, *, 
             shared: PathLike, 
             scratch: Optional[PathLike] = None, 
             **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
-        """Given `ProtocolUnitResult`s from dependencies, execute this `ProtocolUnit`.
+        """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`
 
         Parameters
         ----------
         shared : PathLike
            Path to scratch space that persists across whole DAG execution, but
            is removed after. Used by some `ProtocolUnit`s to pass file contents
-           to dependent `ProtocolUnit`s.
+           to dependent `ProtocolUnit` objects.
         scratch : Optional[PathLike]
             Path to scratch space that persists during execution of this
             `ProtocolUnit`, but removed after.
             
         **inputs
             Keyword arguments giving the named inputs to `_execute`.
-            These can include `ProtocolUnitResult`s from `ProtocolUnit`s this
-            unit is dependent on.
+            These can include `ProtocolUnitResult` objects from `ProtocolUnit`
+            objects this unit is dependent on.
 
         """
         result: Union[ProtocolUnitResult, ProtocolUnitFailure]
