@@ -4,17 +4,25 @@ channels:
   - conda-forge
   - openeye
 dependencies:
-  - numpy
+  - coverage
   - networkx
-  - rdkit
+  - numpy
+  - openeye-toolkits
+  - openff-toolkit
+  - openff-units >=0.1.8
   - pip
   - pydantic
   - pytest
-  - pytest-xdist
   - pytest-cov
-  - coverage
-  - openff-toolkit
-  - openff-units >=0.1.8
-  - openeye-toolkits
+  - pytest-xdist
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?
+  # docs
+  - myst-parser
+  - pydata-sphinx-theme
+  - pip:
+    - git+https://github.com/mikemhenry/openff-models.git@support_nested_models
+    # this can go with the conda deps after https://github.com/conda-forge/sphinx-jsonschema-feedstock/pull/11 is merged
+    - sphinx-jsonschema==1.15  # https://github.com/Zsailer/sphinx-pydantic/issues/5
+    # this can go with the conda deps after https://github.com/conda-forge/staged-recipes/pull/20971 is merged
+    - sphinx-pydantic
