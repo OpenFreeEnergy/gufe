@@ -17,7 +17,9 @@ from copy import copy
 from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
 import tempfile
 
-from ..tokenization import GufeTokenizable, GufeKey, normalize
+from ..tokenization import (
+    GufeTokenizable, GufeKey, normalize, TOKENIZABLE_REGISTRY
+)
 
 
 @dataclass
@@ -33,7 +35,7 @@ class Context:
 class ProtocolUnitMixin:
 
     def _list_dependencies(self, cls):
-        deps = [] 
+        deps = []
         for key, value in self.inputs.items():
             if isinstance(value, dict):
                 for k, v in value.items():
@@ -49,12 +51,11 @@ class ProtocolUnitMixin:
 
 
 class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
-    def __init__(self, *, 
-            name: Optional[str] = None, 
-            source_key: GufeKey, 
-            inputs: Dict[str, Any], 
+    def __init__(self, *,
+            name: Optional[str] = None,
+            source_key: GufeKey,
+            inputs: Dict[str, Any],
             outputs: Dict[str, Any],
-            _key: GufeKey = None
         ):
         """Generate a `ProtocolUnitResult`.
 
@@ -71,14 +72,7 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
         outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
-        _key : GufeKey
-            Used by deserialization to set UUID-based key for this
-            `ProtocolUnitResult` before creation.
-            
         """
-        if _key is not None:
-            self._key = _key
-            
         self._name = name
         self._source_key = source_key
         self._inputs = inputs
@@ -106,7 +100,10 @@ class ProtocolUnitResultBase(GufeTokenizable, ProtocolUnitMixin):
 
     @classmethod
     def _from_dict(cls, dct: Dict):
-        return cls(**dct)
+        key = dct.pop("_key")
+        obj = cls(**dct)
+        obj._set_key(key)
+        return obj
 
     @property
     def name(self):
@@ -186,10 +183,10 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
 
     """
 
-    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback):
+    def __init__(self, *, name=None, source_key, inputs, outputs, exception, traceback):
         self._exception = exception
         self._traceback = traceback
-        super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs, _key=_key)
+        super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs)
 
     def _to_dict(self):
         dct = super()._to_dict()
@@ -268,8 +265,7 @@ class ProtocolUnit(GufeTokenizable, ProtocolUnitMixin):
 
         obj = cls(name=dct['name'],
                   **dct['inputs'])
-        obj._key = _key
-
+        obj._set_key(_key)
         return obj
 
     @property
