@@ -210,7 +210,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def execute(protocoldag: ProtocolDAG, *, 
-            shared: PathLike = None) -> ProtocolDAGResult:
+            shared: Optional[PathLike] = None) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
