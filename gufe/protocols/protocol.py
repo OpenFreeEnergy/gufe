@@ -191,7 +191,7 @@ class Protocol(GufeTokenizable):
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
-        name: str = None,
+        name: Optional[str] = None,
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 

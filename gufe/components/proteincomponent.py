@@ -5,7 +5,7 @@ import json
 import io
 import numpy as np
 from os import PathLike
-from typing import Union
+from typing import Union, Optional
 from collections import defaultdict
 
 from openmm import app
@@ -374,7 +374,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase] = None) -> str:
+    def to_pdb_file(self, out_path: Optional[Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]] = None) -> str:
         """
         serialize protein to pdb file.
 
@@ -421,7 +421,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return out_path
 
     def to_pdbx_file(
-        self, out_path: Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase] = None
+        self, out_path: Optional[Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]] = None
     ) -> str:
         """
         serialize protein to pdbx file.
