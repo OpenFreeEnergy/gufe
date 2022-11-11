@@ -261,6 +261,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         assert len(succeeded_units) > 0
 
+    def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand):
+        protocol = BrokenProtocol(settings=None)
+        dag = protocol.create(
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+        )
+
+        with pytest.raises(ValueError, match="I have failed my mission"):
+            execute(dag, raise_error=True)
+
     def test_create_execute_gather(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
 

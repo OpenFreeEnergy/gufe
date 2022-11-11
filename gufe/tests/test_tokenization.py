@@ -85,7 +85,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
         """
         ...
 
-    def teardown(self):
+    def teardown_method(self):
         TOKENIZABLE_REGISTRY.clear()
 
     def test_to_dict_roundtrip(self, instance):
