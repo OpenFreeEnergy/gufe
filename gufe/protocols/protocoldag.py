@@ -222,6 +222,8 @@ def execute(protocoldag: ProtocolDAG, *,
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
+    raise_error : bool
+        If True, raise an exception if a ProtocolUnit fails.
 
     Returns
     -------
@@ -244,7 +246,7 @@ def execute(protocoldag: ProtocolDAG, *,
         inputs = _pu_to_pur(unit.inputs, results)
 
         # execute
-        result = unit.execute(shared=shared_, **inputs)
+        result = unit.execute(shared=shared_, raise_error=raise_error, **inputs)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
