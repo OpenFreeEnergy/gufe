@@ -281,6 +281,7 @@ class ProtocolUnit(GufeTokenizable):
     def execute(self, *, 
             shared: PathLike, 
             scratch: Optional[PathLike] = None, 
+            raise_error: bool = False,
             **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`
 
@@ -318,6 +319,9 @@ class ProtocolUnit(GufeTokenizable):
             )
 
         except Exception as e:
+            if raise_error:
+                raise
+
             result = ProtocolUnitFailure(
                 name=self._name,
                 source_key=self.key,
