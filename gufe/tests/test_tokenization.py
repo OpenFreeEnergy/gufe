@@ -13,10 +13,10 @@ from gufe.tokenization import (
 
 class Leaf(GufeTokenizable):
     def __init__(self, a, b=2):
-        self.logger.info(f"{a=}")
-        self.logger.debug(f"{b=}")
         self.a = a
         self.b = b
+        self.logger.info(f"{a=}")
+        self.logger.debug(f"{b=}")
 
     def _to_dict(self):
         return {"a": self.a}
@@ -227,18 +227,22 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
     def test_logging(self, level):
         stream = io.StringIO()
         handler = logging.StreamHandler(stream)
-        fmt = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+        fmt = logging.Formatter(
+            "%(name)s - %(gufekey)s - %(levelname)s - %(message)s"
+        )
         logger = logging.getLogger('gufe.tests.test_tokenization.Leaf')
         logger.setLevel(getattr(logging, level))
         handler.setFormatter(fmt)
         logger.addHandler(handler)
 
-        _ = Leaf(10)
+        leaf = Leaf(10)
 
         results = stream.getvalue()
+        name = "gufe.tests.test_tokenization.Leaf"
+        key = leaf.key.split('-')[-1]
 
-        info_log = "gufe.tests.test_tokenization.Leaf - INFO - a=10\n"
-        debug_log = "gufe.tests.test_tokenization.Leaf - DEBUG - b=2\n"
+        info_log = f"{name} - {key} - INFO - a=10\n"
+        debug_log = f"{name} - {key} - DEBUG - b=2\n"
 
         expected = ""
         if level in {"DEBUG", "INFO"}:

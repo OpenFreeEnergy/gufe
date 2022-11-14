@@ -51,6 +51,14 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
     ...
 
 
+class _GufeLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        extra = kwargs.get('extra', {})
+        extra.update(self.extra)
+        kwargs['extra'] = extra
+        return msg, kwargs
+
+
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
@@ -81,12 +89,16 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     @property
     def logger(self):
         """Return logger named by this module and class qualname"""
-        if (logger := getattr(self, '_logger', None)) is None:
+        if (adapter := getattr(self, '_logger', None)) is None:
             cls = self.__class__
             logname = cls.__module__ + "." + cls.__qualname__
             logger = logging.getLogger(logname)
-            self._logger = logger
-        return logger
+            extra = {
+                'gufekey': self.key.split('-')[-1],
+            }
+            adapter = _GufeLoggerAdapter(logger, extra)
+            self._logger = adapter
+        return adapter
 
 
     @property
