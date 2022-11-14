@@ -24,9 +24,9 @@ class AlchemicalNetwork(GufeTokenizable):
     """
     def __init__(
         self,
-        edges: Iterable[Transformation] = None,
-        nodes: Iterable[ChemicalSystem] = None,
-        name: str = None,
+        edges: Optional[Iterable[Transformation]] = None,
+        nodes: Optional[Iterable[ChemicalSystem]] = None,
+        name: Optional[str] = None,
     ):
         self._edges: FrozenSet[Transformation] = frozenset(edges) if edges else frozenset()
         self._nodes: FrozenSet[ChemicalSystem]
@@ -98,7 +98,9 @@ class AlchemicalNetwork(GufeTokenizable):
 
     def to_graphml(self) -> str:
         """ """
+        raise NotImplementedError
 
     @classmethod
     def from_graphml(self, str):
         """ """
+        raise NotImplementedError

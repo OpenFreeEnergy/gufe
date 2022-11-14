@@ -3,7 +3,7 @@
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
 
-from typing import Tuple, Callable, Iterable, Dict, Any, List, Type
+from typing import Tuple, Callable, Iterable, Dict, Any, List, Type, Optional
 import json
 import functools
 
@@ -37,7 +37,7 @@ class JSONCodec(object):
         cls: type,
         to_dict: Callable[[Any], Dict],
         from_dict: Callable[[Dict], Any],
-        is_my_obj: Callable[[Any], bool] = None,
+        is_my_obj: Optional[Callable[[Any], bool]] = None,
         is_my_dict=None
     ):
         if is_my_obj is None:

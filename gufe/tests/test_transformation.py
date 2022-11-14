@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import pytest
+import io
 
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from gufe.transformations import Transformation, NonTransformation
@@ -77,9 +78,12 @@ class TestTransformation(GufeTokenizableTestsMixin):
         )
         assert absolute_transformation == identical
 
-    def test_dict_roundtrip(self):
-        # TODO: need registration of `Protocol`s for this to work
-        ...
+    def test_dump_load_roundtrip(self, absolute_transformation):
+        string = io.StringIO()
+        absolute_transformation.dump(string)
+        string.seek(0)
+        recreated = Transformation.load(string)
+        assert absolute_transformation == recreated
 
 
 class TestNonTransformation(GufeTokenizableTestsMixin):

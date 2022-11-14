@@ -8,4 +8,5 @@ API docs
 
    api/components
    api/protocols
+   api/settings
 
