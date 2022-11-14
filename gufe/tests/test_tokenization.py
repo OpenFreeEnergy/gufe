@@ -13,6 +13,7 @@ from gufe.tokenization import (
 
 class Leaf(GufeTokenizable):
     def __init__(self, a, b=2):
+        self.logger.info("no key defined!")
         self.a = a
         self.b = b
         self.logger.info(f"{a=}")
@@ -233,12 +234,13 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         name = "gufe.tests.test_tokenization.Leaf"
         key = leaf.key.split('-')[-1]
 
+        initial_log = f"{name} - UNKNOWN - INFO - no key defined!\n"
         info_log = f"{name} - {key} - INFO - a=10\n"
         debug_log = f"{name} - {key} - DEBUG - b=2\n"
 
         expected = ""
         if level in {"DEBUG", "INFO"}:
-            expected += info_log
+            expected += initial_log + info_log
         if level == "DEBUG":
             expected += debug_log
 
