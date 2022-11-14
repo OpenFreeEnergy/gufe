@@ -374,14 +374,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Optional[Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]] = None) -> str:
+    def to_pdb_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
         """
         serialize protein to pdb file.
 
         Parameters
         ----------
-        out_path :  Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]
-            provide path or any string based stream (e.g. FileIO ) to the resulting file, by default None
+        out_path :  Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
+            provide path or any string based stream (e.g. FileIO ) to the resulting file
 
         Returns
         -------
@@ -393,7 +393,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # get pos:
         openmm_pos = self.to_openmm_positions()
-
 
         # write file
         if not isinstance(out_path, io.TextIOBase):
@@ -416,20 +415,19 @@ class ProteinComponent(ExplicitMoleculeComponent):
         if must_close:
             # we only close the file if we had to open it
             out_file.close()
-       
-       
+
         return out_path
 
     def to_pdbx_file(
-        self, out_path: Optional[Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]] = None
+        self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
     ) -> str:
         """
         serialize protein to pdbx file.
 
         Parameters
         ----------
-        out_path : Union[Union[str, bytes, PathLike[str], PathLike[bytes]], io.TextIOBase]
-            provide path or FileIO to the resulting file, by default None
+        out_path : Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
+            provide path or FileIO to the resulting file
 
         Returns
         -------
