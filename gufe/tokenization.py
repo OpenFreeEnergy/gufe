@@ -54,7 +54,24 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
 class _GufeLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         extra = kwargs.get('extra', {})
-        extra.update(self.extra)
+        if (extra_dict := getattr(self, '_extra_dict', None)) is None:
+            try:
+                gufekey = self.extra.key.split('-')[-1]
+            except Exception:
+                # no matter what happened, we have a bad key
+                gufekey = "UNKNOWN"
+                save_extra_dict = False
+            else:
+                save_extra_dict = True
+
+            extra_dict = {
+                'gufekey': gufekey
+            }
+
+            if save_extra_dict:
+                self._extra_dict = extra_dict
+
+        extra.update(extra_dict)
         kwargs['extra'] = extra
         return msg, kwargs
 
@@ -93,10 +110,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             cls = self.__class__
             logname = cls.__module__ + "." + cls.__qualname__
             logger = logging.getLogger(logname)
-            extra = {
-                'gufekey': self.key.split('-')[-1],
-            }
-            adapter = _GufeLoggerAdapter(logger, extra)
+            adapter = _GufeLoggerAdapter(logger, self)
             self._logger = adapter
         return adapter
 
