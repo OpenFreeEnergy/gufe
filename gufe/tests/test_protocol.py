@@ -359,6 +359,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_protocol_unit_failures(self, instance: ProtocolDAGResult):
             assert len(instance.protocol_unit_failures) == 0
+            
+        def test_protocol_unit_successes(self, instance: ProtocolDAGResult):
+            assert len(instance.protocol_unit_success) == 23
+            assert all([isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_success])
+
 
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
