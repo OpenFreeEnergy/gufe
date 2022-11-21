@@ -128,6 +128,14 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
         """A list of all failed units"""
         return [r for r in self.protocol_unit_results if not r.ok()]
+    
+    @property
+    def protocol_unit_success(self):
+        """A list of `ProtocolUnitResults`s corresponding to only successful
+        `ProtocolUnit`s.
+
+        """
+        return [r for r in self.protocol_unit_results if r.ok()]
 
     def unit_to_result(self, protocol_unit: ProtocolUnit):
         try:
