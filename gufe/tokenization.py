@@ -52,6 +52,21 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
 
 
 class _GufeLoggerAdapter(logging.LoggerAdapter):
+    """LoggerAdapter to insert the gufe key into contextual information.
+
+    This allows logging users to use ``%(gufekey)s`` in their logging
+    formatter strings, similarly to ``%(name)s`` or ``%(levelname)s``.
+
+    For details on logger adapters, see the Python logging documentation:
+    https://docs.python.org/3/library/logging.html#loggeradapter-objects
+
+    Parameters
+    ----------
+    logger: :class:`logging.Logger`
+        the logger for this class
+    extra: :class:`.GufeTokenizable`
+        the instance this adapter is associated with
+    """
     def process(self, msg, kwargs):
         extra = kwargs.get('extra', {})
         if (extra_dict := getattr(self, '_extra_dict', None)) is None:
@@ -105,10 +120,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @property
     def logger(self):
-        """Return logger named by this module and class qualname"""
+        """Return logger adapter for this instance"""
         if (adapter := getattr(self, '_logger', None)) is None:
             cls = self.__class__
-            logname = cls.__module__ + "." + cls.__qualname__
+            logname = "gufekey." + cls.__module__ + "." + cls.__qualname__
             logger = logging.getLogger(logname)
             adapter = _GufeLoggerAdapter(logger, self)
             self._logger = adapter
