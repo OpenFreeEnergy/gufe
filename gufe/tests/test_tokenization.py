@@ -231,7 +231,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         fmt = logging.Formatter(
             "%(name)s - %(gufekey)s - %(levelname)s - %(message)s"
         )
-        logger = logging.getLogger('gufe.tests.test_tokenization.Leaf')
+        name = "gufekey.gufe.tests.test_tokenization.Leaf"
+        logger = logging.getLogger(name)
         logger.setLevel(getattr(logging, level))
         handler.setFormatter(fmt)
         logger.addHandler(handler)
@@ -239,7 +240,6 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         leaf = Leaf(10)
 
         results = stream.getvalue()
-        name = "gufe.tests.test_tokenization.Leaf"
         key = leaf.key.split('-')[-1]
 
         initial_log = f"{name} - UNKNOWN - INFO - no key defined!\n"
