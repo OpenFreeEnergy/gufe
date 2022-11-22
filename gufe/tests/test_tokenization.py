@@ -182,6 +182,14 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
         }
 
+    def test_set_key(self):
+        leaf = Leaf("foo")
+        key = leaf.key
+        leaf._set_key("qux")
+        assert leaf.key == "qux"
+        assert TOKENIZABLE_REGISTRY["qux"] is leaf
+        assert key not in TOKENIZABLE_REGISTRY
+
     def test_to_dict_deep(self):
         assert self.cont.to_dict() == self.expected_deep
 
