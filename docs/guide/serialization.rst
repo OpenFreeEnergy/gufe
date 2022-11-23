@@ -182,7 +182,7 @@ the same object in memory referenced by multiple objects (e.g., an identical
 save multiple copies of its JSON representation.
 
 On reloading, tools that use the recommended ``from_dict`` method will undo
-do this duplication; see :ref:`gufe_memory_deduplication` for details.
+do this duplication; see :ref:`gufe-memory-deduplication` for details.
 
 .. Using JSON codecs outside of JSON
 .. ---------------------------------
@@ -253,7 +253,7 @@ deduplicated on storage to disk because we store by reference to the gufe
 key. Additionally, objects are deduplicated in memory because we keep a
 registry of all instantiated GufeTokenizables.
 
-.. _gufe_memory-deduplication:
+.. _gufe-memory-deduplication:
 
 Deduplication in memory
 ~~~~~~~~~~~~~~~~~~~~~~~
