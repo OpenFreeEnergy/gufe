@@ -212,7 +212,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
         )
 
-        dagfailure: ProtocolDAGResult = execute_DAG(dag)
+        dagfailure: ProtocolDAGResult = execute_DAG(dag, raise_error=False)
 
         return protocol, dag, dagfailure
 
