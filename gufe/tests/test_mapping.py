@@ -15,7 +15,8 @@ class ExampleMapping(AtomMapping):
         super().__init__(molA, molB)
         self._mapping = mapping
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return {}
 
     def _to_dict(self):

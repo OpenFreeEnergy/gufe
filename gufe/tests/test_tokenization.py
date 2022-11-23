@@ -29,7 +29,8 @@ class Leaf(GufeTokenizable):
     def __repr__(self):
         return f"Leaf({self.a}, {self.b})"
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
 
@@ -48,7 +49,8 @@ class Leaf2(GufeTokenizable):
     def __repr__(self):
         return f"Leaf({self.a}, {self.b})"
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
 
@@ -68,7 +70,8 @@ class Container(GufeTokenizable):
     def __repr__(self):
         return f"Container({self.obj}, {self.lst}, {self.dct})"
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
 

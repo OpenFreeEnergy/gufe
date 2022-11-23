@@ -158,23 +158,24 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         self._key = GufeKey(key)
         TOKENIZABLE_REGISTRY.setdefault(self.key, self)
 
-    @property
-    def defaults(self):
+    @classmethod
+    def defaults(cls):
         """Dict of default key-value pairs for this `GufeTokenizable` object.
 
         These defaults are stripped from the dict form of this object produced
         with `to_dict(include_defaults=False) where default values are present.
 
         """
-        return self._defaults()
+        return cls._defaults()
 
+    @classmethod
     @abc.abstractmethod
-    def _defaults(self):
+    def _defaults(cls):
         """This method should be overridden to provide the dict of defaults
         appropriate for the `GufeTokenizable` subclass.
 
         """
-        sig = inspect.signature(self.__init__)
+        sig = inspect.signature(cls.__init__)
 
         defaults = {
             param.name: param.default for param in sig.parameters.values()
@@ -223,7 +224,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         dct = dict_encode_dependencies(self)
 
         if not include_defaults:
-            for key, value in self.defaults.items():
+            for key, value in self.defaults().items():
                 if dct.get(key) == value:
                     dct.pop(key)
 
@@ -265,7 +266,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         dct = key_encode_dependencies(self)
 
         if not include_defaults:
-            for key, value in self.defaults.items():
+            for key, value in self.defaults().items():
                 if dct.get(key) == value:
                     dct.pop(key)
 
