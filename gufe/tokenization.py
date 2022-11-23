@@ -136,7 +136,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def key(self):
         if not hasattr(self, '_key') or self._key is None:
             prefix = self.__class__.__qualname__
-            token = tokenize(self)
+            token = self._gufe_tokenize()
             self._key = GufeKey(f"{prefix}-{token}")
 
         return self._key
