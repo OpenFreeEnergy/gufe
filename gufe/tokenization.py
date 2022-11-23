@@ -314,8 +314,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def copy_with_replacements(self, **replacements):
         dct = self._to_dict()
         if invalid := set(replacements) - set(dct):
-            raise ValueError(f"Invalid replacement keys: {invalid}. "
-                             f"Allowed keys are: {set(dct)}")
+            raise TypeError(f"Invalid replacement keys: {invalid}. "
+                            f"Allowed keys are: {set(dct)}")
 
         dct.update(replacements)
         return self._from_dict(dct)

@@ -85,7 +85,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
         """
         ...
 
-    def teardown(self):
+    def teardown_method(self):
         TOKENIZABLE_REGISTRY.clear()
 
     def test_to_dict_roundtrip(self, instance):
@@ -149,7 +149,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         """
         return self.cont
 
-    def setup(self):
+    def setup_method(self):
         leaf = Leaf("foo")
         bar = Leaf(leaf)
 
@@ -222,7 +222,26 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         l1 = Leaf(4)
         l2 = Leaf2(4)
 
+        assert l1 != l2A
+
+    def test_copy_with_replacements(self):
+        l1 = Leaf(4)
+        l2 = l1.copy_with_replacements(b=4)
         assert l1 != l2
+        assert l1.a == l2.a
+        assert l1.b != l2.b
+
+    def test_copy_with_replacements_no_arguments(self):
+        # with no arguements, copy_with_replacements returns as actual copy
+        l1 = Leaf(4)
+        l2 = l1.copy_with_replacements()
+        assert l1 == l2
+        assert l1 is not l2
+
+    def test_copy_with_replacements_invalid(self):
+        l1 = Leaf(4)
+        with pytest.raises(TypeError, match="Invalid"):
+            _ = l1.copy_with_replacements(foo=10)
 
     @pytest.mark.parametrize('level', ["DEBUG", "INFO", "CRITICAL"])
     def test_logging(self, level):
