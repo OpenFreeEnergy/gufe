@@ -19,7 +19,7 @@ from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
 import tempfile
 
 from ..tokenization import (
-    GufeTokenizable, GufeKey, normalize, TOKENIZABLE_REGISTRY
+    GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
 )
 
 

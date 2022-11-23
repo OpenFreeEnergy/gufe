@@ -497,57 +497,6 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
     return from_dict(dct)
 
 
-## inspired by `dask.base`
-
-# TODO: make this more efficient with a dispatch mechanism
-# instead of a series of isinstance checks
-def normalize(o):
-
-    # dicts
-    if isinstance(o, dict):
-        dct = {key: normalize(value) 
-               for key, value in o.items()}
-        return normalize_dict(dct)
-
-    # lists and tuples
-    if isinstance(o, (list, tuple)):
-        return list(map(normalize, o))
-
-    # paths
-    if isinstance(o, Path):
-        return str(o)
-
-    # GufeTokenizable
-    method = getattr(o, "_gufe_tokenize", None)
-    if method is not None:
-        return method()
-
-    # primitives we support
-    if isinstance(o,
-        (int,
-        float,
-        str,
-        bytes,
-        type(None),
-        type,
-        slice,
-        complex,
-        type(Ellipsis),
-        datetime.date)):
-            return o
-
-    if isinstance(o, Exception):
-        return 
-
-    raise RuntimeError(
-        f"Object {str(o)} cannot be deterministically hashed."
-    )
-
-
-def normalize_dict(d):
-    return sorted(d.items(), key=str)
-
-
 def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a
     `GufeTokenizable` object.
