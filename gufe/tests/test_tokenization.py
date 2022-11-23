@@ -20,14 +20,14 @@ class Leaf(GufeTokenizable):
         self.logger.debug(f"{b=}")
 
     def _to_dict(self):
-        return {"a": self.a}
+        return {"a": self.a, "b": self.b}
 
     @classmethod
     def _from_dict(cls, dct):
         return cls(**dct)
 
     def __repr__(self):
-        return f"Leaf({self.a})"
+        return f"Leaf({self.a}, {self.b})"
 
     def _defaults(self):
         return super()._defaults()
@@ -39,14 +39,14 @@ class Leaf2(GufeTokenizable):
         self.b = b
 
     def _to_dict(self):
-        return {"a": self.a}
+        return {"a": self.a, "b": self.b}
 
     @classmethod
     def _from_dict(cls, dct):
         return cls(**dct)
 
     def __repr__(self):
-        return f"Leaf({self.a})"
+        return f"Leaf({self.a}, {self.b})"
 
     def _defaults(self):
         return super()._defaults()
@@ -140,7 +140,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     cls = Container
-    key = "Container-262ecded6cd03a619b99d667ded94c9e"
+    key = "Container-3fcec08974fbbd0371fed8a185628b70"
 
     @pytest.fixture
     def instance(self):
@@ -156,7 +156,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         self.cont = Container(bar, [leaf, 0], {"leaf": leaf, "a": "b"})
 
         def leaf_dict(a):
-            return {'__module__': __name__, '__qualname__': "Leaf", "a": a}
+            return {'__module__': __name__, '__qualname__': "Leaf", "a": a,
+                    "b": 2}
 
         self.expected_deep = {
             '__qualname__': "Container",
@@ -222,7 +223,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         l1 = Leaf(4)
         l2 = Leaf2(4)
 
-        assert l1 != l2A
+        assert l1 != l2
 
     def test_copy_with_replacements(self):
         l1 = Leaf(4)
