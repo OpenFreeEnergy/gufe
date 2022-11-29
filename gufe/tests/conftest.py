@@ -22,14 +22,21 @@ else:
 
 ## helper functions
 
+class URLFileLike:
+    def __init__(self, url, encoding='utf-8'):
+        self.url = url
+        self.encoding = encoding
+        self.data = None
 
-def load_url_data(url, encoding='utf-8'):
-    if not HAS_INTERNET:
-        pytest.skip("Skipping because internet seems faulty")
+    def __call__(self):
+        if not HAS_INTERNET:  # pragma: no-cover
+            pytest.skip("Skipping because internet seems faulty")
 
-    req = urllib.request.urlopen(url)
-    # we convert to StringIO because req.read() returns bytes, not string
-    return io.StringIO(req.read().decode(encoding))
+        if self.data is None:
+            req = urllib.request.urlopen(self.url)
+            self.data = req.read().decode(self.encoding)
+
+        return io.StringIO(self.data)
 
 
 def get_test_filename(filename):
@@ -59,10 +66,7 @@ _pl_benchmark_url_pattern = (
 
 
 PDB_BENCHMARK_LOADERS = {
-    name: functools.partial(
-        load_url_data,
-        url=_pl_benchmark_url_pattern.format(name=name)
-    )
+    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name))
     for name in _benchmark_pdb_names
 }
 
