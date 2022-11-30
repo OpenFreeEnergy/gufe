@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+import os
 from typing import Iterable, List, Dict, Set, Optional, Union, Any
 from os import PathLike
 from pathlib import Path
@@ -224,6 +225,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
+       If not given, defaults to os cwd (current directory)
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
         if False, any exceptions will be stored as `ProtocolUnitFailure`
@@ -236,8 +238,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
 
     """
     if shared is None:
-        shared_tmp = tempfile.TemporaryDirectory()
-        shared_ = Path(shared_tmp.name)
+        shared_ = Path(os.getcwd())
     else:
         shared_ = Path(shared)
 
@@ -257,11 +258,6 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
 
         if not result.ok():
             break
-
-    # TODO: change this part once we have clearer ideas on how to inject
-    # persistent storage use
-    if shared is None:
-        shared_tmp.cleanup()
 
     return ProtocolDAGResult(
             name=protocoldag.name, 
