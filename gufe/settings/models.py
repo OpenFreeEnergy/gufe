@@ -56,13 +56,13 @@ class VdWSettings(SettingsBaseModel):
     for more details.
     """
 
-    combining_rules: Literal["Lorentz-Berthelot"]
-    potential: Literal["Lennard-Jones-12-6"]
-    scale: vdWScale
-    long_range_dispersion: Literal["isotropic"]
+    combining_rules: Literal["Lorentz-Berthelot"] = "Lorentz-Berthelot"
+    potential: Literal["Lennard-Jones-12-6"] = "Lennard-Jones-12-6"
+    scale: vdWScale = vdWScale()
+    long_range_dispersion: Literal["isotropic"] = "isotropic"
     cutoff: FloatQuantity["angstrom"] = Field(9.0, description="Default units are angstroms")
     switch_width: FloatQuantity["angstrom"] = Field(1.0, description="Default units are angstroms")
-    method: Literal["cutoff"]
+    method: Literal["cutoff"] = "cutoff"
 
 
 class ElectrostaticSettings(SettingsBaseModel):
@@ -74,10 +74,10 @@ class ElectrostaticSettings(SettingsBaseModel):
     """
 
     # Tricky since this allows functions https://openforcefield.github.io/standards/standards/smirnoff/#electrostatics
-    periodic_potential: Union[Literal["Ewald3D-ConductingBoundary"], str]
-    nonperiodic_potential: Union[Literal["Coulomb"], str]
-    exception_potential: Union[Literal["Coulomb"], str]
-    scale: ElectrostaticScale
+    periodic_potential: Union[Literal["Ewald3D-ConductingBoundary"], str] = "Ewald3D-ConductingBoundary"
+    nonperiodic_potential: Union[Literal["Coulomb"], str] = "Coulomb"
+    exception_potential: Union[Literal["Coulomb"], str] = "Coulomb"
+    scale: ElectrostaticScale = ElectrostaticScale()
     cutoff: FloatQuantity["angstrom"] = Field(None, description="Default units are in angstroms")
     switch_width: FloatQuantity["angstrom"] = Field(None, description="Default units are in angstroms")
     solvent_dielectric: Optional[float]
@@ -104,9 +104,9 @@ class ForcefieldSettings(SettingsBaseModel):
     author: Optional[str]
 
     # These should also allow None
-    vdW: VdWSettings
-    electrostatics: ElectrostaticSettings
-    gbsa: GBSASettings
+    vdW: VdWSettings = VdWSettings()
+    electrostatics: ElectrostaticSettings = ElectrostaticSettings()
+    gbsa: GBSASettings = GBSASettings()
 
 
 class ThermoSettings(SettingsBaseModel):
@@ -135,8 +135,8 @@ class Settings(SettingsBaseModel):
     """
 
     # symvar? calver?
-    settings_version: int
-    forcefield_file: Union[FilePath, str]
+    settings_version: int = 0
+    forcefield_file: Optional[Union[FilePath, str]]
     forcefield_settings: ForcefieldSettings
     thermo_settings: ThermoSettings
     protocol_settings: Union[ProtocolSettings, None]

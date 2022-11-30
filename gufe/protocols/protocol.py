@@ -124,10 +124,11 @@ class Protocol(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'settings': self.settings}
+        return {'settings': self.settings.json()}
 
     @classmethod
     def _from_dict(cls, dct: Dict):
+        # TODO: We need to deserialize from a json, not a dict
         return cls(**dct)
 
     @classmethod
