@@ -281,10 +281,11 @@ class ProtocolUnit(GufeTokenizable):
         return self._dependencies     # type: ignore
 
     def execute(self, *, 
-            shared: PathLike, 
-            scratch: Optional[PathLike] = None, 
-            **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
-        """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`
+                shared: PathLike,
+                scratch: Optional[PathLike] = None,
+                raise_error: bool = False,
+                **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
+        """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
@@ -295,7 +296,10 @@ class ProtocolUnit(GufeTokenizable):
         scratch : Optional[PathLike]
             Path to scratch space that persists during execution of this
             `ProtocolUnit`, but removed after.
-            
+        raise_error : bool
+            If True, raise any errors instead of catching and returning a
+            `ProtocolUnitFailure`, default False
+
         **inputs
             Keyword arguments giving the named inputs to `_execute`.
             These can include `ProtocolUnitResult` objects from `ProtocolUnit`
@@ -320,6 +324,9 @@ class ProtocolUnit(GufeTokenizable):
             )
 
         except Exception as e:
+            if raise_error:
+                raise
+
             result = ProtocolUnitFailure(
                 name=self._name,
                 source_key=self.key,

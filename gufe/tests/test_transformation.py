@@ -6,7 +6,7 @@ import io
 
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from gufe.transformations import Transformation, NonTransformation
-from gufe.protocols.protocoldag import execute
+from gufe.protocols.protocoldag import execute_DAG
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -48,7 +48,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert isinstance(tnf.protocol, DummyProtocol)
 
         protocoldag = tnf.create()
-        protocoldagresult = execute(protocoldag)
+        protocoldagresult = execute_DAG(protocoldag)
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -107,7 +107,7 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert isinstance(ntnf.protocol, DummyProtocol)
 
         protocoldag = ntnf.create()
-        protocoldagresult = execute(protocoldag)
+        protocoldagresult = execute_DAG(protocoldag)
 
         protocolresult = ntnf.gather([protocoldagresult])
 

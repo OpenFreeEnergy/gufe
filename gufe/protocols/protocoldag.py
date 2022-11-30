@@ -207,8 +207,10 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
-def execute(protocoldag: ProtocolDAG, *, 
-            shared: Optional[PathLike] = None) -> ProtocolDAGResult:
+def execute_DAG(protocoldag: ProtocolDAG, *,
+                shared: Optional[PathLike] = None,
+                raise_error: bool = True,
+                ) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
@@ -222,6 +224,10 @@ def execute(protocoldag: ProtocolDAG, *,
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
+    raise_error : bool
+        If True, raise an exception if a ProtocolUnit fails, default True
+        if False, any exceptions will be stored as `ProtocolUnitFailure`
+        objects inside the returned `ProtocolDAGResult`
 
     Returns
     -------
@@ -244,7 +250,7 @@ def execute(protocoldag: ProtocolDAG, *,
         inputs = _pu_to_pur(unit.inputs, results)
 
         # execute
-        result = unit.execute(shared=shared_, **inputs)
+        result = unit.execute(shared=shared_, raise_error=raise_error, **inputs)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
