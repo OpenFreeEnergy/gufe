@@ -1,10 +1,16 @@
 import pytest
-from gufe.protocols.protocolunit import ProtocolUnit, Context
+from pathlib import Path
+
+from gufe.protocols.protocolunit import ProtocolUnit, Context, ProtocolUnitResult, ProtocolUnitFailure
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 
 class DummyUnit(ProtocolUnit):
     @staticmethod
-    def _execute(ctx: Context, **inputs):
+    def _execute(ctx: Context, an_input=2, **inputs):
+
+        if an_input !=2:
+            raise ValueError("`an_input` should always be 2(!!!)")
+
         return {"foo": "bar"}
 
 @pytest.fixture
@@ -25,3 +31,12 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         u2 = DummyUnit()
         assert u1.key != u2.key
 
+
+    def test_execute(self, tmpdir):
+        with tmpdir.as_cwd():
+            u: ProtocolUnitFailure = DummyUnit().execute(shared=Path('.'), an_input=3)
+            assert u.exception[0] == "ValueError"
+
+            # now try actually letting the error raise on execute
+            with pytest.raises(ValueError, match="should always be 2"):
+                DummyUnit().execute(shared=Path('.'), raise_error=True, an_input=3)

@@ -1,5 +1,7 @@
 import pytest
 import abc
+import logging
+import io
 from unittest import mock
 import json
 
@@ -11,8 +13,11 @@ from gufe.tokenization import (
 
 class Leaf(GufeTokenizable):
     def __init__(self, a, b=2):
+        self.logger.info("no key defined!")
         self.a = a
         self.b = b
+        self.logger.info(f"{a=}")
+        self.logger.debug(f"{b=}")
 
     def _to_dict(self):
         return {"a": self.a}
@@ -80,7 +85,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
         """
         ...
 
-    def teardown(self):
+    def teardown_method(self):
         TOKENIZABLE_REGISTRY.clear()
 
     def test_to_dict_roundtrip(self, instance):
@@ -219,6 +224,35 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         assert l1 != l2
 
+    @pytest.mark.parametrize('level', ["DEBUG", "INFO", "CRITICAL"])
+    def test_logging(self, level):
+        stream = io.StringIO()
+        handler = logging.StreamHandler(stream)
+        fmt = logging.Formatter(
+            "%(name)s - %(gufekey)s - %(levelname)s - %(message)s"
+        )
+        name = "gufekey.gufe.tests.test_tokenization.Leaf"
+        logger = logging.getLogger(name)
+        logger.setLevel(getattr(logging, level))
+        handler.setFormatter(fmt)
+        logger.addHandler(handler)
+
+        leaf = Leaf(10)
+
+        results = stream.getvalue()
+        key = leaf.key.split('-')[-1]
+
+        initial_log = f"{name} - UNKNOWN - INFO - no key defined!\n"
+        info_log = f"{name} - {key} - INFO - a=10\n"
+        debug_log = f"{name} - {key} - DEBUG - b=2\n"
+
+        expected = ""
+        if level in {"DEBUG", "INFO"}:
+            expected += initial_log + info_log
+        if level == "DEBUG":
+            expected += debug_log
+
+        assert results == expected
 
 
 class Outer:
