@@ -313,6 +313,25 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return from_dict(dct)
 
     def copy_with_replacements(self, **replacements):
+        """Make a modified copy of this object.
+
+        Since GufeTokenizables are immutable, this is essentially a shortcut
+        to mutate the object. Note that the keyword arguments it takes are
+        based on keys of the dictionaries used in the the
+        ``_to_dict``/``_from_dict`` cycle for this object; in most cases
+        that is the same as parameters to ``__init__``, but not always.
+
+        This will always return a *new* object in memory. So using
+        ``obj.copy_with_replacements()`` (with no keyword arguments) is a
+        way to create a shallow copy: the object is different in memory, but
+        its attributes will be the same objects in memory as the original.
+
+        Parameters
+        ----------
+        replacements: Dict
+            keyword arguments with keys taken from the keys given by the
+            output of this object's ``to_dict`` method.
+        """
         dct = self._to_dict()
         if invalid := set(replacements) - set(dct):
             raise TypeError(f"Invalid replacement keys: {invalid}. "
