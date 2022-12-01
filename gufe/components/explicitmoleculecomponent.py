@@ -68,7 +68,8 @@ class ExplicitMoleculeComponent(Component):
         self._smiles: Optional[str] = None
         self._name = name
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
     # Props

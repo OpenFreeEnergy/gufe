@@ -19,7 +19,7 @@ from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
 import tempfile
 
 from ..tokenization import (
-    GufeTokenizable, GufeKey, normalize, TOKENIZABLE_REGISTRY
+    GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
 )
 
 
@@ -87,7 +87,8 @@ class ProtocolUnitResultBase(GufeTokenizable):
         # tokenize with uuid
         return uuid.uuid4()
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return {}
 
     def _to_dict(self):
@@ -247,7 +248,8 @@ class ProtocolUnit(GufeTokenizable):
         # tokenize with uuid
         return uuid.uuid4()
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         # not used by `ProtocolUnit`s
         return {}
 

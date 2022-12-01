@@ -104,7 +104,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._result_unit_mapping = {result: unit for unit, result
                                      in self._unit_result_mapping.items()}
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         # not used by `ProtocolDAG`
         return {}
 
@@ -211,7 +212,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         # not used by `ProtocolDAG`
         return {}
 
