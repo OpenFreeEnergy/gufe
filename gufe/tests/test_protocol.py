@@ -226,7 +226,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert finishresult.name == "the end"
 
         # gather SimulationUnits
-        simulationresults = [dagresult.unit_to_result(pu)
+        simulationresults = [dagresult.unit_to_results(pu)[0]
                              for pu in dagresult.protocol_units
                              if isinstance(pu, SimulationUnit)]
 
@@ -358,7 +358,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_unit_to_result(self, instance: ProtocolDAGResult):
             # check that every unit has a result that we can retrieve
             for pu in instance.protocol_units:
-                pur: ProtocolUnitResult = instance.unit_to_result(pu)
+                pur: ProtocolUnitResult = instance.unit_to_results(pu)[0]
                 assert pur.source_key == pu.key
 
         def test_result_to_unit(self, instance: ProtocolDAGResult):
