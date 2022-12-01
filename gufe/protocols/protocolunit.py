@@ -149,7 +149,8 @@ class ProtocolUnitResult(ProtocolUnitResultBase):
 
     """
 
-    def ok(self) -> bool:
+    @staticmethod
+    def ok() -> bool:
         return True
 
 
@@ -196,7 +197,8 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
     def traceback(self) -> str:
         return self._traceback
 
-    def ok(self) -> bool:
+    @staticmethod
+    def ok() -> bool:
         return False
 
 
