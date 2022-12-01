@@ -46,6 +46,7 @@ class DAGMixin:
 
         """
         return self._graph
+
     @property
     def protocol_units(self):
         """List of `ProtocolUnit`s given in DAG-order.
@@ -121,21 +122,36 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return self._result_graph
 
     @property
-    def protocol_unit_results(self):
+    def protocol_unit_results(self) -> list[Union[ProtocolUnitResult, ProtocolUnitFailure]]:
+        """A list of all results, both failures and successes
+
+        Note
+        ----
+        These are returned in DAG order
+        """
         return list(self._iterate_dag_order(self.result_graph))
 
     @property
     def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
-        """A list of all failed units"""
-        return [r for r in self.protocol_unit_results if not r.ok()]
+        """A list of all failed units
+
+        Note
+        ----
+        These are returned in DAG order
+        """
+        # mypy can't figure out the types here, .ok() will ensure a certain type
+        # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=cast#complex-type-tests
+        return [r for r in self.protocol_unit_results if not r.ok()]  # type: ignore
     
     @property
-    def protocol_unit_success(self):
-        """A list of `ProtocolUnitResults`s corresponding to only successful
-        `ProtocolUnit`s.
+    def protocol_unit_successes(self) -> list[ProtocolUnitResult]:
+        """A list of only successful `ProtocolUnit` results
 
+        Note
+        ----
+        These are returned in DAG order
         """
-        return [r for r in self.protocol_unit_results if r.ok()]
+        return [r for r in self.protocol_unit_results if r.ok()]  # type: ignore
 
     def unit_to_result(self, protocol_unit: ProtocolUnit):
         try:
