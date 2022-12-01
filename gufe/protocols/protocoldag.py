@@ -150,7 +150,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         ----
         These are returned in DAG order
         """
-        return [r for r in self.protocol_unit_results if r.ok()]  # type: ignore
+        return [r for r in self.protocol_unit_results if r.ok()]
 
     def unit_to_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
         try:
