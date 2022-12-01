@@ -21,7 +21,7 @@ from gufe.protocols import (
     ProtocolUnitFailure,
 )
 
-from gufe.protocols.protocoldag import execute
+from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -201,7 +201,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run"
         )
-        dagresult: ProtocolDAGResult = execute(dag)
+        dagresult: ProtocolDAGResult = execute_DAG(dag)
 
         return protocol, dag, dagresult
 
@@ -212,7 +212,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
         )
 
-        dagfailure: ProtocolDAGResult = execute(dag)
+        dagfailure: ProtocolDAGResult = execute_DAG(dag, raise_error=False)
 
         return protocol, dag, dagfailure
 
@@ -260,6 +260,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
         succeeded_units = dagfailure.protocol_unit_results
 
         assert len(succeeded_units) > 0
+
+    def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand):
+        protocol = BrokenProtocol(settings=None)
+        dag = protocol.create(
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+        )
+
+        with pytest.raises(ValueError, match="I have failed my mission"):
+            execute_DAG(dag, raise_error=True)
 
     def test_create_execute_gather(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
@@ -479,7 +488,7 @@ class TestNoDepProtocol:
 
         dag = p.create(None, None)
 
-        dag_result = execute(dag)
+        dag_result = execute_DAG(dag)
 
         assert dag_result.ok()
 

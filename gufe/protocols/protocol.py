@@ -73,27 +73,27 @@ class Protocol(GufeTokenizable):
     """A protocol that implements an alchemical transformation.
 
     Takes a `ProtocolSettings` object specific to the protocol on init.
-    This configures the protocol for repeated execution on `ChemicalSystem`s.
+    This configures the protocol for repeated execution on `ChemicalSystem`
+    objects.
 
-    This is an abstract base class; individual `Protocol` implementations
+    This is an abstract base class; individual Protocol implementations
     should be subclasses of this class. The following methods should be
     implemented in any subclass:
+
     - `_create`
     - `_gather`
     - `_default_settings`
 
     Attributes
     ----------
-    settings : ProtocolSettings
-        The full settings for this `Protocol` instance.
     result_cls : type[ProtocolResult]
-        Correponding `ProtocolResult` subclass t
+        Corresponding `ProtocolResult` subclass
 
     """
 
     result_cls: type[ProtocolResult]
 
-    def __init__(self, settings: "ProtocolSettings" = None):  # type: ignore
+    def __init__(self, settings=None):
         """Create a new `Protocol` instance.
 
         Parameters
@@ -106,6 +106,7 @@ class Protocol(GufeTokenizable):
 
     @property
     def settings(self):
+        """The full settings for this `Protocol` instance."""
         return self._settings
 
     def __eq__(self, other):
@@ -158,7 +159,7 @@ class Protocol(GufeTokenizable):
         mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
-        """Method to override in custom `Protocol` subclasses.
+        """Method to override in custom :class:`Protocol` subclasses.
 
         This method should take two `ChemicalSystem`s, and optionally a
         dict mapping string to ``ComponentMapping``, and prepare a collection of ``ProtocolUnit`` instances
@@ -191,7 +192,7 @@ class Protocol(GufeTokenizable):
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
         extend_from: Optional[ProtocolDAGResult] = None,
-        name: str = None,
+        name: Optional[str] = None,
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -212,7 +213,7 @@ class Protocol(GufeTokenizable):
             The ending `ChemicalSystem` for the transformation.
         mapping : Optional[dict[str, ComponentMapping]]
             Mappings of e.g. atoms between a labelled component in the
-             `stateA` and `stateB` `ChemicalSystem`s.
+             stateA and stateB `ChemicalSystem` .
         extend_from : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for
@@ -239,12 +240,13 @@ class Protocol(GufeTokenizable):
     def gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
     ) -> ProtocolResult:
-        """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
+        """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
         Parameters
         ----------
         protocol_dag_results : Iterable[ProtocolDAGResult]
-            The `ProtocolDAGResult`s to assemble aggregate quantities from.
+            The `ProtocolDAGResult` objects to assemble aggregate quantities
+            from.
 
         Returns
         -------
@@ -258,9 +260,9 @@ class Protocol(GufeTokenizable):
     def _gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
     ) -> Dict[str, Any]:
-        """Method to override in custom `Protocol` subclasses.
+        """Method to override in custom Protocol subclasses.
 
-        This method should take any number of `ProtocolDAGResult`s produced
+        This method should take any number of ``ProtocolDAGResult``s produced
         by this `Protocol` for a pair of `ChemicalSystem`s and extract the
         quantities necessary to calculate aggregated estimates of the free
         energy difference between them.

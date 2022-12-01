@@ -10,6 +10,7 @@ import importlib
 from pathlib import Path
 import inspect
 import copy
+import logging
 from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
 from gufe.custom_json import JSONSerializerDeserializer
@@ -50,6 +51,46 @@ class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
     ...
 
 
+class _GufeLoggerAdapter(logging.LoggerAdapter):
+    """LoggerAdapter to insert the gufe key into contextual information.
+
+    This allows logging users to use ``%(gufekey)s`` in their logging
+    formatter strings, similarly to ``%(name)s`` or ``%(levelname)s``.
+
+    For details on logger adapters, see the Python logging documentation:
+    https://docs.python.org/3/library/logging.html#loggeradapter-objects
+
+    Parameters
+    ----------
+    logger: :class:`logging.Logger`
+        the logger for this class
+    extra: :class:`.GufeTokenizable`
+        the instance this adapter is associated with
+    """
+    def process(self, msg, kwargs):
+        extra = kwargs.get('extra', {})
+        if (extra_dict := getattr(self, '_extra_dict', None)) is None:
+            try:
+                gufekey = self.extra.key.split('-')[-1]
+            except Exception:
+                # no matter what happened, we have a bad key
+                gufekey = "UNKNOWN"
+                save_extra_dict = False
+            else:
+                save_extra_dict = True
+
+            extra_dict = {
+                'gufekey': gufekey
+            }
+
+            if save_extra_dict:
+                self._extra_dict = extra_dict
+
+        extra.update(extra_dict)
+        kwargs['extra'] = extra
+        return msg, kwargs
+
+
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
@@ -78,6 +119,18 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return normalize(self.to_keyed_dict(include_defaults=False))
 
     @property
+    def logger(self):
+        """Return logger adapter for this instance"""
+        if (adapter := getattr(self, '_logger', None)) is None:
+            cls = self.__class__
+            logname = "gufekey." + cls.__module__ + "." + cls.__qualname__
+            logger = logging.getLogger(logname)
+            adapter = _GufeLoggerAdapter(logger, self)
+            self._logger = adapter
+        return adapter
+
+
+    @property
     def key(self):
         if not hasattr(self, '_key') or self._key is None:
             prefix = self.__class__.__qualname__
@@ -85,6 +138,23 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             self._key = GufeKey(f"{prefix}-{token}")
 
         return self._key
+
+    def _set_key(self, key: str):
+        """Manually set the key.
+
+        This should only be done when reloading an object whose key is not
+        deterministic.
+
+        Parameters
+        ----------
+        key : str
+            contents of the GufeKey for this object
+        """
+        if old_key := getattr(self, '_key', None):
+            TOKENIZABLE_REGISTRY.pop(old_key)
+
+        self._key = GufeKey(key)
+        TOKENIZABLE_REGISTRY.setdefault(self.key, self)
 
     @property
     def defaults(self):
@@ -382,7 +452,7 @@ def from_dict(dct) -> GufeTokenizable:
     # was to a deleted object.
     thing = TOKENIZABLE_REGISTRY.get(obj.key)
 
-    if thing is None:
+    if thing is None:  # -no-cov-
         return obj
     else:
         return thing

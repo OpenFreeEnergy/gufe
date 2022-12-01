@@ -20,9 +20,6 @@ Directed acylic graphs of work
 
 .. autoclass:: gufe.protocols.ProtocolDAGResult
 	       :members:
-
-.. autoclass:: gufe.protocols.ProtocolDAGFailure
-	       :members:
 		  
 		  
 Individual units of work

@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+import os
 from typing import Iterable, List, Dict, Set, Optional, Union, Any
 from os import PathLike
 from pathlib import Path
@@ -10,7 +11,9 @@ import tempfile
 import networkx as nx
 
 from ..tokenization import GufeTokenizable, GufeKey
-from .protocolunit import ProtocolUnit, ProtocolUnitResult, ProtocolUnitResultBase
+from .protocolunit import (
+    ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure,
+)
 
 
 class DAGMixin:
@@ -115,9 +118,6 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def result_graph(self) -> nx.DiGraph:
-        """DAG of `ProtocolUnitResult`s that compose this `ProtocolDAGResult`.
-
-        """
         return self._result_graph
 
     @property
@@ -125,11 +125,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return list(self._iterate_dag_order(self.result_graph))
 
     @property
-    def protocol_unit_failures(self):
-        """A list of `ProtocolUnitFailure`s corresponding to only failed
-        `ProtocolUnit`s.
-
-        """
+    def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
+        """A list of all failed units"""
         return [r for r in self.protocol_unit_results if not r.ok()]
     
     @property
@@ -159,12 +156,12 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
-    """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`s
+    """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`
     with dependencies specified.
 
     A single `ProtocolDAG` execution should yield sufficient information to
     calculate a free energy difference (though perhaps not converged) between
-    two `ChemicalSystem`s.
+    two `ChemicalSystem` objects.
     
     A `ProtocolDAG` yields a `ProtocolDAGResult` when executed.
 
@@ -217,8 +214,10 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
-def execute(protocoldag: ProtocolDAG, *, 
-            shared: PathLike = None) -> ProtocolDAGResult:
+def execute_DAG(protocoldag: ProtocolDAG, *,
+                shared: Optional[PathLike] = None,
+                raise_error: bool = True,
+                ) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
@@ -232,6 +231,11 @@ def execute(protocoldag: ProtocolDAG, *,
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
+       If not given, defaults to os cwd (current directory)
+    raise_error : bool
+        If True, raise an exception if a ProtocolUnit fails, default True
+        if False, any exceptions will be stored as `ProtocolUnitFailure`
+        objects inside the returned `ProtocolDAGResult`
 
     Returns
     -------
@@ -240,8 +244,7 @@ def execute(protocoldag: ProtocolDAG, *,
 
     """
     if shared is None:
-        shared_tmp = tempfile.TemporaryDirectory()
-        shared_ = Path(shared_tmp.name)
+        shared_ = Path(os.getcwd())
     else:
         shared_ = Path(shared)
 
@@ -254,18 +257,13 @@ def execute(protocoldag: ProtocolDAG, *,
         inputs = _pu_to_pur(unit.inputs, results)
 
         # execute
-        result = unit.execute(shared=shared_, **inputs)
+        result = unit.execute(shared=shared_, raise_error=raise_error, **inputs)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
 
         if not result.ok():
             break
-
-    # TODO: change this part once we have clearer ideas on how to inject
-    # persistent storage use
-    if shared is None:
-        shared_tmp.cleanup()
 
     return ProtocolDAGResult(
             name=protocoldag.name, 
