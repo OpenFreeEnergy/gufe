@@ -123,12 +123,6 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def protocol_unit_results(self) -> list[Union[ProtocolUnitResult, ProtocolUnitFailure]]:
-        """A list of all results, both failures and successes
-
-        Note
-        ----
-        These are returned in DAG order
-        """
         return list(self._iterate_dag_order(self.result_graph))
 
     @property
