@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import itertools
-from typing import Optional, Iterable, List, Dict, Any
+from typing import Optional, Iterable, List, Dict, Any, Union
 from collections import defaultdict
 
 import pytest
@@ -335,7 +335,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_protocol_unit_results(self, instance: ProtocolDAGResult):
             # ensure that protocolunitresults are given in-order based on DAG
             # dependencies
-            checked: List[ProtocolUnitResult] = []
+            checked: List[Union[ProtocolUnitResult, ProtocolUnitFailure]] = []
             for pur in instance.protocol_unit_results:
                 assert set(pur.dependencies).issubset(checked)
                 checked.append(pur)
@@ -363,7 +363,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_result_to_unit(self, instance: ProtocolDAGResult):
             for pur in instance.protocol_unit_results:
-                pu: ProtocolUnit = instance.result_to_unit(pur)
+                pu: ProtocolUnit = instance.result_to_unit(pur)  # type: ignore
                 assert pu.key == pur.source_key
 
         def test_protocol_unit_failures(self, instance: ProtocolDAGResult):
