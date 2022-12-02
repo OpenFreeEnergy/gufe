@@ -101,12 +101,13 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
         # build mapping from protocol units to results
         keys_to_pu = {unit.key: unit for unit in self._protocol_units}
-        self._unit_result_mapping = defaultdict(list)
+        unit_result_mapping = defaultdict(list)
         self._result_unit_mapping = dict()
         for result in protocol_unit_results:
             pu = keys_to_pu[result.source_key]
-            self._unit_result_mapping[pu].append(result)
+            unit_result_mapping[pu].append(result)
             self._result_unit_mapping[result] = pu
+        self._unit_result_mapping = dict(unit_result_mapping)
 
     @classmethod
     def _defaults(cls):
@@ -152,7 +153,43 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         """
         return [r for r in self.protocol_unit_results if r.ok()]
 
-    def unit_to_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
+    def unit_to_result(self, protocol_unit: ProtocolUnit) -> ProtocolUnitResult:
+        """Return the successful result for a given Unit
+
+        Returns
+        -------
+        success : ProtocolUnitResult
+          the successful result for this Unit
+
+        Raises
+        ------
+        KeyError
+          if either there are no results, or only failures
+        """
+        try:
+            units = self._unit_result_mapping[protocol_unit]
+        except KeyError:
+            raise KeyError("No such `protocol_unit` present")
+        else:
+            for u in units:
+                if u.ok():
+                    return u
+            else:
+                raise KeyError("No success for `protocol_unit` found")
+
+    def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
+        """Return all results (sucess and failure) for a given Unit
+
+        Returns
+        -------
+        results : list[ProtocolUnitResult]
+          results for a given unit
+
+        Raises
+        ------
+        KeyError
+          if no results present for a given unit
+        """
         try:
             return self._unit_result_mapping[protocol_unit]
         except KeyError:
@@ -166,7 +203,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     def ok(self) -> bool:
         # ensure that for every protocol unit, there is an OK result object
-        return all(any(pur.ok() for pur in self.unit_to_results(pu))
+        return all(any(pur.ok() for pur in self._unit_result_mapping[pu])
                    for pu in self._protocol_units)
 
 
