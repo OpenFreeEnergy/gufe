@@ -85,7 +85,7 @@ class ProtocolUnitResult(GufeTokenizable):
 
     def _gufe_tokenize(self):
         # tokenize with uuid
-        return uuid.uuid4()
+        return uuid.uuid4().hex
 
     @classmethod
     def _defaults(cls):
@@ -224,7 +224,7 @@ class ProtocolUnit(GufeTokenizable):
 
     def _gufe_tokenize(self):
         # tokenize with uuid
-        return uuid.uuid4()
+        return uuid.uuid4().hex
 
     @classmethod
     def _defaults(cls):
