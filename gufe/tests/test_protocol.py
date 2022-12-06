@@ -242,6 +242,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # check that scratch directory is different for all simulations
         assert len(set(i.outputs['scratch'] for i in simulationresults)) == len(simulationresults)
 
+    def test_terminal_units(self, protocol_dag):
+        prot, dag, res = protocol_dag
+
+        finals = res.terminal_protocol_unit_results()
+
+        assert len(finals) == 1
+        assert isinstance(finals[0], ProtocolUnitResult)
+        assert finals[0].name == 'the end'
+
     def test_dag_execute_failure(self, protocol_dag_broken):
         protocol, dag, dagfailure = protocol_dag_broken
 
@@ -496,6 +505,18 @@ class TestNoDepProtocol:
 
         assert result.get_estimate() == 0 + 1 + 4
         assert result.get_uncertainty() == 3
+
+    def test_terminal_units(self):
+        # we have no dependencies, so this should be all three Unit results
+        p = NoDepsProtocol()
+
+        dag = p.create(None, None)
+
+        dag_result = execute_DAG(dag)
+
+        terminal_results = dag_result.terminal_protocol_unit_results()
+
+        assert len(terminal_results) == 3
 
 
 class TestProtocolDAGResult:
