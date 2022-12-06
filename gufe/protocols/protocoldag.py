@@ -207,13 +207,13 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
                    for pu in self._protocol_units)
 
     def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
-        """Get ProtocolUnits that terminate the DAG
+        """Get ProtocolUnitResults that terminate the DAG.
 
         Returns
         -------
-        terminal_units : list[ProtocolUnit]
-          any ProtocolUnits which do not have a ProtocolUnit which follows on
-          (depends) on them
+        list[ProtocolUnitResult]
+          All ProtocolUnitResults which do not have a ProtocolUnitResult that
+          follows on (depends) on them.
         """
         return [u for u in self._protocol_unit_results
                 if not nx.ancestors(self._result_graph, u)]
