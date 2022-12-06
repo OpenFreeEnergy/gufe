@@ -206,6 +206,18 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return all(any(pur.ok() for pur in self._unit_result_mapping[pu])
                    for pu in self._protocol_units)
 
+    def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
+        """Get ProtocolUnits that terminate the DAG
+
+        Returns
+        -------
+        terminal_units : list[ProtocolUnit]
+          any ProtocolUnits which do not have a ProtocolUnit which follows on
+          (depends) on them
+        """
+        return [u for u in self._protocol_unit_results
+                if not nx.ancestors(self._result_graph, u)]
+
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
     """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`
