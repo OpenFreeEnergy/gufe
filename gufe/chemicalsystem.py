@@ -156,5 +156,6 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
         # alternate initializer for typical ligand+solvent system
         ...
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()

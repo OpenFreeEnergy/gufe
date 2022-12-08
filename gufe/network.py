@@ -93,7 +93,8 @@ class AlchemicalNetwork(GufeTokenizable):
                    edges=frozenset(d['edges']),
                    name=d.get('name'))
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
     def to_graphml(self) -> str:

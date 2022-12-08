@@ -42,7 +42,8 @@ class ProtocolResult(GufeTokenizable):
     def __init__(self, **data):
         self._data = data
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return {}
 
     def _to_dict(self):
@@ -120,7 +121,8 @@ class Protocol(GufeTokenizable):
     def __hash__(self):
         return hash((self.__class__.__name__, self._settings))
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return {}
 
     def _to_dict(self):

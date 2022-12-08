@@ -19,7 +19,7 @@ from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
 import tempfile
 
 from ..tokenization import (
-    GufeTokenizable, GufeKey, normalize, TOKENIZABLE_REGISTRY
+    GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
 )
 
 
@@ -49,7 +49,7 @@ def _list_dependencies(inputs, cls):
     return deps
 
 
-class ProtocolUnitResultBase(GufeTokenizable):
+class ProtocolUnitResult(GufeTokenizable):
     def __init__(self, *,
             name: Optional[str] = None,
             source_key: GufeKey,
@@ -85,9 +85,10 @@ class ProtocolUnitResultBase(GufeTokenizable):
 
     def _gufe_tokenize(self):
         # tokenize with uuid
-        return uuid.uuid4()
+        return uuid.uuid4().hex
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return {}
 
     def _to_dict(self):
@@ -124,36 +125,15 @@ class ProtocolUnitResultBase(GufeTokenizable):
     def dependencies(self) -> list[ProtocolUnitResult]:
         """All results that this result was dependent on"""
         if self._dependencies is None:
-            self._dependencies = _list_dependencies(self._inputs, ProtocolUnitResultBase)
+            self._dependencies = _list_dependencies(self._inputs, ProtocolUnitResult)
         return self._dependencies     # type: ignore
 
-
-class ProtocolUnitResult(ProtocolUnitResultBase):
-    """Result for a single `ProtocolUnit` execution.
-
-    Attributes
-    ----------
-    name : Optional[str]
-        Name of the `ProtocolUnit` that produced this `ProtocolUnitResult`.
-    source_key : GufeKey
-        Key of the `ProtocolUnit` that produced this `ProtocolUnitResult`
-    inputs : Dict[str, Any]
-        Inputs to the `ProtocolUnit` that produced this
-        `ProtocolUnitResult`. Includes any `ProtocolUnitResult` objects this
-        `ProtocolUnitResult` was dependent on.
-    outputs : Dict[str, Any]
-        Outputs from the `ProtocolUnit.execute` that generated this
-        `ProtocolUnitResult`.
-    dependencies : list[ProtocolUnitResult]
-        A list of the `ProtocolUnitResult` objects depended upon.
-
-    """
-
-    def ok(self) -> bool:
+    @staticmethod
+    def ok() -> bool:
         return True
 
 
-class ProtocolUnitFailure(ProtocolUnitResultBase):
+class ProtocolUnitFailure(ProtocolUnitResult):
     """Failed result for a single `ProtocolUnit` execution."""
 
     def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback):
@@ -196,7 +176,8 @@ class ProtocolUnitFailure(ProtocolUnitResultBase):
     def traceback(self) -> str:
         return self._traceback
 
-    def ok(self) -> bool:
+    @staticmethod
+    def ok() -> bool:
         return False
 
 
@@ -243,9 +224,10 @@ class ProtocolUnit(GufeTokenizable):
 
     def _gufe_tokenize(self):
         # tokenize with uuid
-        return uuid.uuid4()
+        return uuid.uuid4().hex
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         # not used by `ProtocolUnit`s
         return {}
 

@@ -2,7 +2,9 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from typing import Iterable, List, Dict, Set, Optional, Union, Any
+from collections import defaultdict
+import os
+from typing import Iterable, List, Optional, Union, Any
 from os import PathLike
 from pathlib import Path
 import tempfile
@@ -45,6 +47,7 @@ class DAGMixin:
 
         """
         return self._graph
+
     @property
     def protocol_units(self):
         """List of `ProtocolUnit`s given in DAG-order.
@@ -66,7 +69,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     protocol_units : List[ProtocolUnit]
         `ProtocolUnit`s (given in DAG-dependency order) used to compute this
         `ProtocolDAGResult`.
-    protocol_unit_results : List[ProtocolUnit]
+    protocol_unit_results : List[ProtocolUnitResult]
         `ProtocolUnitResult`s (given in DAG-dependency order) corresponding to
         each `ProtocolUnit` used to compute this `ProtocolDAGResult`.
     graph : nx.DiGraph
@@ -77,10 +80,15 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         `ProtocolUnitResult`'s dependencies.
 
     """
-    def __init__(self, *, 
-            name=None, 
-            protocol_units: List[ProtocolUnit], 
-            protocol_unit_results: List[ProtocolUnitResult]):
+    _protocol_units: List[ProtocolUnit]
+    _protocol_unit_results: List[ProtocolUnitResult]
+    _unit_result_mapping: dict[ProtocolUnit, list[ProtocolUnitResult]]
+    _result_unit_mapping: dict[ProtocolUnitResult, ProtocolUnit]
+
+    def __init__(self, *,
+                 name=None,
+                 protocol_units: List[ProtocolUnit],
+                 protocol_unit_results: List[ProtocolUnitResult]):
         self._name = name
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
@@ -92,17 +100,17 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._result_graph = self._build_graph(protocol_unit_results)
 
         # build mapping from protocol units to results
-        # TODO: currently assumes only a single ProtocolUnitResult for each
-        # ProtocolUnit; will need to update this class if multiple failed
-        # ProtocolUnitResults for a given ProtocolUnitResult supported in this
-        # data structure
         keys_to_pu = {unit.key: unit for unit in self._protocol_units}
-        self._unit_result_mapping = {keys_to_pu[result.source_key]: result
-                                     for result in self._protocol_unit_results}
-        self._result_unit_mapping = {result: unit for unit, result
-                                     in self._unit_result_mapping.items()}
+        unit_result_mapping = defaultdict(list)
+        self._result_unit_mapping = dict()
+        for result in protocol_unit_results:
+            pu = keys_to_pu[result.source_key]
+            unit_result_mapping[pu].append(result)
+            self._result_unit_mapping[result] = pu
+        self._unit_result_mapping = dict(unit_result_mapping)
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         # not used by `ProtocolDAG`
         return {}
 
@@ -112,7 +120,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
                 'protocol_unit_results': self._protocol_unit_results}
 
     @classmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         return cls(**dct)
 
     @property
@@ -120,30 +128,95 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return self._result_graph
 
     @property
-    def protocol_unit_results(self):
+    def protocol_unit_results(self) -> list[ProtocolUnitResult]:
         return list(self._iterate_dag_order(self.result_graph))
 
     @property
     def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
-        """A list of all failed units"""
-        return [r for r in self.protocol_unit_results if not r.ok()]
+        """A list of all failed units
 
-    def unit_to_result(self, protocol_unit: ProtocolUnit):
+        Note
+        ----
+        These are returned in DAG order
+        """
+        # mypy can't figure out the types here, .ok() will ensure a certain type
+        # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=cast#complex-type-tests
+        return [r for r in self.protocol_unit_results if not r.ok()]  # type: ignore
+    
+    @property
+    def protocol_unit_successes(self) -> list[ProtocolUnitResult]:
+        """A list of only successful `ProtocolUnit` results
+
+        Note
+        ----
+        These are returned in DAG order
+        """
+        return [r for r in self.protocol_unit_results if r.ok()]
+
+    def unit_to_result(self, protocol_unit: ProtocolUnit) -> ProtocolUnitResult:
+        """Return the successful result for a given Unit
+
+        Returns
+        -------
+        success : ProtocolUnitResult
+          the successful result for this Unit
+
+        Raises
+        ------
+        KeyError
+          if either there are no results, or only failures
+        """
+        try:
+            units = self._unit_result_mapping[protocol_unit]
+        except KeyError:
+            raise KeyError("No such `protocol_unit` present")
+        else:
+            for u in units:
+                if u.ok():
+                    return u
+            else:
+                raise KeyError("No success for `protocol_unit` found")
+
+    def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
+        """Return all results (sucess and failure) for a given Unit
+
+        Returns
+        -------
+        results : list[ProtocolUnitResult]
+          results for a given unit
+
+        Raises
+        ------
+        KeyError
+          if no results present for a given unit
+        """
         try:
             return self._unit_result_mapping[protocol_unit]
         except KeyError:
             raise KeyError("No such `protocol_unit` present")
 
-    def result_to_unit(self, protocol_unit_result: ProtocolUnitResult):
+    def result_to_unit(self, protocol_unit_result: ProtocolUnitResult) -> ProtocolUnit:
         try:
             return self._result_unit_mapping[protocol_unit_result]
         except KeyError:
             raise KeyError("No such `protocol_unit_result` present")
 
     def ok(self) -> bool:
-        # ensure that for every protocol unit, there is definitely a
-        # corresponding result
-        return set(self._protocol_units) == set(self._unit_result_mapping.keys())
+        # ensure that for every protocol unit, there is an OK result object
+        return all(any(pur.ok() for pur in self._unit_result_mapping[pu])
+                   for pu in self._protocol_units)
+
+    def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
+        """Get ProtocolUnitResults that terminate the DAG.
+
+        Returns
+        -------
+        list[ProtocolUnitResult]
+          All ProtocolUnitResults which do not have a ProtocolUnitResult that
+          follows on (depends) on them.
+        """
+        return [u for u in self._protocol_unit_results
+                if not nx.ancestors(self._result_graph, u)]
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
@@ -192,7 +265,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         # not used by `ProtocolDAG`
         return {}
 
@@ -201,7 +275,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
                 'protocol_units': self.protocol_units}
 
     @classmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         return cls(**dct)
 
 
@@ -222,6 +296,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
        Path to scratch space that persists across whole DAG execution, but
        is removed after. Used by some `ProtocolUnit`s to pass file contents
        to dependent `ProtocolUnit`s.
+       If not given, defaults to os cwd (current directory)
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
         if False, any exceptions will be stored as `ProtocolUnitFailure`
@@ -234,13 +309,12 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
 
     """
     if shared is None:
-        shared_tmp = tempfile.TemporaryDirectory()
-        shared_ = Path(shared_tmp.name)
+        shared_ = Path(os.getcwd())
     else:
         shared_ = Path(shared)
 
     # iterate in DAG order
-    results: Dict[GufeKey, ProtocolUnitResult] = {}
+    results: dict[GufeKey, ProtocolUnitResult] = {}
     for unit in protocoldag.protocol_units:
 
         # translate each `ProtocolUnit` in input into corresponding
@@ -256,11 +330,6 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         if not result.ok():
             break
 
-    # TODO: change this part once we have clearer ideas on how to inject
-    # persistent storage use
-    if shared is None:
-        shared_tmp.cleanup()
-
     return ProtocolDAGResult(
             name=protocoldag.name, 
             protocol_units=protocoldag.protocol_units, 
@@ -268,8 +337,8 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
 
 
 def _pu_to_pur(
-        inputs: Union[Dict[str, Any], List[Any], ProtocolUnit],
-        mapping: Dict[GufeKey, ProtocolUnitResult]):
+        inputs: Union[dict[str, Any], List[Any], ProtocolUnit],
+        mapping: dict[GufeKey, ProtocolUnitResult]):
     """Convert each `ProtocolUnit` found within `inputs` to its corresponding
     `ProtocolUnitResult`.
 

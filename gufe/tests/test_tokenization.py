@@ -20,16 +20,17 @@ class Leaf(GufeTokenizable):
         self.logger.debug(f"{b=}")
 
     def _to_dict(self):
-        return {"a": self.a}
+        return {"a": self.a, "b": self.b}
 
     @classmethod
     def _from_dict(cls, dct):
         return cls(**dct)
 
     def __repr__(self):
-        return f"Leaf({self.a})"
+        return f"Leaf({self.a}, {self.b})"
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
 
@@ -39,16 +40,17 @@ class Leaf2(GufeTokenizable):
         self.b = b
 
     def _to_dict(self):
-        return {"a": self.a}
+        return {"a": self.a, "b": self.b}
 
     @classmethod
     def _from_dict(cls, dct):
         return cls(**dct)
 
     def __repr__(self):
-        return f"Leaf({self.a})"
+        return f"Leaf({self.a}, {self.b})"
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
 
@@ -68,7 +70,8 @@ class Container(GufeTokenizable):
     def __repr__(self):
         return f"Container({self.obj}, {self.lst}, {self.dct})"
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
 
@@ -140,7 +143,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     cls = Container
-    key = "Container-262ecded6cd03a619b99d667ded94c9e"
+    key = "Container-3fcec08974fbbd0371fed8a185628b70"
 
     @pytest.fixture
     def instance(self):
@@ -149,14 +152,15 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         """
         return self.cont
 
-    def setup(self):
+    def setup_method(self):
         leaf = Leaf("foo")
         bar = Leaf(leaf)
 
         self.cont = Container(bar, [leaf, 0], {"leaf": leaf, "a": "b"})
 
         def leaf_dict(a):
-            return {'__module__': __name__, '__qualname__': "Leaf", "a": a}
+            return {'__module__': __name__, '__qualname__': "Leaf", "a": a,
+                    "b": 2}
 
         self.expected_deep = {
             '__qualname__': "Container",
@@ -223,6 +227,25 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         l2 = Leaf2(4)
 
         assert l1 != l2
+
+    def test_copy_with_replacements(self):
+        l1 = Leaf(4)
+        l2 = l1.copy_with_replacements(b=4)
+        assert l1 != l2
+        assert l1.a == l2.a
+        assert l1.b != l2.b
+
+    def test_copy_with_replacements_no_arguments(self):
+        # with no arguements, copy_with_replacements returns as actual copy
+        l1 = Leaf(4)
+        l2 = l1.copy_with_replacements()
+        assert l1 == l2
+        assert l1 is not l2
+
+    def test_copy_with_replacements_invalid(self):
+        l1 = Leaf(4)
+        with pytest.raises(TypeError, match="Invalid"):
+            _ = l1.copy_with_replacements(foo=10)
 
     @pytest.mark.parametrize('level', ["DEBUG", "INFO", "CRITICAL"])
     def test_logging(self, level):

@@ -11,6 +11,7 @@ from pathlib import Path
 import inspect
 import copy
 import logging
+import json
 from typing import Dict, Any, Callable, Union, List, Tuple
 import weakref
 from gufe.custom_json import JSONSerializerDeserializer
@@ -116,7 +117,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
         """
-        return normalize(self.to_keyed_dict(include_defaults=False))
+        return tokenize(self)
+        # return normalize(self.to_keyed_dict(include_defaults=False))
 
     @property
     def logger(self):
@@ -134,7 +136,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def key(self):
         if not hasattr(self, '_key') or self._key is None:
             prefix = self.__class__.__qualname__
-            token = tokenize(self)
+            token = self._gufe_tokenize()
             self._key = GufeKey(f"{prefix}-{token}")
 
         return self._key
@@ -156,23 +158,24 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         self._key = GufeKey(key)
         TOKENIZABLE_REGISTRY.setdefault(self.key, self)
 
-    @property
-    def defaults(self):
+    @classmethod
+    def defaults(cls):
         """Dict of default key-value pairs for this `GufeTokenizable` object.
 
         These defaults are stripped from the dict form of this object produced
         with `to_dict(include_defaults=False) where default values are present.
 
         """
-        return self._defaults()
+        return cls._defaults()
 
+    @classmethod
     @abc.abstractmethod
-    def _defaults(self):
+    def _defaults(cls):
         """This method should be overridden to provide the dict of defaults
         appropriate for the `GufeTokenizable` subclass.
 
         """
-        sig = inspect.signature(self.__init__)
+        sig = inspect.signature(cls.__init__)
 
         defaults = {
             param.name: param.default for param in sig.parameters.values()
@@ -221,7 +224,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         dct = dict_encode_dependencies(self)
 
         if not include_defaults:
-            for key, value in self.defaults.items():
+            for key, value in self.defaults().items():
                 if dct.get(key) == value:
                     dct.pop(key)
 
@@ -263,7 +266,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         dct = key_encode_dependencies(self)
 
         if not include_defaults:
-            for key, value in self.defaults.items():
+            for key, value in self.defaults().items():
                 if dct.get(key) == value:
                     dct.pop(key)
 
@@ -308,6 +311,34 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         return from_dict(dct)
+
+    def copy_with_replacements(self, **replacements):
+        """Make a modified copy of this object.
+
+        Since GufeTokenizables are immutable, this is essentially a shortcut
+        to mutate the object. Note that the keyword arguments it takes are
+        based on keys of the dictionaries used in the the
+        ``_to_dict``/``_from_dict`` cycle for this object; in most cases
+        that is the same as parameters to ``__init__``, but not always.
+
+        This will always return a *new* object in memory. So using
+        ``obj.copy_with_replacements()`` (with no keyword arguments) is a
+        way to create a shallow copy: the object is different in memory, but
+        its attributes will be the same objects in memory as the original.
+
+        Parameters
+        ----------
+        replacements: Dict
+            keyword arguments with keys taken from the keys given by the
+            output of this object's ``to_dict`` method.
+        """
+        dct = self._to_dict()
+        if invalid := set(replacements) - set(dct):
+            raise TypeError(f"Invalid replacement keys: {invalid}. "
+                            f"Allowed keys are: {set(dct)}")
+
+        dct.update(replacements)
+        return self._from_dict(dct)
 
 
 class GufeKey(str):
@@ -485,57 +516,6 @@ def key_decode_dependencies(dct: Dict) -> GufeTokenizable:
     return from_dict(dct)
 
 
-## inspired by `dask.base`
-
-# TODO: make this more efficient with a dispatch mechanism
-# instead of a series of isinstance checks
-def normalize(o):
-
-    # dicts
-    if isinstance(o, dict):
-        dct = {key: normalize(value) 
-               for key, value in o.items()}
-        return normalize_dict(dct)
-
-    # lists and tuples
-    if isinstance(o, (list, tuple)):
-        return list(map(normalize, o))
-
-    # paths
-    if isinstance(o, Path):
-        return str(o)
-
-    # GufeTokenizable
-    method = getattr(o, "_gufe_tokenize", None)
-    if method is not None:
-        return method()
-
-    # primitives we support
-    if isinstance(o,
-        (int,
-        float,
-        str,
-        bytes,
-        type(None),
-        type,
-        slice,
-        complex,
-        type(Ellipsis),
-        datetime.date)):
-            return o
-
-    if isinstance(o, Exception):
-        return 
-
-    raise RuntimeError(
-        f"Object {str(o)} cannot be deterministically hashed."
-    )
-
-
-def normalize_dict(d):
-    return sorted(d.items(), key=str)
-
-
 def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a
     `GufeTokenizable` object.
@@ -551,5 +531,8 @@ def tokenize(obj: GufeTokenizable) -> str:
     True
 
     """
-    hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
+    # hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
+    dumped = json.dumps(obj.to_keyed_dict(include_defaults=False),
+                        sort_keys=True, cls=JSON_HANDLER.encoder)
+    hasher = hashlib.md5(dumped.encode(), usedforsecurity=False)
     return hasher.hexdigest()
