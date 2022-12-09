@@ -66,8 +66,8 @@ class JSONCodec(object):
             dct = {}
             if self.cls:
                 dct.update({
-                    '__class__': self.cls.__name__,
-                    '__module__': self.cls.__module__,
+                    '__class__': obj.__class__.__qualname__,
+                    '__module__': obj.__class__.__module__,
                     ':is_custom:': True,
                 })
             # we let the object override __class__ and __module__ if needed
