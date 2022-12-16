@@ -3,13 +3,20 @@
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
 
-from gufe.custom_json import (
-    JSONSerializerDeserializer, custom_json_factory, JSONCodec
+from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory, JSONCodec
+from gufe.custom_codecs import (
+    PATH_CODEC,
+    BYTES_CODEC,
+    NUMPY_CODEC,
+    SETTINGS_CODEC,
+    OPENFF_QUANTITY_CODEC,
+    OPENFF_UNIT_CODEC,
 )
-from gufe.custom_codecs import PATH_CODEC, BYTES_CODEC, NUMPY_CODEC
+from openff.units import unit, Quantity
 import json
 import pathlib
 import pytest
+
 
 import numpy as np
 from numpy import testing as npt
@@ -46,6 +53,7 @@ class CustomJSONCodingTest(object):
     * ``self.dcts``: A list of expected serilized forms of each object in
       ``self.objs``
     """
+
     def test_default(self):
         for (obj, dct) in zip(self.objs, self.dcts):
             assert self.codec.default(obj) == dct
@@ -68,30 +76,28 @@ class CustomJSONCodingTest(object):
 
     def test_not_mine(self):
         # test that the default behavior is obeyed
-        obj = {'test': 5}
+        obj = {"test": 5}
         json_str = '{"test": 5}'
         encoder, decoder = custom_json_factory([self.codec])
         assert json.dumps(obj, cls=encoder) == json_str
         assert json.loads(json_str, cls=decoder) == obj
 
 
-
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup(self):
         self.codec = NUMPY_CODEC
-        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]),
-                     np.array([1, 0])]
+        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0])]
         shapes = [[2, 2], [2,]]
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
         self.dcts = [
             {
-                ':is_custom:': True,
-                '__class__': 'ndarray',
-                '__module__': 'numpy',
-                 'shape': shape,
-                 'dtype': dtype,
-                 'bytes': byte_rep
+                ":is_custom:": True,
+                "__class__": "ndarray",
+                "__module__": "numpy",
+                "shape": shape,
+                "dtype": dtype,
+                "bytes": byte_rep,
             }
             for shape, dtype, byte_rep in zip(shapes, dtypes, byte_reps)
         ]
@@ -122,7 +128,31 @@ class TestPathCodec(CustomJSONCodingTest):
             {
                 ":is_custom:": True,
                 "__class__": "Path",
-                "__module__": 'pathlib',
-                'path': "foo/bar"
+                "__module__": "pathlib",
+                "path": "foo/bar",
+            }
+        ]
+
+
+class TestSettingsCodec(CustomJSONCodingTest):
+    pass
+
+
+class TestOpenFFQuanityCodec(CustomJSONCodingTest):
+    pass
+
+
+class TestOpenFFUnitCodec(CustomJSONCodingTest):
+    def setup(self):
+        self.codec = OPENFF_UNIT_CODEC
+        self.objs = [
+            unit.amu,
+        ]
+        self.dcts = [
+            {
+                ":is_custom:": True,
+                "__class__": "Unit",
+                "__module__": "pint.util",
+                "unit": "unified_atomic_mass_unit",
             }
         ]
