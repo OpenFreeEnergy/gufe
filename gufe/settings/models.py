@@ -3,14 +3,12 @@ Pydantic models used for storing settings.
 """
 
 import abc
-from datetime import date
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
-from pydantic import Extra, Field, FilePath, PositiveFloat
-from typing_extensions import TypedDict
+from pydantic import Extra, Field, PositiveFloat
 
 
 class SettingsBaseModel(DefaultModel):
