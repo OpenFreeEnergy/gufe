@@ -245,7 +245,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def test_terminal_units(self, protocol_dag):
         prot, dag, res = protocol_dag
 
-        finals = res.terminal_protocol_unit_results()
+        finals = res.terminal_protocol_unit_results
 
         assert len(finals) == 1
         assert isinstance(finals[0], ProtocolUnitResult)
@@ -514,7 +514,7 @@ class TestNoDepProtocol:
 
         dag_result = execute_DAG(dag)
 
-        terminal_results = dag_result.terminal_protocol_unit_results()
+        terminal_results = dag_result.terminal_protocol_unit_results
 
         assert len(terminal_results) == 3
 

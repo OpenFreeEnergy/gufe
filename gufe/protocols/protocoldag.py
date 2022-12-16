@@ -206,6 +206,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return all(any(pur.ok() for pur in self._unit_result_mapping[pu])
                    for pu in self._protocol_units)
 
+    @property
     def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
         """Get ProtocolUnitResults that terminate the DAG.
 
