@@ -47,7 +47,13 @@ class ProtocolSettings(SettingsBaseModel, abc.ABC):
     ...
 
 
-class OpenmmForceFieldSystemGeneratorSettings(SettingsBaseModel):
+class BaseForcefieldSettings(SettingsBaseModel, abc.ABC):
+    """Base class for ForcefieldSettings objects"""
+
+    ...
+
+
+class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     """This class is a WIP.
 
     Right now we just basically just grab what we need for the systemgenerator signature
@@ -77,13 +83,13 @@ class Settings(SettingsBaseModel):
 
     # symvar? calver?
     settings_version: int = 0
-    forcefield_settings: OpenmmForceFieldSystemGeneratorSettings
+    forcefield_settings: OpenMMSystemGeneratorFFSettings
     thermo_settings: ThermoSettings
     protocol_settings: Union[ProtocolSettings, None]
 
     @classmethod
     def get_defaults(cls):
         return Settings(
-            forcefield_settings=OpenmmForceFieldSystemGeneratorSettings(),
+            forcefield_settings=OpenMMSystemGeneratorFFSettings(),
             thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),
         )
