@@ -159,7 +159,7 @@ class Protocol(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
@@ -193,7 +193,7 @@ class Protocol(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
@@ -216,7 +216,7 @@ class Protocol(GufeTokenizable):
         mapping : Optional[dict[str, ComponentMapping]]
             Mappings of e.g. atoms between a labelled component in the
              stateA and stateB `ChemicalSystem` .
-        extend_from : Optional[ProtocolDAGResult]
+        extends : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for
             extension from a previously-run `ProtocolDAG`.
@@ -235,7 +235,7 @@ class Protocol(GufeTokenizable):
                 stateA=stateA,
                 stateB=stateB,
                 mapping=mapping,
-                extend_from=extend_from,
+                extends=extends,
             ),
         )
 

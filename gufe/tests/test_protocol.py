@@ -100,15 +100,15 @@ class DummyProtocol(Protocol):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
-        # rip apart `extend_from` if needed to feed into `InitializeUnit`
-        if extend_from is not None:
+        # rip apart `extends` if needed to feed into `InitializeUnit`
+        if extends is not None:
             # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
             # any ProtocolUnits below, since this could create dependency hell;
             # instead, extract what's needed from it for starting point here
-            starting_point = extend_from.protocol_unit_results[-1].outputs['final_positions']
+            starting_point = extends.protocol_unit_results[-1].outputs['final_positions']
         else:
             starting_point = None
 
@@ -159,7 +159,7 @@ class BrokenProtocol(DummyProtocol):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
 
         # convert protocol inputs into starting points for independent simulations
@@ -168,7 +168,7 @@ class BrokenProtocol(DummyProtocol):
             stateA=stateA,
             stateB=stateB,
             mapping=mapping,
-            start=extend_from,
+            start=extends,
         )
 
         # create several units that would each run an independent simulation
@@ -471,7 +471,7 @@ class NoDepsProtocol(Protocol):
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
             mapping: Optional[dict[str, ComponentMapping]] = None,
-            extend_from: Optional[ProtocolDAGResult] = None,
+            extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings,
                           val=i)

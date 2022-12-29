@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+from copy import copy
 from collections import defaultdict
 import os
 from typing import Iterable, List, Optional, Union, Any
@@ -85,13 +86,21 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     _unit_result_mapping: dict[ProtocolUnit, list[ProtocolUnitResult]]
     _result_unit_mapping: dict[ProtocolUnitResult, ProtocolUnit]
 
+    _transformation: Optional[GufeKey]
+    _extends: Optional[GufeKey]
+
     def __init__(self, *,
                  name=None,
                  protocol_units: List[ProtocolUnit],
-                 protocol_unit_results: List[ProtocolUnitResult]):
+                 protocol_unit_results: List[ProtocolUnitResult],
+                 transformation: Optional[GufeKey] = None,
+                 extends: Optional[GufeKey] = None):
         self._name = name
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
+
+        self._transformation = GufeKey(transformation)
+        self._extends = GufeKey(extends)
 
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
@@ -117,7 +126,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     def _to_dict(self):
         return {'name': self.name,
                 'protocol_units': self._protocol_units,
-                'protocol_unit_results': self._protocol_unit_results}
+                'protocol_unit_results': self._protocol_unit_results,
+                'transformation': self._transformation,
+                'extends': self._extends}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -133,7 +144,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
-        """A list of all failed units
+        """A list of all failed units.
 
         Note
         ----
@@ -145,7 +156,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     
     @property
     def protocol_unit_successes(self) -> list[ProtocolUnitResult]:
-        """A list of only successful `ProtocolUnit` results
+        """A list of only successful `ProtocolUnit` results.
 
         Note
         ----
@@ -154,7 +165,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return [r for r in self.protocol_unit_results if r.ok()]
 
     def unit_to_result(self, protocol_unit: ProtocolUnit) -> ProtocolUnitResult:
-        """Return the successful result for a given Unit
+        """Return the successful result for a given Unit.
 
         Returns
         -------
@@ -178,7 +189,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
                 raise KeyError("No success for `protocol_unit` found")
 
     def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
-        """Return all results (sucess and failure) for a given Unit
+        """Return all results (sucess and failure) for a given Unit.
 
         Returns
         -------
@@ -283,6 +294,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 def execute_DAG(protocoldag: ProtocolDAG, *,
                 shared: Optional[PathLike] = None,
                 raise_error: bool = True,
+                transformation: Optional[GufeKey] = None,
+                extends: Optional[GufeKey] = None
                 ) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
@@ -334,7 +347,9 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     return ProtocolDAGResult(
             name=protocoldag.name, 
             protocol_units=protocoldag.protocol_units, 
-            protocol_unit_results=list(results.values()))
+            protocol_unit_results=list(results.values()),
+            transformation=transformation,
+            extends=extends)
 
 
 def _pu_to_pur(
