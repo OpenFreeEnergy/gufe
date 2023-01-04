@@ -56,7 +56,7 @@ class FinishUnit(ProtocolUnit):
         output = [s.outputs['log'] for s in simulations]
         output.append("assembling_results")
 
-        key_results = {s.inputs['window']: s.outputs['key_result'] for s in simulations}
+        key_results = {str(s.inputs['window']): s.outputs['key_result'] for s in simulations}
 
         return dict(
             log=output,
@@ -139,7 +139,7 @@ class DummyProtocol(Protocol):
 
         outputs = defaultdict(list)
         for pdr in protocol_dag_results:
-            for pur in pdr.protocol_unit_results:
+            for pur in pdr.terminal_protocol_unit_results:
                 if pur.name == "the end":
                     outputs['logs'].append(pur.outputs['log'])
                     outputs['key_results'].append(pur.outputs['key_results'])
