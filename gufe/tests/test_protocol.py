@@ -108,7 +108,7 @@ class DummyProtocol(Protocol):
             # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
             # any ProtocolUnits below, since this could create dependency hell;
             # instead, extract what's needed from it for starting point here
-            starting_point = extends.protocol_unit_results[-1].outputs['final_positions']
+            starting_point = extends.protocol_unit_results[-1].outputs['key_results']
         else:
             starting_point = None
 
@@ -290,7 +290,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(protocolresult.data['logs']) == 1
         assert len(protocolresult.data['logs'][0]) == 21 + 1
 
-        assert protocolresult.get_estimate() == 105336
+        assert protocolresult.get_estimate() == 95500.0
 
     class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
         
