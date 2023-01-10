@@ -131,13 +131,18 @@ class Transformation(GufeTokenizable):
     def _from_dict(cls, d: dict):
         return cls(**d)
 
-    def create(self) -> ProtocolDAG:
+    def create(
+        self,
+        extends: Optional[ProtocolDAGResult] = None,
+        name: Optional[str] = None,
+    ) -> ProtocolDAG:
         """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
         return self.protocol.create(
             stateA=self.stateA,
             stateB=self.stateB,
             mapping=self.mapping,
-            name=str(self.key),
+            extends=extends,
+            name=name,
         )
 
     def gather(
@@ -276,8 +281,15 @@ class NonTransformation(Transformation):
     def _from_dict(cls, d: dict):
         return cls(**d)
 
-    def create(self) -> ProtocolDAG:
+    def create(
+        self,
+        extends: Optional[ProtocolDAGResult] = None,
+        name: Optional[str] = None,
+    ) -> ProtocolDAG:
         """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
         return self.protocol.create(
-            stateA=self.system, stateB=self.system, name=str(self.__hash__())
+            stateA=self.system,
+            stateB=self.system,
+            extends=extends,
+            name=name
         )
