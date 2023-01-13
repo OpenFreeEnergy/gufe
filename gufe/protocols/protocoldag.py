@@ -5,7 +5,7 @@ import abc
 from copy import copy
 from collections import defaultdict
 import os
-from typing import Iterable, List, Optional, Union, Any
+from typing import Iterable, Optional, Union, Any
 from os import PathLike
 from pathlib import Path
 import tempfile
@@ -19,8 +19,13 @@ from .protocolunit import (
 
 
 class DAGMixin:
+    _protocol_units: list[ProtocolUnit]
+
     _name: Optional[str]
     _graph: nx.DiGraph
+
+    _transformation: GufeKey
+    _extends: Optional[GufeKey]
 
     @staticmethod 
     def _build_graph(nodes):
@@ -44,17 +49,31 @@ class DAGMixin:
 
     @property
     def graph(self) -> nx.DiGraph:
-        """DAG of `ProtocolUnit`s that produced this `ProtocolDAGResult`.
+        """DAG of `ProtocolUnit`s that comprise this object.
 
         """
         return self._graph
 
     @property
-    def protocol_units(self):
+    def protocol_units(self) -> list[ProtocolUnit]:
         """List of `ProtocolUnit`s given in DAG-order.
 
         """
         return list(self._iterate_dag_order(self._graph))
+
+    @property
+    def transformation(self) -> GufeKey:
+        """The `GufeKey` of the `Transformation` this object performs.
+
+        """
+        return self._transformation
+
+    @property
+    def extends(self) -> GufeKey:
+        """The `GufeKey` of the `ProtocolDAGResult` this object extends.
+
+        """
+        return self._extends
 
 
 class ProtocolDAGResult(GufeTokenizable, DAGMixin):
@@ -67,10 +86,10 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     ----------
     name : str
         Optional identifier for this `ProtocolDAGResult`.
-    protocol_units : List[ProtocolUnit]
+    protocol_units : list[ProtocolUnit]
         `ProtocolUnit`s (given in DAG-dependency order) used to compute this
         `ProtocolDAGResult`.
-    protocol_unit_results : List[ProtocolUnitResult]
+    protocol_unit_results : list[ProtocolUnitResult]
         `ProtocolUnitResult`s (given in DAG-dependency order) corresponding to
         each `ProtocolUnit` used to compute this `ProtocolDAGResult`.
     graph : nx.DiGraph
@@ -81,26 +100,26 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         `ProtocolUnitResult`'s dependencies.
 
     """
-    _protocol_units: List[ProtocolUnit]
-    _protocol_unit_results: List[ProtocolUnitResult]
+    _protocol_unit_results: list[ProtocolUnitResult]
     _unit_result_mapping: dict[ProtocolUnit, list[ProtocolUnitResult]]
     _result_unit_mapping: dict[ProtocolUnitResult, ProtocolUnit]
 
-    _transformation: Optional[GufeKey]
-    _extends: Optional[GufeKey]
 
-    def __init__(self, *,
-                 name=None,
-                 protocol_units: List[ProtocolUnit],
-                 protocol_unit_results: List[ProtocolUnitResult],
-                 transformation: Optional[GufeKey] = None,
-                 extends: Optional[GufeKey] = None):
+    def __init__(
+        self, 
+        *,
+        name: Optional[str] = None,
+        protocol_units: list[ProtocolUnit],
+        protocol_unit_results: list[ProtocolUnitResult],
+        transformation: GufeKey,
+        extends: Optional[GufeKey] = None
+    ):
         self._name = name
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
 
         self._transformation = GufeKey(transformation)
-        self._extends = GufeKey(extends)
+        self._extends = GufeKey(extends) if extends is not None else None
 
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
@@ -245,7 +264,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     ----------
     name : str
         Optional identifier for this `ProtocolDAGResult`.
-    protocol_units : List[ProtocolUnit]
+    protocol_units : list[ProtocolUnit]
         `ProtocolUnit`s (given in DAG-dependency order) used to compute this
         `ProtocolDAGResult`.
     graph : nx.DiGraph
@@ -257,8 +276,10 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     def __init__(
         self,
         *,
-        protocol_units: Iterable[ProtocolUnit],
         name: Optional[str] = None,
+        protocol_units: list[ProtocolUnit],
+        transformation: GufeKey,
+        extends: Optional[GufeKey] = None
     ):
         """Create a new `ProtocolDAG`.
 
@@ -274,6 +295,9 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self._name = name
         self._protocol_units = protocol_units
 
+        self._transformation = GufeKey(transformation)
+        self._extends = GufeKey(extends) if extends is not None else None
+
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
 
@@ -284,7 +308,9 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
     def _to_dict(self):
         return {'name': self.name,
-                'protocol_units': self.protocol_units}
+                'protocol_units': self.protocol_units,
+                'transformation': self._transformation,
+                'extends': self._extends}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -294,8 +320,6 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 def execute_DAG(protocoldag: ProtocolDAG, *,
                 shared: Optional[PathLike] = None,
                 raise_error: bool = True,
-                transformation: Optional[GufeKey] = None,
-                extends: Optional[GufeKey] = None
                 ) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
@@ -348,12 +372,12 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
             name=protocoldag.name, 
             protocol_units=protocoldag.protocol_units, 
             protocol_unit_results=list(results.values()),
-            transformation=transformation,
-            extends=extends)
+            transformation=protocoldag.transformation,
+            extends=protocoldag.extends)
 
 
 def _pu_to_pur(
-        inputs: Union[dict[str, Any], List[Any], ProtocolUnit],
+        inputs: Union[dict[str, Any], list[Any], ProtocolUnit],
         mapping: dict[GufeKey, ProtocolUnitResult]):
     """Convert each `ProtocolUnit` found within `inputs` to its corresponding
     `ProtocolUnitResult`.
