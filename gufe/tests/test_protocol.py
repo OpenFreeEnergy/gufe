@@ -95,7 +95,8 @@ class DummyProtocol(Protocol):
     def _default_settings(cls):
         return {}
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return {}
 
     def _create(
