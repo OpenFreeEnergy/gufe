@@ -6,11 +6,11 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Dict, List
+from typing import Optional, Iterable, Any, Dict, List, Union
 
 import networkx as nx
 
-from ..tokenization import GufeTokenizable
+from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 
@@ -190,9 +190,11 @@ class Protocol(GufeTokenizable):
 
     def create(
         self,
+        *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Union[dict[str, ComponentMapping], None],
+        transformation: Union[GufeKey, None],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
     ) -> ProtocolDAG:
@@ -237,6 +239,8 @@ class Protocol(GufeTokenizable):
                 mapping=mapping,
                 extends=extends,
             ),
+            transformation=transformation,
+            extends=extends.key if extends is not None else None
         )
 
     def gather(

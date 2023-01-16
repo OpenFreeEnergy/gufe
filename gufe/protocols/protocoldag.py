@@ -24,7 +24,7 @@ class DAGMixin:
     _name: Optional[str]
     _graph: nx.DiGraph
 
-    _transformation: GufeKey
+    _transformation: Union[GufeKey, None]
     _extends: Optional[GufeKey]
 
     @staticmethod 
@@ -108,17 +108,17 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     def __init__(
         self, 
         *,
-        name: Optional[str] = None,
         protocol_units: list[ProtocolUnit],
         protocol_unit_results: list[ProtocolUnitResult],
-        transformation: GufeKey,
-        extends: Optional[GufeKey] = None
+        transformation: Union[GufeKey, None],
+        extends: Optional[GufeKey] = None,
+        name: Optional[str] = None,
     ):
         self._name = name
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
 
-        self._transformation = GufeKey(transformation)
+        self._transformation = GufeKey(transformation) if transformation is not None else None
         self._extends = GufeKey(extends) if extends is not None else None
 
         # build graph from protocol units
@@ -276,10 +276,10 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     def __init__(
         self,
         *,
-        name: Optional[str] = None,
         protocol_units: list[ProtocolUnit],
-        transformation: GufeKey,
-        extends: Optional[GufeKey] = None
+        transformation: Union[GufeKey, None],
+        extends: Optional[GufeKey] = None,
+        name: Optional[str] = None,
     ):
         """Create a new `ProtocolDAG`.
 
@@ -295,7 +295,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self._name = name
         self._protocol_units = protocol_units
 
-        self._transformation = GufeKey(transformation)
+        self._transformation = GufeKey(transformation) if transformation is not None else None
         self._extends = GufeKey(extends) if extends is not None else None
 
         # build graph from protocol units

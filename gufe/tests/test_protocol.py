@@ -199,7 +199,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def protocol_dag(self, solvated_ligand, vacuum_ligand):
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run",
+            mapping=None, transformation=None,
         )
         dagresult: ProtocolDAGResult = execute_DAG(dag)
 
@@ -209,7 +210,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def protocol_dag_broken(self, solvated_ligand, vacuum_ligand):
         protocol = BrokenProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
+            mapping=None, transformation=None,
         )
 
         dagfailure: ProtocolDAGResult = execute_DAG(dag, raise_error=False)
@@ -273,7 +275,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand):
         protocol = BrokenProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
+            mapping=None, transformation=None,
         )
 
         with pytest.raises(ValueError, match="I have failed my mission"):
@@ -488,14 +491,14 @@ class TestNoDepProtocol:
     def test_create(self):
         p = NoDepsProtocol()
 
-        dag = p.create(None, None)
+        dag = p.create(stateA=None, stateB=None, mapping=None, transformation=None)
 
         assert len(dag.protocol_units) == 3
 
     def test_gather(self):
         p = NoDepsProtocol()
 
-        dag = p.create(None, None)
+        dag = p.create(stateA=None, stateB=None, mapping=None, transformation=None)
 
         dag_result = execute_DAG(dag)
 
@@ -510,7 +513,7 @@ class TestNoDepProtocol:
         # we have no dependencies, so this should be all three Unit results
         p = NoDepsProtocol()
 
-        dag = p.create(None, None)
+        dag = p.create(stateA=None, stateB=None, mapping=None, transformation=None)
 
         dag_result = execute_DAG(dag)
 
@@ -549,6 +552,7 @@ class TestProtocolDAGResult:
         dagresult = ProtocolDAGResult(
             protocol_units=units,
             protocol_unit_results=successes,
+            transformation=None,
         )
 
         assert dagresult.ok()
@@ -564,7 +568,8 @@ class TestProtocolDAGResult:
         # final unit has no success
         dagresult = ProtocolDAGResult(
             protocol_units=units,
-            protocol_unit_results=successes[:2] + list(itertools.chain(*failures))
+            protocol_unit_results=successes[:2] + list(itertools.chain(*failures)),
+            transformation=None,
         )
 
         assert not dagresult.ok()
@@ -577,6 +582,7 @@ class TestProtocolDAGResult:
         dagresult = ProtocolDAGResult(
             protocol_units=units,
             protocol_unit_results=successes + list(itertools.chain(*failures)),
+            transformation=None,
         )
 
         assert dagresult.ok()
@@ -593,7 +599,8 @@ class TestProtocolDAGResult:
     def test_foreign_objects(self, units, successes):
         dagresult = ProtocolDAGResult(
             protocol_units=units[:2],
-            protocol_unit_results=successes[:2]
+            protocol_unit_results=successes[:2],
+            transformation=None,
         )
 
         with pytest.raises(KeyError, match="No such `protocol_unit` present"):
