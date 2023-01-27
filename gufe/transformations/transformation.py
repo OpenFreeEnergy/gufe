@@ -55,7 +55,8 @@ class Transformation(GufeTokenizable):
 
         self._protocol = protocol
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()
 
     def __repr__(self):

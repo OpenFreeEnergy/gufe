@@ -131,5 +131,6 @@ class SolventComponent(Component):
                 'ion_concentration': ion_conc,
                 'neutralize': self._neutralize}
 
-    def _defaults(self):
+    @classmethod
+    def _defaults(cls):
         return super()._defaults()

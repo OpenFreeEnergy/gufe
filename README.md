@@ -1,6 +1,7 @@
 [![Logo](https://img.shields.io/badge/OSMF-OpenFreeEnergy-%23002f4a)](https://openfree.energy/)
 [![build](https://github.com/OpenFreeEnergy/gufe/actions/workflows/ci.yaml/badge.svg)](https://github.com/OpenFreeEnergy/gufe/actions/workflows/ci.yaml)
 [![coverage](https://codecov.io/gh/OpenFreeEnergy/gufe/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenFreeEnergy/gufe)
+[![Documentation Status](https://readthedocs.org/projects/gufe/badge/?version=latest)](https://gufe.readthedocs.io/en/latest/?badge=latest)
 
 # gufe - Grand Unified Free Energy
 

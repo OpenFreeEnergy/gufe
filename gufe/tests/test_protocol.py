@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import itertools
-from typing import Optional, Iterable, List, Dict, Any
+from typing import Optional, Iterable, List, Dict, Any, Union
 from collections import defaultdict
 
 import pytest
@@ -21,7 +21,7 @@ from gufe.protocols import (
     ProtocolUnitFailure,
 )
 
-from gufe.protocols.protocoldag import execute
+from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -189,8 +189,8 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-5660965464c9afdaac0ac4486a9566b3"
-    
+    key = "DummyProtocol-19d89baf539230937f5342f059eb0cc0"
+
     @pytest.fixture
     def instance(self):
         return DummyProtocol(settings=None)
@@ -201,7 +201,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run"
         )
-        dagresult: ProtocolDAGResult = execute(dag)
+        dagresult: ProtocolDAGResult = execute_DAG(dag)
 
         return protocol, dag, dagresult
 
@@ -212,7 +212,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
         )
 
-        dagfailure: ProtocolDAGResult = execute(dag)
+        dagfailure: ProtocolDAGResult = execute_DAG(dag, raise_error=False)
 
         return protocol, dag, dagfailure
 
@@ -242,6 +242,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # check that scratch directory is different for all simulations
         assert len(set(i.outputs['scratch'] for i in simulationresults)) == len(simulationresults)
 
+    def test_terminal_units(self, protocol_dag):
+        prot, dag, res = protocol_dag
+
+        finals = res.terminal_protocol_unit_results
+
+        assert len(finals) == 1
+        assert isinstance(finals[0], ProtocolUnitResult)
+        assert finals[0].name == 'the end'
+
     def test_dag_execute_failure(self, protocol_dag_broken):
         protocol, dag, dagfailure = protocol_dag_broken
 
@@ -260,6 +269,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
         succeeded_units = dagfailure.protocol_unit_results
 
         assert len(succeeded_units) > 0
+
+    def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand):
+        protocol = BrokenProtocol(settings=None)
+        dag = protocol.create(
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+        )
+
+        with pytest.raises(ValueError, match="I have failed my mission"):
+            execute_DAG(dag, raise_error=True)
 
     def test_create_execute_gather(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
@@ -326,7 +344,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_protocol_unit_results(self, instance: ProtocolDAGResult):
             # ensure that protocolunitresults are given in-order based on DAG
             # dependencies
-            checked: List[ProtocolUnitResult] = []
+            checked: List[Union[ProtocolUnitResult, ProtocolUnitFailure]] = []
             for pur in instance.protocol_unit_results:
                 assert set(pur.dependencies).issubset(checked)
                 checked.append(pur)
@@ -354,11 +372,16 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_result_to_unit(self, instance: ProtocolDAGResult):
             for pur in instance.protocol_unit_results:
-                pu: ProtocolUnit = instance.result_to_unit(pur)
+                pu: ProtocolUnit = instance.result_to_unit(pur)  # type: ignore
                 assert pu.key == pur.source_key
 
         def test_protocol_unit_failures(self, instance: ProtocolDAGResult):
             assert len(instance.protocol_unit_failures) == 0
+
+        def test_protocol_unit_successes(self, instance: ProtocolDAGResult):
+            assert len(instance.protocol_unit_successes) == 23
+            assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
+
 
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
@@ -474,7 +497,7 @@ class TestNoDepProtocol:
 
         dag = p.create(None, None)
 
-        dag_result = execute(dag)
+        dag_result = execute_DAG(dag)
 
         assert dag_result.ok()
 
@@ -482,3 +505,100 @@ class TestNoDepProtocol:
 
         assert result.get_estimate() == 0 + 1 + 4
         assert result.get_uncertainty() == 3
+
+    def test_terminal_units(self):
+        # we have no dependencies, so this should be all three Unit results
+        p = NoDepsProtocol()
+
+        dag = p.create(None, None)
+
+        dag_result = execute_DAG(dag)
+
+        terminal_results = dag_result.terminal_protocol_unit_results
+
+        assert len(terminal_results) == 3
+
+
+class TestProtocolDAGResult:
+    """tests for combinations of failures and successes in a DAGResult"""
+    @staticmethod
+    @pytest.fixture()
+    def units() -> list[ProtocolUnit]:
+        return [NoDepUnit(settings=None, val=i) for i in range(3)]
+
+    @staticmethod
+    @pytest.fixture()
+    def successes(units) -> list[ProtocolUnitResult]:
+        # a success for every unit
+        return [ProtocolUnitResult(source_key=u.key, inputs=u.inputs,
+                                   outputs={'result': i ** 2})
+                for i, u in enumerate(units)]
+
+    @staticmethod
+    @pytest.fixture()
+    def failures(units) -> list[list[ProtocolUnitFailure]]:
+        # generate 2 failures for every unit
+        return [[ProtocolUnitFailure(source_key=u.key, inputs=u.inputs,
+                                     outputs=dict(),
+                                     exception=('ValueError', "Didn't feel like it"),
+                                     traceback='foo')
+                 for i in range(2)]
+                for u in units]
+
+    def test_all_successes(self, units, successes):
+        dagresult = ProtocolDAGResult(
+            protocol_units=units,
+            protocol_unit_results=successes,
+        )
+
+        assert dagresult.ok()
+        assert set(dagresult.protocol_unit_successes) == set(successes)
+        assert dagresult.protocol_unit_failures == []
+
+        for u, r in zip(units, successes):
+            assert dagresult.unit_to_result(u) == r
+            assert dagresult.unit_to_all_results(u) == [r]
+            assert dagresult.result_to_unit(r) == u
+
+    def test_missing_result(self, units, successes, failures):
+        # final unit has no success
+        dagresult = ProtocolDAGResult(
+            protocol_units=units,
+            protocol_unit_results=successes[:2] + list(itertools.chain(*failures))
+        )
+
+        assert not dagresult.ok()
+
+        with pytest.raises(KeyError, match="No success for `protocol_unit` found") as e:
+            dagresult.unit_to_result(units[2])
+
+    def test_plenty_of_fails(self, units, successes, failures):
+        # 2 fails for each unit, but also a success for each
+        dagresult = ProtocolDAGResult(
+            protocol_units=units,
+            protocol_unit_results=successes + list(itertools.chain(*failures)),
+        )
+
+        assert dagresult.ok()
+        assert set(dagresult.protocol_unit_successes) == set(successes)
+        assert set(dagresult.protocol_unit_failures) == set(itertools.chain(*failures))
+
+        for u, r, f in zip(units, successes, failures):
+            assert dagresult.unit_to_result(u) == r
+            assert dagresult.unit_to_all_results(u) == [r] + f
+            assert dagresult.result_to_unit(r) == u
+            assert dagresult.result_to_unit(f[0]) == u
+            assert dagresult.result_to_unit(f[1]) == u
+
+    def test_foreign_objects(self, units, successes):
+        dagresult = ProtocolDAGResult(
+            protocol_units=units[:2],
+            protocol_unit_results=successes[:2]
+        )
+
+        with pytest.raises(KeyError, match="No such `protocol_unit` present"):
+            dagresult.unit_to_result(units[2])
+        with pytest.raises(KeyError, match="No such `protocol_unit` present"):
+            dagresult.unit_to_all_results(units[2])
+        with pytest.raises(KeyError, match="No such `protocol_unit_result` present"):
+            dagresult.result_to_unit(successes[2])
