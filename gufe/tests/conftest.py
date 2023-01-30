@@ -150,7 +150,7 @@ def PDBx_181L_openMMClean_path():
 
 ## RDKit molecules
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def benzene_modifications():
     with importlib.resources.path('gufe.tests.data',
                                   'benzene_modifications.sdf') as f:
