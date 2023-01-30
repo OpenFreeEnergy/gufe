@@ -14,6 +14,9 @@ class LigandAtomMapping(AtomMapping):
     """Simple container with the mapping between two Molecules
 
     """
+    componentA: SmallMoleculeComponent
+    componentB: SmallMoleculeComponent
+
     def __init__(
         self,
         componentA: SmallMoleculeComponent,
