@@ -150,7 +150,7 @@ def PDBx_181L_openMMClean_path():
 
 ## RDKit molecules
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def benzene_modifications():
     with importlib.resources.path('gufe.tests.data',
                                   'benzene_modifications.sdf') as f:
@@ -159,6 +159,12 @@ def benzene_modifications():
         mols = list(supp)
 
     return {m.GetProp('_Name'): m for m in mols}
+
+
+@pytest.fixture(scope='session')
+def benzene_transforms(benzene_modifications):
+    return {k: gufe.SmallMoleculeComponent(v)
+            for k, v in benzene_modifications.items()}
 
 
 ## Components
