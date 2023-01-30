@@ -5,7 +5,7 @@ import inspect
 from rdkit import Chem
 
 import gufe
-from gufe.mapping.mapping_visualization import (
+from gufe.visualization.mapping_visualization import (
     _match_elements, _get_unique_bonds_and_atoms, draw_mapping,
     draw_one_molecule_mapping, draw_unhighlighted_molecule
 )

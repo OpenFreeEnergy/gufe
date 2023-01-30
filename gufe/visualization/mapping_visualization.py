@@ -1,6 +1,6 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
-from typing import Dict, Set, Tuple, Any, Collection, Optional
+from typing import Any, Collection, Optional
 from itertools import chain
 
 from rdkit import Chem
@@ -37,8 +37,8 @@ def _match_elements(
 
 
 def _get_unique_bonds_and_atoms(
-        mapping: Dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol
-) -> Dict:
+        mapping: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol
+) -> dict:
     """
     Given an input mapping, returns new atoms, element changes, and
     involved bonds.
@@ -60,7 +60,7 @@ def _get_unique_bonds_and_atoms(
         ("bonds") for molecule 1.
     """
 
-    uniques: Dict[str, set] = {
+    uniques: dict[str, set] = {
         "atoms": set(),  # atoms which fully don't exist in molB
         "elements": set(),  # atoms which exist but change elements in molB
         "bonds": set(),  # bonds involving either unique atoms or elements
@@ -86,11 +86,11 @@ def _get_unique_bonds_and_atoms(
 def _draw_molecules(
     d2d,
     mols: Collection[Chem.Mol],
-    atoms_list: Collection[Set[int]],
-    bonds_list: Collection[Set[int]],
-    atom_colors: Collection[Dict[Any, Tuple[float, float, float, float]]],
-    highlight_color: Tuple[float, float, float, float],
-    atom_mapping: Optional[Dict[Tuple[int, int], Dict[int, int]]] = None,
+    atoms_list: Collection[set[int]],
+    bonds_list: Collection[set[int]],
+    atom_colors: Collection[dict[Any, tuple[float, float, float, float]]],
+    highlight_color: tuple[float, float, float, float],
+    atom_mapping: Optional[dict[tuple[int, int], dict[int, int]]] = None,
 ) -> str:
     """
     Internal method to visualize a molecule, possibly with mapping info
@@ -161,7 +161,7 @@ def _draw_molecules(
 
 
 def draw_mapping(
-        mol1_to_mol2: Dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol, d2d=None
+        mol1_to_mol2: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol, d2d=None
 ):
     """
     Method to visualise the atom map correspondence between two rdkit

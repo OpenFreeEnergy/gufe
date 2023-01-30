@@ -6,6 +6,8 @@ __version__ = _version.get_versions()['version']
 
 from . import tokenization
 
+from . import visualization
+
 from .components import (
     Component, 
     SmallMoleculeComponent, 
