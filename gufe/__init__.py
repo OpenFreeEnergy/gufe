@@ -20,6 +20,7 @@ from .chemicalsystem import ChemicalSystem
 from .mapping import (
     ComponentMapping,  # how individual Components relate
     AtomMapping, AtomMapper,  # more specific to atom based components
+    LigandAtomMapping,
 )
 from .protocols import (
     Protocol,  # description of a method

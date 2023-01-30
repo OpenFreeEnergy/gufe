@@ -15,12 +15,6 @@ _HIGHLIGHT_COLOR = (220/255, 50/255, 32/255, 1)
 _CHANGED_ELEMENTS_COLOR = (0, 90/255, 181/255, 1)
 
 
-@pytest.fixture(scope='module')
-def benzene_transforms(benzene_modifications):
-    return {k: gufe.SmallMoleculeComponent(v)
-            for k, v in benzene_modifications.items()}
-
-
 def bound_args(func, args, kwargs):
     """Return a dictionary mapping parameter name to value.
 
@@ -109,7 +103,7 @@ def test_benzene_to_phenol_uniques(molname, atoms, elems, bonds,
     assert uniques['bonds'] == bonds
 
 
-@mock.patch("gufe.mapping.mapping_visualization._draw_molecules", autospec=True)
+@mock.patch("gufe.visualization.mapping_visualization._draw_molecules", autospec=True)
 def test_draw_mapping(mock_func, benzene_phenol_mapping):
     # ensure that draw_mapping passes the desired parameters to our internal
     # _draw_molecules method
@@ -128,7 +122,7 @@ def test_draw_mapping(mock_func, benzene_phenol_mapping):
 
 
 @pytest.mark.parametrize('inverted', [True, False])
-@mock.patch("gufe.mapping.mapping_visualization._draw_molecules", autospec=True)
+@mock.patch("gufe.visualization.mapping_visualization._draw_molecules", autospec=True)
 def test_draw_one_molecule_mapping(mock_func, benzene_phenol_mapping,
                                    inverted):
     # ensure that draw_one_molecule_mapping passes the desired parameters to
@@ -158,7 +152,7 @@ def test_draw_one_molecule_mapping(mock_func, benzene_phenol_mapping,
     assert args['highlight_color'] == _HIGHLIGHT_COLOR
 
 
-@mock.patch("gufe.mapping.mapping_visualization._draw_molecules", autospec=True)
+@mock.patch("gufe.visualization.mapping_visualization._draw_molecules", autospec=True)
 def test_draw_unhighlighted_molecule(mock_func, benzene_transforms):
     # ensure that draw_unhighlighted_molecule passes the desired parameters
     # to our internal _draw_molecules method
