@@ -11,6 +11,8 @@ from gufe.custom_json import JSONCodec
 from gufe.settings.models import SettingsBaseModel
 import openff.units
 import functools
+import pint.util
+from openff.units import DEFAULT_UNIT_REGISTRY
 
 def default_from_dict(dct):
     dct = dict(dct)  # make a copy
@@ -23,12 +25,38 @@ def default_from_dict(dct):
 
 
 def inherited_is_my_dict(dct, cls):
+    if not ("__module__" in dct and "__class__" in dct):
+        return False
     dct = dict(dct)
     module = dct.pop('__module__')
     classname = dct.pop('__class__')
     stored = gufe.tokenization.get_class(module, classname)
     return cls in stored.mro()
 
+def is_openff_unit(obj):
+    return isinstance(obj, DEFAULT_UNIT_REGISTRY.Unit)
+
+def is_openff_quantity(obj):
+    return isinstance(obj, DEFAULT_UNIT_REGISTRY.Quantity)
+
+def openff_unit_to_dict(unit):
+    return {":is_custom:": True,
+            "pint_unit_registry": "openff_units",
+            "unit_name": str(unit)}
+
+def is_openff_unit_dict(dct):
+    expected = ['pint_unit_registry', 'unit_name', ':is_custom:']
+    is_custom = all(exp in dct for exp in expected)
+    return is_custom and dct['pint_unit_registry'] == "openff_units"
+
+def is_openff_quantity_dict(dct):
+    expected = ['pint_unit_registry', 'magnitude', ':is_custom:', "unit"]
+    is_custom = all(exp in dct for exp in expected)
+    return is_custom and dct['pint_unit_registry'] == "openff_units"
+
+
+def openff_unit_from_dict(dct):
+    return openff.units.DEFAULT_UNIT_REGISTRY(dct["unit_name"]).u
 
 PATH_CODEC = JSONCodec(
     cls=pathlib.Path,
@@ -64,13 +92,18 @@ SETTINGS_CODEC = JSONCodec(
 )
 
 OPENFF_QUANTITY_CODEC = JSONCodec(
-    cls=openff.units.units.Quantity,
-    to_dict=lambda obj: {'magnitude': obj.m, 'unit': obj.u},
-    from_dict=lambda dct: dct['magnitude'] * dct['unit']
+    cls=None,
+    to_dict=lambda obj: {'magnitude': obj.m, 'unit': obj.u, ":is_custom:": True,
+        "pint_unit_registry": "openff_units",},
+    from_dict=lambda dct: dct['magnitude'] * dct['unit'],
+    is_my_obj=is_openff_quantity,
+    is_my_dict=is_openff_quantity_dict,
 )
 
 OPENFF_UNIT_CODEC = JSONCodec(
-    cls=openff.units.units.Unit,
-    to_dict=lambda obj: {'unit': str(obj)},
-    from_dict=lambda dct: getattr(openff.units.unit, dct['unit']),
+    cls=None,
+    to_dict=openff_unit_to_dict,
+    from_dict=openff_unit_from_dict,
+    is_my_obj=is_openff_unit,
+    is_my_dict=is_openff_unit_dict,
 )
