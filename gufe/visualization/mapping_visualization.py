@@ -1,11 +1,17 @@
-# This code is part of gufe and is licensed under the MIT license.
-# For details, see https://github.com/OpenFreeEnergy/openfe
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 from typing import Any, Collection, Optional
 from itertools import chain
 
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import AllChem
+
+
+# highlight core element changes differently from unique atoms
+# RGBA color value needs to be between 0 and 1, so divide by 255
+RED = (220 / 255, 50 / 255, 32 / 255, 1.0)
+BLUE = (0.0, 90 / 255, 181 / 255, 1.0)
 
 
 def _match_elements(
@@ -56,14 +62,15 @@ def _get_unique_bonds_and_atoms(
     -------
     uniques : dict
         Dictionary containing; unique atoms ("atoms"), new elements
-        ("elements"), and bonds involved with either of the previous two
-        ("bonds") for molecule 1.
+        ("elements"), deleted bonds ("bond_deletions) and altered bonds
+        ("bond_changes) for molecule 1.
     """
 
     uniques: dict[str, set] = {
         "atoms": set(),  # atoms which fully don't exist in molB
         "elements": set(),  # atoms which exist but change elements in molB
-        "bonds": set(),  # bonds involving either unique atoms or elements
+        "bond_deletions": set(),  # bonds which are removed
+        "bond_changes": set(),  # bonds which change
     }
 
     for at in mol1.GetAtoms():
@@ -78,7 +85,11 @@ def _get_unique_bonds_and_atoms(
         for at in chain(uniques["atoms"], uniques["elements"]):
             if at in bond_at_idxs:
                 bond_idx = bond.GetIdx()
-                uniques["bonds"].add(bond_idx)
+
+                if any(i in uniques["atoms"] for i in bond_at_idxs):
+                    uniques["bond_deletions"].add(bond_idx)
+                else:
+                    uniques["bond_changes"].add(bond_idx)
 
     return uniques
 
@@ -89,6 +100,7 @@ def _draw_molecules(
     atoms_list: Collection[set[int]],
     bonds_list: Collection[set[int]],
     atom_colors: Collection[dict[Any, tuple[float, float, float, float]]],
+    bond_colors: Collection[dict[int, tuple[float, float, float, float]]],
     highlight_color: tuple[float, float, float, float],
     atom_mapping: Optional[dict[tuple[int, int], dict[int, int]]] = None,
 ) -> str:
@@ -100,7 +112,7 @@ def _draw_molecules(
     d2d :
         renderer to draw the molecule; currently we only support
         rdkit.rdMolDraw2D
-    mols : Collection[Chem.Mol]
+    mols : Collection[RDKitMol]
         molecules to visualize
     atoms_list: Collection[Set[int]]
         iterable containing one set per molecule in ``mols``, with each set
@@ -113,6 +125,8 @@ def _draw_molecules(
         dict containing a mapping of RDKit atom to color, expressed as an
         RGBA tuple, for atoms that need special coloring (e.g., element
         changes)
+    bond_colors: Collection[dict[int, tuple[float, float, float, float]]]
+        one dict for each molecule, each dict mapping
     highlight_color: Tuple[float, float, float, float]
         RGBA tuple for the default highlight color used in the mapping
         visualization
@@ -155,6 +169,7 @@ def _draw_molecules(
         highlightAtoms=atoms_list,
         highlightBonds=bonds_list,
         highlightAtomColors=atom_colors,
+        highlightBondColors=bond_colors,
     )
     d2d.FinishDrawing()
     return d2d.GetDrawingText()
@@ -196,18 +211,19 @@ def draw_mapping(
         mol1_uniques["atoms"] | mol1_uniques["elements"],
         mol2_uniques["atoms"] | mol2_uniques["elements"],
     ]
+    bonds_list = [
+        mol1_uniques["bond_deletions"] | mol1_uniques["bond_changes"],
+        mol2_uniques["bond_deletions"] | mol2_uniques["bond_changes"],
+    ]
 
-    # highlight core element changes differently from unique atoms
-    # RGBA color value needs to be between 0 and 1, so divide by 255
-    red = (220 / 255, 50 / 255, 32 / 255, 1.0)
-    blue = (0.0, 90 / 255, 181 / 255, 1.0)
-
-    at1_colors = {at: blue for at in mol1_uniques["elements"]}
-    at2_colors = {at: blue for at in mol2_uniques["elements"]}
+    at1_colors = {at: BLUE for at in mol1_uniques["elements"]}
+    at2_colors = {at: BLUE for at in mol2_uniques["elements"]}
+    bd1_colors = {bd: BLUE for bd in mol1_uniques["bond_changes"]}
+    bd2_colors = {bd: BLUE for bd in mol2_uniques["bond_changes"]}
 
     atom_colors = [at1_colors, at2_colors]
+    bond_colors = [bd1_colors, bd2_colors]
 
-    bonds_list = [mol1_uniques["bonds"], mol2_uniques["bonds"]]
 
     return _draw_molecules(
         d2d,
@@ -215,7 +231,8 @@ def draw_mapping(
         atoms_list=atoms_list,
         bonds_list=bonds_list,
         atom_colors=atom_colors,
-        highlight_color=red,
+        bond_colors=bond_colors,
+        highlight_color=RED,
         atom_mapping={(0, 1): mol1_to_mol2},
     )
 
@@ -243,18 +260,18 @@ def draw_one_molecule_mapping(mol1_to_mol2, mol1, mol2, d2d=None):
     """
     uniques = _get_unique_bonds_and_atoms(mol1_to_mol2, mol1, mol2)
     atoms_list = [uniques["atoms"] | uniques["elements"]]
-    bonds_list = [uniques["bonds"]]
-    red = (220 / 255, 50 / 255, 32 / 255, 1.0)
-    blue = (0, 90 / 255, 181 / 255, 1.0)
+    bonds_list = [uniques["bond_deletions"] | uniques["bond_changes"]]
 
-    atom_colors = [{at: blue for at in uniques["elements"]}]
+    atom_colors = [{at: BLUE for at in uniques["elements"]}]
+    bond_colors = [{bd: BLUE for bd in uniques["bond_changes"]}]
 
     return _draw_molecules(d2d,
                            [mol1],
                            atoms_list,
                            bonds_list,
                            atom_colors,
-                           red,
+                           bond_colors,
+                           RED,
                            )
 
 
@@ -280,5 +297,6 @@ def draw_unhighlighted_molecule(mol, d2d=None):
         atoms_list=[[]],
         bonds_list=[[]],
         atom_colors=[{}],
+        bond_colors=[{}],
         highlight_color=red,
     )
