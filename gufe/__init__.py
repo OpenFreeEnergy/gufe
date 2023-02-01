@@ -6,6 +6,8 @@ __version__ = _version.get_versions()['version']
 
 from . import tokenization
 
+from . import visualization
+
 from .components import (
     Component, 
     SmallMoleculeComponent, 
@@ -18,6 +20,7 @@ from .chemicalsystem import ChemicalSystem
 from .mapping import (
     ComponentMapping,  # how individual Components relate
     AtomMapping, AtomMapper,  # more specific to atom based components
+    LigandAtomMapping,
 )
 from .protocols import (
     Protocol,  # description of a method
