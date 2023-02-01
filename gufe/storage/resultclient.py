@@ -12,6 +12,12 @@ from ..tokenization import (
     get_all_gufe_objs, key_decode_dependencies, from_dict
 )
 
+
+GUFEKEY_JSON_REGEX = re.compile(
+    '":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"'
+)
+
+
 class _ResultContainer(abc.ABC):
     """
     Abstract class, represents all data under some level of the heirarchy.
@@ -146,10 +152,6 @@ class ResultClient(_ResultContainer):
 
     def _load_gufe_tokenizable(self, prefix, gufe_key):
         """generic function to load deduplicated object from a key"""
-        # move to module-level constant if we keep this approach
-        regex = re.compile(
-            '":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"'
-        )
         registry = {}
 
         def recursive_build_object_cache(gufe_key):
@@ -165,7 +167,7 @@ class ResultClient(_ResultContainer):
             dct = json.loads(keyencoded_json)
             # this implementation may seem strange, but it will be a
             # faster than traversing the dict
-            key_encoded = set(regex.findall(keyencoded_json))
+            key_encoded = set(GUFEKEY_JSON_REGEX.findall(keyencoded_json))
 
             # this approach takes the dct instead of the json str
             # found = []
