@@ -531,6 +531,31 @@ def key_decode_dependencies(
     return from_dict(dct)
 
 
+def get_all_gufe_objs(obj):
+    """For GufeTokenizable obj, get all contained GufeTokenizables.
+
+    This is useful when deduplicating GufeTokenizables for serialization.
+
+    Parameters
+    ----------
+    obj: :class:`.GufeTokenizable`
+        the container tokenizable
+
+    Returns
+    -------
+    Set[:class:`.GufeTokenizable`]
+        all contained GufeTokenizables
+    """
+    results = {obj}
+    def modifier(o):
+        results.add(o)
+        return o.to_shallow_dict()
+
+    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj,
+                            mode='encode')
+    return results
+
+
 def tokenize(obj: GufeTokenizable) -> str:
     """Generate a deterministic, relatively-stable token from a
     `GufeTokenizable` object.
