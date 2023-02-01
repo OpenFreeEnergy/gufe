@@ -12,10 +12,11 @@ from gufe.custom_codecs import (
     OPENFF_QUANTITY_CODEC,
     OPENFF_UNIT_CODEC,
 )
-from openff.units import unit, Quantity
+from gufe.settings import models
 import json
 import pathlib
 import pytest
+import openff.units
 
 
 import numpy as np
@@ -122,12 +123,12 @@ class TestPathCodec(CustomJSONCodingTest):
     def setup(self):
         self.codec = PATH_CODEC
         self.objs = [
-            pathlib.Path("foo/bar"),
+            pathlib.PosixPath("foo/bar"),
         ]
         self.dcts = [
             {
                 ":is_custom:": True,
-                "__class__": "Path",
+                "__class__": "PosixPath",
                 "__module__": "pathlib",
                 "path": "foo/bar",
             }
@@ -135,24 +136,42 @@ class TestPathCodec(CustomJSONCodingTest):
 
 
 class TestSettingsCodec(CustomJSONCodingTest):
-    pass
+    def setup(self):
+        self.codec = SETTINGS_CODEC
+        self.objs = [
+            models.Settings.get_defaults(),
+        ]
+        self.dcts = [
+                {},
+                ]
+
 
 
 class TestOpenFFQuanityCodec(CustomJSONCodingTest):
-    pass
+    def setup(self):
+        self.codec = OPENFF_QUANTITY_CODEC
+        self.objs = [
+            openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
+        ]
+        self.dcts = [
+            {':is_custom:': True,
+              'magnitude': 1.0,
+              'pint_unit_registry': 'openff_units',
+              'unit': "kilogram * meter / second ** 2"
+              },
+        ]
 
 
 class TestOpenFFUnitCodec(CustomJSONCodingTest):
     def setup(self):
         self.codec = OPENFF_UNIT_CODEC
         self.objs = [
-            unit.amu,
+            openff.units.unit.amu,
         ]
         self.dcts = [
             {
                 ":is_custom:": True,
-                "__class__": "Unit",
-                "__module__": "pint.util",
-                "unit": "unified_atomic_mass_unit",
+                "pint_unit_registry": "openff_units",
+                "unit_name": "unified_atomic_mass_unit",
             }
         ]

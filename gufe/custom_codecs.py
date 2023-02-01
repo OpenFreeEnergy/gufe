@@ -11,7 +11,6 @@ from gufe.custom_json import JSONCodec
 from gufe.settings.models import SettingsBaseModel
 import openff.units
 import functools
-import pint.util
 from openff.units import DEFAULT_UNIT_REGISTRY
 
 def default_from_dict(dct):
@@ -59,9 +58,9 @@ def openff_unit_from_dict(dct):
     return openff.units.DEFAULT_UNIT_REGISTRY(dct["unit_name"]).u
 
 PATH_CODEC = JSONCodec(
-    cls=pathlib.Path,
+    cls=pathlib.PosixPath,
     to_dict=lambda p: {'path': str(p)},
-    from_dict=lambda dct: pathlib.Path(dct['path'])
+    from_dict=lambda dct: pathlib.PosixPath(dct['path'])
 )
 
 BYTES_CODEC = JSONCodec(
@@ -93,9 +92,9 @@ SETTINGS_CODEC = JSONCodec(
 
 OPENFF_QUANTITY_CODEC = JSONCodec(
     cls=None,
-    to_dict=lambda obj: {'magnitude': obj.m, 'unit': obj.u, ":is_custom:": True,
+    to_dict=lambda obj: {'magnitude': obj.m, 'unit': str(obj.u), ":is_custom:": True,
         "pint_unit_registry": "openff_units",},
-    from_dict=lambda dct: dct['magnitude'] * dct['unit'],
+    from_dict=lambda dct: openff.units.DEFAULT_UNIT_REGISTRY(f"{dct['magnitude']} * {dct['unit']}"),
     is_my_obj=is_openff_quantity,
     is_my_dict=is_openff_quantity_dict,
 )
