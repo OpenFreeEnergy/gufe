@@ -144,43 +144,72 @@ class TestResultClient(_ResultContainerTest):
     def test_store_protocol_dag_result(self):
         pytest.skip("Not implemented yet")
 
+    @staticmethod
+    def _test_store_load_same_process(obj, store_func_name, load_func_name):
+        store = MemoryStorage()
+        client = ResultClient(store)
+        store_func = getattr(client, store_func_name)
+        load_func = getattr(client, load_func_name)
+        assert store._data == {}
+        store_func(obj)
+        assert store._data != {}
+        reloaded = load_func(obj.key)
+        assert reloaded is obj
+
+    @staticmethod
+    def _test_store_load_different_process(obj, store_func_name,
+                                           load_func_name):
+        store = MemoryStorage()
+        client = ResultClient(store)
+        store_func = getattr(client, store_func_name)
+        load_func = getattr(client, load_func_name)
+        assert store._data == {}
+        store_func(obj)
+        assert store._data != {}
+        # make it look like we have an empty cache, as if this was a
+        # different process
+        key = obj.key
+        registry_dict = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(registry_dict, {}, clear=True):
+            reload = load_func(key)
+            assert reload == obj
+            assert reload is not obj
+
+
     @pytest.mark.parametrize("fixture", [
         "absolute_transformation",
         "complex_equilibrium",
     ])
     def test_store_load_transformation_same_process(self, request, fixture):
         transformation = request.getfixturevalue(fixture)
-        store = MemoryStorage()
-        client = ResultClient(store)
-        assert store._data == {}
-        client.store_transformation(transformation)
-        assert store._data != {}
-        # this tests that we can reload identical object in the same process
-        reload1 = client.load_transformation(transformation.key)
-        assert reload1 is transformation
-
-        pytest.skip()
+        self._test_store_load_same_process(transformation,
+                                           "store_transformation",
+                                           "load_transformation")
 
     @pytest.mark.parametrize('fixture', [
         "absolute_transformation",
         "complex_equilibrium",
     ])
     def test_store_load_transformation_different_process(self, request,
-                                                         fixture):
+                                                        fixture):
         transformation = request.getfixturevalue(fixture)
-        store = MemoryStorage()
-        client = ResultClient(store)
-        assert store._data == {}
-        client.store_transformation(transformation)
-        assert store._data != {}
-        # make it look like we have an empty cache, as if this was a
-        # different process
-        key = transformation.key
-        registry_dict = "gufe.tokenization.TOKENIZABLE_REGISTRY"
-        with mock.patch.dict(registry_dict, {}, clear=True):
-            reload = client.load_transformation(key)
-            assert reload == transformation
-            assert reload is not transformation
+        self._test_store_load_different_process(transformation,
+                                                "store_transformation",
+                                                "load_transformation")
+
+    @pytest.mark.parametrize("fixture", ["benzene_variants_star_map"])
+    def test_store_load_network_same_process(self, request, fixture):
+        network = request.getfixturevalue(fixture)
+        self._test_store_load_same_process(network,
+                                           "store_network",
+                                           "load_network")
+
+    @pytest.mark.parametrize("fixture", ["benzene_variants_star_map"])
+    def test_store_load_network_different_process(self, request, fixture):
+        network = request.getfixturevalue(fixture)
+        self._test_store_load_different_process(network,
+                                                "store_network",
+                                                "load_network")
 
     def test_delete(self, result_client):
         file_to_delete = self.expected_files[0]

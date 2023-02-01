@@ -22,6 +22,9 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
         assert not nx.is_weakly_connected(alnet.graph)
         assert nx.number_weakly_connected_components(alnet.graph) == 2
 
+    def test_hashable(self, benzene_variants_star_map):
+        {benzene_variants_star_map}
+
     def test_connectivity(self, benzene_variants_star_map):
         alnet = benzene_variants_star_map
 
