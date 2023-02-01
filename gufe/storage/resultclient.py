@@ -9,23 +9,8 @@ from .resultserver import ResultServer
 from .metadatastore import JSONMetadataStore
 
 from ..tokenization import (
-    is_gufe_obj, key_decode_dependencies, modify_dependencies, from_dict
+    get_all_gufe_objs, key_decode_dependencies, from_dict
 )
-
-############## MOVE TO BASE? ###############################################
-# currently waiting until #39 gets merged; this is needed here, but don't
-# want to add to the to-do list on that PR, or to create merge conflicts
-def get_all_gufe_objs(obj):
-    results = {obj}
-    def modifier(o):
-        results.add(o)
-        return o.to_shallow_dict()
-
-    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj,
-                            mode='encode')
-    return results
-############################################################################
-
 
 class _ResultContainer(abc.ABC):
     """
@@ -119,6 +104,7 @@ class ResultClient(_ResultContainer):
 
     @staticmethod
     def _gufe_key_to_storage_key(prefix, key):
+        """Create the storage key from the gufe key"""
         prefix = prefix.split('/')  # remove this if we switch to tuples
         cls, token = key.split('-')
         tup = tuple(list(prefix) + [cls, f"{token}.json"])
@@ -127,6 +113,7 @@ class ResultClient(_ResultContainer):
         return "/".join(tup)
 
     def _store_gufe_tokenizable(self, prefix, obj):
+        """generic function for deduplicating/storing a GufeTokenizable"""
         for o in get_all_gufe_objs(obj):
             key = self._gufe_key_to_storage_key(prefix, o.key)
 
@@ -138,12 +125,27 @@ class ResultClient(_ResultContainer):
                 self.result_server.store_bytes(key, data)
 
     def store_transformation(self, transformation):
+        """Store a :class:`.Transformation`.
+
+        Parmeters
+        ---------
+        transformation: :class:`.Transformation`
+            the transformation to store
+        """
         self._store_gufe_tokenizable("setup", transformation)
 
     def store_network(self, network):
+        """Store a :class:`.AlchemicalNetwork`.
+
+        Parmeters
+        ---------
+        network: :class:`.AlchemicalNetwork`
+            the network to store
+        """
         self._store_gufe_tokenizable("setup", network)
 
     def _load_gufe_tokenizable(self, prefix, gufe_key):
+        """generic function to load deduplicated object from a key"""
         # move to module-level constant if we keep this approach
         regex = re.compile(
             '":gufe-key:": "(?P<token>[A-Za-z0-9_]+-[0-9a-f]+)"'
@@ -191,9 +193,33 @@ class ResultClient(_ResultContainer):
         return recursive_build_object_cache(gufe_key)
 
     def load_transformation(self, key: str):
+        """Load a :class:`.Transformation` from its GufeKey
+
+        Parameters
+        ----------
+        key: str
+            the gufe key for this object
+
+        Returns
+        -------
+        :class:`.Transformation`
+            the desired transformation
+        """
         return self._load_gufe_tokenizable("setup", key)
 
     def load_network(self, key: str):
+        """Load a :class:`.AlchemicalNetwork` from its GufeKey
+
+        Parameters
+        ----------
+        key: str
+            the gufe key for this object
+
+        Returns
+        -------
+        :class:`.AlchemicalNetwork`
+            the desired network
+        """
         return self._load_gufe_tokenizable("setup", key)
 
     def _load_next_level(self, transformation):
