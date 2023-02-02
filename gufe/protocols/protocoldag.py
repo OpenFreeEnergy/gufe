@@ -67,7 +67,7 @@ class DAGMixin:
         return list(self._iterate_dag_order(self._graph))
 
     @property
-    def transformation_key(self) -> GufeKey:
+    def transformation_key(self) -> Union[GufeKey, None]:
         """The `GufeKey` of the `Transformation` this object performs.
 
         This functions as a label, indicating where this object came from.
@@ -76,7 +76,7 @@ class DAGMixin:
         return self._transformation_key
 
     @property
-    def extends_key(self) -> GufeKey:
+    def extends_key(self) -> Union[GufeKey, None]:
         """The `GufeKey` of the `ProtocolDAGResult` this object extends.
 
         This functions as a label, indicating where this object came from.
