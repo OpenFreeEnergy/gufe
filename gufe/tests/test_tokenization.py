@@ -7,7 +7,8 @@ import json
 
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
-    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER
+    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER,
+    get_all_gufe_objs,
 )
 
 
@@ -276,6 +277,14 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             expected += debug_log
 
         assert results == expected
+
+
+def test_get_all_gufe_objs():
+    leaf = Leaf("foo")
+    bar = Leaf(leaf)
+    cont = Container(bar, [leaf, 0], {"leaf": leaf, "a": "b"})
+    all_objs = get_all_gufe_objs(cont)
+    assert all_objs == {cont, bar, leaf}
 
 
 class Outer:
