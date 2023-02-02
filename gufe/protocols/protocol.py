@@ -194,9 +194,9 @@ class Protocol(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Union[dict[str, ComponentMapping], None],
-        transformation: Union[GufeKey, None],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
+        transformation_key: Optional[GufeKey] = None
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -224,6 +224,12 @@ class Protocol(GufeTokenizable):
             extension from a previously-run `ProtocolDAG`.
         name : Optional[str]
             A user supplied identifier for the resulting DAG
+        transformation_key : Optional[GufeKey]
+            Key of the `Transformation` that this `Protocol` corresponds to, if
+            applicable. This will be used to label the resulting `ProtocolDAG`,
+            and can be used for identifying its source. This label will be
+            passed on to the `ProtocolDAGResult` resulting from execution of
+            this `ProtocolDAG`.
 
         Returns
         -------
@@ -239,8 +245,8 @@ class Protocol(GufeTokenizable):
                 mapping=mapping,
                 extends=extends,
             ),
-            transformation=transformation,
-            extends=extends.key if extends is not None else None
+            transformation_key=transformation_key,
+            extends_key=extends.key if extends is not None else None
         )
 
     def gather(

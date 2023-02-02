@@ -24,8 +24,13 @@ class DAGMixin:
     _name: Optional[str]
     _graph: nx.DiGraph
 
-    _transformation: Union[GufeKey, None]
-    _extends: Optional[GufeKey]
+    # labels for identifying source of this DAG
+
+    ## key of the Transformation that this DAG corresponds to
+    _transformation_key: Union[GufeKey, None]
+
+    ## key of the ProtocolDAG this DAG extends
+    _extends_key: Optional[GufeKey]
 
     @staticmethod 
     def _build_graph(nodes):
@@ -62,18 +67,24 @@ class DAGMixin:
         return list(self._iterate_dag_order(self._graph))
 
     @property
-    def transformation(self) -> GufeKey:
+    def transformation_key(self) -> GufeKey:
         """The `GufeKey` of the `Transformation` this object performs.
 
+        This functions as a label, indicating where this object came from.
+
         """
-        return self._transformation
+        return self._transformation_key
 
     @property
-    def extends(self) -> GufeKey:
+    def extends_key(self) -> GufeKey:
         """The `GufeKey` of the `ProtocolDAGResult` this object extends.
 
+        This functions as a label, indicating where this object came from.
+        It can be used to reconstruct the set of extension relationships
+        between a collection of ProtocolDAG
+
         """
-        return self._extends
+        return self._extends_key
 
 
 class ProtocolDAGResult(GufeTokenizable, DAGMixin):
@@ -98,6 +109,15 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     result_graph : nx.DiGraph
         Graph of `ProtocolUnitResult`s as nodes, with directed edges to each
         `ProtocolUnitResult`'s dependencies.
+    transformation_key : Union[GufeKey, None]
+        Key of the `Transformation` that this `ProtocolDAGResult` corresponds
+        to, if applicable. This functions as a label for identifying the source
+        of this `ProtocolDAGResult`.
+    extends_key : Optional[GufeKey]
+        Key of the `ProtocolDAGResult` that this `ProtocolDAGResult` extends from.
+        This functions as a label for identifying the source of this `ProtocolDAGResult`;
+        it can be used to reconstruct the tree of extensions from a collection
+        of `ProtocolUnitResult`s.
 
     """
     _protocol_unit_results: list[ProtocolUnitResult]
@@ -110,16 +130,16 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         *,
         protocol_units: list[ProtocolUnit],
         protocol_unit_results: list[ProtocolUnitResult],
-        transformation: Union[GufeKey, None],
-        extends: Optional[GufeKey] = None,
+        transformation_key: Union[GufeKey, None],
+        extends_key: Optional[GufeKey] = None,
         name: Optional[str] = None,
     ):
         self._name = name
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
 
-        self._transformation = GufeKey(transformation) if transformation is not None else None
-        self._extends = GufeKey(extends) if extends is not None else None
+        self._transformation_key = GufeKey(transformation_key) if transformation_key is not None else None
+        self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
@@ -146,8 +166,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return {'name': self.name,
                 'protocol_units': self._protocol_units,
                 'protocol_unit_results': self._protocol_unit_results,
-                'transformation': self._transformation,
-                'extends': self._extends}
+                'transformation_key': self._transformation_key,
+                'extends_key': self._extends_key}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -270,6 +290,16 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     graph : nx.DiGraph
         Graph of `ProtocolUnit`s as nodes, with directed edges to each
         `ProtocolUnit`'s dependencies.
+    transformation_key : Union[GufeKey, None]
+        Key of the `Transformation` that this `ProtocolDAG` corresponds to, if
+        applicable. This functions as a label for identifying the source of
+        this `ProtocolDAG`. This label will be passed on to the
+        `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
+    extends_key : Optional[GufeKey]
+        Key of the `ProtocolDAGResult` that this `ProtocolDAG` extends from.
+        This functions as a label for identifying the source of this
+        `ProtocolDAG`. This label will be passed on to the
+        `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
 
     """
 
@@ -277,8 +307,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self,
         *,
         protocol_units: list[ProtocolUnit],
-        transformation: Union[GufeKey, None],
-        extends: Optional[GufeKey] = None,
+        transformation_key: Union[GufeKey, None],
+        extends_key: Optional[GufeKey] = None,
         name: Optional[str] = None,
     ):
         """Create a new `ProtocolDAG`.
@@ -295,8 +325,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self._name = name
         self._protocol_units = protocol_units
 
-        self._transformation = GufeKey(transformation) if transformation is not None else None
-        self._extends = GufeKey(extends) if extends is not None else None
+        self._transformation_key = GufeKey(transformation_key) if transformation_key is not None else None
+        self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
@@ -309,8 +339,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     def _to_dict(self):
         return {'name': self.name,
                 'protocol_units': self.protocol_units,
-                'transformation': self._transformation,
-                'extends': self._extends}
+                'transformation_key': self._transformation_key,
+                'extends_key': self._extends_key}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -372,8 +402,8 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
             name=protocoldag.name, 
             protocol_units=protocoldag.protocol_units, 
             protocol_unit_results=list(results.values()),
-            transformation=protocoldag.transformation,
-            extends=protocoldag.extends)
+            transformation_key=protocoldag.transformation_key,
+            extends_key=protocoldag.extends_key)
 
 
 def _pu_to_pur(
