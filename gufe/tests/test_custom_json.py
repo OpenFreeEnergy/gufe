@@ -141,10 +141,50 @@ class TestSettingsCodec(CustomJSONCodingTest):
         self.objs = [
             models.Settings.get_defaults(),
         ]
+        true = True
+        null = None
+        false = False
         self.dcts = [
-                {},
-                ]
-
+            {
+              "__class__": "Settings",
+              "__module__": "gufe.settings.models",
+              ":is_custom:": true,
+              "settings_version": 0,
+              "forcefield_settings": {
+                "__class__": "OpenMMSystemGeneratorFFSettings",
+                "__module__": "gufe.settings.models",
+                ":is_custom:": true,
+                "forcefield_kwargs": {
+                  "constraints": "app.HBonds",
+                  "rigidWater": true,
+                  "removeCMMotion": false,
+                  "hydrogenMass": "4*unit.amu"
+                },
+                "forcefields": [
+                  "amber/ff14SB.xml",
+                  "amber/tip3p_standard.xml",
+                  "amber/tip3p_HFE_multivalent.xml",
+                  "amber/phosaa10.xml"
+                ],
+                "small_molecule_forcefield": "openff-2.0.0"
+              },
+              "thermo_settings": {
+                "__class__": "ThermoSettings",
+                "__module__": "gufe.settings.models",
+                ":is_custom:": true,
+                "temperature": {
+                  "magnitude": 300,
+                  "unit": "kelvin",
+                  ":is_custom:": true,
+                  "pint_unit_registry": "openff_units"
+                },
+                "pressure": null,
+                "ph": null,
+                "redox_potential": null
+              },
+              "protocol_settings": null
+            }
+        ]
 
 
 class TestOpenFFQuanityCodec(CustomJSONCodingTest):
