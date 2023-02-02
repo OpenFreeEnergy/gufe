@@ -144,7 +144,7 @@ class Transformation(GufeTokenizable):
             mapping=self.mapping,
             extends=extends,
             name=name,
-            transformation=self.key,
+            transformation_key=self.key,
         )
 
     def gather(
@@ -296,5 +296,5 @@ class NonTransformation(Transformation):
             mapping=None,
             extends=extends,
             name=name,
-            transformation=self.key,
+            transformation_key=self.key,
         )
