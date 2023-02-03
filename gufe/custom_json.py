@@ -34,7 +34,7 @@ class JSONCodec(object):
     """
     def __init__(
         self,
-        cls: type,
+        cls: Union[type, None],
         to_dict: Callable[[Any], Dict],
         from_dict: Callable[[Dict], Any],
         is_my_obj: Optional[Callable[[Any], bool]] = None,
