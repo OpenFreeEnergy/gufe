@@ -6,8 +6,9 @@ json round trip, and physical unit testing belongs here.
 
 import json
 
-from gufe.settings.models import Settings
 from openff.units import unit
+
+from gufe.settings.models import Settings
 
 
 def test_model_schema():

@@ -4,25 +4,35 @@
 The machinery for tokenizing gufe objects live in this module.
 """
 import abc
+import copy
 import datetime
 import hashlib
 import importlib
-from pathlib import Path
 import inspect
-import copy
-import logging
 import json
-from typing import Dict, Any, Callable, Union, List, Tuple
+import logging
 import weakref
-from gufe.custom_json import JSONSerializerDeserializer
-from gufe.custom_codecs import (
-    PATH_CODEC, NUMPY_CODEC, BYTES_CODEC, SETTINGS_CODEC, OPENFF_UNIT_CODEC,
-    OPENFF_QUANTITY_CODEC
-)
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Tuple, Union
 
-_default_json_codecs = [PATH_CODEC, NUMPY_CODEC, BYTES_CODEC,
-                        SETTINGS_CODEC, OPENFF_UNIT_CODEC,
-                        OPENFF_QUANTITY_CODEC]
+from gufe.custom_codecs import (
+    BYTES_CODEC,
+    NUMPY_CODEC,
+    OPENFF_QUANTITY_CODEC,
+    OPENFF_UNIT_CODEC,
+    PATH_CODEC,
+    SETTINGS_CODEC,
+)
+from gufe.custom_json import JSONSerializerDeserializer
+
+_default_json_codecs = [
+    PATH_CODEC,
+    NUMPY_CODEC,
+    BYTES_CODEC,
+    SETTINGS_CODEC,
+    OPENFF_UNIT_CODEC,
+    OPENFF_QUANTITY_CODEC,
+]
 JSON_HANDLER = JSONSerializerDeserializer(_default_json_codecs)
 
 # maps qualified name strings to the class

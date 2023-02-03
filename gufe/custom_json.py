@@ -3,11 +3,9 @@
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
 
-from typing import (
-    Tuple, Callable, Iterable, Dict, Any, List, Type, Optional, Union,
-)
-import json
 import functools
+import json
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 
 class JSONCodec(object):
@@ -57,8 +55,11 @@ class JSONCodec(object):
     def _is_my_dict(self, dct: dict) -> bool:
         expected = ['__class__', '__module__', ':is_custom:']
         is_custom = all(exp in dct for exp in expected)
-        return (is_custom and dct['__class__'] == self.cls.__name__  # type: ignore [union-attr]
-                and dct['__module__'] == self.cls.__module__)
+        return (
+            is_custom
+            and dct["__class__"] == self.cls.__name__  # type: ignore [union-attr]
+            and dct["__module__"] == self.cls.__module__
+        )
 
     def _is_my_obj(self, obj: Any) -> bool:
         return isinstance(obj, self.cls)  # type: ignore [arg-type]
@@ -67,11 +68,13 @@ class JSONCodec(object):
         if self.is_my_obj(obj):
             dct = {}
             if self.cls:
-                dct.update({
-                    '__class__': obj.__class__.__qualname__,
-                    '__module__': obj.__class__.__module__,
-                    ':is_custom:': True,
-                })
+                dct.update(
+                    {
+                        "__class__": obj.__class__.__qualname__,
+                        "__module__": obj.__class__.__module__,
+                        ":is_custom:": True,
+                    }
+                )
             # we let the object override __class__ and __module__ if needed
             dct.update(self.to_dict(obj))
             return dct

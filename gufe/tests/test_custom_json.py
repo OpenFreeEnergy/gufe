@@ -3,24 +3,24 @@
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
 
-from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory, JSONCodec
-from gufe.custom_codecs import (
-    PATH_CODEC,
-    BYTES_CODEC,
-    NUMPY_CODEC,
-    SETTINGS_CODEC,
-    OPENFF_QUANTITY_CODEC,
-    OPENFF_UNIT_CODEC,
-)
-from gufe.settings import models
 import json
 import pathlib
-import pytest
-import openff.units
-
 
 import numpy as np
+import openff.units
+import pytest
 from numpy import testing as npt
+
+from gufe.custom_codecs import (
+    BYTES_CODEC,
+    NUMPY_CODEC,
+    OPENFF_QUANTITY_CODEC,
+    OPENFF_UNIT_CODEC,
+    PATH_CODEC,
+    SETTINGS_CODEC,
+)
+from gufe.custom_json import JSONCodec, JSONSerializerDeserializer, custom_json_factory
+from gufe.settings import models
 
 
 class TestJSONSerializerDeserializer(object):
@@ -159,43 +159,43 @@ class TestSettingsCodec(CustomJSONCodingTest):
 
         self.full_dump = [
             {
-              "__class__": "Settings",
-              "__module__": "gufe.settings.models",
-              ":is_custom:": true,
-              "settings_version": 0,
-              "forcefield_settings": {
-                "__class__": "OpenMMSystemGeneratorFFSettings",
+                "__class__": "Settings",
                 "__module__": "gufe.settings.models",
                 ":is_custom:": true,
-                "forcefield_kwargs": {
-                  "constraints": "app.HBonds",
-                  "rigidWater": true,
-                  "removeCMMotion": false,
-                  "hydrogenMass": "4*unit.amu"
+                "settings_version": 0,
+                "forcefield_settings": {
+                    "__class__": "OpenMMSystemGeneratorFFSettings",
+                    "__module__": "gufe.settings.models",
+                    ":is_custom:": true,
+                    "forcefield_kwargs": {
+                        "constraints": "app.HBonds",
+                        "rigidWater": true,
+                        "removeCMMotion": false,
+                        "hydrogenMass": "4*unit.amu",
+                    },
+                    "forcefields": [
+                        "amber/ff14SB.xml",
+                        "amber/tip3p_standard.xml",
+                        "amber/tip3p_HFE_multivalent.xml",
+                        "amber/phosaa10.xml",
+                    ],
+                    "small_molecule_forcefield": "openff-2.0.0",
                 },
-                "forcefields": [
-                  "amber/ff14SB.xml",
-                  "amber/tip3p_standard.xml",
-                  "amber/tip3p_HFE_multivalent.xml",
-                  "amber/phosaa10.xml"
-                ],
-                "small_molecule_forcefield": "openff-2.0.0"
-              },
-              "thermo_settings": {
-                "__class__": "ThermoSettings",
-                "__module__": "gufe.settings.models",
-                ":is_custom:": true,
-                "temperature": {
-                  "magnitude": 300,
-                  "unit": "kelvin",
-                  ":is_custom:": true,
-                  "pint_unit_registry": "openff_units"
+                "thermo_settings": {
+                    "__class__": "ThermoSettings",
+                    "__module__": "gufe.settings.models",
+                    ":is_custom:": true,
+                    "temperature": {
+                        "magnitude": 300,
+                        "unit": "kelvin",
+                        ":is_custom:": true,
+                        "pint_unit_registry": "openff_units",
+                    },
+                    "pressure": null,
+                    "ph": null,
+                    "redox_potential": null,
                 },
-                "pressure": null,
-                "ph": null,
-                "redox_potential": null
-              },
-              "protocol_settings": null
+                "protocol_settings": null,
             }
         ]
         self.required_codecs = [
@@ -216,7 +216,6 @@ class TestSettingsCodec(CustomJSONCodingTest):
             assert dct == as_dct
 
 
-
 class TestOpenFFQuanityCodec(CustomJSONCodingTest):
     def setup(self):
         self.codec = OPENFF_QUANTITY_CODEC
@@ -224,11 +223,12 @@ class TestOpenFFQuanityCodec(CustomJSONCodingTest):
             openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
         ]
         self.dcts = [
-            {':is_custom:': True,
-              'magnitude': 1.0,
-              'pint_unit_registry': 'openff_units',
-              'unit': "kilogram * meter / second ** 2"
-              },
+            {
+                ":is_custom:": True,
+                "magnitude": 1.0,
+                "pint_unit_registry": "openff_units",
+                "unit": "kilogram * meter / second ** 2",
+            },
         ]
 
 
