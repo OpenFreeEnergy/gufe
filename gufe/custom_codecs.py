@@ -32,6 +32,15 @@ def inherited_is_my_dict(dct, cls):
     stored = gufe.tokenization.get_class(module, classname)
     return cls in stored.mro()
 
+def is_openff_unit_dict(dct):
+    expected = ['pint_unit_registry', 'unit_name', ':is_custom:']
+    is_custom = all(exp in dct for exp in expected)
+    return is_custom and dct['pint_unit_registry'] == "openff_units"
+
+def is_openff_quantity_dict(dct):
+    expected = ['pint_unit_registry', 'magnitude', ':is_custom:', "unit"]
+    is_custom = all(exp in dct for exp in expected)
+    return is_custom and dct['pint_unit_registry'] == "openff_units"
 
 
 
@@ -74,7 +83,7 @@ OPENFF_QUANTITY_CODEC = JSONCodec(
         "pint_unit_registry": "openff_units",},
     from_dict=lambda dct: openff.units.DEFAULT_UNIT_REGISTRY(f"{dct['magnitude']} * {dct['unit']}"),
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Quantity),
-    is_my_dict=lambda dct: all(exp in dct for exp in ['pint_unit_registry', 'magnitude', ':is_custom:', "unit"]) and dct['pint_unit_registry'] == "openff_units",
+    is_my_dict=is_openff_quantity_dict,
 )
 
 OPENFF_UNIT_CODEC = JSONCodec(
@@ -82,7 +91,5 @@ OPENFF_UNIT_CODEC = JSONCodec(
     to_dict=lambda unit: {":is_custom:": True, "pint_unit_registry": "openff_units", "unit_name": str(unit)},
     from_dict=lambda dct: openff.units.DEFAULT_UNIT_REGISTRY(dct["unit_name"]).u,
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Unit),
-    is_my_dict=lambda dct: all(
-        exp in dct for exp in ["pint_unit_registry", "unit_name", ":is_custom:"]
-            ) and dct["pint_unit_registry"] == "openff_units",
+    is_my_dict=is_openff_unit_dict,
 )
