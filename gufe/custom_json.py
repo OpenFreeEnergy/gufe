@@ -3,7 +3,9 @@
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
 
-from typing import Tuple, Callable, Iterable, Dict, Any, List, Type, Optional
+from typing import (
+    Tuple, Callable, Iterable, Dict, Any, List, Type, Optional, Union,
+)
 import json
 import functools
 
