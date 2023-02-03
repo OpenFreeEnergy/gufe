@@ -146,6 +146,19 @@ class TestSettingsCodec(CustomJSONCodingTest):
         false = False
         self.dcts = [
             {
+                "__class__": "Settings",
+                "__module__": "gufe.settings.models",
+                ":is_custom:": True,
+                "settings_version": obj.settings_version,
+                "forcefield_settings": obj.forcefield_settings,
+                "thermo_settings": obj.thermo_settings,
+                "protocol_settings": obj.protocol_settings,
+            }
+            for obj in self.objs
+        ]
+
+        self.full_dump = [
+            {
               "__class__": "Settings",
               "__module__": "gufe.settings.models",
               ":is_custom:": true,
@@ -185,6 +198,23 @@ class TestSettingsCodec(CustomJSONCodingTest):
               "protocol_settings": null
             }
         ]
+        self.required_codecs = [
+            self.codec,
+            OPENFF_QUANTITY_CODEC,
+            OPENFF_UNIT_CODEC,
+        ]
+
+    def test_round_trip(self):
+        encoder, decoder = custom_json_factory(self.required_codecs)
+        self._test_round_trip(encoder, decoder)
+
+    def test_full_dump(self):
+        encoder, _ = custom_json_factory(self.required_codecs)
+        for obj, dct in zip(self.objs, self.full_dump):
+            as_str = json.dumps(obj, cls=encoder)
+            as_dct = json.loads(as_str)  # turn off decoder here!
+            assert dct == as_dct
+
 
 
 class TestOpenFFQuanityCodec(CustomJSONCodingTest):
