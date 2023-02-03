@@ -57,11 +57,11 @@ class JSONCodec(object):
     def _is_my_dict(self, dct: dict) -> bool:
         expected = ['__class__', '__module__', ':is_custom:']
         is_custom = all(exp in dct for exp in expected)
-        return (is_custom and dct['__class__'] == self.cls.__name__
+        return (is_custom and dct['__class__'] == self.cls.__name__  # type: ignore [union-attr]
                 and dct['__module__'] == self.cls.__module__)
 
     def _is_my_obj(self, obj: Any) -> bool:
-        return isinstance(obj, self.cls)
+        return isinstance(obj, self.cls)  # type: ignore [arg-type]
 
     def default(self, obj: Any) -> Any:
         if self.is_my_obj(obj):
