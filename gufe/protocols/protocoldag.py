@@ -70,6 +70,10 @@ class DAGMixin:
     def transformation_key(self) -> Union[GufeKey, None]:
         """The `GufeKey` of the `Transformation` this object performs.
 
+        If `None`, then this object was not created from a `Transformation`.
+        This may be the case when creating a `ProtocolDAG` from a `Protocol`
+        directly, without use of a `Transformation` object.
+
         This functions as a label, indicating where this object came from.
 
         """
@@ -79,9 +83,11 @@ class DAGMixin:
     def extends_key(self) -> Union[GufeKey, None]:
         """The `GufeKey` of the `ProtocolDAGResult` this object extends.
 
+        If `None`, then this object does not extend from a result at all.
+
         This functions as a label, indicating where this object came from.
         It can be used to reconstruct the set of extension relationships
-        between a collection of ProtocolDAG
+        between a collection of ProtocolDAGs.
 
         """
         return self._extends_key
@@ -117,7 +123,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         Key of the `ProtocolDAGResult` that this `ProtocolDAGResult` extends from.
         This functions as a label for identifying the source of this `ProtocolDAGResult`;
         it can be used to reconstruct the tree of extensions from a collection
-        of `ProtocolUnitResult`s.
+        of `ProtocolUnitResult`\s.
 
     """
     _protocol_unit_results: list[ProtocolUnitResult]
