@@ -4,16 +4,13 @@
 The machinery for tokenizing gufe objects live in this module.
 """
 import abc
-import copy
-import datetime
 import hashlib
 import importlib
 import inspect
 import json
 import logging
 import weakref
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
