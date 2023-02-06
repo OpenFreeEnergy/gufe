@@ -6,11 +6,11 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Dict, List
+from typing import Optional, Iterable, Any, Dict, List, Union
 
 import networkx as nx
 
-from ..tokenization import GufeTokenizable
+from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 
@@ -159,7 +159,7 @@ class Protocol(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
@@ -190,11 +190,13 @@ class Protocol(GufeTokenizable):
 
     def create(
         self,
+        *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        mapping: Union[dict[str, ComponentMapping], None],
+        extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
+        transformation_key: Optional[GufeKey] = None
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -216,12 +218,18 @@ class Protocol(GufeTokenizable):
         mapping : Optional[dict[str, ComponentMapping]]
             Mappings of e.g. atoms between a labelled component in the
              stateA and stateB `ChemicalSystem` .
-        extend_from : Optional[ProtocolDAGResult]
+        extends : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for
             extension from a previously-run `ProtocolDAG`.
         name : Optional[str]
             A user supplied identifier for the resulting DAG
+        transformation_key : Optional[GufeKey]
+            Key of the `Transformation` that this `Protocol` corresponds to, if
+            applicable. This will be used to label the resulting `ProtocolDAG`,
+            and can be used for identifying its source. This label will be
+            passed on to the `ProtocolDAGResult` resulting from execution of
+            this `ProtocolDAG`.
 
         Returns
         -------
@@ -235,8 +243,10 @@ class Protocol(GufeTokenizable):
                 stateA=stateA,
                 stateB=stateB,
                 mapping=mapping,
-                extend_from=extend_from,
+                extends=extends,
             ),
+            transformation_key=transformation_key,
+            extends_key=extends.key if extends is not None else None
         )
 
     def gather(

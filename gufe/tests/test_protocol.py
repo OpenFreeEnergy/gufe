@@ -56,7 +56,7 @@ class FinishUnit(ProtocolUnit):
         output = [s.outputs['log'] for s in simulations]
         output.append("assembling_results")
 
-        key_results = {s.inputs['window']: s.outputs['key_result'] for s in simulations}
+        key_results = {str(s.inputs['window']): s.outputs['key_result'] for s in simulations}
 
         return dict(
             log=output,
@@ -100,15 +100,15 @@ class DummyProtocol(Protocol):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
-        # rip apart `extend_from` if needed to feed into `InitializeUnit`
-        if extend_from is not None:
+        # rip apart `extends` if needed to feed into `InitializeUnit`
+        if extends is not None:
             # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
             # any ProtocolUnits below, since this could create dependency hell;
             # instead, extract what's needed from it for starting point here
-            starting_point = extend_from.protocol_unit_results[-1].outputs['final_positions']
+            starting_point = extends.protocol_unit_results[-1].outputs['key_results']
         else:
             starting_point = None
 
@@ -139,7 +139,7 @@ class DummyProtocol(Protocol):
 
         outputs = defaultdict(list)
         for pdr in protocol_dag_results:
-            for pur in pdr.protocol_unit_results:
+            for pur in pdr.terminal_protocol_unit_results:
                 if pur.name == "the end":
                     outputs['logs'].append(pur.outputs['log'])
                     outputs['key_results'].append(pur.outputs['key_results'])
@@ -159,7 +159,7 @@ class BrokenProtocol(DummyProtocol):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
-        extend_from: Optional[ProtocolDAGResult] = None,
+        extends: Optional[ProtocolDAGResult] = None,
     ) -> nx.DiGraph:
 
         # convert protocol inputs into starting points for independent simulations
@@ -168,7 +168,7 @@ class BrokenProtocol(DummyProtocol):
             stateA=stateA,
             stateB=stateB,
             mapping=mapping,
-            start=extend_from,
+            start=extends,
         )
 
         # create several units that would each run an independent simulation
@@ -199,7 +199,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def protocol_dag(self, solvated_ligand, vacuum_ligand):
         protocol = DummyProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run",
+            mapping=None,
         )
         dagresult: ProtocolDAGResult = execute_DAG(dag)
 
@@ -209,7 +210,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def protocol_dag_broken(self, solvated_ligand, vacuum_ligand):
         protocol = BrokenProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
+            mapping=None,
         )
 
         dagfailure: ProtocolDAGResult = execute_DAG(dag, raise_error=False)
@@ -273,7 +275,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand):
         protocol = BrokenProtocol(settings=None)
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run"
+            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
+            mapping=None,
         )
 
         with pytest.raises(ValueError, match="I have failed my mission"):
@@ -290,7 +293,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(protocolresult.data['logs']) == 1
         assert len(protocolresult.data['logs'][0]) == 21 + 1
 
-        assert protocolresult.get_estimate() == 105336
+        assert protocolresult.get_estimate() == 95500.0
 
     class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
         
@@ -471,7 +474,7 @@ class NoDepsProtocol(Protocol):
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
             mapping: Optional[dict[str, ComponentMapping]] = None,
-            extend_from: Optional[ProtocolDAGResult] = None,
+            extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings,
                           val=i)
@@ -488,14 +491,14 @@ class TestNoDepProtocol:
     def test_create(self):
         p = NoDepsProtocol()
 
-        dag = p.create(None, None)
+        dag = p.create(stateA=None, stateB=None, mapping=None)
 
         assert len(dag.protocol_units) == 3
 
     def test_gather(self):
         p = NoDepsProtocol()
 
-        dag = p.create(None, None)
+        dag = p.create(stateA=None, stateB=None, mapping=None)
 
         dag_result = execute_DAG(dag)
 
@@ -510,7 +513,7 @@ class TestNoDepProtocol:
         # we have no dependencies, so this should be all three Unit results
         p = NoDepsProtocol()
 
-        dag = p.create(None, None)
+        dag = p.create(stateA=None, stateB=None, mapping=None)
 
         dag_result = execute_DAG(dag)
 
@@ -549,6 +552,7 @@ class TestProtocolDAGResult:
         dagresult = ProtocolDAGResult(
             protocol_units=units,
             protocol_unit_results=successes,
+            transformation_key=None,
         )
 
         assert dagresult.ok()
@@ -564,7 +568,8 @@ class TestProtocolDAGResult:
         # final unit has no success
         dagresult = ProtocolDAGResult(
             protocol_units=units,
-            protocol_unit_results=successes[:2] + list(itertools.chain(*failures))
+            protocol_unit_results=successes[:2] + list(itertools.chain(*failures)),
+            transformation_key=None,
         )
 
         assert not dagresult.ok()
@@ -577,6 +582,7 @@ class TestProtocolDAGResult:
         dagresult = ProtocolDAGResult(
             protocol_units=units,
             protocol_unit_results=successes + list(itertools.chain(*failures)),
+            transformation_key=None,
         )
 
         assert dagresult.ok()
@@ -593,7 +599,8 @@ class TestProtocolDAGResult:
     def test_foreign_objects(self, units, successes):
         dagresult = ProtocolDAGResult(
             protocol_units=units[:2],
-            protocol_unit_results=successes[:2]
+            protocol_unit_results=successes[:2],
+            transformation_key=None,
         )
 
         with pytest.raises(KeyError, match="No such `protocol_unit` present"):

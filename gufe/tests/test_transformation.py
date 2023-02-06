@@ -56,6 +56,23 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
         len(protocolresult.data) == 1
 
+    def test_protocol_extend(self, absolute_transformation):
+        tnf = absolute_transformation
+
+        assert isinstance(tnf.protocol, DummyProtocol)
+
+        protocoldag = tnf.create()
+        protocoldagresult = execute_DAG(protocoldag)
+
+        protocoldag2 = tnf.create(extends=protocoldagresult)
+        protocoldagresult2 = execute_DAG(protocoldag2)
+
+        protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
+
+        assert isinstance(protocolresult, DummyProtocolResult)
+
+        len(protocolresult.data) == 2
+
     def test_equality(self, absolute_transformation, solvated_ligand, solvated_complex):
 
         opposite = Transformation(
@@ -114,6 +131,23 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert isinstance(protocolresult, DummyProtocolResult)
 
         len(protocolresult.data) == 1
+
+    def test_protocol_extend(self, complex_equilibrium):
+        ntnf = complex_equilibrium
+
+        assert isinstance(ntnf.protocol, DummyProtocol)
+
+        protocoldag = ntnf.create()
+        protocoldagresult = execute_DAG(protocoldag)
+
+        protocoldag2 = ntnf.create(extends=protocoldagresult)
+        protocoldagresult2 = execute_DAG(protocoldag2)
+
+        protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
+
+        assert isinstance(protocolresult, DummyProtocolResult)
+
+        len(protocolresult.data) == 2
 
     def test_equality(self, complex_equilibrium, solvated_ligand, solvated_complex):
 
