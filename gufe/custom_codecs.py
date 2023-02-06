@@ -7,7 +7,6 @@ import functools
 import pathlib
 
 import numpy as np
-import openff.units
 from openff.units import DEFAULT_UNIT_REGISTRY
 
 import gufe
@@ -86,7 +85,7 @@ OPENFF_QUANTITY_CODEC = JSONCodec(
         ":is_custom:": True,
         "pint_unit_registry": "openff_units",
     },
-    from_dict=lambda dct: openff.units.DEFAULT_UNIT_REGISTRY(
+    from_dict=lambda dct: DEFAULT_UNIT_REGISTRY(
         f"{dct['magnitude']} * {dct['unit']}"
     ),
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Quantity),
@@ -100,7 +99,7 @@ OPENFF_UNIT_CODEC = JSONCodec(
         "pint_unit_registry": "openff_units",
         "unit_name": str(unit),
     },
-    from_dict=lambda dct: openff.units.DEFAULT_UNIT_REGISTRY(dct["unit_name"]).u,
+    from_dict=lambda dct: DEFAULT_UNIT_REGISTRY(dct["unit_name"]).u,
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Unit),
     is_my_dict=is_openff_unit_dict,
 )

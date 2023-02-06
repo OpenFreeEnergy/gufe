@@ -19,7 +19,7 @@ from gufe.custom_codecs import (
     PATH_CODEC,
     SETTINGS_CODEC,
 )
-from gufe.custom_json import JSONCodec, JSONSerializerDeserializer, custom_json_factory
+from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
 from gufe.settings import models
 
 
