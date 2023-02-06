@@ -141,9 +141,6 @@ class TestSettingsCodec(CustomJSONCodingTest):
         self.objs = [
             models.Settings.get_defaults(),
         ]
-        true = True
-        null = None
-        false = False
         self.dcts = [
             {
                 "__class__": "Settings",
@@ -161,16 +158,16 @@ class TestSettingsCodec(CustomJSONCodingTest):
             {
                 "__class__": "Settings",
                 "__module__": "gufe.settings.models",
-                ":is_custom:": true,
+                ":is_custom:": True,
                 "settings_version": 0,
                 "forcefield_settings": {
                     "__class__": "OpenMMSystemGeneratorFFSettings",
                     "__module__": "gufe.settings.models",
-                    ":is_custom:": true,
+                    ":is_custom:": True,
                     "forcefield_kwargs": {
                         "constraints": "app.HBonds",
-                        "rigidWater": true,
-                        "removeCMMotion": false,
+                        "rigidWater": True,
+                        "removeCMMotion": False,
                         "hydrogenMass": "4*unit.amu",
                     },
                     "forcefields": [
@@ -184,18 +181,18 @@ class TestSettingsCodec(CustomJSONCodingTest):
                 "thermo_settings": {
                     "__class__": "ThermoSettings",
                     "__module__": "gufe.settings.models",
-                    ":is_custom:": true,
+                    ":is_custom:": True,
                     "temperature": {
                         "magnitude": 300,
                         "unit": "kelvin",
-                        ":is_custom:": true,
+                        ":is_custom:": True,
                         "pint_unit_registry": "openff_units",
                     },
-                    "pressure": null,
-                    "ph": null,
-                    "redox_potential": null,
+                    "pressure": None,
+                    "ph": None,
+                    "redox_potential": None,
                 },
-                "protocol_settings": null,
+                "protocol_settings": None,
             }
         ]
         self.required_codecs = [
