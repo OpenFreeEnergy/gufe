@@ -6,6 +6,8 @@ json round trip, and physical unit testing belongs here.
 
 import json
 
+from openff.units import unit
+
 from gufe.settings.models import Settings
 
 
@@ -28,3 +30,10 @@ def test_json_round_trip(all_settings_path, tmp_path):
         settings_from_file = json.load(fd)
 
     assert settings == Settings.parse_raw(settings_from_file)
+
+
+def test_default_settings():
+    my_settings = Settings.get_defaults()
+    my_settings.thermo_settings.temperature = 298 * unit.kelvin
+    my_settings.json()
+    my_settings.schema_json(indent=2)
