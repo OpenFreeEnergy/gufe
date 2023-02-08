@@ -140,6 +140,16 @@ class Transformation(GufeTokenizable):
             name=str(self.key),
         )
 
+    def validate(self):
+        """Scream loudly if protocol not happy with other contents of Transformation.
+
+        """
+
+        return self.protocol.validate(
+                self.stateA,
+                self.stateB,
+                self.mapping)
+
     def gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
     ) -> ProtocolResult:
