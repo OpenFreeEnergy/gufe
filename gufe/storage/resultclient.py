@@ -122,9 +122,9 @@ class ResultClient(_ResultContainer):
             storage key (string identifier used by storage to locate this
             object)
         """
-        prefix = prefix.split('/')  # remove this if we switch to tuples
+        pref = prefix.split('/')  # remove this if we switch to tuples
         cls, token = key.split('-')
-        tup = tuple(list(prefix) + [cls, f"{token}.json"])
+        tup = tuple(list(pref) + [cls, f"{token}.json"])
         # right now we're using strings, but we've talked about switching
         # that to tuples
         return "/".join(tup)
