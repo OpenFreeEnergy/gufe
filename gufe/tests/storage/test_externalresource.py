@@ -121,7 +121,7 @@ class TestFileStorage:
 
 
 class TestMemoryStorage:
-    def setup(self):
+    def setup_method(self):
         self.contents = {'path/to/foo.txt': 'bar'.encode('utf-8')}
         self.storage = MemoryStorage()
         self.storage._data = dict(self.contents)

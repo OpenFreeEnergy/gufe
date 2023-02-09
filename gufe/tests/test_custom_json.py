@@ -23,7 +23,7 @@ from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
 from gufe.settings import models
 
 
-class TestJSONSerializerDeserializer(object):
+class TestJSONSerializerDeserializer:
     def test_add_codec(self):
         # without bytes codec, can't serialize numpy
         serialization = JSONSerializerDeserializer([NUMPY_CODEC])
@@ -44,7 +44,7 @@ class TestJSONSerializerDeserializer(object):
         assert len(serialization.codecs) == 1
 
 
-class CustomJSONCodingTest(object):
+class CustomJSONCodingTest:
     """Base class for testing codecs.
 
     In ``setup()``, user must define the following:
@@ -85,7 +85,7 @@ class CustomJSONCodingTest(object):
 
 
 class TestNumpyCoding(CustomJSONCodingTest):
-    def setup(self):
+    def setup_method(self):
         self.codec = NUMPY_CODEC
         self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0])]
         shapes = [[2, 2], [2,]]
@@ -120,7 +120,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
 
 
 class TestPathCodec(CustomJSONCodingTest):
-    def setup(self):
+    def setup_method(self):
         self.codec = PATH_CODEC
         self.objs = [
             pathlib.PosixPath("foo/bar"),
