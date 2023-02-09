@@ -103,14 +103,25 @@ class ResultClient(_ResultContainer):
     def delete(self, location):
         self._result_server.delete(location)
 
-    def store_result(self, result):
-        # I don't know how we get the path information for the protocol dag
-        # results
-        self.result_server.store(...)
-
     @staticmethod
-    def _gufe_key_to_storage_key(prefix, key):
-        """Create the storage key from the gufe key"""
+    def _gufe_key_to_storage_key(prefix: str, key: str):
+        """Create the storage key from the gufe key.
+
+        Parameters
+        ----------
+        prefix : str
+            the prefix defining which section of storage should be used for
+            this (e.g., ``setup``, ...)
+        key : str
+            the GufeKey for a GufeTokenizable (technically, is likely to be
+            passed as a :class:`.GufeKey`, which is a subclass of ``str``)
+
+        Returns
+        -------
+        str :
+            storage key (string identifier used by storage to locate this
+            object)
+        """
         prefix = prefix.split('/')  # remove this if we switch to tuples
         cls, token = key.split('-')
         tup = tuple(list(prefix) + [cls, f"{token}.json"])
