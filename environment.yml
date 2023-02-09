@@ -10,6 +10,7 @@ dependencies:
   - openeye-toolkits
   - openff-toolkit
   - openff-units >=0.2.0
+  - openff-models >=0.0.4
   - pip
   - pydantic
   - pytest
@@ -22,5 +23,3 @@ dependencies:
   - pydata-sphinx-theme
   - sphinx-pydantic
   - sphinx-jsonschema==1.15
-  - pip:
-    - git+https://github.com/mikemhenry/openff-models.git@support_nested_models
