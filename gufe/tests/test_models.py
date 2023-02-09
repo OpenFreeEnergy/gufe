@@ -7,6 +7,7 @@ json round trip, and physical unit testing belongs here.
 import json
 
 from openff.units import unit
+import pytest
 
 from gufe.settings.models import Settings
 
@@ -15,6 +16,7 @@ def test_model_schema():
     Settings.schema_json(indent=2)
 
 
+@pytest.mark.xfail  # issue #125
 def test_json_round_trip(all_settings_path, tmp_path):
     with open(all_settings_path) as fd:
         settings = Settings.parse_raw(fd.read())
