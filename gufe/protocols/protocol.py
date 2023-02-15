@@ -70,7 +70,7 @@ class ProtocolResult(GufeTokenizable):
         ...
 
 
-class Protocol(GufeTokenizable, abc.ABC):
+class Protocol(GufeTokenizable):
     """A protocol that implements an alchemical transformation.
 
     Takes a `ProtocolSettings` object specific to the protocol on init.
