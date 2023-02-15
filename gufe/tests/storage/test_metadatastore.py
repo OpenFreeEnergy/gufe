@@ -50,7 +50,7 @@ class MetadataTests:
         raise NotImplementedError("This should call self._test_delete")
 
     def _test_load_all_metadata(self, metadata):
-        expected = {'path/to/foo.txt': 'bar'}
+        expected = {'path/to/foo.txt': Metadata(md5='bar')}
         metadata._metadata_cache = {}
         loaded = metadata.load_all_metadata()
         assert loaded == expected
@@ -69,7 +69,7 @@ class MetadataTests:
         assert len(metadata) == 1
 
     def _test_getitem(self, metadata):
-        assert metadata["path/to/foo.txt"] == "bar"
+        assert metadata["path/to/foo.txt"] == Metadata(md5="bar")
 
 
 class TestJSONMetadataStore(MetadataTests):
