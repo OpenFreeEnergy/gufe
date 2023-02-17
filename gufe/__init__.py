@@ -34,3 +34,5 @@ from .protocols import (
 from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork
+
+from .settings import Settings
