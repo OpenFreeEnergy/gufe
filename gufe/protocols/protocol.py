@@ -6,9 +6,9 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Dict, List, Union
+from typing import Optional, Iterable, Any, Union
+from openff.units import Quantity
 
-import networkx as nx
 
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
@@ -32,7 +32,7 @@ class ProtocolResult(GufeTokenizable):
 
     Attributes
     ----------
-    data : Dict[str,Any]
+    data : dict[str,Any]
         Aggregated data contents from multiple `ProtocolDAGResult`s.
         The structure of this data is specific to the `Protocol` subclass each
         `ProtocolResult` subclass corresponds to.
@@ -50,7 +50,7 @@ class ProtocolResult(GufeTokenizable):
         return {'data': self.data}
 
     @classmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         return cls(**dct)
 
     @property
@@ -58,11 +58,11 @@ class ProtocolResult(GufeTokenizable):
         return self._data
 
     @abc.abstractmethod
-    def get_estimate(self):
+    def get_estimate(self) -> Quantity:
         ...
 
     @abc.abstractmethod
-    def get_uncertainty(self):
+    def get_uncertainty(self) -> Quantity:
         ...
 
     @abc.abstractmethod
@@ -129,7 +129,7 @@ class Protocol(GufeTokenizable):
         return {'settings': self.settings}
 
     @classmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         return cls(**dct)
 
     @classmethod
@@ -160,7 +160,7 @@ class Protocol(GufeTokenizable):
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
         extends: Optional[ProtocolDAGResult] = None,
-    ) -> List[ProtocolUnit]:
+    ) -> list[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
         This method should take two `ChemicalSystem`s, and optionally a
@@ -271,7 +271,7 @@ class Protocol(GufeTokenizable):
     @abc.abstractmethod
     def _gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Method to override in custom Protocol subclasses.
 
         This method should take any number of ``ProtocolDAGResult``s produced
