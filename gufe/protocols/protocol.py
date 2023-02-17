@@ -119,7 +119,9 @@ class Protocol(GufeTokenizable):
         return True
 
     def __hash__(self):
-        return hash((self.__class__.__name__, self._settings))
+        # apparently be defining a custom __eq__ here, we lose super's
+        # __hash__, and need to redefine it
+        return super().__hash__()
 
     @classmethod
     def _defaults(cls):

@@ -108,15 +108,9 @@ class Transformation(GufeTokenizable):
         return True
 
     def __hash__(self):
-        return hash(
-            (
-                self._stateA,
-                self._stateB,
-                self._mapping,
-                self._name,
-                self._protocol,
-            )
-        )
+        # apparently be defining a custom __eq__ here, we lose super's
+        # __hash__, and need to redefine it
+        return super().__hash__()
 
     def _to_dict(self) -> dict:
         return {
