@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import itertools
+from openff.units import unit
 from typing import Optional, Iterable, List, Dict, Any, Union
 from collections import defaultdict
 
@@ -11,6 +12,7 @@ import numpy as np
 
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import ComponentMapping
+from gufe import settings
 from gufe.protocols import (
     Protocol,
     ProtocolDAG,
@@ -64,6 +66,10 @@ class FinishUnit(ProtocolUnit):
         )
 
 
+class DummySpecificSettings(settings.ProtocolSettings):
+    n_repeats: int
+
+
 class DummyProtocolResult(ProtocolResult):
     def get_estimate(self):
         # we'll pretend that the free energy estimate here is the sum of the
@@ -93,7 +99,12 @@ class DummyProtocol(Protocol):
 
     @classmethod
     def _default_settings(cls):
-        return {}
+        return settings.Settings(
+            settings_version=1,
+            thermo_settings=settings.ThermoSettings(temperature=298 * unit.kelvin),
+            forcefield_settings=settings.OpenMMSystemGeneratorFFSettings(),
+            protocol_settings=DummySpecificSettings(n_repeats=21),
+        )
 
     @classmethod
     def _defaults(cls):
@@ -128,7 +139,8 @@ class DummyProtocol(Protocol):
 
         # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
-            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha)
+            for i in range(self.settings.protocol_settings.n_repeats)
         ]
 
         # gather results from simulations, finalize outputs
@@ -193,15 +205,15 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-19d89baf539230937f5342f059eb0cc0"
+    key = "DummyProtocol-3f9fd4b151fc5ba1c8241daca2a16528"
 
     @pytest.fixture
     def instance(self):
-        return DummyProtocol(settings=None)
+        return DummyProtocol(settings=DummyProtocol.default_settings())
 
     @pytest.fixture
     def protocol_dag(self, solvated_ligand, vacuum_ligand):
-        protocol = DummyProtocol(settings=None)
+        protocol = DummyProtocol(settings=DummyProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run",
             mapping=None,
