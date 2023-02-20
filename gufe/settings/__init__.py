@@ -1,1 +1,4 @@
-from .models import Settings, ThermoSettings, OpenMMSystemGeneratorFFSettings
+from .models import (
+    Settings, ThermoSettings, OpenMMSystemGeneratorFFSettings,
+    ProtocolSettings,
+)
