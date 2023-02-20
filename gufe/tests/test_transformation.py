@@ -4,7 +4,6 @@
 import pytest
 import io
 
-from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from gufe.transformations import Transformation, NonTransformation
 from gufe.protocols.protocoldag import execute_DAG
 
