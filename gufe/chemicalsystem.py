@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import abc
+from collections import abc
 from typing import Dict, Optional
 
 import numpy as np
@@ -10,7 +10,7 @@ from .tokenization import GufeTokenizable
 from .components import Component
 
 
-class ChemicalSystem(abc.Mapping, GufeTokenizable):
+class ChemicalSystem(GufeTokenizable, abc.Mapping):
     """A node of an alchemical network.
 
     Attributes
@@ -84,7 +84,7 @@ class ChemicalSystem(abc.Mapping, GufeTokenizable):
     def __hash__(self):
         # apparently be defining a custom __eq__ here, we lose super's
         # __hash__, and need to redefine it
-        return super(GufeTokenizable, self).__hash__()
+        return super().__hash__()
 
     def _to_dict(self):
         return {
