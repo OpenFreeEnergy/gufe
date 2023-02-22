@@ -16,20 +16,21 @@ def absolute_transformation(solvated_ligand, solvated_complex):
     return Transformation(
         solvated_ligand,
         solvated_complex,
-        protocol=DummyProtocol(settings=None),
+        protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         mapping=None,
     )
 
 
 @pytest.fixture
 def complex_equilibrium(solvated_complex):
-    return NonTransformation(solvated_complex, protocol=DummyProtocol(settings=None))
+    return NonTransformation(solvated_complex,
+                             protocol=DummyProtocol(settings=DummyProtocol.default_settings()))
 
 
 class TestTransformation(GufeTokenizableTestsMixin):
 
     cls = Transformation
-    key = "Transformation-71aa10f49247f04d3efb0fd697980b46"
+    key = "Transformation-af747630b54613042022fdb183a27c14"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -53,7 +54,9 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
         assert isinstance(protocolresult, DummyProtocolResult)
 
-        len(protocolresult.data) == 1
+        assert len(protocolresult.data) == 2
+        assert 'logs' in protocolresult.data
+        assert 'key_results' in protocolresult.data
 
     def test_protocol_extend(self, absolute_transformation):
         tnf = absolute_transformation
@@ -70,12 +73,13 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
         assert isinstance(protocolresult, DummyProtocolResult)
 
-        len(protocolresult.data) == 2
+        assert len(protocolresult.data) == 2
 
     def test_equality(self, absolute_transformation, solvated_ligand, solvated_complex):
 
         opposite = Transformation(
-            solvated_complex, solvated_ligand, protocol=DummyProtocol(settings=None)
+            solvated_complex, solvated_ligand,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings())
         )
         assert absolute_transformation != opposite
 
@@ -89,7 +93,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
         identical = Transformation(
             solvated_ligand,
             solvated_complex,
-            protocol=DummyProtocol(settings=None),
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
             mapping=None,
         )
         assert absolute_transformation == identical
@@ -105,7 +109,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    key = "NonTransformation-b1040a001ede0358dfec851b6737e654"
+    key = "NonTransformation-d515c0765f4e8bde57bc586d10e29e56"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):
@@ -129,7 +133,9 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         assert isinstance(protocolresult, DummyProtocolResult)
 
-        len(protocolresult.data) == 1
+        assert len(protocolresult.data) == 2
+        assert 'logs' in protocolresult.data
+        assert 'key_results' in protocolresult.data
 
     def test_protocol_extend(self, complex_equilibrium):
         ntnf = complex_equilibrium
@@ -146,7 +152,7 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         assert isinstance(protocolresult, DummyProtocolResult)
 
-        len(protocolresult.data) == 2
+        assert len(protocolresult.data) == 2
 
     def test_equality(self, complex_equilibrium, solvated_ligand, solvated_complex):
 
@@ -156,7 +162,7 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert complex_equilibrium != different_protocol_settings
 
         identical = NonTransformation(
-            solvated_complex, protocol=DummyProtocol(settings=None)
+            solvated_complex, protocol=DummyProtocol(settings=DummyProtocol.default_settings())
         )
         assert complex_equilibrium == identical
 
