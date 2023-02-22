@@ -85,6 +85,10 @@ class Protocol(GufeTokenizable):
     - `_gather`
     - `_default_settings`
 
+    Optionally, these methods can be overridden:
+
+    - `validate`
+
     Attributes
     ----------
     result_cls : type[ProtocolResult]
@@ -154,6 +158,15 @@ class Protocol(GufeTokenizable):
 
         """
         return cls._default_settings()
+
+    def validate(self, stateA: ChemicalSystem, stateB: ChemicalSystem,
+                 mapping: Optional[dict[str, ComponentMapping]],
+                 extends: Optional[ProtocolDAGResult]) -> bool:
+        """Check that a given input will be viable
+
+        Has the same arguments as `create`
+        """
+        return True
 
     @abc.abstractmethod
     def _create(
