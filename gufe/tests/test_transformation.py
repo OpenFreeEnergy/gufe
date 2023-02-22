@@ -167,7 +167,7 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert complex_equilibrium == identical
 
         different_system = NonTransformation(
-            solvated_ligand, protocol=DummyProtocol(settings=None)
+            solvated_ligand, protocol=DummyProtocol(settings=DummyProtocol.default_settings())
         )
         assert complex_equilibrium != different_system
 
