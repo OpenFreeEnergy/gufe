@@ -22,6 +22,9 @@ from .mapping import (
     AtomMapping, AtomMapper,  # more specific to atom based components
     LigandAtomMapping,
 )
+
+from .settings import Settings
+
 from .protocols import (
     Protocol,  # description of a method
     ProtocolUnit,  # the individual step within a method
@@ -34,5 +37,3 @@ from .protocols import (
 from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork
-
-from .settings import Settings

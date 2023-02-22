@@ -9,7 +9,7 @@ import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
 
-
+from .. import Settings
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
@@ -94,12 +94,12 @@ class Protocol(GufeTokenizable):
 
     result_cls: type[ProtocolResult]
 
-    def __init__(self, settings=None):
+    def __init__(self, settings: Optional[Settings] = None):
         """Create a new `Protocol` instance.
 
         Parameters
         ----------
-        settings : ProtocolSettings
+        settings : Settings
             The full settings for this `Protocol` instance.
 
         """
@@ -136,7 +136,7 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def _default_settings(cls) -> "ProtocolSettings":     # type: ignore
+    def _default_settings(cls) -> Settings:
         """Method to override in custom `Protocol` subclasses.
 
         Gives a usable instance of `ProtocolSettings` that function as
@@ -146,7 +146,7 @@ class Protocol(GufeTokenizable):
         raise NotImplementedError()
 
     @classmethod
-    def default_settings(cls) -> "ProtocolSettings":      # type: ignore
+    def default_settings(cls) -> Settings:
         """Get the default settings for this `Protocol`.
 
         These can be modified and passed in as the `settings` for a new
