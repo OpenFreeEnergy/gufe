@@ -73,9 +73,9 @@ class ProtocolResult(GufeTokenizable):
 class Protocol(GufeTokenizable):
     """A protocol that implements an alchemical transformation.
 
-    Takes a `ProtocolSettings` object specific to the protocol on init.
-    This configures the protocol for repeated execution on `ChemicalSystem`
-    objects.
+    Takes a `Settings` object customised for this protocol on init.
+    This configures the protocol for repeated execution on (pairs of)
+    `ChemicalSystem` objects.
 
     This is an abstract base class; individual Protocol implementations
     should be subclasses of this class. The following methods should be
@@ -139,7 +139,7 @@ class Protocol(GufeTokenizable):
     def _default_settings(cls) -> Settings:
         """Method to override in custom `Protocol` subclasses.
 
-        Gives a usable instance of `ProtocolSettings` that function as
+        Gives a usable instance of `Settings` that function as
         reasonable defaults for this `Protocol` subclass.
 
         """
