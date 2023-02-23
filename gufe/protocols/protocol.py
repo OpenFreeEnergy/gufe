@@ -9,7 +9,7 @@ import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
 
-from .. import Settings
+from ..settings import Settings
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
@@ -91,23 +91,22 @@ class Protocol(GufeTokenizable):
         Corresponding `ProtocolResult` subclass
 
     """
-
+    _settings: Settings
     result_cls: type[ProtocolResult]
 
-    def __init__(self, settings: Optional[Settings] = None):
-        """Create a new `Protocol` instance.
+    def __init__(self, settings: Settings):
+        """Create a new ``Protocol`` instance.
 
         Parameters
         ----------
         settings : Settings
-            The full settings for this `Protocol` instance.
-
+            The full settings for this ``Protocol`` instance.
         """
         self._settings = settings
 
     @property
-    def settings(self):
-        """The full settings for this `Protocol` instance."""
+    def settings(self) -> Settings:
+        """The full settings for this ``Protocol`` instance."""
         return self._settings
 
     def __eq__(self, other):
