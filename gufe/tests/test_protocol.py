@@ -140,7 +140,7 @@ class DummyProtocol(Protocol):
         # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
             SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha)
-            for i in range(self.settings.protocol_settings.n_repeats)
+            for i in range(self.settings.protocol_settings.n_repeats)  # type: ignore
         ]
 
         # gather results from simulations, finalize outputs
@@ -176,7 +176,7 @@ class BrokenProtocol(DummyProtocol):
         stateB: ChemicalSystem,
         mapping: Optional[dict[str, ComponentMapping]] = None,
         extends: Optional[ProtocolDAGResult] = None,
-    ) -> nx.DiGraph:
+    ) -> list[ProtocolUnit]:
 
         # convert protocol inputs into starting points for independent simulations
         alpha = InitializeUnit(
