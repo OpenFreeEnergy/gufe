@@ -87,7 +87,7 @@ class Settings(SettingsBaseModel):
     settings_version: int = 0
     forcefield_settings: OpenMMSystemGeneratorFFSettings
     thermo_settings: ThermoSettings
-    protocol_settings: Union[ProtocolSettings, None]
+    protocol_settings: type[ProtocolSettings]
 
     @classmethod
     def get_defaults(cls):
