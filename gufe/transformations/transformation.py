@@ -91,22 +91,6 @@ class Transformation(GufeTokenizable):
         """User-specified for the transformation; used as part of its hash."""
         return self._name
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        if self._name != other.name:
-            return False
-        if self._protocol != other.protocol:
-            return False
-        if self._mapping != other.mapping:
-            return False
-        if self._stateB != other.stateB:
-            return False
-        if self._stateA != other.stateA:
-            return False
-
-        return True
-
     def __hash__(self):
         # apparently be defining a custom __eq__ here, we lose super's
         # __hash__, and need to redefine it
@@ -190,7 +174,6 @@ class Transformation(GufeTokenizable):
         return cls.from_dict(dct)
 
 
-
 # we subclass `Transformation` here for typing simplicity
 class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
@@ -245,26 +228,8 @@ class NonTransformation(Transformation):
         """The protocol for sampling dynamics of the `ChemicalSystem`."""
         return self._protocol
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        if self._name != other.name:
-            return False
-        if self._protocol != other.protocol:
-            return False
-        if self._system != other.system:
-            return False
-
-        return True
-
     def __hash__(self):
-        return hash(
-            (
-                self._name,
-                self._protocol,
-                self._system,
-            )
-        )
+        return super().__hash__()
 
     def _to_dict(self) -> dict:
         return {
