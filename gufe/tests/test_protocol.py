@@ -10,6 +10,7 @@ import pytest
 import networkx as nx
 import numpy as np
 
+import gufe
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import ComponentMapping
 from gufe import settings
@@ -224,7 +225,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     @pytest.fixture
     def protocol_dag_broken(self, solvated_ligand, vacuum_ligand):
-        protocol = BrokenProtocol(settings=None)
+        protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
             mapping=None,
@@ -504,33 +505,33 @@ class NoDepsProtocol(Protocol):
 
 
 class TestNoDepProtocol:
-    def test_create(self):
-        p = NoDepsProtocol()
+    @pytest.fixture()
+    def protocol(self):
+        return NoDepsProtocol(settings=NoDepsProtocol.default_settings())
 
-        dag = p.create(stateA=None, stateB=None, mapping=None)
+    @pytest.fixture()
+    def dag(self, protocol):
+        return protocol.create(
+            stateA=ChemicalSystem(components={'solvent': gufe.SolventComponent(positive_ion='Na')}),
+            stateB=ChemicalSystem(components={'solvent': gufe.SolventComponent(positive_ion='Li')}),
+            mapping=None)
 
+    def test_create(self, dag):
         assert len(dag.protocol_units) == 3
 
-    def test_gather(self):
-        p = NoDepsProtocol()
-
-        dag = p.create(stateA=None, stateB=None, mapping=None)
+    def test_gather(self, protocol, dag):
 
         dag_result = execute_DAG(dag)
 
         assert dag_result.ok()
 
-        result = p.gather([dag_result])
+        result = protocol.gather([dag_result])
 
         assert result.get_estimate() == 0 + 1 + 4
         assert result.get_uncertainty() == 3
 
-    def test_terminal_units(self):
+    def test_terminal_units(self, protocol, dag):
         # we have no dependencies, so this should be all three Unit results
-        p = NoDepsProtocol()
-
-        dag = p.create(stateA=None, stateB=None, mapping=None)
-
         dag_result = execute_DAG(dag)
 
         terminal_results = dag_result.terminal_protocol_unit_results
