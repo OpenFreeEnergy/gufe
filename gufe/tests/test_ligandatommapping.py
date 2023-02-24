@@ -194,3 +194,7 @@ def test_annotation_immutability(annotated_simple_mapping):
 def test_with_annotations(simple_mapping, annotated_simple_mapping):
     new_annot = simple_mapping.with_annotations({'foo': 'bar'})
     assert new_annot == annotated_simple_mapping
+
+
+def test_repr(annotated_simple_mapping):
+    assert repr(annotated_simple_mapping) == "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
