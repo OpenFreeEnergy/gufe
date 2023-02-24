@@ -10,6 +10,8 @@ from rdkit import Chem
 import gufe
 from gufe import LigandAtomMapping, SmallMoleculeComponent
 
+from .test_tokenization import GufeTokenizableTestsMixin
+
 
 def mol_from_smiles(smiles: str) -> Chem.Mol:
     m = Chem.MolFromSmiles(smiles)
@@ -196,5 +198,11 @@ def test_with_annotations(simple_mapping, annotated_simple_mapping):
     assert new_annot == annotated_simple_mapping
 
 
-def test_repr(annotated_simple_mapping):
-    assert repr(annotated_simple_mapping) == "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
+class TestLigandAtomMapping(GufeTokenizableTestsMixin):
+    cls = LigandAtomMapping
+    repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
+    key = "LigandAtomMapping-ea774035e36acbd582725ce97c745ec4"
+
+    @pytest.fixture
+    def instance(self, annotated_simple_mapping):
+        return annotated_simple_mapping

@@ -115,6 +115,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.
     """
+    def __repr__(self):
+        return f"<{self.key}>"
+
     def __lt__(self, other):
         return self.key < other.key
 
@@ -144,7 +147,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             adapter = _GufeLoggerAdapter(logger, self)
             self._logger = adapter
         return adapter
-
 
     @property
     def key(self):

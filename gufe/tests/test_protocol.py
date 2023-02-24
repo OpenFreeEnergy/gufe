@@ -207,6 +207,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
     key = "DummyProtocol-3f9fd4b151fc5ba1c8241daca2a16528"
+    repr = "<DummyProtocol-3f9fd4b151fc5ba1c8241daca2a16528>"
 
     @pytest.fixture
     def instance(self):
@@ -344,8 +345,9 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAG(ProtocolDAGTestsMixin):
         cls = ProtocolDAG
-        key = "..."
-        
+        key = None
+        repr = None
+
         @pytest.fixture
         def instance(self, protocol_dag):
             protocol, dag, dagresult = protocol_dag
@@ -353,7 +355,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAGResult(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
-        key = "..."
+        key = None
+        repr = None
 
         @pytest.fixture
         def instance(self, protocol_dag):
@@ -402,10 +405,10 @@ class TestProtocol(GufeTokenizableTestsMixin):
             assert len(instance.protocol_unit_successes) == 23
             assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
 
-
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
-        key = "..."
+        key = None
+        repr = None
 
         @pytest.fixture
         def instance(self, protocol_dag_broken):
@@ -434,7 +437,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit
-        key = "..."
+        key = None
+        repr = None
     
         @pytest.fixture
         def instance(self, vacuum_ligand, solvated_ligand):
@@ -456,6 +460,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             # for the DAG system, keys for `ProtocolUnit`s are based on UUIDs,
             # so keys aren't stable up through `ProtocolDAG`s
             pass
+
 
 class NoDepUnit(ProtocolUnit):
     @staticmethod
