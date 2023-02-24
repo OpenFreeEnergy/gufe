@@ -4,6 +4,7 @@ import logging
 import io
 from unittest import mock
 import json
+from typing import Optional
 
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
@@ -80,8 +81,8 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
-    key: str
-    repr: str
+    key: Optional[str]
+    repr: Optional[str]
 
     @pytest.fixture
     def instance(self):
