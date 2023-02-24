@@ -4,6 +4,7 @@ import importlib
 import pytest
 import pathlib
 import json
+import numpy as np
 from rdkit import Chem
 
 import gufe
@@ -120,6 +121,16 @@ def test_mapping_inversion(benzene_phenol_mapping):
         0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 11: 11,
         12: 10
     }
+
+
+def test_mapping_distances(benzene_phenol_mapping):
+    d = benzene_phenol_mapping.get_distances()
+
+    ref = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.34005502, 0.]
+
+    assert isinstance(d, np.ndarray)
+    for i, r in zip(d, ref):
+        assert i == pytest.approx(r)
 
 
 def test_uniques(atom_mapping_basic_test_files):
