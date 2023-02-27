@@ -206,3 +206,13 @@ class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     @pytest.fixture
     def instance(self, annotated_simple_mapping):
         return annotated_simple_mapping
+
+    def test_id_key(self, instance):
+        i2 = self.cls.from_dict(instance.to_dict())
+
+        assert instance.key == i2.key
+
+    def test_keyed_dict(self, instance):
+        i2 = self.cls.from_dict(instance.to_dict())
+
+        assert instance.to_keyed_dict() == i2.to_keyed_dict()
