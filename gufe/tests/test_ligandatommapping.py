@@ -179,6 +179,34 @@ def test_draw_mapping_svg(tmpdir, other_mapping):
         assert filed.exists()
 
 
+class TestLigandAtomMappingSerialization:
+    def test_deserialize_roundtrip(self, benzene_phenol_mapping,
+                                   benzene_anisole_mapping):
+
+        roundtrip = LigandAtomMapping.from_dict(
+                        benzene_phenol_mapping.to_dict())
+
+        assert roundtrip == benzene_phenol_mapping
+
+        # We don't check coordinates since that's already done in guefe for
+        # SmallMoleculeComponent
+
+        assert roundtrip != benzene_anisole_mapping
+
+    def test_file_roundtrip(self, benzene_phenol_mapping, tmpdir):
+        with tmpdir.as_cwd():
+            with open('tmpfile.json', 'w') as f:
+                f.write(json.dumps(benzene_phenol_mapping.to_dict()))
+
+            with open('tmpfile.json', 'r') as f:
+                d = json.load(f)
+
+            assert isinstance(d, dict)
+            roundtrip = LigandAtomMapping.from_dict(d)
+
+            assert roundtrip == benzene_phenol_mapping
+
+
 def test_annotated_atommapping_hash_eq(simple_mapping,
                                        annotated_simple_mapping):
     assert annotated_simple_mapping != simple_mapping
@@ -201,7 +229,7 @@ def test_with_annotations(simple_mapping, annotated_simple_mapping):
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     cls = LigandAtomMapping
     repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
-    key = "LigandAtomMapping-ea774035e36acbd582725ce97c745ec4"
+    key = "LigandAtomMapping-2830a1201d55fec0ccd97fbb82934c0a"
 
     @pytest.fixture
     def instance(self, annotated_simple_mapping):

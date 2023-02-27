@@ -76,11 +76,10 @@ class LigandAtomMapping(AtomMapping):
     def _to_dict(self):
         """Serialize to dict"""
         return {
-            # openff serialization doesn't go deep, so stringify at this level
-            'componentA': self.componentA.to_dict(),
-            'componentB': self.componentB.to_dict(),
+            'componentA': self.componentA,
+            'componentB': self.componentB,
             'componentA_to_componentB': self._compA_to_compB,
-            'annotations': json.dumps(self.annotations),
+            'annotations': json.dumps(self._annotations, sort_keys=True),
         }
 
     @classmethod
@@ -91,10 +90,8 @@ class LigandAtomMapping(AtomMapping):
         fixed = {int(k): int(v) for k, v in mapping.items()}
 
         return cls(
-            componentA=SmallMoleculeComponent.from_dict(
-                json.loads(d['componentA'])),
-            componentB=SmallMoleculeComponent.from_dict(
-                json.loads(d['componentB'])),
+            componentA=d['componentA'],
+            componentB=d['componentB'],
             componentA_to_componentB=fixed,
             annotations=json.loads(d['annotations'])
         )
