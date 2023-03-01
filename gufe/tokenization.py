@@ -54,7 +54,9 @@ class _GufeTokenizableMeta(type):
     def __call__(cls, *args, **kwargs):
         instance = super().__call__(*args, **kwargs)
         # add to registry if not already present
-        TOKENIZABLE_REGISTRY.setdefault(instance.key, instance)
+        key = instance.key
+        TOKENIZABLE_REGISTRY.setdefault(key, instance)
+        instance = TOKENIZABLE_REGISTRY[key]
         return instance
 
 
