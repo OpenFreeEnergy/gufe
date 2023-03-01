@@ -89,9 +89,6 @@ class GufeTokenizableTestsMixin(abc.ABC):
         """
         ...
 
-    def teardown_method(self):
-        TOKENIZABLE_REGISTRY.clear()
-
     def test_to_dict_roundtrip(self, instance):
         ser = instance.to_dict()
         deser = self.cls.from_dict(ser)
@@ -106,8 +103,9 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     def test_to_dict_roundtrip_clear_registry(self, instance):
         ser = instance.to_dict()
-        TOKENIZABLE_REGISTRY.clear()
-        deser = self.cls.from_dict(ser)
+        patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(patch_loc, {}, clear=True):
+            deser = self.cls.from_dict(ser)
         reser = deser.to_dict()
 
         assert instance == deser
@@ -188,12 +186,19 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         }
 
     def test_set_key(self):
-        leaf = Leaf("foo")
+        leaf = Leaf("test-set-key")
         key = leaf.key
-        leaf._set_key("qux")
-        assert leaf.key == "qux"
-        assert TOKENIZABLE_REGISTRY["qux"] is leaf
-        assert key not in TOKENIZABLE_REGISTRY
+        patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        registry = dict(TOKENIZABLE_REGISTRY)
+        with mock.patch.dict(patch_loc, registry, clear=True):
+            # import pdb; pdb.set_trace()
+            leaf._set_key("qux")
+            assert leaf.key == "qux"
+            assert TOKENIZABLE_REGISTRY["qux"] is leaf
+            assert key not in TOKENIZABLE_REGISTRY
+
+        assert TOKENIZABLE_REGISTRY[key] is leaf
+        assert "qux" not in TOKENIZABLE_REGISTRY
 
     def test_to_dict_deep(self):
         assert self.cont.to_dict() == self.expected_deep
@@ -237,11 +242,11 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert l1.b != l2.b
 
     def test_copy_with_replacements_no_arguments(self):
-        # with no arguements, copy_with_replacements returns as actual copy
+        # with no arguments, copy_with_replacements returns the same object
         l1 = Leaf(4)
         l2 = l1.copy_with_replacements()
         assert l1 == l2
-        assert l1 is not l2
+        assert l1 is l2
 
     def test_copy_with_replacements_invalid(self):
         l1 = Leaf(4)
