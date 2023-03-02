@@ -37,11 +37,6 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     return name
 
 
-def _ensure_ofe_version(mol: RDKitMol):
-    """Ensure the rdkit representation has the current version associated"""
-    mol.SetProp("ofe-version", __version__)
-
-
 class ExplicitMoleculeComponent(Component):
     """Base class for explicit molecules.
 
@@ -54,7 +49,6 @@ class ExplicitMoleculeComponent(Component):
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
-        _ensure_ofe_version(rdkit)
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
