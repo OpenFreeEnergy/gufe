@@ -15,7 +15,7 @@ else:
     HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
 from gufe.components.explicitmoleculecomponent import (
-    _ensure_ofe_name, _ensure_ofe_version
+    _ensure_ofe_name,
 )
 import gufe
 import json
@@ -66,12 +66,6 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 
     assert out_name == expected
     assert rdkit.GetProp("ofe-name") == out_name
-
-
-def test_ensure_ofe_version():
-    rdkit = Chem.MolFromSmiles("CC")
-    _ensure_ofe_version(rdkit)
-    assert rdkit.GetProp("ofe-version") == gufe.__version__
 
 
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
@@ -140,19 +134,24 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane == deserialized
         assert serialized == reserialized
 
-    def test_to_sdf_string(self, named_ethane, serialization_template):
-        expected = serialization_template("ethane_template.sdf")
+    def test_to_sdf_string(self, named_ethane, ethane_sdf):
+        with open(ethane_sdf, "r") as f:
+            expected = f.read()
+
         assert named_ethane.to_sdf() == expected
 
     @pytest.mark.xfail
-    def test_from_sdf_string(self, named_ethane, serialization_template):
-        sdf_str = serialization_template("ethane_template.sdf")
+    def test_from_sdf_string(self, named_ethane, ethane_sdf):
+        with open(ethane_sdf, "r") as f:
+            sdf_str = f.read()
+
         assert SmallMoleculeComponent.from_sdf_string(sdf_str) == named_ethane
 
     @pytest.mark.xfail
-    def test_from_sdf_file(self, named_ethane, serialization_template,
+    def test_from_sdf_file(self, named_ethane, ethane_sdf,
                            tmpdir):
-        sdf_str = serialization_template("ethane_template.sdf")
+        with open(ethane_sdf, 'r') as f:
+            sdf_str = f.read()
         with open(tmpdir / "temp.sdf", mode='w') as tmpf:
             tmpf.write(sdf_str)
 
