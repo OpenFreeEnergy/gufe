@@ -49,6 +49,8 @@ class ExplicitMoleculeComponent(Component):
     representations. Specific file formats, such as SDF for small molecules
     or PDB for proteins, should be implemented in subclasses.
     """
+    _rdkit: Chem.Mol
+    _name: str
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)

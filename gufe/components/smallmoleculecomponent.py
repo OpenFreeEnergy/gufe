@@ -146,81 +146,28 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
     def _to_dict(self) -> dict:
         """Serialize to dict representation"""
-        # required attributes: (based on openff to_dict)
-        # for each atom:
-        #   element, name, formal charge, aromaticity, stereochemistry
-        # for each bond:
-        #   idx0, idx1, order, aromaticity, stereochemistry
-        # NOTE: Here we're implicitly using units of angstrom and elementary
-        # charge. We might want to explcitly include them in the stored dict.
+        # this changes a global property
+        before = Chem.GetDefaultPickleProperties()
 
-        m = self.to_openff()
+        Chem.SetDefaultPickleProperties(
+            Chem.PropertyPickleOptions.AtomProps |
+            Chem.PropertyPickleOptions.MolProps |
+            Chem.PropertyPickleOptions.BondProps |
+            Chem.PropertyPickleOptions.CoordsAsDouble
+        )
 
-        atoms = [
-            (atom.atomic_number,
-             atom.name,
-             atom.formal_charge.m_as(unit.elementary_charge),
-             atom.is_aromatic,
-             atom.stereochemistry or '')
+        blob = self._rdkit.ToBinary()
 
-            for atom in m.atoms
-        ]
+        Chem.SetDefaultPickleProperties(before)
 
-        bonds = [
-            (
-                bond.atom1_index, 
-                bond.atom2_index, 
-                bond.bond_order,
-                bond.is_aromatic, 
-                bond.stereochemistry or ''
-            )
-            for bond in m.bonds
-        ]
-
-        if m.conformers is None:  # -no-cov-
-            # this should not be reachable; indicates that something went
-            # very wrong
-            raise RuntimeError(f"{self.__class__.__name__} must have at "
-                               "least 1 conformer")
-
-        conformers = [
-            serialize_numpy(conf.m_as(unit.angstrom))
-            for conf in m.conformers
-        ]
-
-        d = {
-            'atoms': atoms,
-            'bonds': bonds,
-            'name': self.name,
-            'conformers': conformers,
+        return {
+            'rdkit_blob': blob,
+            'name': self._name,
         }
-
-        return d
 
     @classmethod
     def _from_dict(cls, d: dict):
         """Deserialize from dict representation"""
-        # manually construct OpenFF molecule as in cookbook
-        m = OFFMolecule()
-        for (an, name, fc, arom, stereo) in d['atoms']:
-            m.add_atom(
-                atomic_number=an,
-                formal_charge=fc * unit.elementary_charge,
-                is_aromatic=arom,
-                stereochemistry=stereo or None,
-                name=name,
-            )
+        m = Chem.Mol(d['rdkit_blob'])
 
-        for (idx1, idx2, order, arom, stereo) in d['bonds']:
-            m.add_bond(
-                atom1=idx1,
-                atom2=idx2,
-                bond_order=order,
-                is_aromatic=arom,
-                stereochemistry=stereo or None,
-            )
-
-        for conf in d['conformers']:
-            m.add_conformer(deserialize_numpy(conf) * unit.angstrom)
-
-        return cls.from_openff(m, name=d['name'])
+        return cls(rdkit=m, name=d['name'])
