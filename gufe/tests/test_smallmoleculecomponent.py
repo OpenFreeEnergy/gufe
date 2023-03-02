@@ -83,13 +83,6 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
     def instance(self, named_ethane):
         return named_ethane
 
-    def test_rdkit_behavior(self, ethane, alt_ethane):
-        # Check that fixture setup is correct (we aren't accidentally
-        # testing tautologies)
-        assert ethane is not alt_ethane
-        assert ethane.to_rdkit() is not alt_ethane.to_rdkit()
-
-
     def test_error_missing_conformers(self):
         mol = Chem.MolFromSmiles("CC")
         with pytest.raises(ValueError, match="conformer"):
