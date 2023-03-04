@@ -364,6 +364,15 @@ class GufeKey(str):
     def to_dict(self):
         return {':gufe-key:': str(self)}
 
+    @property
+    def prefix(self):
+        return self.split('-')[0]
+
+    @property
+    def token(self):
+        return self.split('-')[1]
+
+
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
 TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary()
