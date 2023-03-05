@@ -30,7 +30,7 @@ def complex_equilibrium(solvated_complex):
 class TestTransformation(GufeTokenizableTestsMixin):
 
     cls = Transformation
-    key = "Transformation-af747630b54613042022fdb183a27c14"
+    key = "Transformation-347b35a5eaae49e83d289a5ab86374bd"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -109,7 +109,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    key = "NonTransformation-d515c0765f4e8bde57bc586d10e29e56"
+    key = "NonTransformation-bb37ab8f5d6cff772d3cf69e53dd2a94"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):
