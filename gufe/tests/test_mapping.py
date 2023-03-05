@@ -47,7 +47,7 @@ class ExampleMapping(AtomMapping):
 
 class TestMappingAbstractClass(GufeTokenizableTestsMixin):
     cls = ExampleMapping
-    key = 'ExampleMapping-1fdcf491eceaabd48f0d3b0afbff5769'
+    key = 'ExampleMapping-98bc8ebc1d01d9dc29783d1061149676'
 
     @pytest.fixture
     def instance(self, benzene, toluene):
