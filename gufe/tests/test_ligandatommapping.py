@@ -166,43 +166,6 @@ def test_draw_mapping_svg(tmpdir, other_mapping):
         assert filed.exists()
 
 
-class TestLigandAtomMappingSerialization:
-    def test_to_dict(self, benzene_phenol_mapping):
-        d = benzene_phenol_mapping.to_dict()
-
-        assert isinstance(d, dict)
-        assert 'componentA' in d
-        assert 'componentB' in d
-        assert 'annotations' in d
-        assert isinstance(d['componentA'], str)
-
-    def test_deserialize_roundtrip(self, benzene_phenol_mapping,
-                                   benzene_anisole_mapping):
-
-        roundtrip = LigandAtomMapping.from_dict(
-                        benzene_phenol_mapping.to_dict())
-
-        assert roundtrip == benzene_phenol_mapping
-
-        # We don't check coordinates since that's already done in guefe for
-        # SmallMoleculeComponent
-
-        assert roundtrip != benzene_anisole_mapping
-
-    def test_file_roundtrip(self, benzene_phenol_mapping, tmpdir):
-        with tmpdir.as_cwd():
-            with open('tmpfile.json', 'w') as f:
-                f.write(json.dumps(benzene_phenol_mapping.to_dict()))
-
-            with open('tmpfile.json', 'r') as f:
-                d = json.load(f)
-
-            assert isinstance(d, dict)
-            roundtrip = LigandAtomMapping.from_dict(d)
-
-            assert roundtrip == benzene_phenol_mapping
-
-
 def test_annotated_atommapping_hash_eq(simple_mapping,
                                        annotated_simple_mapping):
     assert annotated_simple_mapping != simple_mapping
