@@ -77,8 +77,8 @@ class LigandAtomMapping(AtomMapping):
         """Serialize to dict"""
         return {
             # openff serialization doesn't go deep, so stringify at this level
-            'componentA': json.dumps(self.componentA.to_dict(), sort_keys=True),
-            'componentB': json.dumps(self.componentB.to_dict(), sort_keys=True),
+            'componentA': self.componentA.to_dict(),
+            'componentB': self.componentB.to_dict(),
             'componentA_to_componentB': self._compA_to_compB,
             'annotations': json.dumps(self.annotations),
         }
