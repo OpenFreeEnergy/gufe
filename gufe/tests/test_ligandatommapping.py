@@ -229,7 +229,7 @@ def test_with_annotations(simple_mapping, annotated_simple_mapping):
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     cls = LigandAtomMapping
     repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
-    key = "LigandAtomMapping-2830a1201d55fec0ccd97fbb82934c0a"
+    key = "LigandAtomMapping-c95a2c15fe21f446cf731338427137ae"
 
     @pytest.fixture
     def instance(self, annotated_simple_mapping):

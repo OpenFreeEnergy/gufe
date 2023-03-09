@@ -71,7 +71,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
-    key = "SmallMoleculeComponent-d8d7b85fcfa6d9a3859a1cc023c58b67"
+    key = "SmallMoleculeComponent-45d1c819e0b7c8a7179113e6296837fa"
     repr = "SmallMoleculeComponent(name=ethane)"
 
     @pytest.fixture
