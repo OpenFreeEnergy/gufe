@@ -48,14 +48,6 @@ class AlchemicalNetwork(GufeTokenizable):
 
         self._graph = None
 
-    def __eq__(self, other):
-        return self.nodes == other.nodes and self.edges == other.edges
-
-    def __hash__(self):
-        # apparently be defining a custom __eq__ here, we lose super's
-        # __hash__, and need to redefine it
-        return super().__hash__()
-
     @staticmethod
     def _generate_graph(edges, nodes):
         g = nx.MultiDiGraph()
