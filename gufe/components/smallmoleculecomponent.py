@@ -66,13 +66,13 @@ def _setprops(obj, d: dict) -> None:
     # add props onto rdkit "obj" (atom/bond/mol/conformer)
     # props are guaranteed one of Bool, Int, Float or String type
     for k, v in d.items():
-        if isinstance(v, int):
+        if isinstance(v, bool):
+            obj.SetBoolProp(k, v)
+        elif isinstance(v, int):
             obj.SetIntProp(k, v)
         elif isinstance(v, float):
             obj.SetDoubleProp(k, v)
-        elif isinstance(v, bool):
-            obj.SetBoolProp(k, v)
-        else:  # string
+        else:  # isinstance(v, str):
             obj.SetProp(k, v)
 
 
