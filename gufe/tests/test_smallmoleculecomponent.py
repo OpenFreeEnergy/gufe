@@ -301,7 +301,6 @@ def test_prop_preservation(ethane, target, dtype):
     if dtype == 'int':
         assert obj.GetIntProp('foo') == 1234
     elif dtype == 'bool':
-        print(f'foo is {obj.GetProp("foo")}')
         assert obj.GetBoolProp('foo') is False
     elif dtype == 'str':
         assert obj.GetProp('foo') == 'bar'
