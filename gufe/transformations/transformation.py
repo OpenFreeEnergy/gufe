@@ -91,11 +91,6 @@ class Transformation(GufeTokenizable):
         """User-specified for the transformation; used as part of its hash."""
         return self._name
 
-    def __hash__(self):
-        # apparently be defining a custom __eq__ here, we lose super's
-        # __hash__, and need to redefine it
-        return super().__hash__()
-
     def _to_dict(self) -> dict:
         return {
             "stateA": self.stateA,
@@ -227,9 +222,6 @@ class NonTransformation(Transformation):
     def protocol(self):
         """The protocol for sampling dynamics of the `ChemicalSystem`."""
         return self._protocol
-
-    def __hash__(self):
-        return super().__hash__()
 
     def _to_dict(self) -> dict:
         return {

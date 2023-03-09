@@ -96,9 +96,6 @@ class LigandAtomMapping(AtomMapping):
             annotations=json.loads(d['annotations'])
         )
 
-    def __hash__(self):
-        return super().__hash__()
-
     def __repr__(self):
         return (f"{self.__class__.__name__}(componentA={self.componentA!r}, "
                 f"componentB={self.componentB!r}, "
