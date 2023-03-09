@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
 from openff.toolkit.topology import Molecule as OFFMolecule
-from openff.units import unit
+from typing import Any
 
 from rdkit import Chem
 
@@ -206,7 +206,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         # but this format slowly evolves, so the future hash of a SMC could change if rdkit were updated
         # this is based on that method, with some irrelevant fields cut out
 
-        output = {}
+        output: dict[str, Any] = {}
 
         atoms = []
         for atom in self._rdkit.GetAtoms():
