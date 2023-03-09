@@ -50,8 +50,6 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     def to_sdf(self) -> str:
         """Create a string based on SDF.
 
-        This is the primary serialization mechanism for this class.
-
         See Also
         --------
         :meth:`.from_sdf_string` : create an object from the output of this
@@ -68,8 +66,6 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     @classmethod
     def from_sdf_string(cls, sdf_str: str):
         """Create ``SmallMoleculeComponent`` from SDF-formatted string.
-
-        This is the primary deserialization mechanism for this class.
 
         Parameters
         ----------
