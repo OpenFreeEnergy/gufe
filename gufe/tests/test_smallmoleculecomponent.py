@@ -258,3 +258,52 @@ class TestSmallMoleculeSerialization:
         roundtrip = SmallMoleculeComponent.from_dict(d)
 
         assert roundtrip == toluene
+
+
+@pytest.mark.parametrize('target', ['atom', 'bond', 'conformer', 'mol'])
+@pytest.mark.parametrize('dtype', ['int', 'bool', 'str', 'float'])
+def test_prop_preservation(ethane, target, dtype):
+    # issue 145 make sure props are propagated
+    mol = Chem.MolFromSmiles("CC")
+    Chem.AllChem.Compute2DCoords(mol)
+
+    if target == 'atom':
+        obj = mol.GetAtomWithIdx(0)
+    elif target == 'bond':
+        obj = mol.GetBondWithIdx(0)
+    elif target == 'conformer':
+        obj = mol.GetConformer()
+    else:
+        obj = mol
+    if dtype == 'int':
+        obj.SetIntProp('foo', 1234)
+    elif dtype == 'bool':
+        obj.SetBoolProp('foo', False)
+    elif dtype == 'str':
+        obj.SetProp('foo', 'bar')
+    elif dtype == 'float':
+        obj.SetDoubleProp('foo', 1.234)
+    else:
+        pytest.fail()
+
+    # check that props on rdkit molecules are preserved via to_dict/from_dict cycles
+    d = SmallMoleculeComponent(rdkit=mol).to_dict()
+    e2 = SmallMoleculeComponent.from_dict(d).to_rdkit()
+
+    if target == 'atom':
+        obj = e2.GetAtomWithIdx(0)
+    elif target == 'bond':
+        obj = e2.GetBondWithIdx(0)
+    elif target == 'conformer':
+        obj = e2.GetConformer()
+    else:
+        obj = e2
+    if dtype == 'int':
+        assert obj.GetIntProp('foo') == 1234
+    elif dtype == 'bool':
+        print(f'foo is {obj.GetProp("foo")}')
+        assert obj.GetBoolProp('foo') is False
+    elif dtype == 'str':
+        assert obj.GetProp('foo') == 'bar'
+    else:
+        assert obj.GetDoubleProp('foo') == pytest.approx(1.234)
