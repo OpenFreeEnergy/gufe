@@ -109,11 +109,6 @@ class Protocol(GufeTokenizable):
         """The full settings for this ``Protocol`` instance."""
         return self._settings
 
-    def __hash__(self):
-        # apparently be defining a custom __eq__ here, we lose super's
-        # __hash__, and need to redefine it
-        return super().__hash__()
-
     @classmethod
     def _defaults(cls):
         return {}
