@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
 from . import AtomMapping
+from ..tokenization import JSON_HANDLER
 
 
 class LigandAtomMapping(AtomMapping):
@@ -79,7 +80,7 @@ class LigandAtomMapping(AtomMapping):
             'componentA': self.componentA,
             'componentB': self.componentB,
             'componentA_to_componentB': self._compA_to_compB,
-            'annotations': json.dumps(self._annotations, sort_keys=True),
+            'annotations': json.dumps(self._annotations, sort_keys=True, cls=JSON_HANDLER.encoder),
         }
 
     @classmethod
@@ -93,7 +94,7 @@ class LigandAtomMapping(AtomMapping):
             componentA=d['componentA'],
             componentB=d['componentB'],
             componentA_to_componentB=fixed,
-            annotations=json.loads(d['annotations'])
+            annotations=json.loads(d['annotations'], cls=JSON_HANDLER.decoder)
         )
 
     def __repr__(self):
