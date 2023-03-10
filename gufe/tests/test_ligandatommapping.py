@@ -6,7 +6,7 @@ import pathlib
 import json
 import numpy as np
 from rdkit import Chem
-
+from openff.units import unit
 import gufe
 from gufe import LigandAtomMapping, SmallMoleculeComponent
 
@@ -224,6 +224,16 @@ def test_annotation_immutability(annotated_simple_mapping):
 def test_with_annotations(simple_mapping, annotated_simple_mapping):
     new_annot = simple_mapping.with_annotations({'foo': 'bar'})
     assert new_annot == annotated_simple_mapping
+
+
+def test_with_fancy_annotations(simple_mapping):
+    m = simple_mapping.with_annotations({'thing': 4.0 * unit.nanometer})
+
+    assert m.key
+
+    m2 = LigandAtomMapping.from_dict(m.to_dict())
+
+    assert m == m2
 
 
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
