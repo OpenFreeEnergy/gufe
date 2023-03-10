@@ -125,7 +125,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         if not isinstance(other, self.__class__):
             return False
 
-        return self.to_keyed_dict() == other.to_keyed_dict()
+        return self.key == other.key
 
     def __hash__(self):
         return hash(self.key)
