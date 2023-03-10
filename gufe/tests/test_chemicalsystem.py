@@ -143,10 +143,11 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
             )
 
 
-@pytest.mark.xfail
 class TestChemicalSystemNanBox(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem
+    key = "ChemicalSystem-34f6bd8be97cc184bad334e6f8daa469"
+    repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
 
     @pytest.fixture
     def instance(self, solv_comp, toluene_ligand_comp):
