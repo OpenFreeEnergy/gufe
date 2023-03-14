@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
 from . import AtomMapping
+from ..tokenization import JSON_HANDLER
 
 
 class LigandAtomMapping(AtomMapping):
@@ -76,11 +77,10 @@ class LigandAtomMapping(AtomMapping):
     def _to_dict(self):
         """Serialize to dict"""
         return {
-            # openff serialization doesn't go deep, so stringify at this level
-            'componentA': json.dumps(self.componentA.to_dict(), sort_keys=True),
-            'componentB': json.dumps(self.componentB.to_dict(), sort_keys=True),
+            'componentA': self.componentA,
+            'componentB': self.componentB,
             'componentA_to_componentB': self._compA_to_compB,
-            'annotations': json.dumps(self.annotations),
+            'annotations': json.dumps(self._annotations, sort_keys=True, cls=JSON_HANDLER.encoder),
         }
 
     @classmethod
@@ -91,12 +91,10 @@ class LigandAtomMapping(AtomMapping):
         fixed = {int(k): int(v) for k, v in mapping.items()}
 
         return cls(
-            componentA=SmallMoleculeComponent.from_dict(
-                json.loads(d['componentA'])),
-            componentB=SmallMoleculeComponent.from_dict(
-                json.loads(d['componentB'])),
+            componentA=d['componentA'],
+            componentB=d['componentB'],
             componentA_to_componentB=fixed,
-            annotations=json.loads(d['annotations'])
+            annotations=json.loads(d['annotations'], cls=JSON_HANDLER.decoder)
         )
 
     def __repr__(self):

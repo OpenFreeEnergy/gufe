@@ -16,6 +16,7 @@ from numpy.testing import assert_almost_equal
 
 from .conftest import ALL_PDB_LOADERS
 
+
 @pytest.fixture
 def PDB_181L_mutant(PDB_181L_path):
     # has a single resname flipped to change the resulting sequence
@@ -41,7 +42,6 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     else:
         out_file = open(out_file_path, mode='r')
         must_close = True
-
 
     in_lines = in_file.readlines()
     out_lines = out_file.readlines()
@@ -88,6 +88,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
     key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
+    repr = "ProteinComponent(name=Steve)"
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
@@ -163,7 +164,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             output_func=p.to_pdbx_file
         )
 
-
     @pytest.mark.parametrize('input_type', ['filename', 'Path', 'StringIO',
                                             'TextIOWrapper'])
     def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path,
@@ -189,7 +189,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
-        #generate openMM reference file:
+        # generate openMM reference file:
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
         out_ref_file_name = "tmp_"+in_pdb_path+"_openmm_ref.pdb"
         out_ref_file = tmp_path / out_ref_file_name
@@ -213,8 +213,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert p == p2
 
-    #parametrize
-    
+    # parametrize
     @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
     def test_to_openmm_positions(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
@@ -231,7 +230,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
-    #parametrize
+    # parametrize
     @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
     def test_to_openmm_topology(self, in_pdb_path):
         in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
@@ -250,9 +249,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
         assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
 
-        
     # Functionality
-
     def test_eq(self, PDB_181L_path):
         m1 = self.cls.from_pdb_file(PDB_181L_path)
         m2 = self.cls.from_pdb_file(PDB_181L_path)

@@ -131,7 +131,8 @@ def test_sorting(solvated_complex, solvated_ligand):
 class TestChemicalSystem(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem
-    key = "ChemicalSystem-21dceb153fdfb4865b87af060e6ecf15"
+    key = "ChemicalSystem-1f244420be5cf662c0f804b052ef2a1e"
+    repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
 
     @pytest.fixture
     def instance(self, solv_comp, toluene_ligand_comp):
@@ -142,10 +143,11 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
             )
 
 
-@pytest.mark.xfail
 class TestChemicalSystemNanBox(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem
+    key = "ChemicalSystem-34f6bd8be97cc184bad334e6f8daa469"
+    repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
 
     @pytest.fixture
     def instance(self, solv_comp, toluene_ligand_comp):
