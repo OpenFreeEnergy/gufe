@@ -355,7 +355,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
                 shared: Optional[PathLike] = None,
-                scratch_basedir: Optional[PathLike] = None,
+                scratch: Optional[PathLike] = None,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
                 ) -> ProtocolDAGResult:
@@ -373,7 +373,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         removed after. Used by some `ProtocolUnit`s to pass file contents to
         dependent `ProtocolUnit`s. If not given, defaults to os cwd (current
         directory).
-    scratch_basedir : Optional[PathLike]
+    scratch : Optional[PathLike]
         Filesystem path to use for `ProtocolUnit` `scratch` space.
     keep_scratch : bool
         If True, don't remove scratch directories for `ProtocolUnit`s after
@@ -402,10 +402,10 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        if scratch_basedir is not None:
+        if scratch is not None:
             scratch_tmp = tempfile.TemporaryDirectory(
                     prefix=str(unit.key),
-                    dir=scratch_basedir)
+                    dir=scratch)
             scratch_ = Path(scratch_tmp.name)
         else:
             scratch_ = None
@@ -417,7 +417,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                 raise_error=raise_error,
                 **inputs)
 
-        if scratch_basedir is not None and not keep_scratch:
+        if scratch is not None and not keep_scratch:
             scratch_tmp.cleanup()
 
         # attach result to this `ProtocolUnit`
