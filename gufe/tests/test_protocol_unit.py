@@ -4,6 +4,7 @@ from pathlib import Path
 
 from gufe.protocols.protocolunit import ProtocolUnit, Context, ProtocolUnitFailure
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
+from gufe.storage import FileStorage
 
 
 class DummyUnit(ProtocolUnit):
@@ -38,12 +39,13 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
     def test_execute(self, tmpdir):
         with tmpdir.as_cwd():
-            u: ProtocolUnitFailure = DummyUnit().execute(shared=Path('.'), an_input=3)
+            shared = FileStorage(".")
+            u: ProtocolUnitFailure = DummyUnit().execute(shared=shared, an_input=3)
             assert u.exception[0] == "ValueError"
 
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
-                DummyUnit().execute(shared=Path('.'), raise_error=True, an_input=3)
+                DummyUnit().execute(shared=shared, raise_error=True, an_input=3)
 
     def test_normalize(self, dummy_unit):
         thingy = dummy_unit.key

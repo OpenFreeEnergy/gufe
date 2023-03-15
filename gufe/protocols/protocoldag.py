@@ -16,6 +16,7 @@ from ..tokenization import GufeTokenizable, GufeKey
 from .protocolunit import (
     ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure,
 )
+from ..storage import ExternalStorage, FileStorage
 
 
 class DAGMixin:
@@ -354,7 +355,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared: Optional[PathLike] = None,
+                shared: Optional[ExternalStorage] = None,
                 raise_error: bool = True,
                 ) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
@@ -366,10 +367,10 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     ----------
     protocoldag : ProtocolDAG
         The `ProtocolDAG` to execute.
-    shared : Optional[PathLike]
-       Path to scratch space that persists across whole DAG execution, but
-       is removed after. Used by some `ProtocolUnit`s to pass file contents
-       to dependent `ProtocolUnit`s.
+    shared : Optiona[ExternalStorage]
+       Storage space that persists across whole DAG execution, but may
+       be removed after. Used by some `ProtocolUnit`s to pass file
+       contents to dependent `ProtocolUnit` objects.
        If not given, defaults to os cwd (current directory)
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
@@ -383,9 +384,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
 
     """
     if shared is None:
-        shared_ = Path(os.getcwd())
-    else:
-        shared_ = Path(shared)
+        shared = FileStorage(os.getcwd())
 
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
@@ -396,7 +395,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         inputs = _pu_to_pur(unit.inputs, results)
 
         # execute
-        result = unit.execute(shared=shared_, raise_error=raise_error, **inputs)
+        result = unit.execute(shared=shared, raise_error=raise_error, **inputs)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result

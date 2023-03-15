@@ -22,6 +22,8 @@ from ..tokenization import (
     GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
 )
 
+from ..storage import ExternalStorage
+
 
 @dataclass
 class Context:
@@ -30,7 +32,7 @@ class Context:
 
     """
     scratch: PathLike
-    shared: PathLike
+    shared: ExternalStorage
 
 
 def _list_dependencies(inputs, cls):
@@ -261,7 +263,7 @@ class ProtocolUnit(GufeTokenizable):
         return self._dependencies     # type: ignore
 
     def execute(self, *, 
-                shared: PathLike,
+                shared: ExternalStorage,
                 scratch: Optional[PathLike] = None,
                 raise_error: bool = False,
                 **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
@@ -269,10 +271,10 @@ class ProtocolUnit(GufeTokenizable):
 
         Parameters
         ----------
-        shared : PathLike
-           Path to scratch space that persists across whole DAG execution, but
-           is removed after. Used by some `ProtocolUnit`s to pass file contents
-           to dependent `ProtocolUnit` objects.
+        shared : ExternalStorage
+           Storage space that persists across whole DAG execution, but may
+           be removed after. Used by some `ProtocolUnit`s to pass file
+           contents to dependent `ProtocolUnit` objects.
         scratch : Optional[PathLike]
             Path to scratch space that persists during execution of this
             `ProtocolUnit`, but removed after.
@@ -302,22 +304,27 @@ class ProtocolUnit(GufeTokenizable):
             result = ProtocolUnitResult(
                 name=self.name, source_key=self.key, inputs=inputs, outputs=outputs
             )
-
         except Exception as e:
             if raise_error:
                 raise
+
+            outputs = {}
 
             result = ProtocolUnitFailure(
                 name=self._name,
                 source_key=self.key,
                 inputs=inputs,
-                outputs=dict(),
+                outputs=outputs,
                 exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc()
             )
 
-        # TODO: change this part once we have clearer ideas on how to inject
-        # persistent storage use
+        output_files = [f for f in outputs.values() if isinstance(f, Path)]
+        for path in output_files:
+            # label is worth further consideration before merge
+            label = str(self.key / path)
+            shared.store_path(label, path)
+
         if scratch is None:
             scratch_tmp.cleanup()
 
