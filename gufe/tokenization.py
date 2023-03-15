@@ -361,11 +361,13 @@ class GufeKey(str):
         return {':gufe-key:': str(self)}
 
     @property
-    def prefix(self):
+    def prefix(self) -> str:
+        """Commonly indicates a classname"""
         return self.split('-')[0]
 
     @property
-    def token(self):
+    def token(self) -> str:
+        """Unique hash of this key, typically a md5 value"""
         return self.split('-')[1]
 
 
