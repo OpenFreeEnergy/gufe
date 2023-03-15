@@ -1,14 +1,13 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import abc
 from copy import copy
 from collections import defaultdict
 import os
 from typing import Iterable, Optional, Union, Any
 from os import PathLike
 from pathlib import Path
-import tempfile
+import shutil
 
 import networkx as nx
 
@@ -402,23 +401,16 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        if scratch is not None:
-            scratch_tmp = tempfile.TemporaryDirectory(
-                    prefix=str(unit.key),
-                    dir=scratch)
-            scratch_ = Path(scratch_tmp.name)
-        else:
-            scratch_ = None
-
         # execute
         result = unit.execute(
                 shared=shared_,
-                scratch=scratch_,
+                scratch=scratch,
                 raise_error=raise_error,
                 **inputs)
 
-        if scratch is not None and not keep_scratch:
-            scratch_tmp.cleanup()
+        if scratch and not keep_scratch:
+            shutil.rmtree(scratch)  # wipe scratch and recreate empty dir
+            os.makedirs(scratch)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
