@@ -75,7 +75,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     Right now we just basically just grab what we need for the systemgenerator signature
     https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
-    constraints: Literal['hbonds', 'allbonds', 'hangles', None] = 'HBonds'
+    constraints: Optional[str] = 'hbonds'
     rigid_water: bool = True
     remove_com: bool = False
     hydrogen_mass: float
