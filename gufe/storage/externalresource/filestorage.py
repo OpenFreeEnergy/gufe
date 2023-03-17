@@ -14,7 +14,7 @@ from ..errors import (
 
 # TODO: this should use pydantic to check init inputs
 class FileStorage(ExternalStorage):
-    def __init__(self, root_dir: Union[pathlib.Path, str]):
+    def __init__(self, root_dir: Union[os.PathLike, str]):
         self.root_dir = pathlib.Path(root_dir)
 
     def _exists(self, location):
