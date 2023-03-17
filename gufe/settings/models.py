@@ -101,13 +101,13 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
 class Settings(SettingsBaseModel):
     """
     Container for all settings needed by a protocol
-    """
 
-    # symvar? calver?
-    settings_version: int = 0
-    forcefield_settings: OpenMMSystemGeneratorFFSettings
+    This represents the minimal surface that all settigns objects will have.
+
+    Protocols can subclass this to extend this to cater for their additional settings.
+    """
+    forcefield_settings: BaseForcefieldSettings
     thermo_settings: ThermoSettings
-    protocol_settings: Union[ProtocolSettings, None]
 
     @classmethod
     def get_defaults(cls):
