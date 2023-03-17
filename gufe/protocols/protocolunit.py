@@ -319,6 +319,9 @@ class ProtocolUnit(GufeTokenizable):
                 traceback=traceback.format_exc()
             )
 
+        # extract any files from the values of the dict that _execute
+        # returns; ensure that we move these to shared so they can be used
+        # by later units
         output_files = [f for f in outputs.values() if isinstance(f, Path)]
         for path in output_files:
             # label is worth further consideration before merge
@@ -364,8 +367,9 @@ class ProtocolUnit(GufeTokenizable):
         chained together, with their outputs exposed to `ProtocolUnit`s
         dependent on them.
 
-        The return dict should contain objects that are either `gufe` objects
-        or JSON-serializables.
+        The return dict should contain objects that are `gufe` objects,
+        JSON-serializables, or pathlib.Path objects pointing to files that
+        should be moved to shared storage.
 
         """
         ...

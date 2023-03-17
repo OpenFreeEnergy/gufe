@@ -354,10 +354,11 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
-def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared: Optional[ExternalStorage] = None,
-                raise_error: bool = True,
-                ) -> ProtocolDAGResult:
+def execute_DAG(
+    protocoldag: ProtocolDAG, *,
+    shared: Optional[Union[ExternalStorage, PathLike, str]] = None,
+    raise_error: bool = True,
+) -> ProtocolDAGResult:
     """Execute the full DAG in-serial, in process.
 
     This is intended for debug use for Protocol developers.
@@ -367,7 +368,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     ----------
     protocoldag : ProtocolDAG
         The `ProtocolDAG` to execute.
-    shared : Optiona[ExternalStorage]
+    shared : Optional[ExternalStorage]
        Storage space that persists across whole DAG execution, but may
        be removed after. Used by some `ProtocolUnit`s to pass file
        contents to dependent `ProtocolUnit` objects.
@@ -385,6 +386,9 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     """
     if shared is None:
         shared = FileStorage(os.getcwd())
+
+    if isinstance(shared, (PathLike, str)):
+        shared = FileStorage(shared)
 
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
