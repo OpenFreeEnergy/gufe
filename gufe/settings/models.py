@@ -7,6 +7,7 @@ Pydantic models used for storing settings.
 import abc
 from typing import Optional, Union
 
+import pydantic
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
@@ -88,6 +89,14 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     ]
     small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
 
+    @pydantic.validator
+    def constraint_check(cls, v):
+        allowed = {'hbonds', 'hangles', 'allbonds'}
+
+        if not (v is None or v.lower() in allowed):
+            raise ValueError(f"Bad constraints value, use one of {allowed}")
+
+        return v
 
 class Settings(SettingsBaseModel):
     """
