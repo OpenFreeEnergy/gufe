@@ -56,20 +56,31 @@ class BaseForcefieldSettings(SettingsBaseModel, abc.ABC):
 
 
 class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
-    """This class is a WIP.
+    """Parameters to set up the forcefield with OpenMM Forcefields
+
+    Attributes
+    ----------
+    constraints : Optional[str]
+      one of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'
+    rigid_water : bool
+      default True
+    remove_com : bool
+       default False
+    hydrogen_mass : float
+       the repartitioned hydrogen mass (in amu), default 4.0
+    forcefields : list[str]
+
+    small_molecule_forcefield : str
 
     Right now we just basically just grab what we need for the systemgenerator signature
     https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
+    constraints: Literal['hbonds', 'allbonds', 'hangles', None] = 'HBonds'
+    rigid_water: bool = True
+    remove_com: bool = False
+    hydrogen_mass: float
 
-    # I don't want app.HBonds or 4*unit.amu, so will string-ify those for now
-    forcefield_kwargs: dict = {
-        "constraints": "app.HBonds",
-        "rigidWater": True,
-        "removeCMMotion": False,
-        "hydrogenMass": "4*unit.amu",
-    }
-    forcefields: list = [
+    forcefields: list[str] = [
         "amber/ff14SB.xml",  # ff14SB protein force field
         "amber/tip3p_standard.xml",  # TIP3P and recommended monovalent ion parameters
         "amber/tip3p_HFE_multivalent.xml",  # for divalent ions
