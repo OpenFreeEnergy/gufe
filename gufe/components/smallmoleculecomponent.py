@@ -11,7 +11,6 @@ from typing import Any
 from rdkit import Chem
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
-from ..custom_typing import OEMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 
 
@@ -178,15 +177,6 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             raise RuntimeError(f"SDF contains more than 1 molecule")
 
         return cls(rdkit=mol)  # name is obtained automatically
-
-    def to_openeye(self) -> OEMol:  # type: ignore
-        # typing: see https://github.com/OpenFreeEnergy/gufe/pull/65#issuecomment-1259682099
-        """OEChem representation of this molecule"""
-        return self.to_openff().to_openeye()
-
-    @classmethod
-    def from_openeye(cls, oemol: OEMol, name: str = ""):
-        raise NotImplementedError
 
     def to_openff(self):
         """OpenFF Toolkit representation of this molecule"""

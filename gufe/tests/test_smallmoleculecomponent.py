@@ -7,12 +7,6 @@ import openff.toolkit.topology
 import os
 import pytest
 
-try:
-    from openeye import oechem
-except ImportError:
-    HAS_OECHEM = False
-else:
-    HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
 from gufe.components.explicitmoleculecomponent import (
     _ensure_ofe_name,
@@ -195,12 +189,6 @@ class TestSmallMoleculeComponentConversion:
         off_ethane = named_ethane.to_openff()
 
         assert off_ethane.name == 'ethane'
-
-    @pytest.mark.skipif(not HAS_OECHEM, reason="No OEChem available")
-    def test_to_oechem(self, ethane):
-        oec_ethane = ethane.to_openeye()
-
-        assert isinstance(oec_ethane, oechem.OEMol)
 
 
 @pytest.mark.parametrize('mol, charge', [
