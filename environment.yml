@@ -7,7 +7,6 @@ dependencies:
   - coverage
   - networkx
   - numpy
-  - openeye-toolkits
   - openff-toolkit
   - openff-units >=0.2.0
   - openff-models >=0.0.4
