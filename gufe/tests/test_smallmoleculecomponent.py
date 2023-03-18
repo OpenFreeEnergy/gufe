@@ -3,7 +3,12 @@
 
 import importlib
 import importlib.resources
-import openff.toolkit.topology
+try:
+    import openff.toolkit.topology
+except ImportError:
+    HAS_OFFTK = False
+else:
+    HAS_OFFTK = True
 import os
 import pytest
 
@@ -179,6 +184,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane.smiles == copy.smiles
 
 
+@pytest.skipif(not HAS_OFFTK)
 class TestSmallMoleculeComponentConversion:
     def test_to_off(self, ethane):
         off_ethane = ethane.to_openff()
@@ -216,9 +222,8 @@ class TestSmallMoleculeSerialization:
 
         assert isinstance(d, dict)
 
+    @pytest.mark.skipif(not HAS_OFFTK)
     def test_deserialize_roundtrip(self, toluene, phenol):
-        # TODO: Currently roundtripping via openff adds Hydrogens even when
-        #       they weren't in the original input molecule.
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
 
         assert roundtrip == phenol
@@ -232,8 +237,6 @@ class TestSmallMoleculeSerialization:
         for x, y in zip(pos1, pos2):
             assert (x == y).all()
 
-    # TODO: determine if we want to add our own serializers for e.g. JSON
-    # based on `to_dict`
     @pytest.mark.xfail
     def test_bounce_off_file(self, toluene, tmpdir):
         fname = str(tmpdir / 'mol.json')
