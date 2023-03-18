@@ -5,7 +5,6 @@ import logging
 # openff complains about oechem being missing, shhh
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
-from openff.toolkit.topology import Molecule as OFFMolecule
 from typing import Any
 
 from rdkit import Chem
@@ -180,13 +179,15 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
     def to_openff(self):
         """OpenFF Toolkit representation of this molecule"""
+        from openff.toolkit.topology import Molecule as OFFMolecule
+
         m = OFFMolecule(self._rdkit, allow_undefined_stereo=True)
         m.name = self.name
 
         return m
 
     @classmethod
-    def from_openff(cls, openff: OFFMolecule, name: str = ""):
+    def from_openff(cls, openff, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(openff.to_rdkit(), name=name)
 
