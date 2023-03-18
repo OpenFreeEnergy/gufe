@@ -184,7 +184,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane.smiles == copy.smiles
 
 
-@pytest.skipif(not HAS_OFFTK)
+@pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
     def test_to_off(self, ethane):
         off_ethane = ethane.to_openff()
@@ -222,7 +222,7 @@ class TestSmallMoleculeSerialization:
 
         assert isinstance(d, dict)
 
-    @pytest.mark.skipif(not HAS_OFFTK)
+    @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_deserialize_roundtrip(self, toluene, phenol):
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
 
