@@ -259,4 +259,6 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         _setprops(m, d['molprops'])
 
+        m.UpdatePropertyCache()
+
         return cls(rdkit=m)

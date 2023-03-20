@@ -251,6 +251,7 @@ class TestSmallMoleculeSerialization:
 
         assert roundtrip == toluene
 
+    @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_to_openff_after_serialisation(self, toluene):
         TOKENIZABLE_REGISTRY.pop(toluene.key)
 
