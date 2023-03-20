@@ -251,6 +251,16 @@ class TestSmallMoleculeSerialization:
 
         assert roundtrip == toluene
 
+    def test_to_openff_after_serialisation(self, toluene):
+        TOKENIZABLE_REGISTRY.pop(toluene.key)
+
+        t2 = SmallMoleculeComponent.from_dict(toluene.to_dict())
+
+        off1 = toluene.to_openff()
+        off2 = t2.to_openff()
+
+        assert off1 == off2
+
 
 @pytest.mark.parametrize('target', ['atom', 'bond', 'conformer', 'mol'])
 @pytest.mark.parametrize('dtype', ['int', 'bool', 'str', 'float'])
