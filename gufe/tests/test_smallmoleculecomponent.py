@@ -10,6 +10,7 @@ except ImportError:
 else:
     HAS_OFFTK = True
 import os
+from unittest import mock
 import pytest
 
 from gufe import SmallMoleculeComponent
@@ -253,9 +254,11 @@ class TestSmallMoleculeSerialization:
 
     @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_to_openff_after_serialisation(self, toluene):
-        TOKENIZABLE_REGISTRY.pop(toluene.key)
+        d = toluene.to_dict()
 
-        t2 = SmallMoleculeComponent.from_dict(toluene.to_dict())
+        patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(patch_loc, {}, clear=True):
+            t2 = SmallMoleculeComponent.from_dict(d)
 
         off1 = toluene.to_openff()
         off2 = t2.to_openff()
