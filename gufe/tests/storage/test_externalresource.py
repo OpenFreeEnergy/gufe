@@ -52,20 +52,27 @@ class TestFileStorage:
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
 
-    def test_store_path(self, file_storage):
+    @pytest.mark.parametrize('missing_parent_dir', [True, False])
+    def test_store_path(self, file_storage, missing_parent_dir):
         orig_file = file_storage.root_dir / ".hidden" / "bar.txt"
         orig_file.parent.mkdir()
         as_bytes = "This is bar".encode('utf-8')
         with open(orig_file, 'wb') as f:
             f.write(as_bytes)
 
-        fileloc = file_storage.root_dir / "bar.txt"
-        assert not fileloc.exists()
+        if missing_parent_dir:
+            fileloc = "qux/bar.txt"
+        else:
+            fileloc = "bar.txt"
+
+        filename = file_storage.root_dir / fileloc
+
+        assert not filename.exists()
 
         file_storage.store_path(fileloc, orig_file)
 
-        assert fileloc.exists()
-        with open(fileloc, 'rb') as f:
+        assert filename.exists()
+        with open(filename, 'rb') as f:
             assert as_bytes == f.read()
 
     def test_delete(self, file_storage):
