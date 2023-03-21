@@ -10,4 +10,3 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 RDKitMol: TypeAlias = Chem.rdchem.Mol
-OEMol = TypeVar('OEMol')
