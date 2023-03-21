@@ -31,7 +31,9 @@ class LigandAtomMapping(AtomMapping):
         componentA, componentB : SmallMoleculeComponent
           the ligand molecules on either end of the mapping
         componentA_to_componentB : dict[int, int]
-          correspondence of indices of atoms between the two ligands
+          correspondence of indices of atoms between the two ligands; the
+          keys are indices in componentA and the values are indices in
+          componentB
         annotations : dict[str, Any]
           Mapping of annotation identifier to annotation data. Annotations may
           contain arbitrary JSON-serializable data. Annotation identifiers
