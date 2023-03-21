@@ -4,7 +4,6 @@
 from typing import Optional, Iterable
 import json
 
-from openff.toolkit.utils.serialization import Serializable
 from ..tokenization import GufeTokenizable, JSON_HANDLER
 from ..utils import ensure_filelike
 

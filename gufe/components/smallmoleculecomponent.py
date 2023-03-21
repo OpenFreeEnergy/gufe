@@ -5,13 +5,11 @@ import logging
 # openff complains about oechem being missing, shhh
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
-from openff.toolkit.topology import Molecule as OFFMolecule
 from typing import Any
 
 from rdkit import Chem
 
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
-from ..custom_typing import OEMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 
 
@@ -179,24 +177,17 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         return cls(rdkit=mol)  # name is obtained automatically
 
-    def to_openeye(self) -> OEMol:  # type: ignore
-        # typing: see https://github.com/OpenFreeEnergy/gufe/pull/65#issuecomment-1259682099
-        """OEChem representation of this molecule"""
-        return self.to_openff().to_openeye()
-
-    @classmethod
-    def from_openeye(cls, oemol: OEMol, name: str = ""):
-        raise NotImplementedError
-
     def to_openff(self):
         """OpenFF Toolkit representation of this molecule"""
+        from openff.toolkit.topology import Molecule as OFFMolecule
+
         m = OFFMolecule(self._rdkit, allow_undefined_stereo=True)
         m.name = self.name
 
         return m
 
     @classmethod
-    def from_openff(cls, openff: OFFMolecule, name: str = ""):
+    def from_openff(cls, openff, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(openff.to_rdkit(), name=name)
 
@@ -267,5 +258,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m.AddConformer(c)
 
         _setprops(m, d['molprops'])
+
+        m.UpdatePropertyCache()
 
         return cls(rdkit=m)
