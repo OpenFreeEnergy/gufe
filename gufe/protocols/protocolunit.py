@@ -322,11 +322,11 @@ class ProtocolUnit(GufeTokenizable):
         # extract any files from the values of the dict that _execute
         # returns; ensure that we move these to shared so they can be used
         # by later units
-        output_files = [f for f in outputs.values() if isinstance(f, Path)]
-        for path in output_files:
-            # label is worth further consideration before merge
-            label = str(self.key / path)
-            shared.store_path(label, path)
+        for label, path in outputs.items():
+            is_file = (isinstance(path, Path) and path.exists()
+                       and not path.is_dir())
+            if is_file:
+                shared.store_path(f"{self.key}/{label}", path)
 
         if scratch is None:
             scratch_tmp.cleanup()

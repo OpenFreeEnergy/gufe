@@ -5,6 +5,7 @@ import itertools
 from openff.units import unit
 from typing import Optional, Iterable, List, Dict, Any, Union
 from collections import defaultdict
+import pathlib
 
 import pytest
 import networkx as nx
@@ -13,6 +14,7 @@ import numpy as np
 import gufe
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import ComponentMapping
+from gufe.storage.externalresource import FileStorage
 from gufe import settings
 from gufe.protocols import (
     Protocol,
@@ -50,6 +52,16 @@ class SimulationUnit(ProtocolUnit):
             scratch=ctx.scratch,
             shared=ctx.shared
         )
+
+
+class WriteFileUnit(ProtocolUnit):
+    @staticmethod
+    def _execute(ctx, *, initialization, **inputs):
+        path = ctx.scratch / "foo.txt"
+        with open(path, mode='w') as f:
+            f.write("I wrote something!")
+
+        return {"foo.txt": path}
 
 
 class FinishUnit(ProtocolUnit):
@@ -164,6 +176,20 @@ class DummyProtocol(Protocol):
         return dict(outputs)
 
 
+class DummyWritingProtocol(DummyProtocol):
+    def _create(
+        self,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[dict[str, ComponentMapping]] = None,
+        extends: Optional[ProtocolDAGResult] = None,
+    ) -> List[ProtocolUnit]:
+        units = super()._create(stateA, stateB, mapping, extends)
+        writer = WriteFileUnit(initialization=units[0])
+        units.insert(-1, writer)
+        return units
+
+
 class BrokenSimulationUnit(SimulationUnit):
     @staticmethod
     def _execute(ctx, **inputs):
@@ -261,6 +287,31 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         # check that scratch directory is different for all simulations
         assert len(set(i.outputs['scratch'] for i in simulationresults)) == len(simulationresults)
+
+    def test_execute_write_file(self, solvated_ligand, vacuum_ligand, tmp_path):
+        # tests that files are correctly written to shared
+        settings = DummyWritingProtocol.default_settings()
+        protocol = DummyWritingProtocol(settings=settings)
+        dag = protocol.create(stateA=solvated_ligand, stateB=vacuum_ligand,
+                              name="writing", mapping=None)
+
+        # extract the write unit to get the filename prefix
+        write_units = [u for u in dag.protocol_units
+                       if isinstance(u, WriteFileUnit)]
+        assert len(write_units) == 1
+        write_unit = write_units[0]
+        relative_filename = f"{write_unit.key}/foo.txt"
+
+        # get the expected filename
+        shared = FileStorage(tmp_path / "shared")
+        # scratch = tmp_path / "scratch"
+        filename = pathlib.Path(shared.get_filename(relative_filename))
+        assert not filename.exists()
+
+        # create the file
+        dag_result = execute_DAG(dag, shared=shared)
+        assert filename.exists()
+
 
     def test_terminal_units(self, protocol_dag):
         prot, dag, res = protocol_dag
