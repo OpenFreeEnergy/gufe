@@ -9,7 +9,7 @@ import functools
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
-
+from openff.units import unit
 import gufe
 from gufe.tests.test_protocol import DummyProtocol
 
@@ -216,7 +216,7 @@ def prot_comp(PDB_181L_path):
 
 @pytest.fixture
 def solv_comp():
-    yield gufe.SolventComponent(positive_ion="K", negative_ion="Cl")
+    yield gufe.SolventComponent(positive_ion="K", negative_ion="Cl", ion_concentration=0.0 * unit.molar)
 
 
 @pytest.fixture
