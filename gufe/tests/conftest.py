@@ -2,8 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import importlib.resources
-import urllib.request
-from urllib.error import URLError
 import io
 import functools
 import pytest

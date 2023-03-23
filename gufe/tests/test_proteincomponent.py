@@ -3,9 +3,12 @@
 import os
 import io
 import copy
+import importlib.resources
 import pytest
 from rdkit import Chem
-
+import pooch
+import urllib.request
+from urllib.error import URLError
 from gufe import ProteinComponent
 
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -14,7 +17,44 @@ from openmm.app import pdbfile
 from openmm import unit
 from numpy.testing import assert_almost_equal
 
-from .conftest import ALL_PDB_LOADERS
+
+try:
+    urllib.request.urlopen("https://google.com")
+except URLError:
+    HAS_INTERNET = False
+else:
+    HAS_INTERNET = True
+
+
+_pl_benchmarks = pooch.create(
+    path=pooch.os_cache('gufe'),
+    base_url="https://github.com/OpenFreeEnergy/openfe-benchmarks/raw/f87f5272cd95d15277de92a7442a9cb71d76615d/openfe_benchmarks/data/",
+    version=None,
+    registry={
+        "cmet_protein.pdb": None,
+        "hif2a_protein.pdb": None,
+        "mcl1_protein.pdb": None,
+        "p38_protein.pdb": None,
+        "ptp1b_protein.pdb": None,
+        "syk_protein.pdb": None,
+        "thrombin_protein.pdb": None,
+        "tnsk2_protein.pdb": None,
+        "tyk2_protein.pdb": None,
+    }
+)
+
+
+@pytest.fixture(
+    params=list(_pl_benchmarks.registry.keys()) + ["181l.pdb"]
+)
+def PLB_PDB_files(request):
+    if request.param == '181l.pdb':
+        with importlib.resources.path('gufe.tests.data', request.param) as f:
+            yield str(f)
+    else:
+        if not HAS_INTERNET:
+            pytest.skip("Offline -- can't fetch PDB file")
+        yield _pl_benchmarks.fetch(request.param)
 
 
 @pytest.fixture
@@ -87,18 +127,15 @@ def assert_topology_equal(ref_top, top):
 class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
-    key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
+    key = "ProteinComponent-72f676dfad8dc1863440a80a53fac542"
     repr = "ProteinComponent(name=Steve)"
 
     @pytest.fixture
-    def instance(self, PDB_181L_path):
-        return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
+    def instance(self, PDB_181L_OpenMMClean_path):
+        return self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Steve")
 
-    # From
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_from_pdb_file(self, in_pdb_path):
-        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        p = self.cls.from_pdb_file(in_pdb_io, name="Steve")
+    def test_from_pdb_file(self, PLB_PDB_files):
+        p = self.cls.from_pdb_file(PLB_PDB_files, name="Steve")
 
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
@@ -177,8 +214,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             output_func=p.to_pdb_file
         )
 
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
+    def test_to_pdb_round_trip(self, PLB_PDB_files, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         p = self.cls.from_pdb_file(in_pdb_io, name="Wuff")
@@ -213,9 +249,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert p == p2
 
-    # parametrize
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_to_openmm_positions(self, in_pdb_path):
+    def test_to_openmm_positions(self, PLB_PDB_files):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
 
@@ -230,9 +264,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
-    # parametrize
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_to_openmm_topology(self, in_pdb_path):
+    def test_to_openmm_topology(self, PLB_PDB_files):
         in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
         ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
 

@@ -5,13 +5,10 @@ import logging
 # openff complains about oechem being missing, shhh
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
-from typing import Any
 
 from rdkit import Chem
 
-from .explicitmoleculecomponent import ExplicitMoleculeComponent
-from ..molhashing import deserialize_numpy, serialize_numpy
-
+from .explicitmoleculecomponent import ExplicitMoleculeComponent, _mol_from_dict
 
 _INT_TO_ATOMCHIRAL = {
     0: Chem.rdchem.ChiralType.CHI_UNSPECIFIED,
@@ -104,6 +101,12 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     name : str, optional
         A human readable tag for this molecule.  This name will be used in the hash.
     """
+    @classmethod
+    def _from_dict(cls, dct: dict):
+        nm = dct.pop('name', '')
+        m = _mol_from_dict(dct)
+
+        return cls(rdkit=m, name=nm)
 
     def to_sdf(self) -> str:
         """Create a string based on SDF.
@@ -190,75 +193,3 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     def from_openff(cls, openff, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(openff.to_rdkit(), name=name)
-
-    def _to_dict(self) -> dict:
-        """Serialize to dict representation"""
-        # in a perfect world we'd use ToBinary()
-        # but this format slowly evolves, so the future hash of a SMC could change if rdkit were updated
-        # this is based on that method, with some irrelevant fields cut out
-
-        output: dict[str, Any] = {}
-
-        atoms = []
-        for atom in self._rdkit.GetAtoms():
-            atoms.append((
-                atom.GetAtomicNum(), atom.GetIsotope(), atom.GetFormalCharge(), atom.GetIsAromatic(),
-                _ATOMCHIRAL_TO_INT[atom.GetChiralTag()], atom.GetAtomMapNum(),
-                atom.GetPropsAsDict(includePrivate=False),
-            ))
-        output['atoms'] = atoms
-
-        bonds = []
-        for bond in self._rdkit.GetBonds():
-            bonds.append((
-                bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), _BONDTYPE_TO_INT[bond.GetBondType()],
-                _BONDSTEREO_TO_INT[bond.GetStereo()],
-                bond.GetPropsAsDict(includePrivate=False)
-            ))
-        output['bonds'] = bonds
-
-        conf = self._rdkit.GetConformer()
-        output['conformer'] = (serialize_numpy(conf.GetPositions()), conf.GetPropsAsDict(includePrivate=False))
-
-        output['molprops'] = self._rdkit.GetPropsAsDict(includePrivate=False)
-
-        return output
-
-    @classmethod
-    def _from_dict(cls, d: dict):
-        """Deserialize from dict representation"""
-        m = Chem.Mol()
-        em = Chem.EditableMol(m)
-
-        for atom in d['atoms']:
-            a = Chem.Atom(atom[0])
-            a.SetIsotope(atom[1])
-            a.SetFormalCharge(atom[2])
-            a.SetIsAromatic(atom[3])
-            a.SetChiralTag(_INT_TO_ATOMCHIRAL[atom[4]])
-            a.SetAtomMapNum(atom[5])
-            _setprops(a, atom[6])
-            em.AddAtom(a)
-
-        for bond in d['bonds']:
-            em.AddBond(bond[0], bond[1], _INT_TO_BONDTYPE[bond[2]])
-            # other fields are applied onto the ROMol
-
-        m = em.GetMol()
-
-        for bond, b in zip(d['bonds'], m.GetBonds()):
-            b.SetStereo(_INT_TO_BONDSTEREO[bond[3]])
-            _setprops(b, bond[4])
-
-        pos = deserialize_numpy(d['conformer'][0])
-        c = Chem.Conformer(m.GetNumAtoms())
-        for i, p in enumerate(pos):
-            c.SetAtomPosition(i, p)
-        _setprops(c, d['conformer'][1])
-        m.AddConformer(c)
-
-        _setprops(m, d['molprops'])
-
-        m.UpdatePropertyCache()
-
-        return cls(rdkit=m)
