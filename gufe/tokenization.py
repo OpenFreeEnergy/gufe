@@ -10,7 +10,7 @@ import inspect
 import json
 import logging
 import weakref
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Union
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
@@ -35,11 +35,11 @@ _default_json_codecs = [
 JSON_HANDLER = JSONSerializerDeserializer(_default_json_codecs)
 
 # maps qualified name strings to the class
-TOKENIZABLE_CLASS_REGISTRY: Dict[Tuple[str, str], "GufeTokenizable"] = {}
+TOKENIZABLE_CLASS_REGISTRY: dict[tuple[str, str], "GufeTokenizable"] = {}
 # maps fully qualified names to a new location
 # e.g. if we did a rename:
 # ('gufe', 'ProteinComponent') -> ('gufe', 'BiopolymerComponent')
-REMAPPED_CLASSES: Dict[Tuple[str, str], Tuple[str, str]] = {}
+REMAPPED_CLASSES: dict[tuple[str, str], tuple[str, str]] = {}
 
 
 def register_tokenizable_class(cls):
@@ -203,7 +203,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return defaults
 
     @abc.abstractmethod
-    def _to_dict(self) -> Dict:
+    def _to_dict(self) -> dict:
         """This method should be overridden to provide the dict form of the
         `GufeTokenizable` subclass.
 
@@ -216,7 +216,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @classmethod
     @abc.abstractmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         """This method should be overridden to receive the dict form of the
         `GufeTokenizable` subclass and generate an instance from it.
 
@@ -249,7 +249,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return dct
 
     @classmethod
-    def from_dict(cls, dct: Dict):
+    def from_dict(cls, dct: dict):
         """Generate an instance from full dict representation.
 
         Parameters
@@ -262,7 +262,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return dict_decode_dependencies(dct)
 
-    def to_keyed_dict(self, include_defaults=True) -> Dict:
+    def to_keyed_dict(self, include_defaults=True) -> dict:
         """Generate keyed dict representation, with all referenced
         `GufeTokenizable` objects given in keyed representations.
 
@@ -291,7 +291,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return dct
 
     @classmethod
-    def from_keyed_dict(cls, dct: Dict):
+    def from_keyed_dict(cls, dct: dict):
         """Generate an instance from keyed dict representation.
 
         Parameters
@@ -304,7 +304,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return key_decode_dependencies(dct)
 
-    def to_shallow_dict(self) -> Dict:
+    def to_shallow_dict(self) -> dict:
         """Generate shallow dict representation, with all referenced
         `GufeTokenizable` objects left intact.
 
@@ -317,7 +317,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return to_dict(self)
 
     @classmethod
-    def from_shallow_dict(cls, dct: Dict):
+    def from_shallow_dict(cls, dct: dict):
         """Generate an instance from shallow dict representation.
 
         Parameters
@@ -435,7 +435,7 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=True):
+def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=True):
     """
     Parameters
     ----------
@@ -474,13 +474,13 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=Tru
 
 
 # encode options
-def to_dict(obj: GufeTokenizable) -> Dict:
+def to_dict(obj: GufeTokenizable) -> dict:
     dct = obj._to_dict()
     dct.update(module_qualname(obj))
     return dct
 
 
-def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
+def dict_encode_dependencies(obj: GufeTokenizable) -> dict:
     return modify_dependencies(
         obj.to_shallow_dict(),
         to_dict,
@@ -490,7 +490,7 @@ def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
     )
 
 
-def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
+def key_encode_dependencies(obj: GufeTokenizable) -> dict:
     return modify_dependencies(
         obj.to_shallow_dict(),
         lambda obj: obj.key.to_dict(),
@@ -518,7 +518,7 @@ def from_dict(dct) -> GufeTokenizable:
         return thing
 
 
-def _from_dict(dct: Dict) -> GufeTokenizable:
+def _from_dict(dct: dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
 
@@ -526,14 +526,14 @@ def _from_dict(dct: Dict) -> GufeTokenizable:
     return cls._from_dict(dct)
 
 
-def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
+def dict_decode_dependencies(dct: dict) -> GufeTokenizable:
     return from_dict(
         modify_dependencies(dct, from_dict, is_gufe_dict, mode='decode', top=True)
     )
 
 
 def key_decode_dependencies(
-    dct: Dict,
+    dct: dict,
     registry=TOKENIZABLE_REGISTRY
 ) -> GufeTokenizable:
     # this version requires that all dependent objects are already registered
