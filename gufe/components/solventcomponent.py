@@ -31,7 +31,7 @@ class SolventComponent(Component):
                  positive_ion: str = 'Na+',
                  negative_ion: str = 'Cl-',
                  neutralize: bool = True,
-                 ion_concentration: unit.Quantity = 0.0 * unit.molar):
+                 ion_concentration: unit.Quantity = 0.15 * unit.molar):
         """
         Parameters
         ----------
@@ -45,7 +45,7 @@ class SolventComponent(Component):
           if the net charge on the chemical state is neutralized by the ions in
           this solvent component.  Default `True`
         ion_concentration : openff-units.unit.Quantity, optional
-          ionic concentration required, default `None`
+          ionic concentration required, default 0.15 * unit.molar
           this must be supplied with units, e.g. "1.5 * unit.molar"
 
         Examples
