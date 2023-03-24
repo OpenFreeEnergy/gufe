@@ -261,8 +261,7 @@ class ProtocolUnit(GufeTokenizable):
         return self._dependencies     # type: ignore
 
     def execute(self, *, 
-                shared: PathLike,
-                scratch: Optional[PathLike] = None,
+                context: Context,
                 raise_error: bool = False,
                 **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`.
@@ -288,15 +287,6 @@ class ProtocolUnit(GufeTokenizable):
         """
         result: Union[ProtocolUnitResult, ProtocolUnitFailure]
 
-        if scratch is None:
-            scratch_tmp = tempfile.TemporaryDirectory()
-            scratch_ = Path(scratch_tmp.name)
-        else:
-            scratch_ = Path(scratch)
-
-        context = Context(shared=shared,
-                          scratch=scratch_)
-
         try:
             outputs = self._execute(context, **inputs)
             result = ProtocolUnitResult(
@@ -315,11 +305,6 @@ class ProtocolUnit(GufeTokenizable):
                 exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc()
             )
-
-        # TODO: change this part once we have clearer ideas on how to inject
-        # persistent storage use
-        if scratch is None:
-            scratch_tmp.cleanup()
 
         return result
 

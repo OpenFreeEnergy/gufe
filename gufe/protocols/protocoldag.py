@@ -14,7 +14,7 @@ import networkx as nx
 
 from ..tokenization import GufeTokenizable, GufeKey
 from .protocolunit import (
-    ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure,
+    ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure, Context
 )
 
 
@@ -354,7 +354,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared: Optional[PathLike] = None,
+                shared: Path,
                 scratch_basedir: Optional[PathLike] = None,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
@@ -389,11 +389,6 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         The result of executing the `ProtocolDAG`.
 
     """
-    if shared is None:
-        shared_ = Path(os.getcwd())
-    else:
-        shared_ = Path(shared)
-
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
     for unit in protocoldag.protocol_units:
@@ -402,18 +397,20 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        if scratch_basedir is not None:
+        if scratch_basedir is None:
+            scratch_ = None
+        else:
             scratch_tmp = tempfile.TemporaryDirectory(
                     prefix=str(unit.key),
                     dir=scratch_basedir)
             scratch_ = Path(scratch_tmp.name)
-        else:
-            scratch_ = None
+
+        context = Context(shared=Path(shared),
+                          scratch=scratch_)
 
         # execute
         result = unit.execute(
-                shared=shared_,
-                scratch=scratch_,
+                context=context,
                 raise_error=raise_error,
                 **inputs)
 
