@@ -355,7 +355,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
                 shared: Path,
-                scratch_basedir: Optional[PathLike] = None,
+                scratch_basedir: Path,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
                 ) -> ProtocolDAGResult:
@@ -368,12 +368,12 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     ----------
     protocoldag : ProtocolDAG
         The `ProtocolDAG` to execute.
-    shared : Optional[PathLike]
+    shared : Path
         Path to scratch space that persists across whole DAG execution, but is
         removed after. Used by some `ProtocolUnit`s to pass file contents to
         dependent `ProtocolUnit`s. If not given, defaults to os cwd (current
         directory).
-    scratch_basedir : Optional[PathLike]
+    scratch_basedir : Path
         Filesystem path to use for `ProtocolUnit` `scratch` space.
     keep_scratch : bool
         If True, don't remove scratch directories for `ProtocolUnit`s after
@@ -397,16 +397,13 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        if scratch_basedir is None:
-            scratch_ = None
-        else:
-            scratch_tmp = tempfile.TemporaryDirectory(
-                    prefix=str(unit.key),
-                    dir=scratch_basedir)
-            scratch_ = Path(scratch_tmp.name)
+        scratch_tmp = tempfile.TemporaryDirectory(
+                prefix=f"{str(unit.key)}__",
+                dir=scratch_basedir)
+        scratch = Path(scratch_tmp.name)
 
-        context = Context(shared=Path(shared),
-                          scratch=scratch_)
+        context = Context(shared=shared,
+                          scratch=scratch)
 
         # execute
         result = unit.execute(
@@ -414,7 +411,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                 raise_error=raise_error,
                 **inputs)
 
-        if scratch_basedir is not None and not keep_scratch:
+        if not keep_scratch:
             scratch_tmp.cleanup()
 
         # attach result to this `ProtocolUnit`
