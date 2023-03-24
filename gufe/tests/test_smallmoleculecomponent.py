@@ -3,16 +3,16 @@
 
 import importlib
 import importlib.resources
-import openff.toolkit.topology
+try:
+    import openff.toolkit.topology
+except ImportError:
+    HAS_OFFTK = False
+else:
+    HAS_OFFTK = True
 import os
+from unittest import mock
 import pytest
 
-try:
-    from openeye import oechem
-except ImportError:
-    HAS_OECHEM = False
-else:
-    HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
 from gufe.components.explicitmoleculecomponent import (
     _ensure_ofe_name,
@@ -185,6 +185,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane.smiles == copy.smiles
 
 
+@pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
     def test_to_off(self, ethane):
         off_ethane = ethane.to_openff()
@@ -195,12 +196,6 @@ class TestSmallMoleculeComponentConversion:
         off_ethane = named_ethane.to_openff()
 
         assert off_ethane.name == 'ethane'
-
-    @pytest.mark.skipif(not HAS_OECHEM, reason="No OEChem available")
-    def test_to_oechem(self, ethane):
-        oec_ethane = ethane.to_openeye()
-
-        assert isinstance(oec_ethane, oechem.OEMol)
 
 
 @pytest.mark.parametrize('mol, charge', [
@@ -228,9 +223,8 @@ class TestSmallMoleculeSerialization:
 
         assert isinstance(d, dict)
 
+    @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_deserialize_roundtrip(self, toluene, phenol):
-        # TODO: Currently roundtripping via openff adds Hydrogens even when
-        #       they weren't in the original input molecule.
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
 
         assert roundtrip == phenol
@@ -244,8 +238,6 @@ class TestSmallMoleculeSerialization:
         for x, y in zip(pos1, pos2):
             assert (x == y).all()
 
-    # TODO: determine if we want to add our own serializers for e.g. JSON
-    # based on `to_dict`
     @pytest.mark.xfail
     def test_bounce_off_file(self, toluene, tmpdir):
         fname = str(tmpdir / 'mol.json')
@@ -259,6 +251,19 @@ class TestSmallMoleculeSerialization:
         roundtrip = SmallMoleculeComponent.from_dict(d)
 
         assert roundtrip == toluene
+
+    @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
+    def test_to_openff_after_serialisation(self, toluene):
+        d = toluene.to_dict()
+
+        patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(patch_loc, {}, clear=True):
+            t2 = SmallMoleculeComponent.from_dict(d)
+
+        off1 = toluene.to_openff()
+        off2 = t2.to_openff()
+
+        assert off1 == off2
 
 
 @pytest.mark.parametrize('target', ['atom', 'bond', 'conformer', 'mol'])
