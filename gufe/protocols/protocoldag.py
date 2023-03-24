@@ -397,13 +397,16 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        scratch_tmp = tempfile.TemporaryDirectory(
-                prefix=f"{str(unit.key)}__",
-                dir=scratch_basedir)
-        scratch = Path(scratch_tmp.name)
+        if scratch_basedir is None:
+            scratch_ = None
+        else:
+            scratch_tmp = tempfile.TemporaryDirectory(
+                    prefix=str(unit.key),
+                    dir=scratch_basedir)
+            scratch_ = Path(scratch_tmp.name)
 
-        context = Context(shared=shared,
-                          scratch=scratch)
+        context = Context(shared=Path(shared),
+                          scratch=scratch_)
 
         # execute
         result = unit.execute(
