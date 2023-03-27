@@ -302,12 +302,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # get top:
         top = self.to_openmm_topology()
-
-        # get pos:
-        np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = (
-            list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
-        )
+        pos = self.to_openmm_positions()
 
         # write file
         if not isinstance(out_path, io.TextIOBase):
@@ -323,8 +318,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         except AttributeError:
             out_path = "<unknown>"
 
-        PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
-
+        PDBxFile.writeFile(topology=top, positions=pos, file=out_file)
 
         if must_close:
             # we only close the file if we had to open it
