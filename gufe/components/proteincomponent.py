@@ -217,8 +217,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return top
 
     def to_openmm_positions(self):
-        """
-        serialize the positions to openmm.unit.Quantity
+        """Convert the positions to openmm.unit.Quantity
+
         ! only one frame at the moment!
 
         Returns
@@ -228,12 +228,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         """
         from openmm import unit as omm_unit
 
-        np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = (
-            list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
-        )
+        np_pos = self._rdkit.GetConformer().GetPositions()
 
-        return openmm_pos
+        return np_pos * omm_unit.angstrom
 
     def to_pdb_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
         """
