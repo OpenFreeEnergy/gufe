@@ -354,7 +354,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             top.addBond(a1, a2,
-                        order=_BONDORDERS_RDKIT_TO_OPENMM[bond.GetBondType()])
+                        order=_BONDORDERS_RDKIT_TO_OPENMM.get(bond.GetBondType(), None))
 
         return top
 
