@@ -189,16 +189,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             output_func=p.to_pdb_file
         )
 
-    def test_to_pdb_round_trip(self, PLB_PDB_files, tmp_path):
-        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
+    def test_to_pdb_round_trip(self, PLB_PDB_files, tmpdir):
+        p = self.cls.from_pdb_file(PLB_PDB_files, name="Wuff")
+        out_file1 = str(tmpdir / "foo.pdb")
 
-        p = self.cls.from_pdb_file(in_pdb_io, name="Wuff")
-        out_file_name = "tmp_"+in_pdb_path+".pdb"
-        out_file = tmp_path / out_file_name
-
-        p.to_pdb_file(str(out_file))
-
-        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
+        p.to_pdb_file(out_file1)
 
         # generate openMM reference file:
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
@@ -225,13 +220,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert p == p2
 
     def test_to_openmm_positions(self, PLB_PDB_files):
-        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-
-        openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
+        openmm_pdb = pdbfile.PDBFile(PLB_PDB_files)
         openmm_pos = openmm_pdb.positions
 
-        p = self.cls.from_pdb_file(in_pdb_io, name="Bob")
+        p = self.cls.from_pdb_file(PLB_PDB_files, name="Bob")
         gufe_openmm_pos = p.to_openmm_positions()
 
         v1 = gufe_openmm_pos.value_in_unit(unit.nanometer)
@@ -240,13 +232,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
     def test_to_openmm_topology(self, PLB_PDB_files):
-        in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-        ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-
-        openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
+        openmm_pdb = pdbfile.PDBFile(PLB_PDB_files)
         openmm_top = openmm_pdb.topology
 
-        p = self.cls.from_pdb_file(in_pdb_io, name="Bob")
+        p = self.cls.from_pdb_file(PLB_PDB_files, name="Bob")
         gufe_openmm_top = p.to_openmm_topology()
         assert openmm_top.getNumAtoms() == gufe_openmm_top.getNumAtoms()
         for ref_atom, atom in zip(openmm_top.atoms(), gufe_openmm_top.atoms()):
@@ -322,7 +311,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert m1.total_charge == 7
 
     def test_protein_total_charge_thromb(self):
-        m1 = self.cls.from_pdb_file(ALL_PDB_LOADERS["thrombin_protein"]())
+        m1 = self.cls.from_pdb_file(_pl_benchmarks.fetch('thrombin_protein.pdb'))
 
         assert m1.total_charge == 6
 
