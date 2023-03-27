@@ -23,9 +23,10 @@ from ..molhashing import deserialize_numpy, serialize_numpy
 
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
-    1: BondType.SINGLE,
-    2: BondType.DOUBLE,
-    3: BondType.TRIPLE,
+    app.Single: BondType.SINGLE, 1: BondType.SINGLE,
+    app.Double: BondType.DOUBLE, 2: BondType.DOUBLE,
+    app.Triple: BondType.TRIPLE, 3: BondType.TRIPLE,
+    app.Aromatic: BondType.AROMATIC,
     None: BondType.UNSPECIFIED,
 }
 _BONDORDERS_RDKIT_TO_OPENMM = {
