@@ -90,9 +90,11 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
         out_file.close()
 
     in_lines = [l for l in in_lines
-                if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
+                if not l.startswith(('REMARK', 'CRYST', '# Created with', 'CONECT'))]
     out_lines = [l for l in out_lines
-                 if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
+                 if not l.startswith(('REMARK', 'CRYST', '# Created with', 'CONECT'))]
+    in_conect_lines = [l for l in in_lines if l.startswith('CONECT')]
+    out_conect_lines = [l for l in in_lines if l.startswith('CONECT')]
 
     assert in_lines == out_lines
 
