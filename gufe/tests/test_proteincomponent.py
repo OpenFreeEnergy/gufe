@@ -45,10 +45,10 @@ _pl_benchmarks = pooch.create(
 
 
 @pytest.fixture(
-    params=list(_pl_benchmarks.registry.keys()) + ["181l.pdb"]
+    params=list(_pl_benchmarks.registry.keys()) + ["181l_openmmClean.pdb"]
 )
 def PLB_PDB_files(request):
-    if request.param == '181l.pdb':
+    if request.param == '181l_openmmClean.pdb':
         with importlib.resources.path('gufe.tests.data', request.param) as f:
             yield str(f)
     else:
@@ -115,8 +115,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
 
-    def test_from_pdbx_file(self, PDBx_181L_path):
-        p = self.cls.from_pdbx_file(str(PDBx_181L_path), name="Steve")
+    def test_from_pdbx_file(self, PDBx_181L_openMMClean_path):
+        p = self.cls.from_pdbx_file(str(PDBx_181L_openMMClean_path), name="Steve")
 
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
