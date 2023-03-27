@@ -196,12 +196,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         p.to_pdb_file(out_file1)
 
         # generate openMM reference file:
-        openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
-        out_ref_file_name = "tmp_"+in_pdb_path+"_openmm_ref.pdb"
-        out_ref_file = tmp_path / out_ref_file_name
+        openmm_pdb = pdbfile.PDBFile(PLB_PDB_files)
+        out_file2 = str(tmpdir / "bar.pdb")
 
-        pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
-        assert_same_pdb_lines(in_file_path=str(out_ref_file), out_file_path=out_file)
+        pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(out_file2, "w"))
+        assert_same_pdb_lines(in_file_path=out_file1, out_file_path=out_file2)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
         out_file_name = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
