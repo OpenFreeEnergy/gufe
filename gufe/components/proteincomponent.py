@@ -192,14 +192,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             if (new_resid := reskey(mi)) != current_resid:
                 _, resname, resnum, icode = new_resid
-                r = top.addResidue(name=resname,
+                r = top.addResidue(name=resname.strip(),
                                    chain=c,
                                    id=str(resnum),
                                    insertionCode=icode)
                 current_resid = new_resid
 
             a = top.addAtom(
-                name=mi.GetName(),
+                name=mi.GetName().strip(),  # PDBFile seems to strip whitespace, rdkit doesn't
                 element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
                 id=str(mi.GetSerialNumber()),
