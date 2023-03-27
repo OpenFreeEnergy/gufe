@@ -294,7 +294,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
         str
             string path to the resulting pdbx.
         """
-        from openmm import unit as omm_unit
         from openmm.app import PDBxFile
 
         # get top:
