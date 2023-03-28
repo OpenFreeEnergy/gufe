@@ -79,7 +79,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     constraints: Optional[str] = 'hbonds'
     rigid_water: bool = True
     remove_com: bool = False
-    hydrogen_mass: float
+    hydrogen_mass: float = 4.0
 
     forcefields: list[str] = [
         "amber/ff14SB.xml",  # ff14SB protein force field
