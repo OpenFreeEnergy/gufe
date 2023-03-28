@@ -41,15 +41,6 @@ class ThermoSettings(SettingsBaseModel):
     )
 
 
-class ProtocolSettings(SettingsBaseModel, abc.ABC):
-    """Protocol-specific settings; this is a base class for protocol
-    developers to use for building any settings not included elsewhere.
-
-    """
-
-    ...
-
-
 class BaseForcefieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForcefieldSettings objects"""
 
