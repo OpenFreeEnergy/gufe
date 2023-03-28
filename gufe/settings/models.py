@@ -89,7 +89,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     ]
     small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
 
-    @pydantic.validator
+    @pydantic.validator('constraints')
     def constraint_check(cls, v):
         allowed = {'hbonds', 'hangles', 'allbonds'}
 
