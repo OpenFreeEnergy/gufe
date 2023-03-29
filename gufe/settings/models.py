@@ -43,34 +43,22 @@ class ThermoSettings(SettingsBaseModel):
 
 class BaseForcefieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForcefieldSettings objects"""
-
     ...
 
 
 class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     """Parameters to set up the forcefield with OpenMM Forcefields
 
-    Attributes
-    ----------
-    constraints : Optional[str]
-      one of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'
-    rigid_water : bool
-      default True
-    remove_com : bool
-       default False
-    hydrogen_mass : float
-       the repartitioned hydrogen mass (in amu), default 4.0
-    forcefields : list[str]
-
-    small_molecule_forcefield : str
-
     Right now we just basically just grab what we need for the systemgenerator signature
     https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
     constraints: Optional[str] = 'hbonds'
+    """one of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
+
     rigid_water: bool = True
     remove_com: bool = False
     hydrogen_mass: float = 4.0
+    """the repartitioned hydrogen mass (in amu), default 4.0"""
 
     forcefields: list[str] = [
         "amber/ff14SB.xml",  # ff14SB protein force field
@@ -78,7 +66,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
         "amber/tip3p_HFE_multivalent.xml",  # for divalent ions
         "amber/phosaa10.xml",  # Handles THE TPO
     ]
+    """list of forcefield paths for all components except the small molecules"""
+
     small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
+    """the forcefield for small molecules"""
 
     @pydantic.validator('constraints')
     def constraint_check(cls, v):
