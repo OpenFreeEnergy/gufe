@@ -77,10 +77,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
         "amber/tip3p_HFE_multivalent.xml",  # for divalent ions
         "amber/phosaa10.xml",  # Handles THE TPO
     ]
-    """List of force field paths for all components except :class:`SmallMoleculeComponent`s"""
+    """List of force field paths for all components except :class:`SmallMoleculeComponent` """
 
     small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
-    """Name of the force field to be used for :class:`SmallMoleculeComponent`s"""
+    """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
     @pydantic.validator('constraints')
     def constraint_check(cls, v):
