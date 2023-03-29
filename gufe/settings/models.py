@@ -27,8 +27,8 @@ class ThermoSettings(SettingsBaseModel):
     """Settings for thermodynamic parameters.
 
     .. note::
-       * No checking is done to ensure a valid thermodynamic ensemble is
-         possible.
+       No checking is done to ensure a valid thermodynamic ensemble is
+       possible.
     """
 
     temperature: FloatQuantity["kelvin"] = Field(
@@ -52,10 +52,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
     """Parameters to set up the forcefield with OpenMM Forcefields
 
     .. note::
-       * Right now we just basically just grab what we need for the
-         :class:`openmmforcefields.system_generators.SystemGenerator`
-         signature. See the `OpenMMForceField SystemGenerator documentation`_
-         for more details.
+       Right now we just basically just grab what we need for the
+       :class:`openmmforcefields.system_generators.SystemGenerator` 
+       signature. See the `OpenMMForceField SystemGenerator documentation`_
+       for more details.
 
     
     .. _`OpenMMForceField SystemGenerator documentation`:
