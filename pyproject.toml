@@ -54,8 +54,12 @@ versionfile_build = "gufe/_version.py"
 tag_prefix = "''"
 
 [tool.mypy]
-files = ["gufe"]
+files = "gufe"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "gufe.vendor.*"
+ignore_errors = true
 
 [tool.coverage.run]
 omit = [
