@@ -2,16 +2,16 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from . import _version
-__version__ = _version.get_versions()['version']
+__version__ = _version.__version__
 
 from . import tokenization
 
 from . import visualization
 
 from .components import (
-    Component, 
-    SmallMoleculeComponent, 
-    ProteinComponent, 
+    Component,
+    SmallMoleculeComponent,
+    ProteinComponent,
     SolventComponent
 )
 
