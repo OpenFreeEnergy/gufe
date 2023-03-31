@@ -4,10 +4,13 @@ import importlib
 import pytest
 import pathlib
 import json
+import numpy as np
 from rdkit import Chem
-
+from openff.units import unit
 import gufe
 from gufe import LigandAtomMapping, SmallMoleculeComponent
+
+from .test_tokenization import GufeTokenizableTestsMixin
 
 
 def mol_from_smiles(smiles: str) -> Chem.Mol:
@@ -122,6 +125,16 @@ def test_mapping_inversion(benzene_phenol_mapping):
     }
 
 
+def test_mapping_distances(benzene_phenol_mapping):
+    d = benzene_phenol_mapping.get_distances()
+
+    ref = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.34005502, 0.]
+
+    assert isinstance(d, np.ndarray)
+    for i, r in zip(d, ref):
+        assert i == pytest.approx(r)
+
+
 def test_uniques(atom_mapping_basic_test_files):
     mapping = LigandAtomMapping(
         componentA=atom_mapping_basic_test_files['methylcyclohexane'],
@@ -167,15 +180,6 @@ def test_draw_mapping_svg(tmpdir, other_mapping):
 
 
 class TestLigandAtomMappingSerialization:
-    def test_to_dict(self, benzene_phenol_mapping):
-        d = benzene_phenol_mapping.to_dict()
-
-        assert isinstance(d, dict)
-        assert 'componentA' in d
-        assert 'componentB' in d
-        assert 'annotations' in d
-        assert isinstance(d['componentA'], str)
-
     def test_deserialize_roundtrip(self, benzene_phenol_mapping,
                                    benzene_anisole_mapping):
 
@@ -220,3 +224,33 @@ def test_annotation_immutability(annotated_simple_mapping):
 def test_with_annotations(simple_mapping, annotated_simple_mapping):
     new_annot = simple_mapping.with_annotations({'foo': 'bar'})
     assert new_annot == annotated_simple_mapping
+
+
+def test_with_fancy_annotations(simple_mapping):
+    m = simple_mapping.with_annotations({'thing': 4.0 * unit.nanometer})
+
+    assert m.key
+
+    m2 = LigandAtomMapping.from_dict(m.to_dict())
+
+    assert m == m2
+
+
+class TestLigandAtomMapping(GufeTokenizableTestsMixin):
+    cls = LigandAtomMapping
+    repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
+    key = "LigandAtomMapping-c95a2c15fe21f446cf731338427137ae"
+
+    @pytest.fixture
+    def instance(self, annotated_simple_mapping):
+        return annotated_simple_mapping
+
+    def test_id_key(self, instance):
+        i2 = self.cls.from_dict(instance.to_dict())
+
+        assert instance.key == i2.key
+
+    def test_keyed_dict(self, instance):
+        i2 = self.cls.from_dict(instance.to_dict())
+
+        assert instance.to_keyed_dict() == i2.to_keyed_dict()

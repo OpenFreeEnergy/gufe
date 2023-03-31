@@ -12,7 +12,7 @@ def test_defaults():
     assert s.smiles == 'O'
     assert s.positive_ion == "Na+"
     assert s.negative_ion == "Cl-"
-    assert s.ion_concentration == 0.0 * unit.molar
+    assert s.ion_concentration == 0.15 * unit.molar
 
 
 @pytest.mark.parametrize('pos, neg', [
@@ -34,18 +34,6 @@ def test_neq():
     s2 = SolventComponent(positive_ion='K', negative_ion='Cl')
 
     assert s1 != s2
-
-
-def test_to_dict():
-    s = SolventComponent(positive_ion='Na', negative_ion='Cl')
-
-    assert s.to_dict() == {'__module__': 'gufe.components.solventcomponent',
-                           '__qualname__': 'SolventComponent',
-                           'smiles': 'O',
-                           'positive_ion': 'Na+',
-                           'negative_ion': 'Cl-',
-                           'neutralize': True,
-                           'ion_concentration': '0.0 molar'}
 
 
 @pytest.mark.parametrize('conc', [0.0 * unit.molar, 1.75 * unit.molar])
@@ -93,7 +81,8 @@ def test_bad_inputs(pos, neg):
 class TestSolventComponent(GufeTokenizableTestsMixin):
 
     cls = SolventComponent
-    key = "SolventComponent-66a63b6cfdc5e60efc09401aae804ef1"
+    key = "SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f"
+    repr = "SolventComponent(name=O, Na+, Cl-)"
 
     @pytest.fixture
     def instance(self):

@@ -54,7 +54,9 @@ class _GufeTokenizableMeta(type):
     def __call__(cls, *args, **kwargs):
         instance = super().__call__(*args, **kwargs)
         # add to registry if not already present
-        TOKENIZABLE_REGISTRY.setdefault(instance.key, instance)
+        key = instance.key
+        TOKENIZABLE_REGISTRY.setdefault(key, instance)
+        instance = TOKENIZABLE_REGISTRY[key]
         return instance
 
 
@@ -113,6 +115,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.
     """
+    def __repr__(self):
+        return f"<{self.key}>"
+
     def __lt__(self, other):
         return self.key < other.key
 
@@ -120,7 +125,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         if not isinstance(other, self.__class__):
             return False
 
-        return self.to_keyed_dict() == other.to_keyed_dict()
+        return self.key == other.key
 
     def __hash__(self):
         return hash(self.key)
@@ -142,7 +147,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             adapter = _GufeLoggerAdapter(logger, self)
             self._logger = adapter
         return adapter
-
 
     @property
     def key(self):

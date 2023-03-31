@@ -7,7 +7,6 @@ dependencies:
   - coverage
   - networkx
   - numpy
-  - openeye-toolkits
   - openff-toolkit
   - openff-units >=0.2.0
   - openff-models >=0.0.4
@@ -21,5 +20,6 @@ dependencies:
   # docs
   - myst-parser
   - pydata-sphinx-theme
-  - sphinx-pydantic
   - sphinx-jsonschema==1.15
+  - pip:
+    - autodoc_pydantic

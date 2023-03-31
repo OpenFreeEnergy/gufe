@@ -30,6 +30,9 @@ class AtomMapping(ComponentMapping, abc.ABC):
     def componentA_to_componentB(self) -> Mapping[int, int]:
         """Maps the index of an item from Component A onto Component B
 
+        Keys are indices from Component A, values are indices from Component
+        B.
+
         Not all indices will be resolvable, these items have no corresponding
         entity in the other component (e.g. the atom disappears), therefore
         resulting in a KeyError on query

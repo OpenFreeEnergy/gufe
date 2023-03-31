@@ -68,24 +68,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
             f"{self.__class__.__name__}(name={self.name}, components={self.components})"
         )
 
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        if self._name != other.name:
-            return False
-        if not np.array_equal(self._box_vectors, other.box_vectors,
-                              equal_nan=True):  # nan usually compares to false
-            return False
-        if self._components != other.components:
-            return False
-
-        return True
-
-    def __hash__(self):
-        # apparently be defining a custom __eq__ here, we lose super's
-        # __hash__, and need to redefine it
-        return super().__hash__()
-
     def _to_dict(self):
         return {
             "components": {

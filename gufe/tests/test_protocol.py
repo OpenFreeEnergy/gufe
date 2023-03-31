@@ -67,7 +67,7 @@ class FinishUnit(ProtocolUnit):
         )
 
 
-class DummySpecificSettings(settings.ProtocolSettings):
+class DummySpecificSettings(settings.Settings):
     n_repeats: int
 
 
@@ -100,11 +100,10 @@ class DummyProtocol(Protocol):
 
     @classmethod
     def _default_settings(cls):
-        return settings.Settings(
-            settings_version=1,
+        return DummySpecificSettings(
             thermo_settings=settings.ThermoSettings(temperature=298 * unit.kelvin),
             forcefield_settings=settings.OpenMMSystemGeneratorFFSettings(),
-            protocol_settings=DummySpecificSettings(n_repeats=21),
+            n_repeats=21,
         )
 
     @classmethod
@@ -141,7 +140,7 @@ class DummyProtocol(Protocol):
         # create several units that would each run an independent simulation
         simulations: List[ProtocolUnit] = [
             SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha)
-            for i in range(self.settings.protocol_settings.n_repeats)  # type: ignore
+            for i in range(self.settings.n_repeats)  # type: ignore
         ]
 
         # gather results from simulations, finalize outputs
@@ -206,7 +205,8 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-3f9fd4b151fc5ba1c8241daca2a16528"
+    key = "DummyProtocol-84b834e05f8a280c0c26a161010f52c8"
+    repr = "<DummyProtocol-84b834e05f8a280c0c26a161010f52c8>"
 
     @pytest.fixture
     def instance(self):
@@ -344,8 +344,9 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAG(ProtocolDAGTestsMixin):
         cls = ProtocolDAG
-        key = "..."
-        
+        key = None
+        repr = None
+
         @pytest.fixture
         def instance(self, protocol_dag):
             protocol, dag, dagresult = protocol_dag
@@ -353,7 +354,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAGResult(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
-        key = "..."
+        key = None
+        repr = None
 
         @pytest.fixture
         def instance(self, protocol_dag):
@@ -402,10 +404,10 @@ class TestProtocol(GufeTokenizableTestsMixin):
             assert len(instance.protocol_unit_successes) == 23
             assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
 
-
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
-        key = "..."
+        key = None
+        repr = None
 
         @pytest.fixture
         def instance(self, protocol_dag_broken):
@@ -434,7 +436,8 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit
-        key = "..."
+        key = None
+        repr = None
     
         @pytest.fixture
         def instance(self, vacuum_ligand, solvated_ligand):
@@ -456,6 +459,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             # for the DAG system, keys for `ProtocolUnit`s are based on UUIDs,
             # so keys aren't stable up through `ProtocolDAG`s
             pass
+
 
 class NoDepUnit(ProtocolUnit):
     @staticmethod

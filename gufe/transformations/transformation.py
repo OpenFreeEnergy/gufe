@@ -4,7 +4,6 @@
 from typing import Optional, Iterable
 import json
 
-from openff.toolkit.utils.serialization import Serializable
 from ..tokenization import GufeTokenizable, JSON_HANDLER
 from ..utils import ensure_filelike
 
@@ -90,11 +89,6 @@ class Transformation(GufeTokenizable):
     def name(self):
         """User-specified for the transformation; used as part of its hash."""
         return self._name
-
-    def __hash__(self):
-        # apparently be defining a custom __eq__ here, we lose super's
-        # __hash__, and need to redefine it
-        return super().__hash__()
 
     def _to_dict(self) -> dict:
         return {
@@ -227,9 +221,6 @@ class NonTransformation(Transformation):
     def protocol(self):
         """The protocol for sampling dynamics of the `ChemicalSystem`."""
         return self._protocol
-
-    def __hash__(self):
-        return super().__hash__()
 
     def _to_dict(self) -> dict:
         return {

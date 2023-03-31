@@ -9,7 +9,7 @@ import functools
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
-
+from openff.units import unit
 import gufe
 from gufe.tests.test_protocol import DummyProtocol
 
@@ -82,13 +82,9 @@ ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
 ## data file paths
 
 @pytest.fixture
-def serialization_template():
-    def inner(filename):
-        loc = "gufe.tests.data"
-        tmpl = importlib.resources.read_text(loc, filename)
-        return tmpl.format(OFE_VERSION=gufe.__version__)
-
-    return inner
+def ethane_sdf():
+    with importlib.resources.path("gufe.tests.data", "ethane.sdf") as f:
+        yield str(f)
 
 
 @pytest.fixture
@@ -220,7 +216,7 @@ def prot_comp(PDB_181L_path):
 
 @pytest.fixture
 def solv_comp():
-    yield gufe.SolventComponent(positive_ion="K", negative_ion="Cl")
+    yield gufe.SolventComponent(positive_ion="K", negative_ion="Cl", ion_concentration=0.0 * unit.molar)
 
 
 @pytest.fixture

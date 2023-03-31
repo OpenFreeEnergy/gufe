@@ -146,10 +146,8 @@ class TestSettingsCodec(CustomJSONCodingTest):
                 "__class__": "Settings",
                 "__module__": "gufe.settings.models",
                 ":is_custom:": True,
-                "settings_version": obj.settings_version,
                 "forcefield_settings": obj.forcefield_settings,
                 "thermo_settings": obj.thermo_settings,
-                "protocol_settings": obj.protocol_settings,
             }
             for obj in self.objs
         ]
@@ -159,17 +157,14 @@ class TestSettingsCodec(CustomJSONCodingTest):
                 "__class__": "Settings",
                 "__module__": "gufe.settings.models",
                 ":is_custom:": True,
-                "settings_version": 0,
                 "forcefield_settings": {
                     "__class__": "OpenMMSystemGeneratorFFSettings",
                     "__module__": "gufe.settings.models",
                     ":is_custom:": True,
-                    "forcefield_kwargs": {
-                        "constraints": "app.HBonds",
-                        "rigidWater": True,
-                        "removeCMMotion": False,
-                        "hydrogenMass": "4*unit.amu",
-                    },
+                    "constraints": "hbonds",
+                    "rigid_water": True,
+                    "remove_com": False,
+                    "hydrogen_mass": 4.0,
                     "forcefields": [
                         "amber/ff14SB.xml",
                         "amber/tip3p_standard.xml",
@@ -192,7 +187,6 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     "ph": None,
                     "redox_potential": None,
                 },
-                "protocol_settings": None,
             }
         ]
         self.required_codecs = [

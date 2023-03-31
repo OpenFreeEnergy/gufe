@@ -9,7 +9,7 @@ import json
 from openff.units import unit
 import pytest
 
-from gufe.settings.models import Settings
+from gufe.settings.models import Settings, OpenMMSystemGeneratorFFSettings
 
 
 def test_model_schema():
@@ -39,3 +39,17 @@ def test_default_settings():
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
     my_settings.json()
     my_settings.schema_json(indent=2)
+
+
+@pytest.mark.parametrize('value,good', [
+    ('parsnips', False),  # shouldn't be allowed
+    ('hbonds', True), ('hangles', True), ('allbonds', True),  # allowed options
+    ('HBonds', True),  # check case insensitivity
+])
+def test_invalid_constraint(value, good):
+    if good:
+        s = OpenMMSystemGeneratorFFSettings(constraints=value)
+        assert s
+    else:
+        with pytest.raises(ValueError):
+            _ = OpenMMSystemGeneratorFFSettings(constraints=value)

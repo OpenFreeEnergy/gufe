@@ -3,19 +3,19 @@
 
 import importlib
 import importlib.resources
-import openff.toolkit.topology
+try:
+    import openff.toolkit.topology
+except ImportError:
+    HAS_OFFTK = False
+else:
+    HAS_OFFTK = True
 import os
+from unittest import mock
 import pytest
 
-try:
-    from openeye import oechem
-except ImportError:
-    HAS_OECHEM = False
-else:
-    HAS_OECHEM = oechem.OEChemIsLicensed()
 from gufe import SmallMoleculeComponent
 from gufe.components.explicitmoleculecomponent import (
-    _ensure_ofe_name, _ensure_ofe_version
+    _ensure_ofe_name,
 )
 import gufe
 import json
@@ -68,27 +68,15 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
     assert rdkit.GetProp("ofe-name") == out_name
 
 
-def test_ensure_ofe_version():
-    rdkit = Chem.MolFromSmiles("CC")
-    _ensure_ofe_version(rdkit)
-    assert rdkit.GetProp("ofe-version") == gufe.__version__
-
-
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
-    key = "SmallMoleculeComponent-d8d7b85fcfa6d9a3859a1cc023c58b67"
+    key = "SmallMoleculeComponent-45d1c819e0b7c8a7179113e6296837fa"
+    repr = "SmallMoleculeComponent(name=ethane)"
 
     @pytest.fixture
     def instance(self, named_ethane):
         return named_ethane
-
-    def test_rdkit_behavior(self, ethane, alt_ethane):
-        # Check that fixture setup is correct (we aren't accidentally
-        # testing tautologies)
-        assert ethane is not alt_ethane
-        assert ethane.to_rdkit() is not alt_ethane.to_rdkit()
-
 
     def test_error_missing_conformers(self):
         mol = Chem.MolFromSmiles("CC")
@@ -147,19 +135,24 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane == deserialized
         assert serialized == reserialized
 
-    def test_to_sdf_string(self, named_ethane, serialization_template):
-        expected = serialization_template("ethane_template.sdf")
+    def test_to_sdf_string(self, named_ethane, ethane_sdf):
+        with open(ethane_sdf, "r") as f:
+            expected = f.read()
+
         assert named_ethane.to_sdf() == expected
 
     @pytest.mark.xfail
-    def test_from_sdf_string(self, named_ethane, serialization_template):
-        sdf_str = serialization_template("ethane_template.sdf")
+    def test_from_sdf_string(self, named_ethane, ethane_sdf):
+        with open(ethane_sdf, "r") as f:
+            sdf_str = f.read()
+
         assert SmallMoleculeComponent.from_sdf_string(sdf_str) == named_ethane
 
     @pytest.mark.xfail
-    def test_from_sdf_file(self, named_ethane, serialization_template,
+    def test_from_sdf_file(self, named_ethane, ethane_sdf,
                            tmpdir):
-        sdf_str = serialization_template("ethane_template.sdf")
+        with open(ethane_sdf, 'r') as f:
+            sdf_str = f.read()
         with open(tmpdir / "temp.sdf", mode='w') as tmpf:
             tmpf.write(sdf_str)
 
@@ -192,6 +185,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane.smiles == copy.smiles
 
 
+@pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
     def test_to_off(self, ethane):
         off_ethane = ethane.to_openff()
@@ -202,12 +196,6 @@ class TestSmallMoleculeComponentConversion:
         off_ethane = named_ethane.to_openff()
 
         assert off_ethane.name == 'ethane'
-
-    @pytest.mark.skipif(not HAS_OECHEM, reason="No OEChem available")
-    def test_to_oechem(self, ethane):
-        oec_ethane = ethane.to_openeye()
-
-        assert isinstance(oec_ethane, oechem.OEMol)
 
 
 @pytest.mark.parametrize('mol, charge', [
@@ -235,9 +223,8 @@ class TestSmallMoleculeSerialization:
 
         assert isinstance(d, dict)
 
+    @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_deserialize_roundtrip(self, toluene, phenol):
-        # TODO: Currently roundtripping via openff adds Hydrogens even when
-        #       they weren't in the original input molecule.
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
 
         assert roundtrip == phenol
@@ -251,8 +238,6 @@ class TestSmallMoleculeSerialization:
         for x, y in zip(pos1, pos2):
             assert (x == y).all()
 
-    # TODO: determine if we want to add our own serializers for e.g. JSON
-    # based on `to_dict`
     @pytest.mark.xfail
     def test_bounce_off_file(self, toluene, tmpdir):
         fname = str(tmpdir / 'mol.json')
@@ -266,3 +251,64 @@ class TestSmallMoleculeSerialization:
         roundtrip = SmallMoleculeComponent.from_dict(d)
 
         assert roundtrip == toluene
+
+    @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
+    def test_to_openff_after_serialisation(self, toluene):
+        d = toluene.to_dict()
+
+        patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(patch_loc, {}, clear=True):
+            t2 = SmallMoleculeComponent.from_dict(d)
+
+        off1 = toluene.to_openff()
+        off2 = t2.to_openff()
+
+        assert off1 == off2
+
+
+@pytest.mark.parametrize('target', ['atom', 'bond', 'conformer', 'mol'])
+@pytest.mark.parametrize('dtype', ['int', 'bool', 'str', 'float'])
+def test_prop_preservation(ethane, target, dtype):
+    # issue 145 make sure props are propagated
+    mol = Chem.MolFromSmiles("CC")
+    Chem.AllChem.Compute2DCoords(mol)
+
+    if target == 'atom':
+        obj = mol.GetAtomWithIdx(0)
+    elif target == 'bond':
+        obj = mol.GetBondWithIdx(0)
+    elif target == 'conformer':
+        obj = mol.GetConformer()
+    else:
+        obj = mol
+    if dtype == 'int':
+        obj.SetIntProp('foo', 1234)
+    elif dtype == 'bool':
+        obj.SetBoolProp('foo', False)
+    elif dtype == 'str':
+        obj.SetProp('foo', 'bar')
+    elif dtype == 'float':
+        obj.SetDoubleProp('foo', 1.234)
+    else:
+        pytest.fail()
+
+    # check that props on rdkit molecules are preserved via to_dict/from_dict cycles
+    d = SmallMoleculeComponent(rdkit=mol).to_dict()
+    e2 = SmallMoleculeComponent.from_dict(d).to_rdkit()
+
+    if target == 'atom':
+        obj = e2.GetAtomWithIdx(0)
+    elif target == 'bond':
+        obj = e2.GetBondWithIdx(0)
+    elif target == 'conformer':
+        obj = e2.GetConformer()
+    else:
+        obj = e2
+    if dtype == 'int':
+        assert obj.GetIntProp('foo') == 1234
+    elif dtype == 'bool':
+        assert obj.GetBoolProp('foo') is False
+    elif dtype == 'str':
+        assert obj.GetProp('foo') == 'bar'
+    else:
+        assert obj.GetDoubleProp('foo') == pytest.approx(1.234)
