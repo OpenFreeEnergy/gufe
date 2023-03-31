@@ -228,7 +228,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch.mkdir(parents=True)
 
             dagresult: ProtocolDAGResult = execute_DAG(
-                    dag, shared=shared, scratch_basedir=scratch)
+                    dag, shared_basedir=shared, scratch_basedir=scratch)
 
         return protocol, dag, dagresult
 
@@ -247,7 +247,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch.mkdir(parents=True)
 
             dagfailure: ProtocolDAGResult = execute_DAG(
-                    dag, shared=shared, scratch_basedir=scratch, raise_error=False)
+                    dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=False)
 
         return protocol, dag, dagfailure
 
@@ -271,11 +271,14 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # check that we have as many units as we expect in resulting graph
         assert len(dagresult.graph) == 23
         
-        # check that shared directory the same for all simulations
-        assert len(set(i.outputs['shared'] for i in simulationresults)) == 1
+        # check that each simulation has its own shared directory
+        assert len(set(i.outputs['shared'] for i in simulationresults)) == len(simulationresults)
 
-        # check that scratch directory is different for all simulations
+        # check that each simulation has its own scratch directory
         assert len(set(i.outputs['scratch'] for i in simulationresults)) == len(simulationresults)
+
+        # check that shared and scratch not the same for each simulation
+        assert all([i.outputs['scratch'] != i.outputs['shared'] for i in simulationresults])
 
     def test_terminal_units(self, protocol_dag):
         prot, dag, res = protocol_dag
@@ -319,7 +322,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch.mkdir(parents=True)
 
             with pytest.raises(ValueError, match="I have failed my mission"):
-                execute_DAG(dag, shared=shared, scratch_basedir=scratch, raise_error=True)
+                execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=True)
 
     def test_create_execute_gather(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
@@ -553,7 +556,7 @@ class TestNoDepProtocol:
             scratch = pathlib.Path('scratch')
             scratch.mkdir(parents=True)
 
-            dag_result = execute_DAG(dag, shared=shared, scratch_basedir=scratch)
+            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         assert dag_result.ok()
 
@@ -571,7 +574,7 @@ class TestNoDepProtocol:
             scratch.mkdir(parents=True)
 
             # we have no dependencies, so this should be all three Unit results
-            dag_result = execute_DAG(dag, shared=shared, scratch_basedir=scratch)
+            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         terminal_results = dag_result.terminal_protocol_unit_results
 

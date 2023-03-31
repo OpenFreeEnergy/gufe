@@ -3,6 +3,7 @@
 
 import pytest
 import io
+import pathlib
 
 from gufe.transformations import Transformation, NonTransformation
 from gufe.protocols.protocoldag import execute_DAG
@@ -43,13 +44,21 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert tnf.stateA is solvated_ligand
         assert tnf.stateB is solvated_complex
 
-    def test_protocol(self, absolute_transformation):
+    def test_protocol(self, absolute_transformation, tmpdir):
         tnf = absolute_transformation
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
         protocoldag = tnf.create()
-        protocoldagresult = execute_DAG(protocoldag)
+
+        with tmpdir.as_cwd():
+            shared = pathlib.Path('shared')
+            shared.mkdir(parents=True)
+
+            scratch = pathlib.Path('scratch')
+            scratch.mkdir(parents=True)
+    
+            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -59,16 +68,23 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert 'logs' in protocolresult.data
         assert 'key_results' in protocolresult.data
 
-    def test_protocol_extend(self, absolute_transformation):
+    def test_protocol_extend(self, absolute_transformation, tmpdir):
         tnf = absolute_transformation
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
-        protocoldag = tnf.create()
-        protocoldagresult = execute_DAG(protocoldag)
+        with tmpdir.as_cwd():
+            shared = pathlib.Path('shared')
+            shared.mkdir(parents=True)
 
-        protocoldag2 = tnf.create(extends=protocoldagresult)
-        protocoldagresult2 = execute_DAG(protocoldag2)
+            scratch = pathlib.Path('scratch')
+            scratch.mkdir(parents=True)
+    
+            protocoldag = tnf.create()
+            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+
+            protocoldag2 = tnf.create(extends=protocoldagresult)
+            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch)
 
         protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -123,13 +139,21 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         assert ntnf.system is solvated_complex
 
-    def test_protocol(self, complex_equilibrium):
+    def test_protocol(self, complex_equilibrium, tmpdir):
         ntnf = complex_equilibrium
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
         protocoldag = ntnf.create()
-        protocoldagresult = execute_DAG(protocoldag)
+
+        with tmpdir.as_cwd():
+            shared = pathlib.Path('shared')
+            shared.mkdir(parents=True)
+
+            scratch = pathlib.Path('scratch')
+            scratch.mkdir(parents=True)
+
+            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
 
         protocolresult = ntnf.gather([protocoldagresult])
 
@@ -139,16 +163,23 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert 'logs' in protocolresult.data
         assert 'key_results' in protocolresult.data
 
-    def test_protocol_extend(self, complex_equilibrium):
+    def test_protocol_extend(self, complex_equilibrium, tmpdir):
         ntnf = complex_equilibrium
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
-        protocoldag = ntnf.create()
-        protocoldagresult = execute_DAG(protocoldag)
+        with tmpdir.as_cwd():
+            shared = pathlib.Path('shared')
+            shared.mkdir(parents=True)
 
-        protocoldag2 = ntnf.create(extends=protocoldagresult)
-        protocoldagresult2 = execute_DAG(protocoldag2)
+            scratch = pathlib.Path('scratch')
+            scratch.mkdir(parents=True)
+
+            protocoldag = ntnf.create()
+            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+
+            protocoldag2 = ntnf.create(extends=protocoldagresult)
+            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch)
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
 

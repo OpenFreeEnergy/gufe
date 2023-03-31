@@ -268,13 +268,9 @@ class ProtocolUnit(GufeTokenizable):
 
         Parameters
         ----------
-        shared : PathLike
-           Path to scratch space that persists across whole DAG execution, but
-           is removed after. Used by some `ProtocolUnit`s to pass file contents
-           to dependent `ProtocolUnit` objects.
-        scratch : Optional[PathLike]
-            Path to scratch space that persists during execution of this
-            `ProtocolUnit`, but removed after.
+        context : Context
+            Execution context for this `ProtocolUnit`; includes e.g. `shared`
+            and `scratch` `Path`s.
         raise_error : bool
             If True, raise any errors instead of catching and returning a
             `ProtocolUnitFailure`, default False

@@ -8,7 +8,7 @@ import os
 from typing import Iterable, Optional, Union, Any
 from os import PathLike
 from pathlib import Path
-import tempfile
+import shutil
 
 import networkx as nx
 
@@ -354,8 +354,9 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared: Path,
+                shared_basedir: Path,
                 scratch_basedir: Path,
+                keep_shared: bool = False,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
                 ) -> ProtocolDAGResult:
@@ -368,16 +369,18 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     ----------
     protocoldag : ProtocolDAG
         The `ProtocolDAG` to execute.
-    shared : Path
-        Path to scratch space that persists across whole DAG execution, but is
-        removed after. Used by some `ProtocolUnit`s to pass file contents to
-        dependent `ProtocolUnit`s. If not given, defaults to os cwd (current
-        directory).
+    shared_basedir : Path
+        Filesystem path to use for shared space that persists across whole DAG
+        execution. Used by `ProtocolUnit`s to pass file contents to dependent
+        `ProtocolUnit`s. 
     scratch_basedir : Path
         Filesystem path to use for `ProtocolUnit` `scratch` space.
+    keep_shared : bool
+        If True, don't remove shared directories for `ProtocolUnit`s after
+        the `ProtocolDAG` is executed.
     keep_scratch : bool
-        If True, don't remove scratch directories for `ProtocolUnit`s after
-        completion.
+        If True, don't remove scratch directories for a `ProtocolUnit` after
+        it is executed.
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
         if False, any exceptions will be stored as `ProtocolUnitFailure`
@@ -391,16 +394,19 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     """
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
+    shared_paths = []
     for unit in protocoldag.protocol_units:
 
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        scratch_tmp = tempfile.TemporaryDirectory(
-                prefix=f"{str(unit.key)}__",
-                dir=scratch_basedir)
-        scratch = Path(scratch_tmp.name)
+        shared = shared_basedir / str(unit.key)
+        shared_paths.append(shared)
+        shared.mkdir()
+
+        scratch = scratch_basedir / str(unit.key)
+        scratch.mkdir()
 
         context = Context(shared=shared,
                           scratch=scratch)
@@ -412,13 +418,17 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                 **inputs)
 
         if not keep_scratch:
-            scratch_tmp.cleanup()
+            shutil.rmtree(scratch)
 
         # attach result to this `ProtocolUnit`
         results[unit.key] = result
 
         if not result.ok():
             break
+
+    if not keep_shared:
+        for shared_path in shared_paths:
+            shutil.rmtree(shared_path)
 
     return ProtocolDAGResult(
             name=protocoldag.name, 

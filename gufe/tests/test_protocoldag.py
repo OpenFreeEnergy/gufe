@@ -63,26 +63,39 @@ def writefile_dag():
     return p.create(stateA=s1, stateB=s2, mapping={})
 
 
+@pytest.mark.parametrize('keep_shared', [False, True])
 @pytest.mark.parametrize('keep_scratch', [False, True])
-def test_execute_dag(tmpdir, keep_scratch, writefile_dag):
+def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
 
     with tmpdir.as_cwd():
         shared = pathlib.Path('shared')
         shared.mkdir(parents=True)
-        
+
         scratch = pathlib.Path('scratch')
         scratch.mkdir(parents=True)
     
         # run dag
         execute_DAG(writefile_dag,
-                    shared=shared,
+                    shared_basedir=shared,
                     scratch_basedir=scratch,
+                    keep_shared=keep_shared,
                     keep_scratch=keep_scratch)
     
         # check outputs are as expected
-        # will have produced 3 files in scratch and shared directory
-        assert os.path.exists(os.path.join(shared, 'unit_0_shared.txt'))
-        if keep_scratch:
-            assert os.path.exists(os.path.join(scratch, 'unit_0_scratch.txt'))
-        else:
-            assert not os.path.exists(os.path.join(scratch, 'unit_0_scratch.txt'))
+        # will have produced 4 files in scratch and shared directory
+        for pu in writefile_dag.protocol_units:
+            identity = pu.inputs['identity']
+            shared_file = os.path.join(shared, str(pu.key), f'unit_{identity}_shared.txt')
+            scratch_file = os.path.join(scratch, str(pu.key), f'unit_{identity}_scratch.txt')
+            if keep_shared:
+                assert os.path.exists(shared_file)
+            else:
+                assert not os.path.exists(shared_file)
+            if keep_scratch:
+                assert os.path.exists(scratch_file)
+            else:
+                assert not os.path.exists(scratch_file)
+
+        # check that our shared and scratch basedirs are left behind
+        assert shared.exists()
+        assert scratch.exists()
