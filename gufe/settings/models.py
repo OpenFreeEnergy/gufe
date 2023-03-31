@@ -91,6 +91,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
 
         return v
 
+
 class Settings(SettingsBaseModel):
     """
     Container for all settings needed by a protocol
