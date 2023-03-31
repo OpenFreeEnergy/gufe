@@ -5,6 +5,5 @@ from .models import (
     ThermoSettings,
     BaseForcefieldSettings,
     OpenMMSystemGeneratorFFSettings,
-    ProtocolSettings,
     SettingsBaseModel,
 )
