@@ -28,8 +28,20 @@ class WriterSettings(gufe.settings.Settings):
     n_repeats: int
 
 
+class WriterProtocolResult(gufe.ProtocolResult):
+
+    def get_estimate(self):
+        ...
+
+    def get_uncertainty(self):
+        ...
+
+    def get_rate_of_convergence(self):
+        ...
+
+
 class WriterProtocol(gufe.Protocol):
-    result_cls = None
+    result_cls = WriterProtocolResult
 
     @classmethod
     def _default_settings(cls) -> WriterSettings: 
