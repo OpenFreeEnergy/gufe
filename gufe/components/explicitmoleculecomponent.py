@@ -4,7 +4,6 @@ from rdkit import Chem
 from typing import Optional
 
 from .component import Component
-from .. import __version__
 
 # typing
 from ..custom_typing import RDKitMol
