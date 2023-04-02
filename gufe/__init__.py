@@ -1,8 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from . import _version
-__version__ = _version.__version__
+from ._version import __version__
 
 from . import tokenization
 
