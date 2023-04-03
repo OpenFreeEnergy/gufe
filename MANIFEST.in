@@ -1,6 +1,3 @@
-include versioneer.py
-include gufe/_version.py
-
 include gufe/vendor/pdb_file/data/*.xml
 recursive-include gufe/tests/data/ *.pdb
 recursive-include gufe/tests/data/ *.sdf
