@@ -46,13 +46,6 @@ find = {namespaces = false}
 [tool.distutils.bdist_wheel]
 universal = 1
 
-[tool.versioneer]
-vcs = "git"
-style = "pep440-post"
-versionfile_source = "gufe/_version.py"
-versionfile_build = "gufe/_version.py"
-tag_prefix = "''"
-
 [tool.mypy]
 files = "gufe"
 ignore_missing_imports = true
@@ -91,6 +84,3 @@ distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 method = "git" 
 match = ["*"]
 default-tag = "0.0.0"
-
-[tool.versioningit.write]
-file = "gufe/_version.py"
