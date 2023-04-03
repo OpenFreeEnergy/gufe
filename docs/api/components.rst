@@ -1,11 +1,11 @@
 GUFE Components
 ---------------
 
+Component base class
+====================
 
-
-
-
-
+.. autoclass:: gufe.components.Component
+              :members:
 	       
 Small Molecule Component
 ========================
