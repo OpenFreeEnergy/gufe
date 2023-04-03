@@ -58,7 +58,7 @@ class WriterProtocol(gufe.Protocol):
 
     def _create(self, stateA,  stateB, mapping=None, extends=None) -> list[gufe.ProtocolUnit]:
         return [
-            WriterUnit(identity=i) for i in range(self.settings.n_repeats)
+            WriterUnit(identity=i) for i in range(self.settings.n_repeats) # type: ignore
         ]
 
     def _gather(self, results):
