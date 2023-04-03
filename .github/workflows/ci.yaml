@@ -54,8 +54,8 @@ jobs:
 
       - name: "Environment Information"
         run: |
-          mamba info -a
-          mamba list
+          micromamba info -a
+          micromamba list
 
       - name: "Run tests"
         run: |
