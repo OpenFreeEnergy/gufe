@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from ._version import __version__
+from importlib.metadata import version
 
 from . import tokenization
 
@@ -36,3 +36,5 @@ from .protocols import (
 from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork
+
+__version__ = version("gufe")
