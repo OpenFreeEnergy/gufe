@@ -269,8 +269,8 @@ class ProtocolUnit(GufeTokenizable):
         Parameters
         ----------
         context : Context
-            Execution context for this `ProtocolUnit`; includes e.g. `shared`
-            and `scratch` `Path`s.
+            Execution context for this `ProtocolUnit`; includes e.g. ``shared``
+            and ``scratch`` `Path`s.
         raise_error : bool
             If True, raise any errors instead of catching and returning a
             `ProtocolUnitFailure`, default False
