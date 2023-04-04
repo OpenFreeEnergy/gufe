@@ -270,11 +270,10 @@ class ProtocolUnit(GufeTokenizable):
         ----------
         context : Context
             Execution context for this `ProtocolUnit`; includes e.g. ``shared``
-            and ``scratch`` `Path`s.
+            and ``scratch`` `Path` s.
         raise_error : bool
             If True, raise any errors instead of catching and returning a
-            `ProtocolUnitFailure`, default False
-
+            `ProtocolUnitFailure` default False
         **inputs
             Keyword arguments giving the named inputs to `_execute`.
             These can include `ProtocolUnitResult` objects from `ProtocolUnit`
