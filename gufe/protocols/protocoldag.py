@@ -401,11 +401,11 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        shared = shared_basedir / str(unit.key)
+        shared = shared_basedir / f'shared_{str(unit.key)}'
         shared_paths.append(shared)
         shared.mkdir()
 
-        scratch = scratch_basedir / str(unit.key)
+        scratch = scratch_basedir / f'scratch_{str(unit.key)}'
         scratch.mkdir()
 
         context = Context(shared=shared,
