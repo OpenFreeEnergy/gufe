@@ -53,7 +53,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
 
     .. note::
        Right now we just basically just grab what we need for the
-       :class:`openmmforcefields.system_generators.SystemGenerator`
+       :class:`openmmforcefields.system_generators.SystemGenerator` 
        signature. See the `OpenMMForceField SystemGenerator documentation`_
        for more details.
 
