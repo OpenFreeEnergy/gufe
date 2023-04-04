@@ -261,25 +261,19 @@ class ProtocolUnit(GufeTokenizable):
         return self._dependencies     # type: ignore
 
     def execute(self, *, 
-                shared: PathLike,
-                scratch: Optional[PathLike] = None,
+                context: Context,
                 raise_error: bool = False,
                 **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
         """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
         ----------
-        shared : PathLike
-           Path to scratch space that persists across whole DAG execution, but
-           is removed after. Used by some `ProtocolUnit`s to pass file contents
-           to dependent `ProtocolUnit` objects.
-        scratch : Optional[PathLike]
-            Path to scratch space that persists during execution of this
-            `ProtocolUnit`, but removed after.
+        context : Context
+            Execution context for this `ProtocolUnit`; includes e.g. ``shared``
+            and ``scratch`` `Path` s.
         raise_error : bool
             If True, raise any errors instead of catching and returning a
-            `ProtocolUnitFailure`, default False
-
+            `ProtocolUnitFailure` default False
         **inputs
             Keyword arguments giving the named inputs to `_execute`.
             These can include `ProtocolUnitResult` objects from `ProtocolUnit`
@@ -287,15 +281,6 @@ class ProtocolUnit(GufeTokenizable):
 
         """
         result: Union[ProtocolUnitResult, ProtocolUnitFailure]
-
-        if scratch is None:
-            scratch_tmp = tempfile.TemporaryDirectory()
-            scratch_ = Path(scratch_tmp.name)
-        else:
-            scratch_ = Path(scratch)
-
-        context = Context(shared=shared,
-                          scratch=scratch_)
 
         try:
             outputs = self._execute(context, **inputs)
@@ -315,11 +300,6 @@ class ProtocolUnit(GufeTokenizable):
                 exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc()
             )
-
-        # TODO: change this part once we have clearer ideas on how to inject
-        # persistent storage use
-        if scratch is None:
-            scratch_tmp.cleanup()
 
         return result
 

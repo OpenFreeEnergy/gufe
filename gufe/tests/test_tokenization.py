@@ -358,3 +358,19 @@ def test_path_to_json():
     assert ser == reser
     assert p == deser
 
+
+class TestGufeKey:
+    def test_to_dict(self):
+        k = GufeKey('foo-bar')
+
+        assert k.to_dict() == {':gufe-key:': 'foo-bar'}
+
+    def test_prefix(self):
+        k = GufeKey('foo-bar')
+
+        assert k.prefix == 'foo'
+
+    def test_token(self):
+        k = GufeKey('foo-bar')
+
+        assert k.token == 'bar'

@@ -26,6 +26,7 @@ from .mapping import (
 from .settings import Settings
 
 from .protocols import (
+    Context,
     Protocol,  # description of a method
     ProtocolUnit,  # the individual step within a method
     ProtocolDAG,  # many Units forming a workflow

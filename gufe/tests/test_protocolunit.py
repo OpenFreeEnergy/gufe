@@ -38,12 +38,33 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
     def test_execute(self, tmpdir):
         with tmpdir.as_cwd():
-            u: ProtocolUnitFailure = DummyUnit().execute(shared=Path('.'), an_input=3)
+
+            unit = DummyUnit()
+
+            shared = Path('shared') / str(unit.key)
+            shared.mkdir(parents=True)
+
+            scratch = Path('scratch') / str(unit.key)
+            scratch.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch)
+            
+            u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
 
+            unit = DummyUnit()
+
+            shared = Path('shared') / str(unit.key)
+            shared.mkdir(parents=True)
+
+            scratch = Path('scratch') / str(unit.key)
+            scratch.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch)
+            
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
-                DummyUnit().execute(shared=Path('.'), raise_error=True, an_input=3)
+                unit.execute(context=ctx, raise_error=True, an_input=3)
 
     def test_normalize(self, dummy_unit):
         thingy = dummy_unit.key
