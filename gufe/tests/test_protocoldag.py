@@ -97,8 +97,8 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
         # will have produced 4 files in scratch and shared directory
         for pu in writefile_dag.protocol_units:
             identity = pu.inputs['identity']
-            shared_file = os.path.join(shared, str(pu.key), f'unit_{identity}_shared.txt')
-            scratch_file = os.path.join(scratch, str(pu.key), f'unit_{identity}_scratch.txt')
+            shared_file = os.path.join(shared, f'shared_{str(pu.key)}', f'unit_{identity}_shared.txt')
+            scratch_file = os.path.join(scratch, f'scratch_{str(pu.key)}', f'unit_{identity}_scratch.txt')
             if keep_shared:
                 assert os.path.exists(shared_file)
             else:
