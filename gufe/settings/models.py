@@ -57,7 +57,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
        signature. See the `OpenMMForceField SystemGenerator documentation`_
        for more details.
 
-    
+
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
@@ -90,6 +90,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
             raise ValueError(f"Bad constraints value, use one of {allowed}")
 
         return v
+
 
 class Settings(SettingsBaseModel):
     """
