@@ -50,7 +50,7 @@ jobs:
       - name: "Test imports"
         run: |
           # if we add more to this, consider changing to for + env vars
-          python -Ic "import gufe"
+          python -Ic "import gufe; print(gufe.__version__)"
 
       - name: "Environment Information"
         run: |
