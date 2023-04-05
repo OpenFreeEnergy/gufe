@@ -34,6 +34,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # More info on options: https://github.com/conda-incubator/setup-miniconda
       - name: Setup Micromamba
@@ -50,7 +52,7 @@ jobs:
       - name: "Test imports"
         run: |
           # if we add more to this, consider changing to for + env vars
-          python -Ic "import gufe"
+          python -Ic "import gufe; print(gufe.__version__)"
 
       - name: "Environment Information"
         run: |

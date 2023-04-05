@@ -43,9 +43,6 @@ license-files = ["LICENSE"]
 [tool.setuptools.packages]
 find = {namespaces = false}
 
-[tool.distutils.bdist_wheel]
-universal = 1
-
 [tool.mypy]
 files = "gufe"
 ignore_missing_imports = true
