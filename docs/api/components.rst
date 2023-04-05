@@ -5,7 +5,7 @@ Component base class
 ====================
 
 .. autoclass:: gufe.components.Component
-	       :members:
+           :members:
 	       
 Small Molecule Component
 ========================
