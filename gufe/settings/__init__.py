@@ -3,7 +3,7 @@
 from .models import (
     Settings,
     ThermoSettings,
-    BaseForcefieldSettings,
+    BaseForceFieldSettings,
     OpenMMSystemGeneratorFFSettings,
     SettingsBaseModel,
 )
