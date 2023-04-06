@@ -94,7 +94,7 @@ class Protocol(GufeTokenizable):
         """
         self._settings = settings
 
-        def make_readonly(s: type[SettingsBaseModel]):
+        def make_readonly(s):
             # recursively make the Settings object, and all Settings contained within, readonly
             s.__config__.allow_mutation = False
             for fieldname, c in s:
