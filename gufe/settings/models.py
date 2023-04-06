@@ -43,13 +43,13 @@ class ThermoSettings(SettingsBaseModel):
     )
 
 
-class BaseForcefieldSettings(SettingsBaseModel, abc.ABC):
-    """Base class for ForcefieldSettings objects"""
+class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
+    """Base class for ForceFieldSettings objects"""
     ...
 
 
-class OpenMMSystemGeneratorFFSettings(BaseForcefieldSettings):
-    """Parameters to set up the forcefield with OpenMM Forcefields
+class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
+    """Parameters to set up the force field with OpenMM ForceFields
 
     .. note::
        Right now we just basically just grab what we need for the
@@ -100,7 +100,7 @@ class Settings(SettingsBaseModel):
 
     Protocols can subclass this to extend this to cater for their additional settings.
     """
-    forcefield_settings: BaseForcefieldSettings
+    forcefield_settings: BaseForceFieldSettings
     thermo_settings: ThermoSettings
 
     @classmethod
