@@ -91,10 +91,10 @@ class Protocol(GufeTokenizable):
         Corresponding `ProtocolResult` subclass
 
     """
-    _settings: type[Settings]
+    _settings: Settings
     result_cls: type[ProtocolResult]
 
-    def __init__(self, settings: type[Settings]):
+    def __init__(self, settings: Settings):
         """Create a new ``Protocol`` instance.
 
         Parameters
@@ -106,7 +106,7 @@ class Protocol(GufeTokenizable):
         self._settings = settings.copy(deep=True)
 
     @property
-    def settings(self) -> type[Settings]:
+    def settings(self) -> Settings:
         """A copy of the full settings for this ``Protocol`` instance.  This is read only"""
         return self._settings.copy(deep=True)
 
