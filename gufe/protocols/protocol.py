@@ -103,7 +103,7 @@ class Protocol(GufeTokenizable):
         make_readonly(self._settings)
 
     @property
-    def settings(self) -> type[Settings]:
+    def settings(self) -> Settings:
         """The full settings for this ``Protocol`` instance.  This is read only"""
         return self._settings
 
