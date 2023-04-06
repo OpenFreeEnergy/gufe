@@ -9,7 +9,7 @@ import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
 
-from ..settings import Settings
+from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
@@ -105,9 +105,17 @@ class Protocol(GufeTokenizable):
         """
         self._settings = settings
 
+        def make_readonly(s: type[SettingsBaseModel]):
+            # recursively make the Settings object, and all Settings contained within, readonly
+            s.__config__.allow_mutation = False
+            for fieldname, c in s:
+                if isinstance(c, SettingsBaseModel):
+                    make_readonly(c)
+        make_readonly(self._settings)
+
     @property
-    def settings(self) -> Settings:
-        """The full settings for this ``Protocol`` instance."""
+    def settings(self) -> type[Settings]:
+        """The full settings for this ``Protocol`` instance.  This is read only"""
         return self._settings
 
     @classmethod
