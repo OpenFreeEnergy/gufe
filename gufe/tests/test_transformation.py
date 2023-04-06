@@ -100,10 +100,12 @@ class TestTransformation(GufeTokenizableTestsMixin):
         )
         assert absolute_transformation != opposite
 
+        s = DummyProtocol.default_settings()
+        s.n_repeats = 99
         different_protocol_settings = Transformation(
             solvated_ligand,
             solvated_complex,
-            protocol=DummyProtocol(settings={"lol": True}),
+            protocol=DummyProtocol(settings=s),
         )
         assert absolute_transformation != different_protocol_settings
 
