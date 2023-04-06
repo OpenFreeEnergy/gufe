@@ -719,3 +719,14 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
                             keep_scratch=True,
                             raise_error=False,
                             n_retries=-1)
+
+
+def test_settings_readonly():
+    # checks that settings are immutable once inside a Protocol
+    p = DummyProtocol(DummyProtocol.default_settings())
+
+    with pytest.raises(TypeError, match="immutable"):
+        p.settings.n_repeats = 72
+    # check that child settings are also immutable
+    with pytest.raises(TypeError, match="immutable"):
+        p.settings.thermo_settings.temperature = 10.0 * unit.kelvin
