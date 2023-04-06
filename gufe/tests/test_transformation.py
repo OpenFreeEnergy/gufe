@@ -190,9 +190,10 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert len(protocolresult.data) == 2
 
     def test_equality(self, complex_equilibrium, solvated_ligand, solvated_complex):
-
+        s = DummyProtocol.default_settings()
+        s.n_repeats = 4031
         different_protocol_settings = NonTransformation(
-            solvated_complex, protocol=DummyProtocol(settings={"lol": True})
+            solvated_complex, protocol=DummyProtocol(settings=s)
         )
         assert complex_equilibrium != different_protocol_settings
 
