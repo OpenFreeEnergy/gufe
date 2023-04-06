@@ -79,17 +79,18 @@ class Protocol(GufeTokenizable):
     - `_gather`
     - `_default_settings`
     """
-    _settings: Settings
+    _settings: type[Settings]
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: type[Settings]):
         """Create a new ``Protocol`` instance.
 
         Parameters
         ----------
         settings : Settings
-            The full settings for this ``Protocol`` instance.
+            The full settings for this ``Protocol`` instance.  Must be passed an instance of Settings or a
+            subclass which is specialised for a particular Protocol
         """
         self._settings = settings
 
@@ -111,7 +112,7 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def _default_settings(cls) -> Settings:
+    def _default_settings(cls) -> type[Settings]:
         """Method to override in custom `Protocol` subclasses.
 
         Gives a usable instance of ``Settings`` that function as
@@ -121,7 +122,7 @@ class Protocol(GufeTokenizable):
         raise NotImplementedError()
 
     @classmethod
-    def default_settings(cls) -> Settings:
+    def default_settings(cls) -> type[Settings]:
         """Get the default settings for this `Protocol`.
 
         These can be modified and passed in as the `settings` for a new
