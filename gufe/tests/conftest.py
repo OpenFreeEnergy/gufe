@@ -253,15 +253,12 @@ def vacuum_ligand(toluene_ligand_comp):
     )
 
 
-## Transformations
-
-
 @pytest.fixture
 def absolute_transformation(solvated_ligand, solvated_complex):
     return gufe.Transformation(
         solvated_ligand,
         solvated_complex,
-        protocol=DummyProtocol(settings=None),
+        protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         mapping=None,
     )
 
@@ -270,7 +267,7 @@ def absolute_transformation(solvated_ligand, solvated_complex):
 def complex_equilibrium(solvated_complex):
     return gufe.NonTransformation(
         solvated_complex,
-        protocol=DummyProtocol(settings=None)
+        protocol=DummyProtocol(settings=DummyProtocol.default_settings())
     )
 
 
@@ -312,7 +309,7 @@ def benzene_variants_star_map(
         ] = gufe.Transformation(
             solvated_ligands["benzene"],
             solvated_ligands[ligand.name],
-            protocol=DummyProtocol(settings=None),
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
             mapping=None,
         )
 
@@ -336,7 +333,7 @@ def benzene_variants_star_map(
         ] = gufe.Transformation(
             solvated_complexes["benzene"],
             solvated_complexes[ligand.name],
-            protocol=DummyProtocol(settings=None),
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
             mapping=None,
         )
 
