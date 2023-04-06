@@ -309,7 +309,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(succeeded_units) > 0
 
     def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand, tmpdir):
-        protocol = BrokenProtocol(settings=None)
+        protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
             mapping=None,
@@ -513,7 +513,7 @@ class NoDepsProtocol(Protocol):
 
     @classmethod
     def _default_settings(cls):
-        return {}
+        return settings.Settings.get_defaults()
 
     def _create(
             self,
