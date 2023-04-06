@@ -79,11 +79,11 @@ class Protocol(GufeTokenizable):
     - `_gather`
     - `_default_settings`
     """
-    _settings: type[Settings]
+    _settings: Settings
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
 
-    def __init__(self, settings: type[Settings]):
+    def __init__(self, settings: Settings):
         """Create a new ``Protocol`` instance.
 
         Parameters
