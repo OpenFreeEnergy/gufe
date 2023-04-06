@@ -668,3 +668,14 @@ class TestProtocolDAGResult:
             dagresult.unit_to_all_results(units[2])
         with pytest.raises(KeyError, match="No such `protocol_unit_result` present"):
             dagresult.result_to_unit(successes[2])
+
+
+def test_settings_readonly():
+    # checks that settings are immutable once inside a Protocol
+    p = DummyProtocol(DummyProtocol.default_settings())
+
+    with pytest.raises(TypeError, match="immutable"):
+        p.settings.n_repeats = 72
+    # check that child settings are also immutable
+    with pytest.raises(TypeError, match="immutable"):
+        p.settings.thermo_settings.temperature = 10.0 * unit.kelvin
