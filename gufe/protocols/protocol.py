@@ -92,20 +92,12 @@ class Protocol(GufeTokenizable):
             The full settings for this ``Protocol`` instance.  Must be passed an instance of Settings or a
             subclass which is specialised for a particular Protocol
         """
-        self._settings = settings
-
-        def make_readonly(s):
-            # recursively make the Settings object, and all Settings contained within, readonly
-            s.__config__.allow_mutation = False
-            for fieldname, c in s:
-                if isinstance(c, SettingsBaseModel):
-                    make_readonly(c)
-        make_readonly(self._settings)
+        self._settings = settings.copy(deep=True)
 
     @property
     def settings(self) -> Settings:
-        """The full settings for this ``Protocol`` instance.  This is read only"""
-        return self._settings
+        """A copy of the full settings for this ``Protocol`` instance.  This is read only"""
+        return self._settings.copy(deep=True)
 
     @classmethod
     def _defaults(cls):

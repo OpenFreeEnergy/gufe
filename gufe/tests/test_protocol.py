@@ -722,11 +722,15 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
 
 
 def test_settings_readonly():
-    # checks that settings are immutable once inside a Protocol
+    # checks that settings aren't editable once inside a Protocol
     p = DummyProtocol(DummyProtocol.default_settings())
 
-    with pytest.raises(TypeError, match="immutable"):
-        p.settings.n_repeats = 72
-    # check that child settings are also immutable
-    with pytest.raises(TypeError, match="immutable"):
-        p.settings.thermo_settings.temperature = 10.0 * unit.kelvin
+    before = p.settings.n_repeats
+
+    p.settings.n_repeats = before + 1
+    assert p.settings.n_repeats == before
+
+    # also check child settings
+    before = p.settings.thermo_settings.temperature
+    p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
+    assert p.settings.thermo_settings.temperature == before
