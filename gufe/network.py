@@ -11,14 +11,19 @@ from .transformations import Transformation
 
 
 class AlchemicalNetwork(GufeTokenizable):
-    """A network of `ChemicalSystem`s as nodes, `Transformation`s as edges.
+    """A network with all the information needed for a simulation campaign.
+
+    Nodes are :class:`.ChemicalSystem`\ s and edges are
+    ;class:`.Transformation`\ s.
 
     Attributes
     ----------
     edges : FrozenSet[Transformation]
-        The edges of the network, given as a `frozenset` of `Transformation`s.
+        The edges of the network, given as a ``frozenset`` of
+        :class:`.Transformation`\ s.
     nodes : FrozenSet[ChemicalSystem]
-        The nodes of the network, given as a `frozenset` of `ChemicalSystem`s.
+        The nodes of the network, given as a ``frozenset`` of
+        :class:`.ChemicalSystem` \ s.
     name : Optional identifier for the network.
 
     """

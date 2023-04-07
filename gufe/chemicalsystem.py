@@ -18,14 +18,14 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     components
         The molecular representation of the chemical state, including
         connectivity and coordinates. This is a frozendict with user-defined
-        labels as keys, `Component`s as values.
+        labels as keys, :class:`.Component`\ s as values.
     box_vectors
         Numpy array indicating shape and size of unit cell for the system. May
         be a partial definition to allow for variability on certain dimensions.
     name
         Optional identifier for the chemical state; used as part of the
         (hashable) graph node itself when the chemical state is added to an
-        `AlchemicalNetwork`.
+        :class:`.AlchemicalNetwork`.
 
     """
 
@@ -42,15 +42,15 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         components
             The molecular representation of the chemical state, including
             connectivity and coordinates. Given as a dict with user-defined
-            labels as keys, `Component`s as values.
+            labels as keys, :class:`.Component`\ s as values.
         box_vectors
-            Optional `numpy` array indicating shape and size of unit cell for
+            Optional ``numpy`` array indicating shape and size of unit cell for
             the system. May be a partial definition to allow for variability on
             certain dimensions.
         name
             Optional identifier for the chemical state; included with the other
             attributes as part of the (hashable) graph node itself when the
-            chemical state is added to an `AlchemicalNetwork`.
+            chemical state is added to an :class:`.AlchemicalNetwork`.
 
         """
         super().__init__()
