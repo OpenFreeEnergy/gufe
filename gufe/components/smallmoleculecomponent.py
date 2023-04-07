@@ -97,7 +97,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
     Parameters
     ----------
-    rdkit : rdkit.Mol
+    rdkit : :class:`rdkit.Chem.rdchem.Mol`
         rdkit representation of the molecule
     name : str, optional
         if multiple Molecules with identical SMILES but differing positions

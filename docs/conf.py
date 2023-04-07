@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
@@ -31,7 +31,12 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinxcontrib.autodoc_pydantic',
+    'sphinx.ext.intersphinx',
 ]
+
+intersphinx_mapping = {
+    'rdkit': ('https://www.rdkit.org/docs/', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -44,11 +49,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 autodoc_mock_imports = ["openff.models",
                         "rdkit",
                         "networkx",
-        ]
+]
 
-#autodoc_mock_imports = ['lomap', 'networkx', 'openff', 'openff.toolkit', 'openeye', 'rdkit', 'pytest',
-#                        'typing_extensions',
-#                        'click', 'plugcli']
 
 # -- Options for HTML output -------------------------------------------------
 
