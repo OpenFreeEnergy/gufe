@@ -43,7 +43,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 autodoc_mock_imports = ["openff.models",
                         "rdkit",
-                        "openmm",
                         "networkx",
         ]
 
