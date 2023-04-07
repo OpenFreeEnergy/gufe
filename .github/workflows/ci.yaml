@@ -43,6 +43,8 @@ jobs:
         with:
           environment-file: environment.yml
           environment-name: gufe
+          cache-env: true
+          cache-downloads: true
           extra-specs: |
             python==${{ matrix.python-version }}
 
