@@ -28,7 +28,7 @@ jobs:
           - "3.10"
 
     steps:
-      - name: setup-micromamba
+      - name: setup micromamba
         uses: mamba-org/provision-with-micromamba@main
         with:
           environment-file: False
@@ -37,12 +37,13 @@ jobs:
           extra-specs: |
             python==${{ matrix.python-version }}
 
-      - name: install-and-deps
+      - name: install gufe and deps
         run: |
           micromamba install gufe pytest pytest-xdist pip -c conda-forge
           python -m pip install PyGithub
 
-      - name: run-tests
+      - id: run-tests
+        name: run tests
         continue-on-error: true
         run: pytest -n auto --pyargs gufe
 
