@@ -52,6 +52,6 @@ jobs:
       - name: raise-or-close-issue
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
-          TITLE: "[CI] CONDA CRON FAILURE"
+          TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} ${{ matrix.python-version }}"
           GITHUB_TOKEN: ${{ github.token }}
         run: python devtools/raise-or-close-issue.py
