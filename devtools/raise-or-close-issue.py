@@ -29,4 +29,5 @@ if __name__ == "__main__":
     else:
         # Otherwise raise an issue
         if target_issue is None:
+            pass
             #repo.create_issue(title=title, body="")
