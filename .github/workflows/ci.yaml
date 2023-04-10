@@ -74,3 +74,47 @@ jobs:
           file: coverage.xml
           fail_ci_if_error: False
           verbose: True
+
+
+  package_build_and_test:
+    runs-on: ubuntu-latest
+    name: "package build and install test"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: environment.yml
+          environment-name: gufe
+          cache-env: true
+          cache-downloads: true
+          extra-specs: |
+            python==${{ matrix.python-version }}
+
+      - name: "install extra deps"
+        run: pip install pipx wheel twine readme-renderer
+
+      - name: "build sdistt"
+        run: pipx ruun build --sdist --outidr dist
+
+      - name: "check package build"
+        run: |
+          dist=$(ls -t1 dist/gufe-*tar.gz | head -n1)
+          test -n "${dist}" || { echo "no distribution found"; exit 1; }
+          twine check $dit
+
+      - name: "install from source dist"
+        working-directory: ./dist
+        run: python -m pip install gufe-*tar.gz
+
+      - name: "install checks"
+        working-directory: ./dist
+        run: |
+          pip check
+          python -Ic "import gufe; print(gufe.__version__)"
+
+      - name: "run tests"
+        working-directory: ./dist
+        run: pytest -n autho --pyargs gufe
