@@ -28,7 +28,7 @@ jobs:
           - "3.10"
 
     steps:
-      - name: Setup Micromamba
+      - name: setup-micromamba
         uses: mamba-org/provision-with-micromamba@main
         with:
           environment-file: False
@@ -37,12 +37,35 @@ jobs:
           extra-specs: |
             python==${{ matrix.python-version }}
 
-      - name: "Install gufe + optional deps"
-        run: micromamba install gufe pytest pytest-xdist -c conda-forge
+      - name: install-and-deps
+        run: |
+          micromamba install gufe pytest pytest-xdist pip -c conda-forge
+          python -m pip install PyGithub
 
-      - name: "Run tests"
+      - name: run-tests
+        continue-on-error: true
         run: pytest -n auto --pyargs gufe
 
-      - name: "WIP"
+      - name: raise-or-close-issue
+        env:
+          CI_OUTCOME: ${{ steps.run-tests.outcome }}
+          TITLE: "[CI] CONDA CRON FAILURE"
+        shell: python
         run: |
-          micromamba list
+          git = Github(os.environ['GITHUB_TOKEN'])
+          status = os.environ['CI_OUTCOME']
+          repo = git.get_repo('OpenFreeEnergy/gufe')
+          title = os.environ['TITLE']
+          issues = list(repo.get_issues())
+
+          # Close any issues with given title if CI returned green
+          if status == 'passed':
+              for issue in issues:
+                  if issue.title == title:
+                      issue.edit(state='closed')
+          else:
+              # Otherwise raise an issue
+              for issue in issues:
+                  if issue.title == title:
+                      return
+              repo.create_issue(title=title, body="")
