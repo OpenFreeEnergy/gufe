@@ -52,6 +52,9 @@ jobs:
           TITLE: "[CI] CONDA CRON FAILURE"
         shell: python
         run: |
+          import os
+          from github import Github
+
           git = Github(os.environ['GITHUB_TOKEN'])
           status = os.environ['CI_OUTCOME']
           repo = git.get_repo('OpenFreeEnergy/gufe')
