@@ -41,7 +41,7 @@ jobs:
         run: micromamba install gufe pytest pytest-xdist -c conda-forge
 
       - name: "Run tests"
-        run: pytest -n auto --pyargs openfe openfecli
+        run: pytest -n auto --pyargs gufe
 
       - name: "WIP"
         run: |
