@@ -117,4 +117,4 @@ jobs:
 
       - name: "run tests"
         working-directory: ./dist
-        run: pytest -n autho --pyargs gufe
+        run: pytest -n auto --pyargs gufe
