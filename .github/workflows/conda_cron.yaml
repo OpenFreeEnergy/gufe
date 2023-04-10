@@ -50,7 +50,7 @@ jobs:
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE"
-        shell: python
+        shell: python {0}
         run: |
           import os
           from github import Github
