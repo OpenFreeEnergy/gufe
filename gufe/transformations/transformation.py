@@ -15,14 +15,14 @@ from ..mapping import ComponentMapping
 class Transformation(GufeTokenizable):
     """An edge of an alchemical network.
 
-    Connects two `ChemicalSystem`s, with directionality.
+    Connects two :class:`.ChemicalSystem`\ s, with directionality.
 
     Attributes
     ----------
     stateA : ChemicalSystem
-        The starting `ChemicalSystem` for the transformation.
+        The starting :class:`.ChemicalSystem` for the transformation.
     stateB : ChemicalSystem
-        The ending `ChemicalSystem` for the transformation.
+        The ending :class:`.ChemicalSystem` for the transformation.
     protocol : Protocol
         The protocol used to perform the transformation.
         Includes all details needed to perform required
@@ -30,11 +30,11 @@ class Transformation(GufeTokenizable):
         May also correspond to an experimental result.
     mapping : Optional[Dict[str, ComponentMapping]]
         Mapping of e.g. atoms between the `stateA` and `stateB`
-        `ChemicalSystem`s.
+        :class:`.ChemicalSystem`\ s.
     name : Optional[str]
         Optional identifier for the transformation; set this to a unique value
         if adding multiple, otherwise identical transformations to the same
-        `AlchemicalNetwork` to avoid deduplication
+        :class:`.AlchemicalNetwork` to avoid deduplication
 
     """
 
