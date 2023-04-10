@@ -11,23 +11,19 @@ from github import Github
 if __name__ == "__main__":
     git = Github(os.environ['GITHUB_TOKEN'])
     status = os.environ['CI_OUTCOME']
-    print(status)
     repo = git.get_repo('OpenFreeEnergy/gufe')
     title = os.environ['TITLE']
-    print(title)
     
     target_issue = None
     for issue in repo.get_issues():
         if issue.title == title:
             target_issue = issue
-    print(target_issue)
     
     # Close any issues with given title if CI returned green
-    if status == 'passed':
+    if status == 'success':
         if target_issue is not None:
             target_issue.edit(state='closed')
     else:
         # Otherwise raise an issue
         if target_issue is None:
-            pass
-            #repo.create_issue(title=title, body="")
+            repo.create_issue(title=title, body="")
