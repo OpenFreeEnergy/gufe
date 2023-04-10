@@ -103,7 +103,7 @@ jobs:
         run: |
           dist=$(ls -t1 dist/gufe-*tar.gz | head -n1)
           test -n "${dist}" || { echo "no distribution found"; exit 1; }
-          twine check $dit
+          twine check $dist
 
       - name: "install from source dist"
         working-directory: ./dist
