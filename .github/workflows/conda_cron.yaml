@@ -56,16 +56,16 @@ jobs:
           status = os.environ['CI_OUTCOME']
           repo = git.get_repo('OpenFreeEnergy/gufe')
           title = os.environ['TITLE']
-          issues = list(repo.get_issues())
 
+          target_issue = None
+          for issue in repo.get_issues():
+              if issue.title == title:
+                  target_issue = issue
+          
           # Close any issues with given title if CI returned green
           if status == 'passed':
-              for issue in issues:
-                  if issue.title == title:
-                      issue.edit(state='closed')
+              target_issue.edit(state='closed')
           else:
               # Otherwise raise an issue
-              for issue in issues:
-                  if issue.title == title:
-                      return
-              repo.create_issue(title=title, body="")
+              if target_issue is None:
+                  repo.create_issue(title=title, body="")
