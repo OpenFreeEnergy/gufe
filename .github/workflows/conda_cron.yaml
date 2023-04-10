@@ -53,6 +53,7 @@ jobs:
         shell: python {0}
         run: |
           import os
+          import numpy as np
           from github import Github
 
           git = Github(os.environ['GITHUB_TOKEN'])
