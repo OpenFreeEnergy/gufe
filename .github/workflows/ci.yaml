@@ -97,7 +97,7 @@ jobs:
         run: pip install pipx wheel twine readme-renderer
 
       - name: "build sdistt"
-        run: pipx ruun build --sdist --outidr dist
+        run: pipx run build --sdist --outidr dist
 
       - name: "check package build"
         run: |
