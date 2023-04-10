@@ -80,19 +80,6 @@ def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
     assert hash(solvated_complex) != hash(complex2)
 
 
-def test_chemical_system_neq_3(solvated_complex, prot_comp, solv_comp,
-                               toluene_ligand_comp):
-    # different unit cell size
-    complex2 = ChemicalSystem(
-        {'protein': prot_comp,
-         'solvent': solv_comp,
-         'ligand': toluene_ligand_comp},
-        box_vectors=np.array([10, 0, 0] + [np.nan] * 6),
-    )
-    assert solvated_complex != complex2
-    assert hash(solvated_complex) != hash(complex2)
-
-
 def test_chemical_system_neq_4(solvated_complex, solvated_ligand):
     # different component keys
     assert solvated_complex != solvated_ligand
@@ -131,7 +118,7 @@ def test_sorting(solvated_complex, solvated_ligand):
 class TestChemicalSystem(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem
-    key = "ChemicalSystem-1f244420be5cf662c0f804b052ef2a1e"
+    key = "ChemicalSystem-92176395ceb86ecd7787ce2585b24218"
     repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
 
     @pytest.fixture
@@ -139,20 +126,4 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
         return ChemicalSystem(
             {'solvent': solv_comp,
              'ligand': toluene_ligand_comp},
-            box_vectors=np.array([10, 10, 10, 90, 90, 90.]),
-            )
-
-
-class TestChemicalSystemNanBox(GufeTokenizableTestsMixin):
-
-    cls = ChemicalSystem
-    key = "ChemicalSystem-34f6bd8be97cc184bad334e6f8daa469"
-    repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
-
-    @pytest.fixture
-    def instance(self, solv_comp, toluene_ligand_comp):
-        return ChemicalSystem(
-            {'solvent': solv_comp,
-             'ligand': toluene_ligand_comp},
-            box_vectors=np.array([np.nan, 10, 10, 90, 90, 90.]),
             )

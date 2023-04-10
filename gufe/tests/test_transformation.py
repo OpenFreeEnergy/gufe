@@ -31,7 +31,7 @@ def complex_equilibrium(solvated_complex):
 class TestTransformation(GufeTokenizableTestsMixin):
 
     cls = Transformation
-    key = "Transformation-0969b1cd6232bf5d78c47216f0200177"
+    key = "Transformation-decb5cda54a4092529bd47a2305c3169"
     repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-84b834e05f8a280c0c26a161010f52c8>)"
 
     @pytest.fixture
@@ -126,7 +126,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    key = "NonTransformation-a3604da309c4016df7c1bd5340626825"
+    key = "NonTransformation-f82418b1fcc30dc3ec1e8e196a208aa8"
     repr = "NonTransformation(stateA=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-84b834e05f8a280c0c26a161010f52c8>)"
 
     @pytest.fixture
@@ -203,7 +203,3 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             solvated_ligand, protocol=DummyProtocol(settings=DummyProtocol.default_settings())
         )
         assert complex_equilibrium != different_system
-
-    def test_dict_roundtrip(self):
-        # TODO: need registration of `Protocol`s for this to work
-        ...
