@@ -45,19 +45,7 @@ class SettingsBaseModel(DefaultModel):
         if self._is_frozen:
             raise TypeError(f"Cannot set '{name}': Settings are immutable "
                             "once attached to a Protocol")
-
-        if name == "_is_frozen":
-            return object.__setattr__(self, '_is_frozen', value)
-
         return super().__setattr__(name, value)
-
-    def __getattr__(self, name):
-        if name == "_is_frozen":
-            return object.__getattribute__(self, name)
-        else:
-            return super().__getattr__(name)
-
-
 
 
 class ThermoSettings(SettingsBaseModel):
