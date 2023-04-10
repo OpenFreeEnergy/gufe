@@ -1,0 +1,48 @@
+name: "conda_cron"
+on:
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # At 07:00 UTC every day
+    - cron: "0 7 * * *"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  condacheck:
+    runs-on: ${{ matrix.OS }}-latest
+    name: "daily conda check"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu', 'macos']
+        python-version:
+          - "3.9"
+          - "3.10"
+
+    steps:
+      - name: Setup Micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: False
+          environment-name: gufe
+          channels: conda-forge
+          extra-specs: |
+            python==${{ matrix.python-version }}
+
+      - name: "Install gufe + optional deps"
+        run: micromamba install gufe pytest pytest-xdist -c conda-forge
+
+      - name: "Run tests"
+        run: pytest -n auto --pyargs openfe openfecli
+
+      - name: "WIP"
+        run: |
+          micromamba list
