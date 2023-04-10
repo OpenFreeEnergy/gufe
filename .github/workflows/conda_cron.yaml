@@ -1,0 +1,54 @@
+name: "conda_cron"
+on:
+  schedule:
+    # At 07:00 UTC every day
+    - cron: "0 7 * * *"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  condacheck:
+    runs-on: ${{ matrix.OS }}-latest
+    name: "daily conda check"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu', 'macos']
+        python-version:
+          - "3.9"
+          - "3.10"
+
+    steps:
+      - name: setup micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: False
+          environment-name: gufe
+          channels: conda-forge
+          extra-specs: |
+            python==${{ matrix.python-version }}
+
+      - name: install gufe and deps
+        run: |
+          micromamba install gufe pytest pytest-xdist pip -c conda-forge
+          python -m pip install PyGithub
+
+      - id: run-tests
+        name: run tests
+        continue-on-error: true
+        run: pytest -n auto --pyargs gufe
+
+      - uses: actions/checkout@v3
+
+      - name: raise-or-close-issue
+        env:
+          CI_OUTCOME: ${{ steps.run-tests.outcome }}
+          TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python devtools/raise-or-close-issue.py
