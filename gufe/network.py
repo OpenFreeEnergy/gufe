@@ -14,7 +14,7 @@ class AlchemicalNetwork(GufeTokenizable):
     """A network with all the information needed for a simulation campaign.
 
     Nodes are :class:`.ChemicalSystem`\ s and edges are
-    ;class:`.Transformation`\ s.
+    :class:`.Transformation`\ s.
 
     Attributes
     ----------
