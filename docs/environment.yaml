@@ -1,0 +1,11 @@
+name: gufe-docs
+channels:
+- https://conda.anaconda.org/jaimergp/label/unsupported-cudatoolkit-shim
+- https://conda.anaconda.org/conda-forge
+dependencies:
+- autodoc-pydantic
+- openff-units
+- pydata-sphinx-theme
+- python=3.9
+- sphinx
+- openmm

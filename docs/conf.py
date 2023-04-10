@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
@@ -31,7 +31,12 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinxcontrib.autodoc_pydantic',
+    'sphinx.ext.intersphinx',
 ]
+
+intersphinx_mapping = {
+    'rdkit': ('https://www.rdkit.org/docs/', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -41,10 +46,11 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+autodoc_mock_imports = ["openff.models",
+                        "rdkit",
+                        "networkx",
+]
 
-#autodoc_mock_imports = ['lomap', 'networkx', 'openff', 'openff.toolkit', 'openeye', 'rdkit', 'pytest',
-#                        'typing_extensions',
-#                        'click', 'plugcli']
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -57,3 +63,8 @@ html_theme = 'pydata_sphinx_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# replace macros
+rst_prolog = """
+.. |rdkit.mol| replace:: :class:`rdkit.Chem.rdchem.Mol`
+"""
