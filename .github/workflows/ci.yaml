@@ -98,7 +98,7 @@ jobs:
       - name: "install extra deps"
         run: pip install pipx wheel twine readme-renderer
 
-      - name: "build sdistt"
+      - name: "build sdist"
         run: pipx run build --sdist --outdir dist
 
       - name: "check package build"
