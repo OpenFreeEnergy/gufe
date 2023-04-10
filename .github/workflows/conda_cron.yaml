@@ -52,4 +52,5 @@ jobs:
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE"
+          GITHUB_TOKEN: ${{ github.token }}
         run: python devtools/raise-or-close-issue.py
