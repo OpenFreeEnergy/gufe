@@ -727,10 +727,15 @@ def test_settings_readonly():
 
     before = p.settings.n_repeats
 
-    p.settings.n_repeats = before + 1
+    with pytest.raises(TypeError, match="immutable"):
+        p.settings.n_repeats = before + 1
+
     assert p.settings.n_repeats == before
 
     # also check child settings
     before = p.settings.thermo_settings.temperature
-    p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
+
+    with pytest.raises(TypeError, match="immutable"):
+        p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
+
     assert p.settings.thermo_settings.temperature == before

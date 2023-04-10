@@ -92,12 +92,12 @@ class Protocol(GufeTokenizable):
             The full settings for this ``Protocol`` instance.  Must be passed an instance of Settings or a
             subclass which is specialised for a particular Protocol
         """
-        self._settings = settings.copy(deep=True)
+        self._settings = settings.frozen_copy()
 
     @property
     def settings(self) -> Settings:
         """A copy of the full settings for this ``Protocol`` instance.  This is read only"""
-        return self._settings.copy(deep=True)
+        return self._settings.frozen_copy()
 
     @classmethod
     def _defaults(cls):
