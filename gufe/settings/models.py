@@ -12,15 +12,52 @@ from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
 from pydantic import Extra, Field, PositiveFloat
+from pydantic import PrivateAttr
 
 
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
+    _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
     class Config:
         extra = Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
+
+    def frozen_copy(self):
+        copied = self.copy(deep=True)
+
+        def freeze_model(model):
+            submodels = (
+                mod for field in model.__fields__
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+            )
+            for mod in submodels:
+                freeze_model(mod)
+
+            if not model._is_frozen:
+                model._is_frozen = True
+
+        freeze_model(copied)
+        return copied
+
+    def __setattr__(self, name, value):
+        if self._is_frozen:
+            raise TypeError(f"Cannot set '{name}': Settings are immutable "
+                            "once attached to a Protocol")
+
+        if name == "_is_frozen":
+            return object.__setattr__(self, '_is_frozen', value)
+
+        return super().__setattr__(name, value)
+
+    def __getattr__(self, name):
+        if name == "_is_frozen":
+            return object.__getattribute__(self, name)
+        else:
+            return super().__getattr__(name)
+
+
 
 
 class ThermoSettings(SettingsBaseModel):
