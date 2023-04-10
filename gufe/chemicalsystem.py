@@ -19,9 +19,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         The molecular representation of the chemical state, including
         connectivity and coordinates. This is a frozendict with user-defined
         labels as keys, :class:`.Component`\ s as values.
-    box_vectors
-        Numpy array indicating shape and size of unit cell for the system. May
-        be a partial definition to allow for variability on certain dimensions.
     name
         Optional identifier for the chemical state; used as part of the
         (hashable) graph node itself when the chemical state is added to an
@@ -32,7 +29,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     def __init__(
         self,
         components: Dict[str, Component],
-        box_vectors: Optional[np.ndarray] = None,
         name: Optional[str] = "",
     ):
         """Create a node for an alchemical network.
@@ -43,10 +39,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
             The molecular representation of the chemical state, including
             connectivity and coordinates. Given as a dict with user-defined
             labels as keys, :class:`.Component`\ s as values.
-        box_vectors
-            Optional ``numpy`` array indicating shape and size of unit cell for
-            the system. May be a partial definition to allow for variability on
-            certain dimensions.
         name
             Optional identifier for the chemical state; included with the other
             attributes as part of the (hashable) graph node itself when the
@@ -58,11 +50,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         self._components = components
         self._name = name
 
-        if box_vectors is None:
-            self._box_vectors = np.array([np.nan] * 9)
-        else:
-            self._box_vectors = box_vectors
-
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(name={self.name}, components={self.components})"
@@ -73,7 +60,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
             "components": {
                 key: value for key, value in sorted(self.components.items())
             },
-            "box_vectors": self.box_vectors.tolist(),
             "name": self.name,
         }
 
@@ -83,17 +69,12 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
             components={
                 key: value for key, value in d["components"].items()
             },
-            box_vectors=np.array(d["box_vectors"]),
             name=d["name"],
         )
 
     @property
     def components(self):
         return dict(self._components)
-
-    @property
-    def box_vectors(self):
-        return np.array(self._box_vectors)
 
     @property
     def name(self):
