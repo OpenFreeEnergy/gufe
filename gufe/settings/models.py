@@ -58,7 +58,8 @@ class SettingsBaseModel(DefaultModel):
     def __setattr__(self, name, value):
         if self._is_frozen:
             raise TypeError(f"Cannot set '{name}': Settings are immutable "
-                            "once attached to a Protocol")
+                            "once attached to a Protocol and cannot be modified. "
+                            "Modify Settings *before* creating the Protocol.")
         return super().__setattr__(name, value)
 
 
