@@ -112,7 +112,7 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def _default_settings(cls) -> type[Settings]:
+    def _default_settings(cls) -> Settings:
         """Method to override in custom `Protocol` subclasses.
 
         Gives a usable instance of ``Settings`` that function as
@@ -122,7 +122,7 @@ class Protocol(GufeTokenizable):
         raise NotImplementedError()
 
     @classmethod
-    def default_settings(cls) -> type[Settings]:
+    def default_settings(cls) -> Settings:
         """Get the default settings for this `Protocol`.
 
         These can be modified and passed in as the `settings` for a new
