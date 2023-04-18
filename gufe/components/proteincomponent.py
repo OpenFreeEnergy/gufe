@@ -53,6 +53,11 @@ positive_ions = ["NA", "MG", "ZN"]
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
 
+    Relative to a SmallMoleculeComponent, this representation additionally contains information
+    relating to the residue and chain information.  This is achievable by having the MonomerInfo attributes
+    present on each atom of the input RDKit molecule, which is done when reading from either PDB or `.mae`
+    file inputs.
+
     Note
     ----
     This class is a read-only representation of a protein, if you want to
@@ -72,8 +77,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def from_pdb_file(cls, pdb_file: str, name: str = ""):
         """
         Create ``ProteinComponent`` from PDB-formatted file.
-
-        This is the primary deserialization mechanism for this class.
 
         Parameters
         ----------
@@ -96,8 +99,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def from_pdbx_file(cls, pdbx_file: str, name=""):
         """
         Create ``ProteinComponent`` from PDBX-formatted file.
-
-        This is the primary deserialization mechanism for this class.
 
         Parameters
         ----------
