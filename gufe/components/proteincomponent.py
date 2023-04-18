@@ -14,6 +14,7 @@ from openmm import unit as omm_unit
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 
+from ..custom_typing import RDKitMol
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
@@ -71,6 +72,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
     name : str, optional
        of the protein, by default ""
     """
+    def __init__(self, rdkit: RDKitMol, name=""):
+        if not all(a.GetMonomerInfo() is not None for a in rdkit.GetAtoms()):
+            raise TypeError("Not all atoms in input have MonomerInfo defined.  "
+                            "Consider loading via MolFromPDBFile or similar.")
+        super().__init__(rdkit=rdkit, name=name)
 
     # FROM
     @classmethod

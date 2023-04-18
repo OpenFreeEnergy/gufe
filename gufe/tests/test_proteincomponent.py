@@ -293,3 +293,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         m1 = self.cls.from_pdb_file(ALL_PDB_LOADERS["thrombin_protein"]())
 
         assert m1.total_charge == 6
+
+
+def test_no_monomer_info_error(ethane):
+    with pytest.raises(TypeError):
+        _ = ProteinComponent(rdkit=ethane.to_rdkit())
