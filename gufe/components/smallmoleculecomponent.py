@@ -82,12 +82,9 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
        edit the molecule do this in an appropriate toolkit **before** creating
        an instance from this class.
 
-    This wrapper uses SMILES as the primary hash, so is best suited to smaller
-    molecules.  It also supports reading/writing to .sdf format, which again
-    is suited to smaller molecules.
-    A small molecule can have a name associated with it, which is needed to
-    distinguish two molecules with the same SMILES representation, or is
-    simply useful to help identify ligand molecules later.
+    This class supports reading/writing to the `.sdf` format, which is suited to smaller
+    molecules.
+
     The name can be explicitly set by the ``name`` attribute, or implicitly set
     based on the tags in the input molecular representation (if supported, as
     with RDKit). If not explicitly set on creation, the molecule will first
@@ -100,9 +97,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     rdkit : |rdkit.mol|
         rdkit representation of the molecule
     name : str, optional
-        if multiple Molecules with identical SMILES but differing positions
-        are used, a name must be given to differentiate these.  This name
-        will be used in the hash.
+        A human readable tag for this molecule.  This name will be used in the hash.
     """
 
     def to_sdf(self) -> str:
