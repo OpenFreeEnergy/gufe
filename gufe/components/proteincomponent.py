@@ -54,7 +54,7 @@ positive_ions = ["NA", "MG", "ZN"]
 class ProteinComponent(ExplicitMoleculeComponent):
     """Wrapper around a Protein representation.
 
-    Relative to a SmallMoleculeComponent, this representation additionally contains information
+    In comparison to a SmallMoleculeComponent, this representation additionally contains information
     relating to the residue and chain information.  This is achievable by having the MonomerInfo attributes
     present on each atom of the input RDKit molecule, which is done when reading from either PDB or `.mae`
     file inputs.
