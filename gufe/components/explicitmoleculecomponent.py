@@ -59,6 +59,10 @@ class ExplicitMoleculeComponent(Component):
                 f"Only the first will be used."
             )
 
+        if not any(atom.GetAtomicNum() == 1 for atom in rdkit.GetAtoms()):
+            warnings.warn("Molecule doesn't have any hydrogen atoms present. "
+                          "If this is unexpected, consider loading the molecule with `removeHs=False`")
+
         self._rdkit = rdkit
         self._smiles: Optional[str] = None
         self._name = name
