@@ -312,3 +312,11 @@ def test_prop_preservation(ethane, target, dtype):
         assert obj.GetProp('foo') == 'bar'
     else:
         assert obj.GetDoubleProp('foo') == pytest.approx(1.234)
+
+
+def test_missing_H_warning():
+    m = Chem.MolFromSmiles('CC')
+    Chem.AllChem.Compute2DCoords(m)
+
+    with pytest.warns(UserWarning, match='removeHs=False'):
+        _ = SmallMoleculeComponent(rdkit=m)
