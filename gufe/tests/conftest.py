@@ -204,7 +204,7 @@ def styrene(benzene_modifications):
 
 @pytest.fixture(scope="session")
 def ethane():
-    mol = Chem.MolFromSmiles("CC")
+    mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
     AllChem.Compute2DCoords(mol)
     return gufe.SmallMoleculeComponent(mol)
 

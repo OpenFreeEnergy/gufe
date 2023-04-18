@@ -27,13 +27,13 @@ from .test_tokenization import GufeTokenizableTestsMixin
 
 @pytest.fixture
 def alt_ethane():
-    mol = Chem.MolFromSmiles("CC")
+    mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
     Chem.AllChem.Compute2DCoords(mol)
     return SmallMoleculeComponent(mol)
 
 @pytest.fixture
 def named_ethane():
-    mol = Chem.MolFromSmiles("CC")
+    mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
     Chem.AllChem.Compute2DCoords(mol)
     return SmallMoleculeComponent(mol, name='ethane')
 
@@ -47,7 +47,7 @@ def named_ethane():
     ('foo', '', '', 'foo'),
 ])
 def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
-    rdkit = Chem.MolFromSmiles("CC")
+    rdkit = Chem.AddHs(Chem.MolFromSmiles("CC"))
     if internal:
         rdkit.SetProp('_Name', internal)
 
@@ -71,7 +71,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
-    key = "SmallMoleculeComponent-45d1c819e0b7c8a7179113e6296837fa"
+    key = "SmallMoleculeComponent-51068a89f4793e688ee26135a9b7fbb6"
     repr = "SmallMoleculeComponent(name=ethane)"
 
     @pytest.fixture
@@ -169,7 +169,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
             SmallMoleculeComponent.from_sdf_string(data)
 
     def test_from_rdkit(self, named_ethane):
-        rdkit = Chem.MolFromSmiles("CC")
+        rdkit = Chem.AddHs(Chem.MolFromSmiles("CC"))
         AllChem.Compute2DCoords(rdkit)
         mol = SmallMoleculeComponent.from_rdkit(rdkit, "ethane")
         assert mol == named_ethane
