@@ -75,7 +75,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def __init__(self, rdkit: RDKitMol, name=""):
         if not all(a.GetMonomerInfo() is not None for a in rdkit.GetAtoms()):
             raise TypeError("Not all atoms in input have MonomerInfo defined.  "
-                            "Consider loading via MolFromPDBFile or similar.")
+                            "Consider loading via rdkit.Chem.MolFromPDBFile or similar.")
         super().__init__(rdkit=rdkit, name=name)
 
     # FROM
