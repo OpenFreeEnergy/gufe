@@ -320,3 +320,16 @@ def test_missing_H_warning():
 
     with pytest.warns(UserWarning, match='removeHs=False'):
         _ = SmallMoleculeComponent(rdkit=m)
+
+
+def test_to_openff_5_membered_aromatics():
+    # see openfe #278
+    m = Chem.MolFromSmiles("c2scnc2C")
+    m = Chem.AddHs(m)
+    m.Compute2DCoords()
+
+    smc = SmallMoleculeComponent(m)
+
+    offm = smc.to_openff()
+
+    assert offm
