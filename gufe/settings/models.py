@@ -67,9 +67,9 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
 
     rigid_water: bool = True
     remove_com: bool = False
-    hydrogen_mass: float = 4.0
+    hydrogen_mass: float = 3.0
     """Mass to be repartitioned to hydrogens from neighbouring
-       heavy atoms (in amu), default 4.0"""
+       heavy atoms (in amu), default 3.0"""
 
     forcefields: list[str] = [
         "amber/ff14SB.xml",  # ff14SB protein force field

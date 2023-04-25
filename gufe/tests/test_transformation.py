@@ -31,8 +31,8 @@ def complex_equilibrium(solvated_complex):
 class TestTransformation(GufeTokenizableTestsMixin):
 
     cls = Transformation
-    key = "Transformation-decb5cda54a4092529bd47a2305c3169"
-    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-84b834e05f8a280c0c26a161010f52c8>)"
+    key = "Transformation-e710da52fcf4b7d78f890e6e00e8f6c5"
+    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-f4f0aab0421240c9bc65b6491791f9d8>)"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -126,8 +126,8 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    key = "NonTransformation-f82418b1fcc30dc3ec1e8e196a208aa8"
-    repr = "NonTransformation(stateA=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-84b834e05f8a280c0c26a161010f52c8>)"
+    key = "NonTransformation-55e8c1e7274d71e246d36ca4d718fed3"
+    repr = "NonTransformation(stateA=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-f4f0aab0421240c9bc65b6491791f9d8>)"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):
