@@ -35,7 +35,7 @@ class SharedRoot:
         external: ExternalStorage,
         prefix: str,
         *,
-        holding: PathLike =".holding",
+        holding: PathLike = Path(".holding"),
         delete_holding: bool = True,
         read_only: bool = False,
     ):
@@ -46,7 +46,7 @@ class SharedRoot:
         self.delete_holding = delete_holding
         self.holding = holding
 
-        self.registry = set()
+        self.registry : set[SharedPath] = set()
         # NOTE: the fact that we use $SCRATCH/$HOLDING/$PREFIX instead of
         # $SCRATCH/$PREFIX/$HOLDING is important for 2 reasons:
         # 1. This doesn't take any of the user's namespace from their
