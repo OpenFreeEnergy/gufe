@@ -34,6 +34,8 @@ extensions = [
     'sphinx.ext.intersphinx',
 ]
 
+autoclass_content = 'both'
+
 intersphinx_mapping = {
     'rdkit': ('https://www.rdkit.org/docs/', None),
 }
