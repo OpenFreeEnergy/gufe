@@ -33,7 +33,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     ):
         """Create a node for an alchemical network.
 
-        Attributes
+        Parameters
         ----------
         components
             The molecular representation of the chemical state, including
