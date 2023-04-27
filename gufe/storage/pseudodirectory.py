@@ -7,7 +7,29 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class SharedRoot:
-    """
+    """PathLike local representation of an :class:`.ExternalStorage`.
+
+    This connects objects on a local filesystem to the key-value store of a
+    (possibly remote) :class:`.ExternalStorage`. It presents a FileLike
+    interface to users, but internally (via the :class:`.SharedPath` objects
+    it contains in its registry) maps local filenames to the keys (labels)
+    for the key-value store.
+
+    1. If a local path is requested that corresponds to an existing label in
+       the :class:`.ExternalStorage`, this object will "download" the
+       contents of that key to that local path.
+
+    2. When requested, or when this object ??? (TODO: __exit__ or __del__),
+       it transfers any newly created files to the
+       :class:`.ExternalStorage`.
+
+    3. Optionally, this can delete the local cache of files when requested
+       or when this object ??? (TODO: __exit__ or __del__)
+
+    This can be opened in "read-only" mode, which prevents new files from
+    being created, but does not prevent changes to existing versions of
+    local files.
+
     Parameters
     ----------
     scratch : os.PathLike
@@ -25,7 +47,7 @@ class SharedRoot:
         directory when this object is deleted
     read_only : bool
         write to prevent NEW files from being written within this shared
-        directory. NOTE: This will not prevent overwrite of existing files,
+        directory. NOTE: This will not prevent overwrite of existing files
         in scratch space, but it will prevent changed files from uploading
         to the external storage.
     """
@@ -99,6 +121,23 @@ class SharedRoot:
             shutil.rmtree(self.shared_dir)
 
     def register_path(self, shared_path):
+        """Register a :class:`.SharedPath` with this :class:`.SharedRoot`.
+
+        This marks a given path as something for this object to manage, by
+        loading it into the ``registry``. This way it is tracked such that
+        its contents can be transfered to the :class:`.ExternalStorage` and
+        such that the local copy can be deleted when it is no longer needed.
+
+        If this objects's :class:`.ExternalStorage` already has data for the
+        label associated with the provided :class:`.Sharedpath`, then the
+        contents of that should copied to the local path so that it can be
+        read by the user.
+
+        Parameters
+        ----------
+        shared_path: :class:`.SharedPath`
+            the path to track
+        """
         label_exists = self.external.exists(shared_path.label)
 
         if self.read_only and not label_exists:
@@ -132,6 +171,11 @@ class SharedRoot:
 
 
 class SharedPath:
+    """PathLike object linking local path with label for external storage.
+
+    On creation, this registers with a :class:`.SharedRoot` that will manage
+    the local path and transferring data with its :class:`.ExternalStorage`.
+    """
     def __init__(self, root: SharedRoot, path: PathLike):
         self.root = root
         self.path = Path(path)
@@ -145,6 +189,7 @@ class SharedPath:
 
     @property
     def label(self):
+        """Label used in :class:`.ExternalStorage` for this path"""
         return str(self.root.prefix / self.path)
 
     def __repr__(self):
