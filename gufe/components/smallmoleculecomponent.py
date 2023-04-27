@@ -175,13 +175,8 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     def to_openff(self):
         """OpenFF Toolkit representation of this molecule"""
         from openff.toolkit.topology import Molecule as OFFMolecule
-        m = self.to_rdkit()
 
-        # see openfe #278 / openff tk #1563
-        Chem.Kekulize(m)
-        Chem.SetAromaticity(m, Chem.AromaticityModel.AROMATICITY_MDL)
-
-        m = OFFMolecule(m, allow_undefined_stereo=True)
+        m = OFFMolecule(self._rdkit, allow_undefined_stereo=True)
         m.name = self.name
 
         return m
