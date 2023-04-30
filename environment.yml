@@ -9,7 +9,7 @@ dependencies:
   - numpy
   - openff-toolkit >=0.13.0
   - openff-units >=0.2.0
-  - openff-models >=0.0.4
+  - openff-models >=0.0.5
   - pip
   - pydantic
   - pytest
