@@ -1,8 +1,8 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import datetime
 # custom_codecs.py: A place to keep various custom JSONCodec instances
 
+import datetime
 import functools
 import pathlib
 
