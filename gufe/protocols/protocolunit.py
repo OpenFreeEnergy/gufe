@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
+import datetime
 import sys
 import traceback
 import uuid
@@ -50,6 +51,9 @@ def _list_dependencies(inputs, cls):
 
 
 class ProtocolUnitResult(GufeTokenizable):
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+
     def __init__(self, *,
             name: Optional[str] = None,
             source_key: GufeKey,
@@ -281,6 +285,7 @@ class ProtocolUnit(GufeTokenizable):
 
         """
         result: Union[ProtocolUnitResult, ProtocolUnitFailure]
+        start = datetime.datetime.now()
 
         try:
             outputs = self._execute(context, **inputs)
@@ -300,6 +305,10 @@ class ProtocolUnit(GufeTokenizable):
                 exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc()
             )
+        end = datetime.datetime.now()
+
+        result.start_time = start
+        result.end_time = end
 
         return result
 
