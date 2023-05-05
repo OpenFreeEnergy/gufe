@@ -51,14 +51,13 @@ def _list_dependencies(inputs, cls):
 
 
 class ProtocolUnitResult(GufeTokenizable):
-    start_time: datetime.datetime
-    end_time: datetime.datetime
-
     def __init__(self, *,
             name: Optional[str] = None,
             source_key: GufeKey,
             inputs: Dict[str, Any],
             outputs: Dict[str, Any],
+            start_time: datetime.datetime,
+            end_time: datetime.datetime,
         ):
         """Generate a `ProtocolUnitResult`.
 
@@ -75,11 +74,15 @@ class ProtocolUnitResult(GufeTokenizable):
         outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
+        start_time, end_time: datetime.datetime
+            The start and end time for executing this Unit
         """
         self._name = name
         self._source_key = source_key
         self._inputs = inputs
         self._outputs = outputs
+        self._start_time = start_time
+        self._end_time = end_time
 
         # for caching
         self._dependencies = None
@@ -100,7 +103,9 @@ class ProtocolUnitResult(GufeTokenizable):
                 '_key': self.key,
                 'source_key': self.source_key,
                 'inputs': self.inputs,
-                'outputs': self.outputs}
+                'outputs': self.outputs,
+                'start_time': self.start_time,
+                'end_time': self.end_time}
 
     @classmethod
     def _from_dict(cls, dct: Dict):
@@ -136,11 +141,22 @@ class ProtocolUnitResult(GufeTokenizable):
     def ok() -> bool:
         return True
 
+    @property
+    def start_time(self) -> datetime.datetime:
+        """The time execution of this Unit began"""
+        return self._start_time
+
+    @property
+    def end_time(self) -> datetime.datetime:
+        """The time at which execution of this Unit finished"""
+        return self._end_time
+
 
 class ProtocolUnitFailure(ProtocolUnitResult):
     """Failed result for a single `ProtocolUnit` execution."""
 
-    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback):
+    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback,
+                 start_time: datetime.datetime, end_time: datetime.datetime):
         """
         Parameters
         ----------
@@ -164,7 +180,8 @@ class ProtocolUnitFailure(ProtocolUnitResult):
         """
         self._exception = exception
         self._traceback = traceback
-        super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs)
+        super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs,
+                         start_time=start_time, end_time=end_time)
 
     def _to_dict(self):
         dct = super()._to_dict()
@@ -290,7 +307,8 @@ class ProtocolUnit(GufeTokenizable):
         try:
             outputs = self._execute(context, **inputs)
             result = ProtocolUnitResult(
-                name=self.name, source_key=self.key, inputs=inputs, outputs=outputs
+                name=self.name, source_key=self.key, inputs=inputs, outputs=outputs,
+                start_time=start, end_time=datetime.datetime.now(),
             )
 
         except Exception as e:
@@ -303,12 +321,10 @@ class ProtocolUnit(GufeTokenizable):
                 inputs=inputs,
                 outputs=dict(),
                 exception=(e.__class__.__qualname__, e.args),
-                traceback=traceback.format_exc()
+                traceback=traceback.format_exc(),
+                start_time=start,
+                end_time=datetime.datetime.now(),
             )
-        end = datetime.datetime.now()
-
-        result.start_time = start
-        result.end_time = end
 
         return result
 
