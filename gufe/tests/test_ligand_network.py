@@ -116,7 +116,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
     @pytest.fixture
     def instance(self, simple_network):
-        return simple_network
+        return simple_network.network
 
     def test_node_type(self, network_container):
         n = network_container.network
