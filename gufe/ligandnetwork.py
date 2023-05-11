@@ -72,9 +72,6 @@ class LigandNetwork(GufeTokenizable):
         """A read-only view of the nodes of the Network"""
         return self._nodes
 
-    def __eq__(self, other):
-        return self.nodes == other.nodes and self.edges == other.edges
-
     def _serializable_graph(self) -> nx.Graph:
         """
         Create NetworkX graph with serializable attribute representations.
