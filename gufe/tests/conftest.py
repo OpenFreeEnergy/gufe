@@ -21,8 +21,6 @@ else:
     HAS_INTERNET = True
 
 
-## helper functions
-
 class URLFileLike:
     def __init__(self, url, encoding='utf-8'):
         self.url = url
@@ -43,9 +41,6 @@ class URLFileLike:
 def get_test_filename(filename):
     with importlib.resources.path('gufe.tests.data', filename) as file:
         return str(file)
-
-
-## PDBs for input/output testing
 
 
 _benchmark_pdb_names = [
@@ -78,8 +73,6 @@ PDB_FILE_LOADERS = {
 
 ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
 
-
-## data file paths
 
 @pytest.fixture
 def ethane_sdf():
@@ -145,7 +138,6 @@ def PDBx_181L_openMMClean_path():
                                   '181l_openmmClean.cif') as f:
         yield str(f)
 
-## RDKit molecules
 
 @pytest.fixture(scope='session')
 def benzene_modifications():
@@ -162,9 +154,6 @@ def benzene_modifications():
 def benzene_transforms(benzene_modifications):
     return {k: gufe.SmallMoleculeComponent(v)
             for k, v in benzene_modifications.items()}
-
-
-## Components
 
 
 @pytest.fixture
@@ -229,9 +218,6 @@ def phenol_ligand_comp(benzene_modifications):
     yield gufe.SmallMoleculeComponent.from_rdkit(benzene_modifications["phenol"])
 
 
-## ChemicalSystems
-
-
 @pytest.fixture
 def solvated_complex(prot_comp, solv_comp, toluene_ligand_comp):
     return gufe.ChemicalSystem(
@@ -253,9 +239,6 @@ def vacuum_ligand(toluene_ligand_comp):
     )
 
 
-## Transformations
-
-
 @pytest.fixture
 def absolute_transformation(solvated_ligand, solvated_complex):
     return gufe.Transformation(
@@ -272,9 +255,6 @@ def complex_equilibrium(solvated_complex):
         solvated_complex,
         protocol=DummyProtocol(settings=None)
     )
-
-
-## Alchemical Networks
 
 
 @pytest.fixture
