@@ -37,5 +37,6 @@ from .protocols import (
 from .transformations import Transformation, NonTransformation
 
 from .network import AlchemicalNetwork
+from .ligandnetwork import LigandNetwork
 
 __version__ = version("gufe")
