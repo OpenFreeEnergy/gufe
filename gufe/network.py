@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import FrozenSet, Iterable, Optional, Tuple
+from typing import Iterable, Optional
 
 import networkx as nx
 from .tokenization import GufeTokenizable
@@ -18,10 +18,10 @@ class AlchemicalNetwork(GufeTokenizable):
 
     Attributes
     ----------
-    edges : FrozenSet[Transformation]
+    edges : frozenset[Transformation]
         The edges of the network, given as a ``frozenset`` of
         :class:`.Transformation`\ s.
-    nodes : FrozenSet[ChemicalSystem]
+    nodes : frozenset[ChemicalSystem]
         The nodes of the network, given as a ``frozenset`` of
         :class:`.ChemicalSystem` \ s.
     name : Optional identifier for the network.
@@ -33,8 +33,8 @@ class AlchemicalNetwork(GufeTokenizable):
         nodes: Optional[Iterable[ChemicalSystem]] = None,
         name: Optional[str] = None,
     ):
-        self._edges: FrozenSet[Transformation] = frozenset(edges) if edges else frozenset()
-        self._nodes: FrozenSet[ChemicalSystem]
+        self._edges: frozenset[Transformation] = frozenset(edges) if edges else frozenset()
+        self._nodes: frozenset[ChemicalSystem]
 
         self._name = name
 
@@ -73,11 +73,11 @@ class AlchemicalNetwork(GufeTokenizable):
         return self._graph.copy(as_view=True)
 
     @property
-    def edges(self) -> FrozenSet[Transformation]:
+    def edges(self) -> frozenset[Transformation]:
         return self._edges
 
     @property
-    def nodes(self) -> FrozenSet[ChemicalSystem]:
+    def nodes(self) -> frozenset[ChemicalSystem]:
         return self._nodes
 
     @property
