@@ -256,7 +256,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         assert network == deserialized
 
     def test_to_graphml(self, simple_network, ligandnetwork_graphml):
-        assert simple_network.network.to_graphml() + "\n" == ligandnetwork_graphml
+        assert simple_network.network.to_graphml() == ligandnetwork_graphml
 
     def test_from_graphml(self, simple_network, ligandnetwork_graphml):
         assert LigandNetwork.from_graphml(ligandnetwork_graphml) == simple_network.network
