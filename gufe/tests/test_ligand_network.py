@@ -31,7 +31,8 @@ class _NetworkTestContainer(NamedTuple):
 @pytest.fixture
 def ligandnetwork_graphml():
     with importlib.resources.path('gufe.tests.data', 'ligand_network.graphml') as file:
-        return str(file)
+        with open(file, 'r') as f:
+            yield f.read()
 
 
 @pytest.fixture
@@ -111,8 +112,8 @@ def network_container(
 
 class TestLigandNetwork(GufeTokenizableTestsMixin):
     cls = LigandNetwork
-    key = "LigandNetwork-8c6df17d7ecf5902e2e338984cc11140"
-    repr = "<LigandNetwork-8c6df17d7ecf5902e2e338984cc11140>"
+    key = "LigandNetwork-8d9c3198d7fbfc29e73cb09911bccc7f"
+    repr = "<LigandNetwork-8d9c3198d7fbfc29e73cb09911bccc7f>"
 
     @pytest.fixture
     def instance(self, simple_network):
