@@ -1,6 +1,6 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
-
+import datetime
 import itertools
 from openff.units import unit
 from typing import Optional, Iterable, List, Dict, Any, Union
@@ -206,8 +206,8 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-f4f0aab0421240c9bc65b6491791f9d8"
-    repr = "<DummyProtocol-f4f0aab0421240c9bc65b6491791f9d8>"
+    key = "DummyProtocol-9244bc1d3ec3161ac48867f0c1029bf1"
+    repr = "<DummyProtocol-9244bc1d3ec3161ac48867f0c1029bf1>"
 
     @pytest.fixture
     def instance(self):
@@ -592,18 +592,26 @@ class TestProtocolDAGResult:
     @pytest.fixture()
     def successes(units) -> list[ProtocolUnitResult]:
         # a success for every unit
+        t1 = datetime.datetime.now()
+        t2 = datetime.datetime.now()
+
         return [ProtocolUnitResult(source_key=u.key, inputs=u.inputs,
-                                   outputs={'result': i ** 2})
+                                   outputs={'result': i ** 2},
+                                   start_time=t1, end_time=t2)
                 for i, u in enumerate(units)]
 
     @staticmethod
     @pytest.fixture()
     def failures(units) -> list[list[ProtocolUnitFailure]]:
         # generate 2 failures for every unit
+        t1 = datetime.datetime.now()
+        t2 = datetime.datetime.now()
+
         return [[ProtocolUnitFailure(source_key=u.key, inputs=u.inputs,
                                      outputs=dict(),
                                      exception=('ValueError', "Didn't feel like it"),
-                                     traceback='foo')
+                                     traceback='foo',
+                                     start_time=t1, end_time=t2)
                  for i in range(2)]
                 for u in units]
 

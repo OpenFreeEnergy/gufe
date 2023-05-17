@@ -1,8 +1,8 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-
 # custom_codecs.py: A place to keep various custom JSONCodec instances
 
+import datetime
 import functools
 import pathlib
 
@@ -56,6 +56,12 @@ BYTES_CODEC = JSONCodec(
     cls=bytes,
     to_dict=lambda obj: {'latin-1': obj.decode('latin-1')},
     from_dict=lambda dct: dct['latin-1'].encode('latin-1'),
+)
+
+DATETIME_CODEC = JSONCodec(
+    cls=datetime.datetime,
+    to_dict=lambda obj: {'isotime': obj.isoformat()},
+    from_dict=lambda dct: datetime.datetime.fromisoformat(dct['isotime']),
 )
 
 NUMPY_CODEC = JSONCodec(

@@ -360,19 +360,16 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
                 ) -> ProtocolDAGResult:
-    """Execute the full DAG in-serial, in process.
-
-    This is intended for debug use for Protocol developers.
-    Running locally is generally not useful for production purposes.
+    """Locally execute a full ProtocolDAG in-serial, in process.
 
     Parameters
     ----------
     protocoldag : ProtocolDAG
-        The `ProtocolDAG` to execute.
+        The :class:``ProtocolDAG`` to execute.
     shared_basedir : Path
         Filesystem path to use for shared space that persists across whole DAG
-        execution. Used by `ProtocolUnit`s to pass file contents to dependent
-        `ProtocolUnit`s. 
+        execution. Used by a `ProtocolUnit` to pass file contents to dependent
+        class:``ProtocolUnit`` instances.
     scratch_basedir : Path
         Filesystem path to use for `ProtocolUnit` `scratch` space.
     keep_shared : bool

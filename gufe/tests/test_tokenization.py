@@ -1,5 +1,6 @@
 import pytest
 import abc
+import datetime
 import logging
 import io
 from unittest import mock
@@ -374,3 +375,20 @@ class TestGufeKey:
         k = GufeKey('foo-bar')
 
         assert k.token == 'bar'
+
+
+def test_datetime_to_json():
+    d = datetime.datetime.fromisoformat('2023-05-05T09:06:43.699068')
+
+    ser = json.dumps(d, cls=JSON_HANDLER.encoder)
+
+    assert isinstance(ser, str)
+
+    d2 = json.loads(ser, cls=JSON_HANDLER.decoder)
+
+    assert isinstance(d2, datetime.datetime)
+    assert d == d2
+
+    reser = json.dumps(d2, cls=JSON_HANDLER.encoder)
+
+    assert reser == ser

@@ -75,7 +75,7 @@ class Protocol(GufeTokenizable):
 
     Takes a ``Settings`` object customised for this protocol on init.
     This configures the protocol for repeated execution on (pairs of)
-    ``ChemicalSystem`` objects.
+    :class:`ChemicalSystem` objects.
 
     This is an abstract base class; individual Protocol implementations
     should be subclasses of this class. The following methods should be
