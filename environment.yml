@@ -2,7 +2,6 @@ name: gufe
 channels:
   - jaimergp/label/unsupported-cudatoolkit-shim
   - conda-forge
-  - openeye
 dependencies:
   - coverage
   - networkx
@@ -17,6 +16,7 @@ dependencies:
   - pytest-xdist
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?
+  - joblib  # necessary because of https://github.com/conda-forge/ambertools-feedstock/issues/114
   # docs
   - myst-parser
   - pydata-sphinx-theme
