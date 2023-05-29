@@ -65,10 +65,6 @@ class ProtocolResult(GufeTokenizable):
     def get_uncertainty(self) -> Quantity:
         ...
 
-    @abc.abstractmethod
-    def get_rate_of_convergence(self):
-        ...
-
 
 class Protocol(GufeTokenizable):
     """A protocol that implements an alchemical transformation.
