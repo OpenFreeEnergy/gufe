@@ -262,6 +262,12 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         dct = dict_encode_dependencies(self)
+        anns = modify_dependencies(self._annotations,
+                                   to_dict,
+                                   is_gufe_obj,
+                                   mode='encode',
+                                   top=False)
+        dct['annotations'] = anns
 
         if not include_defaults:
             for key, value in self.defaults().items():
@@ -282,7 +288,11 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             returned.  Otherwise, a new instance will be returned.
 
         """
-        return dict_decode_dependencies(dct)
+        anns = dct.pop('annotations', {})
+        c = dict_decode_dependencies(dct)
+        c._annotations = anns
+
+        return c
 
     def to_keyed_dict(self, include_defaults=True) -> Dict:
         """Generate keyed dict representation, with all referenced
