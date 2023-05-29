@@ -4,6 +4,7 @@
 The machinery for tokenizing gufe objects live in this module.
 """
 import abc
+import copy
 import hashlib
 import importlib
 import inspect
@@ -117,6 +118,13 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.
     """
+    _annotations: dict[str, Any]
+
+    def __init__(self, annotations=None):
+        if annotations is None:
+            annotations = {}
+        self._annotations = annotations
+
     def __repr__(self):
         return f"<{self.key}>"
 
@@ -158,6 +166,20 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             self._key = GufeKey(f"{prefix}-{token}")
 
         return self._key
+
+    @property
+    def annotations(self) -> dict:
+        """A read-only copy of the annotations on this object"""
+        return copy.deepcopy(self._annotations)
+
+    def with_annotations(self, annotations):
+        """Return a new very of this with additional annotations"""
+        new_a = dict(**self.annotations, **annotations)
+
+        new_thing = self.__class__.from_dict(self.to_dict())
+        new_thing._annotations = new_a
+
+        return new_thing
 
     def _set_key(self, key: str):
         """Manually set the key.

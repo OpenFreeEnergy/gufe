@@ -46,7 +46,8 @@ class ExplicitMoleculeComponent(Component):
     _rdkit: Chem.Mol
     _name: str
 
-    def __init__(self, rdkit: RDKitMol, name: str = ""):
+    def __init__(self, rdkit: RDKitMol, name: str = "", annotations=None):
+        super().__init__(annotations=annotations)
         name = _ensure_ofe_name(rdkit, name)
         conformers = list(rdkit.GetConformers())
         if not conformers:

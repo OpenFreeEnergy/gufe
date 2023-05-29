@@ -45,8 +45,9 @@ class Transformation(GufeTokenizable):
         protocol: Protocol,
         mapping: Optional[dict[str, ComponentMapping]] = None,
         name: Optional[str] = None,
+        annotations=None,
     ):
-
+        super().__init__(annotations=annotations)
         self._stateA = stateA
         self._stateB = stateB
         self._mapping = mapping
@@ -199,8 +200,9 @@ class NonTransformation(Transformation):
         system: ChemicalSystem,
         protocol: Protocol,
         name: Optional[str] = None,
+        annotations=None,
     ):
-
+        super().__init__(annotations=annotations)
         self._system = system
         self._name = name
         self._protocol = protocol

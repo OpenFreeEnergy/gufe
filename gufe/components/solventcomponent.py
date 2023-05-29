@@ -56,6 +56,8 @@ class SolventComponent(Component):
           ...                      ion_concentration=0.2 * unit.molar)
 
         """
+        super().__init__()
+
         self._smiles = smiles
         norm = positive_ion.strip('-+').capitalize()
         if norm not in _CATIONS:

@@ -72,11 +72,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
     name : str, optional
        of the protein, by default ""
     """
-    def __init__(self, rdkit: RDKitMol, name=""):
+    def __init__(self, rdkit: RDKitMol, name="", annotations=None):
         if not all(a.GetMonomerInfo() is not None for a in rdkit.GetAtoms()):
             raise TypeError("Not all atoms in input have MonomerInfo defined.  "
                             "Consider loading via rdkit.Chem.MolFromPDBFile or similar.")
-        super().__init__(rdkit=rdkit, name=name)
+        super().__init__(rdkit=rdkit, name=name, annotations=annotations)
 
     # FROM
     @classmethod
