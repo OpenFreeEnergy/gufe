@@ -67,6 +67,10 @@ class _DAGStorageManager:
             self.permanents.append(permanent)
             shared.transfer_holding_to_external()
 
+            # everything in permanent must also be available in shared
+            for file in permanent.registry:
+                shared.transfer_single_file_to_external(file)
+
             # TODO: check whether shared external is the same as scratch,
             # put this in can_delete
             can_delete = True
