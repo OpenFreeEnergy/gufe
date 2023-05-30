@@ -6,6 +6,28 @@ from .externalresource import ExternalStorage
 import logging
 _logger = logging.getLogger(__name__)
 
+
+def _delete_empty_dirs(root, delete_root=True):
+    """Delete all empty directories.
+
+    Repeats so that directories that only contained empty directories also
+    get deleted.
+    """
+    root = Path(root)
+
+    def find_empty_dirs(directory):
+        if not (paths := directory.iterdir()):
+            return [directory]
+        directories = [p for p in paths if p.is_dir()]
+        return sum([find_empty_dirs(d) for d in directories], [])
+
+    while empties := find_empty_dirs(root):
+        if empties == [root] and not delete_root:
+            return
+        for directory in empties:
+            os.rmdir(directory)
+
+
 class SharedRoot:
     """PathLike local representation of an :class:`.ExternalStorage`.
 
@@ -19,12 +41,10 @@ class SharedRoot:
        the :class:`.ExternalStorage`, this object will "download" the
        contents of that key to that local path.
 
-    2. When requested, or when this object ??? (TODO: __exit__ or __del__),
-       it transfers any newly created files to the
+    2. When requested, it transfers any newly created files to the
        :class:`.ExternalStorage`.
 
-    3. Optionally, this can delete the local cache of files when requested
-       or when this object ??? (TODO: __exit__ or __del__)
+    3. It can delete all of the files it manages
 
     This can be opened in "read-only" mode, which prevents new files from
     being created, but does not prevent changes to existing versions of
@@ -95,6 +115,24 @@ class SharedRoot:
             read_only=True,
         )
 
+    def transfer_single_file_to_external(self, held_file):
+        """Transfer a given file from holding into external storage
+        """
+        if self.read_only:
+            logging.debug("Read-only: Not transfering to external storage")
+            return  # early exit
+
+        path = Path(held_file)
+        if not path.exists():
+            logging.info(f"Found nonexistent path {path}, not "
+                         "transfering to external storage")
+        elif path.is_dir():
+            logging.debug(f"Found directory {path}, not "
+                          "transfering to external storage")
+        else:
+            logging.info(f"Transfering {path} to external storage")
+            self.external.store_path(held_file.label, path)
+
     def transfer_holding_to_external(self):
         """Transfer all objects in the registry to external storage"""
         if self.read_only:
@@ -102,23 +140,15 @@ class SharedRoot:
             return  # early exit
 
         for obj in self.registry:
-            path = Path(obj)
-            if not path.exists():
-                logging.info(f"Found nonexistent path {path}, not "
-                             "transfering to external storage")
-            elif path.is_dir():
-                logging.debug(f"Found directory {path}, not "
-                             "transfering to external storage")
-            else:
-                logging.info(f"Transfering {path} to external storage")
-                self.external.store_path(obj.label, path)
+            self.transfer_single_file_to_external(obj)
 
-    def __del__(self):
-        # take everything in self.shared_dir and write to it shared; keeping
-        # our prefix
-        self.transfer_holding_to_external()
+    def cleanup(self):
+        """Perform end-of-lifecycle cleanup.
+        """
         if self.delete_holding:
-            shutil.rmtree(self.shared_dir)
+            for file in self.registry:
+                os.delete(file)
+            _delete_empty_dirs(self.shared_dir)
 
     def register_path(self, shared_path):
         """Register a :class:`.SharedPath` with this :class:`.SharedRoot`.
