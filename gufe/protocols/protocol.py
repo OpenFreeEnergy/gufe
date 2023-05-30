@@ -28,7 +28,6 @@ class ProtocolResult(GufeTokenizable):
     The following methods should be implemented in any subclass:
     - `get_estimate`
     - `get_uncertainty`
-    - `get_rate_of_convergence`
 
     Attributes
     ----------
