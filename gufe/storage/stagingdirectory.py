@@ -1,6 +1,6 @@
 from typing import Union, Optional
 from pathlib import Path
-from os import PathLike
+from os import PathLike, rmdir
 from .externalresource import ExternalStorage
 
 import logging
@@ -16,24 +16,26 @@ def _delete_empty_dirs(root, delete_root=True):
     root = Path(root)
 
     def find_empty_dirs(directory):
-        if not (paths := directory.iterdir()):
+        if not (paths := list(directory.iterdir())):
             return [directory]
         directories = [p for p in paths if p.is_dir()]
         return sum([find_empty_dirs(d) for d in directories], [])
 
-    while empties := find_empty_dirs(root):
+
+    while root.exists() and (empties := find_empty_dirs(root)):
         if empties == [root] and not delete_root:
             return
         for directory in empties:
-            os.rmdir(directory)
+            _logger.debug(f"Removing '{directory}'")
+            rmdir(directory)
 
 
-class SharedRoot:
+class StagingDirectory:
     """PathLike local representation of an :class:`.ExternalStorage`.
 
     This connects objects on a local filesystem to the key-value store of a
     (possibly remote) :class:`.ExternalStorage`. It presents a FileLike
-    interface to users, but internally (via the :class:`.SharedPath` objects
+    interface to users, but internally (via the :class:`.StagingPath` objects
     it contains in its registry) maps local filenames to the keys (labels)
     for the key-value store.
 
@@ -59,14 +61,14 @@ class SharedRoot:
     prefix : str
         label for this specific unit
     holding : os.PathLike
-        name of the subdirectory of scratch where shared results are
+        name of the subdirectory of scratch where staged results are
         temporarily stored; default is '.holding'. This must be the same for
         all units within a DAG.
     delete_holding : bool
         whether to delete the contents of the $SCRATCH/$HOLDING/$PREFIX
         directory when this object is deleted
     read_only : bool
-        write to prevent NEW files from being written within this shared
+        write to prevent NEW files from being written within this staging
         directory. NOTE: This will not prevent overwrite of existing files
         in scratch space, but it will prevent changed files from uploading
         to the external storage.
@@ -88,7 +90,7 @@ class SharedRoot:
         self.delete_holding = delete_holding
         self.holding = holding
 
-        self.registry : set[SharedPath] = set()
+        self.registry : set[StagingPath] = set()
         # NOTE: the fact that we use $SCRATCH/$HOLDING/$PREFIX instead of
         # $SCRATCH/$PREFIX/$HOLDING is important for 2 reasons:
         # 1. This doesn't take any of the user's namespace from their
@@ -97,16 +99,16 @@ class SharedRoot:
         #    external storage is exactly the same as this local storage,
         #    meaning that copies to/from the external storage are no-ops.
         #    Use FileStorage(scratch / holding) for that.
-        self.shared_dir = self.scratch / holding / prefix
-        self.shared_dir.mkdir(exist_ok=True, parents=True)
+        self.staging_dir = self.scratch / holding / prefix
+        self.staging_dir.mkdir(exist_ok=True, parents=True)
 
-    def get_other_shared_dir(self, prefix, delete_holding=None):
-        """Get a related unit's shared directory.
+    def get_other_staging_dir(self, prefix, delete_holding=None):
+        """Get a related unit's staging directory.
         """
         if delete_holding is None:
             delete_holding = self.delete_holding
 
-        return SharedRoot(
+        return StagingDirectory(
             scratch=self.scratch,
             external=self.external,
             prefix=prefix,
@@ -148,10 +150,11 @@ class SharedRoot:
         if self.delete_holding:
             for file in self.registry:
                 os.delete(file)
-            _delete_empty_dirs(self.shared_dir)
+            _delete_empty_dirs(self.staging_dir)
 
-    def register_path(self, shared_path):
-        """Register a :class:`.SharedPath` with this :class:`.SharedRoot`.
+    def register_path(self, staging_path):
+        """
+        Register a :class:`.StagingPath` with this :class:`.StagingDirectory`.
 
         This marks a given path as something for this object to manage, by
         loading it into the ``registry``. This way it is tracked such that
@@ -159,30 +162,30 @@ class SharedRoot:
         such that the local copy can be deleted when it is no longer needed.
 
         If this objects's :class:`.ExternalStorage` already has data for the
-        label associated with the provided :class:`.Sharedpath`, then the
+        label associated with the provided :class:`.Stagingpath`, then the
         contents of that should copied to the local path so that it can be
         read by the user.
 
         Parameters
         ----------
-        shared_path: :class:`.SharedPath`
+        staging_path: :class:`.StagingPath`
             the path to track
         """
-        label_exists = self.external.exists(shared_path.label)
+        label_exists = self.external.exists(staging_path.label)
 
         if self.read_only and not label_exists:
-            raise IOError(f"Unable to create '{shared_path.label}'. This "
-                          "shared path is read-only.")
+            raise IOError(f"Unable to create '{staging_path.label}'. This "
+                          "staging path is read-only.")
 
-        self.registry.add(shared_path)
+        self.registry.add(staging_path)
 
         # if this is a file that exists, bring it into our subdir
         # NB: this happens even if you're intending to overwrite the path,
         # which is kind of wasteful
         if label_exists:
-            scratch_path = self.shared_dir / shared_path.path
+            scratch_path = self.staging_dir / staging_path.path
             # TODO: switch this to using `get_filename` and `store_path`
-            with self.external.load_stream(shared_path.label) as f:
+            with self.external.load_stream(staging_path.label) as f:
                 external_bytes = f.read()
             if scratch_path.exists():
                 ... # TODO: something to check that the bytes are the same?
@@ -191,31 +194,35 @@ class SharedRoot:
                 f.write(external_bytes)
 
     def __truediv__(self, path: PathLike):
-        return SharedPath(root=self, path=path)
+        return StagingPath(root=self, path=path)
 
     def __fspath__(self):
-        return str(self.shared_dir)
+        return str(self.staging_dir)
 
     def __repr__(self):
-        return f"SharedRoot({self.scratch}, {self.external}, {self.prefix})"
+        return (
+            f"StagingDirectory({self.scratch}, {self.external}, "
+            f"{self.prefix})"
+        )
 
 
-class SharedPath:
+class StagingPath:
     """PathLike object linking local path with label for external storage.
 
-    On creation, this registers with a :class:`.SharedRoot` that will manage
-    the local path and transferring data with its :class:`.ExternalStorage`.
+    On creation, this registers with a :class:`.StagingDirectory` that will
+    manage the local path and transferring data with its
+    :class:`.ExternalStorage`.
     """
-    def __init__(self, root: SharedRoot, path: PathLike):
+    def __init__(self, root: StagingDirectory, path: PathLike):
         self.root = root
         self.path = Path(path)
         self.root.register_path(self)
 
     def __truediv__(self, path):
-        return SharedPath(self.root, self.path / path)
+        return StagingPath(self.root, self.path / path)
 
     def __fspath__(self):
-        return str(self.root.shared_dir / self.path)
+        return str(self.root.staging_dir / self.path)
 
     @property
     def label(self):
@@ -223,9 +230,9 @@ class SharedPath:
         return str(self.root.prefix / self.path)
 
     def __repr__(self):
-        return f"SharedPath({self.__fspath__()})"
+        return f"StagingPath({self.__fspath__()})"
 
     # TODO: how much of the pathlib.Path interface do we want to wrap?
     # although edge cases may be a pain, we can get most of it with, e.g.:
     # def exists(self): return Path(self).exists()
-    # but also, can do pathlib.Path(shared_path) and get hte whole thing
+    # but also, can do pathlib.Path(staging_path) and get hte whole thing
