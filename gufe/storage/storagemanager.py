@@ -1,15 +1,17 @@
-import os
+from os import PathLike
 from pathlib import Path
 from contextlib import contextmanager
 
-def _storage_path_conflict(external, path):
-    # this is a little brittle; would be nice to directly check the
-    # filenames without needing to load the files? maybe we have a way
-    # to do that?
-    if isinstance(pseudodir.external, FileStorage):
-        root = Path(external.root_dir)
+from .externalstorage import ExternalStorage, FileStorage
 
-    ...
+def _storage_path_conflict(external, path):
+    # this is a little brittle; I don't like hard-coding the class here
+    if isinstance(external, FileStorage):
+        root = Path(external.root_dir)
+    else:
+        return False
+
+    return False
 
 
 class _DAGStorageManager:
@@ -45,7 +47,7 @@ class _DAGStorageManager:
                 permanent.transfer_holding_to_external()
 
             if not dag_manager.manager.keep_holding:
-                for d in dag_manager.permanents + dag_manager.shareds:
+                for d in dag_manager.permanents:
                     d.cleanup()
 
     @contextmanager
@@ -64,18 +66,19 @@ class _DAGStorageManager:
         try:
             yield scratch, shared, permanent
         finally:
+            # TODO: should some of this be in an else clause instead?
             self.permanents.append(permanent)
             shared.transfer_holding_to_external()
-
             # everything in permanent must also be available in shared
             for file in permanent.registry:
                 shared.transfer_single_file_to_external(file)
-
-            # TODO: check whether shared external is the same as scratch,
-            # put this in can_delete
-            can_delete = True
-            if not self.manager.keep_scratch and can_delete:
+            scratch_conflict = _storage_path_conflict(shared.external,
+                                                      scratch)
+            if not self.manager.keep_scratch and not scratch_conflict:
                 shutil.rmtree(scratch)
+
+            shared_conflict = _storage_path_conflict(shared.external,
+                                                     shared)
 
             if not self.manager.keep_holding:
                 shared.cleanup()
@@ -85,21 +88,27 @@ class StorageManager:
     """Tool to manage the storage lifecycle during a DAG.
 
     This object primarily contains the logic for getting the holding
-    directories. A separate class, in the ``_DAGContextClass`` variable,
+    directories. A separate class, in the ``DAGContextClass`` variable,
     handles the logic for the context managers.
     """
-    _DAGContextClass = _DAGStorageManager
     def __init__(
         self,
-        scratch_root: os.Pathlike,
+        scratch_root: PathLike,
         shared_root: ExternalStorage,
         permanent_root: ExternalStorage,
         *,
         keep_scratch: bool = False,
         keep_holding: bool = False,
-        holding: os.PathLike = Path(".holding")
+        holding: PathLike = Path(".holding"),
+        DAGContextClass: type = _DAGStorageManager,
     ):
-        ...
+        self.scratch_root = scratch_root
+        self.shared_root = shared_root
+        self.permanent_root = permanent_root
+        self.keep_scratch = keep_scratch
+        self.keep_holding = keep_holding
+        self.holding = holding
+        self.DAGContextClass = DAGContextClass
 
     def get_scratch(self, dag_label: str , unit_label: str) -> Path:
         """Get the path for this unit's scratch directory"""
@@ -137,4 +146,4 @@ class StorageManager:
                         scratch, shared, permanent = dirs
                         # run the unit
         """
-        return self._DAGContextClass.running_dag(self, dag_label)
+        return self.DAGContextClass.running_dag(self, dag_label)
