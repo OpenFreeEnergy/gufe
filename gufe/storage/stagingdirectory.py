@@ -1,7 +1,8 @@
 from typing import Union, Optional
 from pathlib import Path
-from os import PathLike, rmdir
+from os import PathLike, rmdir, remove
 from .externalresource import ExternalStorage
+from contextlib import contextmanager
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -54,13 +55,13 @@ class StagingDirectory:
 
     Parameters
     ----------
-    scratch : os.PathLike
+    scratch : PathLike
         the scratch directory shared by all objects on this host
     external : :class:`.ExternalStorage`
         external storage resource where objects should eventualy go
     prefix : str
         label for this specific unit
-    holding : os.PathLike
+    holding : PathLike
         name of the subdirectory of scratch where staged results are
         temporarily stored; default is '.holding'. This must be the same for
         all units within a DAG.
@@ -117,6 +118,13 @@ class StagingDirectory:
             read_only=True,
         )
 
+    @contextmanager
+    def other_shared(self, prefix, delete_holding=None):
+        other = self.get_other_staging_dir(prefix, delete_holding)
+        yield other
+        other.cleanup()
+
+
     def transfer_single_file_to_external(self, held_file):
         """Transfer a given file from holding into external storage
         """
@@ -149,7 +157,7 @@ class StagingDirectory:
         """
         if self.delete_holding:
             for file in self.registry:
-                os.delete(file)
+                remove(file)
             _delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path):
@@ -174,7 +182,8 @@ class StagingDirectory:
         label_exists = self.external.exists(staging_path.label)
 
         if self.read_only and not label_exists:
-            raise IOError(f"Unable to create '{staging_path.label}'. This "
+            raise IOError(f"Unable to create '{staging_path.label}'. File "
+                          "does not exist in external storage, and This "
                           "staging path is read-only.")
 
         self.registry.add(staging_path)
