@@ -82,12 +82,10 @@ class StagingDirectory:
         *,
         holding: PathLike = Path(".holding"),
         delete_holding: bool = True,
-        read_only: bool = False,
     ):
         self.external = external
         self.scratch = Path(scratch)
         self.prefix = Path(prefix)
-        self.read_only = read_only
         self.delete_holding = delete_holding
         self.holding = holding
 
@@ -104,34 +102,9 @@ class StagingDirectory:
         self.staging_dir = self.scratch / holding / prefix
         self.staging_dir.mkdir(exist_ok=True, parents=True)
 
-    def get_other_staging_dir(self, prefix, delete_holding=None):
-        """Get a related unit's staging directory.
-        """
-        if delete_holding is None:
-            delete_holding = self.delete_holding
-
-        return StagingDirectory(
-            scratch=self.scratch,
-            external=self.external,
-            prefix=prefix,
-            holding=self.holding,
-            delete_holding=delete_holding,
-            read_only=True,
-        )
-
-    @contextmanager
-    def other_shared(self, prefix, delete_holding=None):
-        other = self.get_other_staging_dir(prefix, delete_holding)
-        yield other
-        other.cleanup()
-
-
     def transfer_single_file_to_external(self, held_file):
         """Transfer a given file from holding into external storage
         """
-        if self.read_only:
-            logging.debug("Read-only: Not transfering to external storage")
-            return  # early exit
 
         path = Path(held_file)
         if not path.exists():
@@ -146,10 +119,6 @@ class StagingDirectory:
 
     def transfer_holding_to_external(self):
         """Transfer all objects in the registry to external storage"""
-        if self.read_only:
-            logging.debug("Read-only: Not transfering to external storage")
-            return  # early exit
-
         for obj in self.registry:
             self.transfer_single_file_to_external(obj)
 
@@ -182,20 +151,18 @@ class StagingDirectory:
         """
         label_exists = self.external.exists(staging_path.label)
 
-        if self.read_only and not label_exists:
-            raise IOError(f"Unable to create '{staging_path.label}'. File "
-                          "does not exist in external storage, and This "
-                          "staging path is read-only.")
-
         self.registry.add(staging_path)
 
         # if this is a file that exists, bring it into our subdir
         # NB: this happens even if you're intending to overwrite the path,
         # which is kind of wasteful
         if label_exists:
+            self._load_file_from_external(self.external, staging_path)
+
+    def _load_file_from_external(self, external, staging_path):
             scratch_path = self.staging_dir / staging_path.path
             # TODO: switch this to using `get_filename` and `store_path`
-            with self.external.load_stream(staging_path.label) as f:
+            with external.load_stream(staging_path.label) as f:
                 external_bytes = f.read()
             if scratch_path.exists():
                 self.preexisting.add(staging_path)
@@ -215,6 +182,96 @@ class StagingDirectory:
             f"StagingDirectory({self.scratch}, {self.external}, "
             f"{self.prefix})"
         )
+
+
+class SharedStaging(StagingDirectory):
+    def __init__(
+        self,
+        scratch: PathLike,
+        external: ExternalStorage,
+        prefix: str,
+        *,
+        holding: PathLike = Path(".holding"),
+        delete_holding: bool = True,
+        read_only: bool = False,
+    ):
+        super().__init__(scratch, external, prefix, holding=holding,
+                         delete_holding=delete_holding)
+        self.read_only = read_only
+
+    def get_other_shared(self, prefix, delete_holding=None):
+        """Get a related unit's staging directory.
+        """
+        if delete_holding is None:
+            delete_holding = self.delete_holding
+
+        return SharedStaging(
+            scratch=self.scratch,
+            external=self.external,
+            prefix=prefix,
+            holding=self.holding,
+            delete_holding=delete_holding,
+            read_only=True,
+        )
+
+    @contextmanager
+    def other_shared(self, prefix, delete_holding=None):
+        """Context manager approach for getting a related unit's directory.
+
+        This is usually the recommended way to get a previous unit's shared
+        data.
+        """
+        other = self.get_other_shared(prefix, delete_holding)
+        yield other
+        other.cleanup()
+
+    def transfer_single_file_to_external(self, held_file):
+        if self.read_only:
+            logging.debug("Read-only: Not transfering to external storage")
+            return  # early exit
+
+        super().transfer_single_file_to_external(held_file)
+
+    def transfer_holding_to_external(self):
+        if self.read_only:
+            logging.debug("Read-only: Not transfering to external storage")
+            return  # early exit
+
+        super().transfer_holding_to_external()
+
+    def register_path(self, staging_path):
+        label_exists = self.external.exists(staging_path.label)
+
+        if self.read_only and not label_exists:
+            raise IOError(f"Unable to create '{staging_path.label}'. File "
+                          "does not exist in external storage, and This "
+                          "staging path is read-only.")
+
+        super().register_path(staging_path)
+
+
+class PermanentStaging(StagingDirectory):
+    def __init__(
+        self,
+        scratch: PathLike,
+        external: ExternalStorage,
+        shared: ExternalStorage,
+        prefix: str,
+        *,
+        holding: PathLike = Path(".holding"),
+        delete_holding: bool = True,
+    ):
+        super().__init__(scratch, external, prefix, holding=holding,
+                         delete_holding=delete_holding)
+        self.shared = shared
+
+    def transfer_single_file_to_external(self, held_file):
+        # for this one, if we can't fin
+        path = Path(held_file)
+        if not path.exists():
+            self._load_file_from_external(self.shared, held_file)
+
+        super().transfer_single_file_to_external(held_file)
 
 
 class StagingPath:

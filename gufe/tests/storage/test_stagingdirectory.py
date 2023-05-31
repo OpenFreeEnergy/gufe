@@ -5,14 +5,14 @@ import pathlib
 
 from gufe.storage.externalresource import MemoryStorage
 from gufe.storage.stagingdirectory import (
-    StagingDirectory, _delete_empty_dirs
+    SharedStaging, PermanentStaging, _delete_empty_dirs
 )
 
 @pytest.fixture
 def root(tmp_path):
     external = MemoryStorage()
     external.store_bytes("old_unit/data.txt", b"foo")
-    root = StagingDirectory(
+    root = SharedStaging(
         scratch=tmp_path,
         external=external,
         prefix="new_unit",
@@ -74,7 +74,7 @@ def test_delete_empty_dirs_delete_root(tmp_path, delete_root):
 
 
 
-class TestStagingDirectory:
+class TestSharedStaging:
     @pytest.mark.parametrize('pathlist', [
         ['file.txt'], ['dir', 'file.txt']
     ])
@@ -100,7 +100,7 @@ class TestStagingDirectory:
 
         # when we create the specific StagingPath, it registers and
         # "downloads" the file
-        old_staging = root.get_other_staging_dir("old_unit")
+        old_staging = root.get_other_shared("old_unit")
         filepath = old_staging / "data.txt"
         assert pathlib.Path(filepath) == on_filesystem
         assert on_filesystem.exists()
@@ -122,7 +122,7 @@ class TestStagingDirectory:
         assert not root.external.exists(label)
 
     def test_write_old_fail(self, root):
-        old_staging = root.get_other_staging_dir("old_unit")
+        old_staging = root.get_other_shared("old_unit")
         with pytest.raises(IOError, match="read-only"):
             old_staging / "foo.txt"
 

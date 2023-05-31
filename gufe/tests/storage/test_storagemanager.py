@@ -25,9 +25,7 @@ def storage_manager_holding_overlaps_permanent(tmp_path):
 @pytest.fixture
 def dag_units():
     class Unit1:
-        @property
-        def key(self):
-            return "unit1"
+        key = "unit1"
 
         def run(self, scratch, shared, permanent):
             (scratch / "foo.txt").touch()
@@ -39,9 +37,7 @@ def dag_units():
             return "done 1"
 
     class Unit2:
-        @property
-        def key(self):
-            return "unit2"
+        key = "unit2"
 
         def run(self, scratch, shared, permanent):
             (scratch / "foo2.txt").touch()
@@ -128,6 +124,11 @@ def test_lifecycle(request, manager, dag_units):
     # assert set(shared_root.iter_contents()) == {"unit1/bar.txt",
     #                                             "unit1/baz.txt"}
     assert list(permanent_root.iter_contents()) == ["unit1/baz.txt"]
+    # check the results
+    assert results == [
+        "done 1",
+        {"bar": "bar was written", "baz": "baz was written"}
+    ]
 
 def test_lifecycle_keep_scratch_and_holding():
     ...
