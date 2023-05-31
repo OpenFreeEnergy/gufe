@@ -27,14 +27,14 @@ def _storage_path_conflict(external, path):
 class _AbstractDAGContextManager:
     @classmethod
     @contextmanager
-    def running_dag(cls, storage_manager, dag_label):
+    def running_dag(cls, storage_manager, dag_label: str):
         raise NotImplementedError()
 
     @contextmanager
-    def running_unit(cls, unit):
+    def running_unit(cls, unit_label: str):
         raise NotImplementedError()
 
-DAGContextManager = Type[_DAGStorageManager]
+DAGContextManager = Type[_AbstractDAGContextManager]
 
 
 class _DAGStorageManager(_AbstractDAGContextManager):
@@ -74,7 +74,7 @@ class _DAGStorageManager(_AbstractDAGContextManager):
                     d.cleanup()
 
     @contextmanager
-    def running_unit(self, unit):
+    def running_unit(self, unit_label: str):
         """Unit level of the storage lifecycle.
 
         This provides the holding directories used for scratch, shared, and
@@ -82,7 +82,6 @@ class _DAGStorageManager(_AbstractDAGContextManager):
         to the real shared external storage, cleans up the scratch
         directory and the shared holding directory.
         """
-        unit_label = unit.key
         scratch = self.manager.get_scratch(self.dag_label, unit_label)
         shared = self.manager.get_shared(self.dag_label, unit_label)
         permanent = self.manager.get_permanent(self.dag_label, unit_label)

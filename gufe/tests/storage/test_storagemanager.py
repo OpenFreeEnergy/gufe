@@ -74,7 +74,7 @@ def test_lifecycle(request, manager, dag_units):
     all_files = {barfile, bazfile, foofile, foo2file}
     with storage_manager.running_dag("dag_label") as dag_ctx:
         for unit in dag_units:
-            with dag_ctx.running_unit(unit) as (scratch, shared, permanent):
+            with dag_ctx.running_unit(unit.key) as (scratch, shared, permanent):
                 results.append(unit.run(scratch, shared, permanent))
 
                 # check that the expected files are found in staging
