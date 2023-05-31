@@ -36,9 +36,6 @@ class WriterProtocolResult(gufe.ProtocolResult):
     def get_uncertainty(self):
         ...
 
-    def get_rate_of_convergence(self):
-        ...
-
 
 class WriterProtocol(gufe.Protocol):
     result_cls = WriterProtocolResult

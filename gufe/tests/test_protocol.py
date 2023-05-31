@@ -91,9 +91,6 @@ class DummyProtocolResult(ProtocolResult):
     def get_uncertainty(self):
         ...
 
-    def get_rate_of_convergence(self):
-        ...
-
 
 class DummyProtocol(Protocol):
 
@@ -498,9 +495,6 @@ class NoDepResults(ProtocolResult):
 
     def get_uncertainty(self):
         return len(self.data['vals'])
-
-    def get_rate_of_convergence(self):
-        return 0.0
 
 
 class NoDepsProtocol(Protocol):
