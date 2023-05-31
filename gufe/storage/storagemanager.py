@@ -1,17 +1,26 @@
 from os import PathLike
 from pathlib import Path
 from contextlib import contextmanager
+import shutil
 
-from .externalstorage import ExternalStorage, FileStorage
+from .externalresource import ExternalStorage, FileStorage
+from .stagingdirectory import StagingDirectory
 
 def _storage_path_conflict(external, path):
+    """Check if deleting ``path`` could delete externally stored data
+    """
     # this is a little brittle; I don't like hard-coding the class here
     if isinstance(external, FileStorage):
         root = Path(external.root_dir)
     else:
         return False
 
-    return False
+    try:
+        _ = root.relative_to(Path(path))
+    except ValueError:
+        return False
+    else:
+        return True
 
 
 class _DAGStorageManager:
@@ -79,8 +88,7 @@ class _DAGStorageManager:
 
             shared_conflict = _storage_path_conflict(shared.external,
                                                      shared)
-
-            if not self.manager.keep_holding:
+            if not self.manager.keep_holding and not shared_conflict:
                 shared.cleanup()
 
 
@@ -118,7 +126,7 @@ class StorageManager:
 
     def get_permanent(self, dag_label, unit_label):
         """Get the object for this unit's permanent holding directory"""
-        return SharedRoot(
+        return StagingDirectory(
             scratch=self.scratch_root / dag_label,
             external=self.permanent_root,
             prefix=unit_label,
@@ -126,7 +134,7 @@ class StorageManager:
 
     def get_shared(self, dag_label, unit_label):
         """Get the object for this unit's shared holding directory"""
-        return SharedRoot(
+        return StagingDirectory(
             scratch=self.scratch_root / dag_label,
             external=self.shared_root,
             prefix=unit_label

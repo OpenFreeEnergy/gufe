@@ -92,6 +92,7 @@ class StagingDirectory:
         self.holding = holding
 
         self.registry : set[StagingPath] = set()
+        self.preexisting : set[StagingPath] = set()
         # NOTE: the fact that we use $SCRATCH/$HOLDING/$PREFIX instead of
         # $SCRATCH/$PREFIX/$HOLDING is important for 2 reasons:
         # 1. This doesn't take any of the user's namespace from their
@@ -156,7 +157,7 @@ class StagingDirectory:
         """Perform end-of-lifecycle cleanup.
         """
         if self.delete_holding:
-            for file in self.registry:
+            for file in self.registry - self.preexisting:
                 remove(file)
             _delete_empty_dirs(self.staging_dir)
 
@@ -197,6 +198,7 @@ class StagingDirectory:
             with self.external.load_stream(staging_path.label) as f:
                 external_bytes = f.read()
             if scratch_path.exists():
+                self.preexisting.add(staging_path)
                 ... # TODO: something to check that the bytes are the same?
             scratch_path.parent.mkdir(exist_ok=True, parents=True)
             with open(scratch_path, mode='wb') as f:
