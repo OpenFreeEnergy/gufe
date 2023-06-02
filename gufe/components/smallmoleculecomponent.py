@@ -18,11 +18,16 @@ _INT_TO_ATOMCHIRAL = {
     1: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW,
     2: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW,
     3: Chem.rdchem.ChiralType.CHI_OTHER,
-    4: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL,
-    5: Chem.rdchem.ChiralType.CHI_ALLENE,
-    6: Chem.rdchem.ChiralType.CHI_SQUAREPLANAR,
-    7: Chem.rdchem.ChiralType.CHI_TRIGONALBIPYRAMIDAL,
-    8: Chem.rdchem.ChiralType.CHI_OCTAHEDRAL}
+}
+# support for non-tetrahedral stereo requires rdkit 2022.09.1+
+if hasattr(Chem.rdchem.ChiralType, 'CHI_TETRAHEDRAL'):
+    _INT_TO_ATOMCHIRAL.update({
+        4: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL,
+        5: Chem.rdchem.ChiralType.CHI_ALLENE,
+        6: Chem.rdchem.ChiralType.CHI_SQUAREPLANAR,
+        7: Chem.rdchem.ChiralType.CHI_TRIGONALBIPYRAMIDAL,
+        8: Chem.rdchem.ChiralType.CHI_OCTAHEDRAL,
+    })
 _ATOMCHIRAL_TO_INT = {v: k for k, v in _INT_TO_ATOMCHIRAL.items()}
 
 
