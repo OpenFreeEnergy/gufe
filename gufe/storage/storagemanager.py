@@ -28,11 +28,20 @@ class _AbstractDAGContextManager:
     @classmethod
     @contextmanager
     def running_dag(cls, storage_manager, dag_label: str):
+        """Return a context manager for when a DAG is started.
+
+        This context manager handles the DAG scale of the lifecycle.
+        """
         raise NotImplementedError()
 
     @contextmanager
-    def running_unit(cls, unit_label: str):
+    def running_unit(self, unit_label: str):
+        """Return a context manager for when unit is started.
+
+        This context manager handles the unit scale of the lifecycle.
+        """
         raise NotImplementedError()
+
 
 DAGContextManager = Type[_AbstractDAGContextManager]
 
@@ -82,9 +91,9 @@ class _DAGStorageManager(_AbstractDAGContextManager):
         to the real shared external storage, cleans up the scratch
         directory and the shared holding directory.
         """
-        scratch = self.manager.get_scratch(self.dag_label, unit_label)
-        shared = self.manager.get_shared(self.dag_label, unit_label)
-        permanent = self.manager.get_permanent(self.dag_label, unit_label)
+        scratch = self.manager.get_scratch(unit_label)
+        shared = self.manager.get_shared(unit_label)
+        permanent = self.manager.get_permanent(unit_label)
         try:
             yield scratch, shared, permanent
         finally:
@@ -131,26 +140,26 @@ class StorageManager:
         self.holding = holding
         self.DAGContextClass = DAGContextClass
 
-    def get_scratch(self, dag_label: str , unit_label: str) -> Path:
+    def get_scratch(self, unit_label: str) -> Path:
         """Get the path for this unit's scratch directory"""
 
-        scratch = self.scratch_root / dag_label / "scratch" / unit_label
+        scratch = self.scratch_root / unit_label / "scratch"
         scratch.mkdir(parents=True, exist_ok=True)
         return scratch
 
-    def get_permanent(self, dag_label, unit_label):
+    def get_permanent(self, unit_label):
         """Get the object for this unit's permanent holding directory"""
         return PermanentStaging(
-            scratch=self.scratch_root / dag_label,
+            scratch=self.scratch_root,
             external=self.permanent_root,
             shared=self.shared_root,
             prefix=unit_label,
         )
 
-    def get_shared(self, dag_label, unit_label):
+    def get_shared(self, unit_label):
         """Get the object for this unit's shared holding directory"""
         return SharedStaging(
-            scratch=self.scratch_root / dag_label,
+            scratch=self.scratch_root,
             external=self.shared_root,
             prefix=unit_label
         )

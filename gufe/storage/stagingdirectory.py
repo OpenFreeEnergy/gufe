@@ -60,7 +60,11 @@ class StagingDirectory:
     external : :class:`.ExternalStorage`
         external storage resource where objects should eventualy go
     prefix : str
-        label for this specific unit
+        label for this specific unit; this should be a slash-separated
+        description of where this unit fits in the hierarchy. For example,
+        it might be ``$DAG_LABEL/$UNIT_LABEL`` or
+        ``$DAG_LABEL/$UNIT_LABEL/$UNIT_REPEAT``. It must be a unique
+        identifier for this unit within the permanent storage.
     holding : PathLike
         name of the subdirectory of scratch where staged results are
         temporarily stored; default is '.holding'. This must be the same for
@@ -99,7 +103,7 @@ class StagingDirectory:
         #    external storage is exactly the same as this local storage,
         #    meaning that copies to/from the external storage are no-ops.
         #    Use FileStorage(scratch / holding) for that.
-        self.staging_dir = self.scratch / holding / prefix
+        self.staging_dir = self.scratch / prefix / holding
         self.staging_dir.mkdir(exist_ok=True, parents=True)
 
     def transfer_single_file_to_external(self, held_file):
@@ -266,7 +270,7 @@ class PermanentStaging(StagingDirectory):
         self.shared = shared
 
     def transfer_single_file_to_external(self, held_file):
-        # for this one, if we can't fin
+        # if we can't find it locally, we load it from shared storage
         path = Path(held_file)
         if not path.exists():
             self._load_file_from_external(self.shared, held_file)

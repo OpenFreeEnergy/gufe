@@ -65,3 +65,25 @@ to the executor, can be instances of an :class:`.ExternalResource`.
    on ``scp`` or ``sftp`` are fine, but things like cloud storage, where the
    existence of a new document may take time to propagate through the
    network, are not recommended for ``shared``.
+
+
+Details: Manangement of the Storage Lifetime
+--------------------------------------------
+
+The concepts of the storage lifetimes are important for protocol authors,
+but details of implementation are left to the specific executor. In order to
+facilitate  ???
+
+* :class:`.StorageManager`: This is the overall façade interface for
+  interacting with the rest of the storage lifecycle tools.
+* ``DAGContextManager``:
+* :class:`.StagingDirectory`:
+* :class:`.StagingPath`:
+
+In practice, the executor uses the :class:`.StorageManager` to create a
+:class:`.DAGContextManager` at the level of a DAG, and then uses the
+:class:`.DAGContextManager` to create a context to run a unit. That context
+creates a :class:`.SharedStaging` and a :class:`.PermanentStaging`
+associated with the specific unit. Those staging directories, with the
+scratch directory, are provided to the :class:`.ProtocolDAGUnit`, so that
+these are the only objects protocol authors need to interact with.

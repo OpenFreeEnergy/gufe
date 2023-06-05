@@ -94,7 +94,7 @@ class TestSharedStaging:
 
         # initial conditions, without touching StagingDirectory/StagingPath
         label = "old_unit/data.txt"
-        on_filesystem = root.scratch / root.holding / label
+        on_filesystem = root.scratch / "old_unit" / root.holding / "data.txt"
         assert not on_filesystem.exists()
         assert root.external.exists(label)
 
@@ -111,7 +111,8 @@ class TestSharedStaging:
 
     def test_write_new(self, root):
         label = "new_unit/somefile.txt"
-        on_filesystem = root.scratch / root.holding / label
+        on_filesystem = (root.scratch / "new_unit" / root.holding
+                         / "somefile.txt")
         assert not on_filesystem.exists()
         with open(root / "somefile.txt", mode='wb') as f:
             f.write(b"testing")
