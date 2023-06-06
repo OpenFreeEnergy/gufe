@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Union, Optional
 from pathlib import Path
 from os import PathLike, rmdir, remove
@@ -7,7 +9,10 @@ from contextlib import contextmanager
 import logging
 _logger = logging.getLogger(__name__)
 
-def _safe_to_delete_holding(external, path, prefix):
+# TODO: holding -> staging
+
+def _safe_to_delete_holding(external: ExternalStorage, path: PathLike,
+                            prefix: Union[PathLike, str]) -> bool:
     """Check if deleting ``path`` could delete externally stored data.
 
     If external storage is a FileStorage, then it will storage files for
@@ -32,7 +37,7 @@ def _safe_to_delete_holding(external, path, prefix):
         return False
 
 
-def _delete_empty_dirs(root, delete_root=True):
+def _delete_empty_dirs(root: PathLike, delete_root: bool = True):
     """Delete all empty directories.
 
     Repeats so that directories that only contained empty directories also
@@ -45,7 +50,6 @@ def _delete_empty_dirs(root, delete_root=True):
             return [directory]
         directories = [p for p in paths if p.is_dir()]
         return sum([find_empty_dirs(d) for d in directories], [])
-
 
     while root.exists() and (empties := find_empty_dirs(root)):
         if empties == [root] and not delete_root:
@@ -123,16 +127,17 @@ class StagingDirectory:
         self.staging_dir.mkdir(exist_ok=True, parents=True)
 
     def _delete_holding_safe(self):
+        """Check if deleting staging will remove data from external.
+        """
         return _safe_to_delete_holding(
             external=self.external,
             path=self.staging_dir,
             prefix=self.prefix,
         )
 
-    def transfer_single_file_to_external(self, held_file):
+    def transfer_single_file_to_external(self, held_file: StagingPath):
         """Transfer a given file from holding into external storage
         """
-
         path = Path(held_file)
         if not path.exists():
             logging.info(f"Found nonexistent path {path}, not "
@@ -157,7 +162,7 @@ class StagingDirectory:
                 remove(file)
             _delete_empty_dirs(self.staging_dir)
 
-    def register_path(self, staging_path):
+    def register_path(self, staging_path: StagingPath):
         """
         Register a :class:`.StagingPath` with this :class:`.StagingDirectory`.
 
@@ -186,7 +191,8 @@ class StagingDirectory:
         if label_exists:
             self._load_file_from_external(self.external, staging_path)
 
-    def _load_file_from_external(self, external, staging_path):
+    def _load_file_from_external(self, external: ExternalStorage,
+                                 staging_path: StagingPath):
             scratch_path = self.staging_dir / staging_path.path
             # TODO: switch this to using `get_filename` and `store_path`
             with external.load_stream(staging_path.label) as f:
@@ -198,7 +204,7 @@ class StagingDirectory:
             with open(scratch_path, mode='wb') as f:
                 f.write(external_bytes)
 
-    def __truediv__(self, path: PathLike):
+    def __truediv__(self, path: Union[PathLike, str, bytes]):
         return StagingPath(root=self, path=path)
 
     def __fspath__(self):
@@ -210,8 +216,18 @@ class StagingDirectory:
             f"{self.prefix})"
         )
 
+    def __del__(self):  # -no-cov-
+        # in case someone doesn't use this within a context manager
+        if self.staging_dir.exists():
+            self.cleanup()
+
+
 
 class SharedStaging(StagingDirectory):
+    """Staging for shared external storage.
+
+    This enables read-only versions to be loaded from other units.
+    """
     def __init__(
         self,
         scratch: PathLike,
@@ -226,7 +242,8 @@ class SharedStaging(StagingDirectory):
                          delete_holding=delete_holding)
         self.read_only = read_only
 
-    def get_other_shared(self, prefix, delete_holding=None):
+    def get_other_shared(self, prefix: Union[str, PathLike],
+                         delete_holding: Optional[bool] = None):
         """Get a related unit's staging directory.
         """
         if delete_holding is None:
@@ -242,7 +259,8 @@ class SharedStaging(StagingDirectory):
         )
 
     @contextmanager
-    def other_shared(self, prefix, delete_holding=None):
+    def other_shared(self, prefix: Union[str, PathLike],
+                     delete_holding: Optional[bool] = None):
         """Context manager approach for getting a related unit's directory.
 
         This is usually the recommended way to get a previous unit's shared
@@ -252,7 +270,7 @@ class SharedStaging(StagingDirectory):
         yield other
         other.cleanup()
 
-    def transfer_single_file_to_external(self, held_file):
+    def transfer_single_file_to_external(self, held_file: StagingPath):
         if self.read_only:
             logging.debug("Read-only: Not transfering to external storage")
             return  # early exit
@@ -266,7 +284,7 @@ class SharedStaging(StagingDirectory):
 
         super().transfer_holding_to_external()
 
-    def register_path(self, staging_path):
+    def register_path(self, staging_path: StagingPath):
         label_exists = self.external.exists(staging_path.label)
 
         if self.read_only and not label_exists:
@@ -305,7 +323,7 @@ class PermanentStaging(StagingDirectory):
         )
         return shared_safe and super()._delete_holding_safe()
 
-    def transfer_single_file_to_external(self, held_file):
+    def transfer_single_file_to_external(self, held_file: StagingPath):
         # if we can't find it locally, we load it from shared storage
         path = Path(held_file)
         if not path.exists():
@@ -321,19 +339,20 @@ class StagingPath:
     manage the local path and transferring data with its
     :class:`.ExternalStorage`.
     """
-    def __init__(self, root: StagingDirectory, path: PathLike):
+    def __init__(self, root: StagingDirectory,
+                 path: Union[PathLike, str, bytes]):
         self.root = root
         self.path = Path(path)
         self.root.register_path(self)
 
-    def __truediv__(self, path):
+    def __truediv__(self, path: Union[PathLike, str, bytes]):
         return StagingPath(self.root, self.path / path)
 
     def __fspath__(self):
         return str(self.root.staging_dir / self.path)
 
     @property
-    def label(self):
+    def label(self) -> str:
         """Label used in :class:`.ExternalStorage` for this path"""
         return str(self.root.prefix / self.path)
 

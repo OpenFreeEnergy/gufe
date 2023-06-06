@@ -89,11 +89,3 @@ creates a :class:`.SharedStaging` and a :class:`.PermanentStaging`
 associated with the specific unit. Those staging directories, with the
 scratch directory, are provided to the :class:`.ProtocolDAGUnit`, so that
 these are the only objects protocol authors need to interact with.
-
-In using these, we assume that the label for data from a given unit is of
-the form ``$DAG/$UNIT_INFO/$FILEPATH``. The details of ``$DAG`` and
-``$UNIT_INFO`` are up the executor; in particular, there may be a more
-deeply nested hierarchy for the ``$UNIT_INFO`` (e.g., to account for retries
-of a given unit). An executor that wants to use a data label that doesnt'
-match this format should not use :class:`.StorageManager` and the related
-tools.
