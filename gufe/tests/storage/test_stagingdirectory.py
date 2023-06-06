@@ -94,6 +94,12 @@ def test_delete_empty_dirs_delete_root(tmp_path, delete_root):
 
 
 class TestSharedStaging:
+    def test_repr(self, root):
+        r = repr(root)
+        assert r.startswith("StagingDirectory")
+        assert "MemoryStorage" in r
+        assert r.endswith(", new_unit)")
+
     @pytest.mark.parametrize('pathlist', [
         ['file.txt'], ['dir', 'file.txt']
     ])
