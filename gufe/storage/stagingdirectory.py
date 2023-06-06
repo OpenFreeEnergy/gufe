@@ -278,6 +278,11 @@ class SharedStaging(StagingDirectory):
 
 
 class PermanentStaging(StagingDirectory):
+    """Staging directory for the permanent storage.
+
+    This allows files to be downloaded from a shared
+    :class:`.ExternalStorage`.
+    """
     def __init__(
         self,
         scratch: PathLike,

@@ -8,29 +8,6 @@ from typing import Type
 from .externalresource import ExternalStorage, FileStorage
 from .stagingdirectory import SharedStaging, PermanentStaging
 
-def _storage_path_conflict(external, path, label):
-    """Check if deleting ``path`` could delete externally stored data.
-
-    If external storage is a FileStorage, then it will storage files for
-    this unit or dag in the directory ``external.root_dir / label``, where
-    ``label`` is either the unit label or the dag label. If ``path`` is
-    inside that directory, then deleting it may delete information from the
-    external storage. In that case, this returns True, indicating a
-    conflict. Otherwise, this returns False.
-    """
-    # this is a little brittle; I don't like hard-coding the class here
-    if isinstance(external, FileStorage):
-        root = Path(external.root_dir) / label
-    else:
-        return False
-
-    p = Path(path)
-    try:
-        _ = p.relative_to(root)
-    except ValueError:
-        return False
-    else:
-        return True
 
 class _AbstractDAGContextManager:
     @classmethod
@@ -112,14 +89,11 @@ class _DAGStorageManager(_AbstractDAGContextManager):
             # everything in permanent must also be available in shared
             for file in permanent.registry:
                 shared.transfer_single_file_to_external(file)
-            scratch_conflict = _storage_path_conflict(shared.external,
-                                                      scratch, unit_label)
-            if not self.manager.keep_scratch and not scratch_conflict:
+
+            if not self.manager.keep_scratch:
                 shutil.rmtree(scratch)
 
-            shared_conflict = _storage_path_conflict(shared.external,
-                                                     shared, unit_label)
-            if not self.manager.keep_holding and not shared_conflict:
+            if not self.manager.keep_holding:
                 shared.cleanup()
 
 

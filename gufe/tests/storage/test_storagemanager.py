@@ -1,6 +1,6 @@
 import pytest
 from gufe.storage.storagemanager import (
-    StorageManager, _storage_path_conflict
+    StorageManager
 )
 from gufe.storage.stagingdirectory import StagingDirectory
 from gufe.storage.externalresource import MemoryStorage, FileStorage
@@ -256,25 +256,6 @@ class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
 
 # class TestHoldingOverlapsPermanentStorageManager(LifecycleHarness):
 #     ...
-
-
-# def test_storage_path_conflict_ok(tmp_path):
-#     # if the filestorage root is not in the given path, no conflict
-#     external = FileStorage(tmp_path / "foo" / "bar")
-#     path = tmp_path / "foo" / "baz"
-#     assert _storage_path_conflict(external, path) is False
-
-# def test_storage_path_conflict_not_filestorage(tmp_path):
-#     # if the external resource isn't a FileStorage, no conflict
-#     external = MemoryStorage()
-#     path = tmp_path / "foo" / "baz"
-#     assert _storage_path_conflict(external, path) is False
-
-# def test_storage_path_conflict_problem(tmp_path):
-#     # if the filestorage root is in the given path, we have a conflict
-#     external = FileStorage(tmp_path / "foo" / "bar")
-#     path = tmp_path / "foo"
-#     assert _storage_path_conflict(external, path) is True
 
 
 class TestStorageManager:

@@ -3,9 +3,10 @@ import pytest
 import os
 import pathlib
 
-from gufe.storage.externalresource import MemoryStorage
+from gufe.storage.externalresource import MemoryStorage, FileStorage
 from gufe.storage.stagingdirectory import (
-    SharedStaging, PermanentStaging, _delete_empty_dirs
+    SharedStaging, PermanentStaging, _delete_empty_dirs,
+    _safe_to_delete_holding
 )
 
 @pytest.fixture
@@ -26,6 +27,24 @@ def root_with_contents(root):
         f.write(b"bar")
 
     return root
+
+def test_safe_to_delete_holding_ok(tmp_path):
+    external = FileStorage(tmp_path / "foo")
+    prefix = "bar"
+    holding = tmp_path / "foo" / "baz"
+    assert _safe_to_delete_holding(external, holding, prefix)
+
+def test_safe_to_delete_holding_danger(tmp_path):
+    external = FileStorage(tmp_path / "foo")
+    prefix = "bar"
+    holding = tmp_path / "foo" / "bar" / "baz"
+    assert not _safe_to_delete_holding(external, holding, prefix)
+
+def test_safe_to_delete_holding_not_filestorage(tmp_path):
+    external = MemoryStorage()
+    prefix = "bar"
+    holding = tmp_path / "bar"
+    assert _safe_to_delete_holding(external, holding, prefix)
 
 def test_delete_empty_dirs(tmp_path):
     base = tmp_path / "tmp"
