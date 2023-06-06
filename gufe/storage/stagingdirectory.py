@@ -77,10 +77,6 @@ class StagingDirectory:
 
     3. It can delete all of the files it manages
 
-    This can be opened in "read-only" mode, which prevents new files from
-    being created, but does not prevent changes to existing versions of
-    local files.
-
     Parameters
     ----------
     scratch : PathLike
@@ -100,11 +96,6 @@ class StagingDirectory:
     delete_holding : bool
         whether to delete the contents of the $SCRATCH/$HOLDING/$PREFIX
         directory when this object is deleted
-    read_only : bool
-        write to prevent NEW files from being written within this staging
-        directory. NOTE: This will not prevent overwrite of existing files
-        in scratch space, but it will prevent changed files from uploading
-        to the external storage.
     """
     def __init__(
         self,
@@ -140,13 +131,13 @@ class StagingDirectory:
         """
         path = Path(held_file)
         if not path.exists():
-            logging.info(f"Found nonexistent path {path}, not "
+            _logger.info(f"Found nonexistent path {path}, not "
                          "transfering to external storage")
         elif path.is_dir():
-            logging.debug(f"Found directory {path}, not "
+            _logger.debug(f"Found directory {path}, not "
                           "transfering to external storage")
         else:
-            logging.info(f"Transfering {path} to external storage")
+            _logger.info(f"Transfering {path} to external storage")
             self.external.store_path(held_file.label, path)
 
     def transfer_holding_to_external(self):
@@ -159,7 +150,12 @@ class StagingDirectory:
         """
         if self.delete_holding and self._delete_holding_safe():
             for file in self.registry - self.preexisting:
-                remove(file)
+                if Path(file).exists():
+                    _logger.debug(f"Removing file {file}")
+                    remove(file)
+                else:
+                    _logger.warning("Request to remove missing file "
+                                    f"{file}")
             _delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
@@ -272,14 +268,14 @@ class SharedStaging(StagingDirectory):
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         if self.read_only:
-            logging.debug("Read-only: Not transfering to external storage")
+            _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
         super().transfer_single_file_to_external(held_file)
 
     def transfer_holding_to_external(self):
         if self.read_only:
-            logging.debug("Read-only: Not transfering to external storage")
+            _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
         super().transfer_holding_to_external()
