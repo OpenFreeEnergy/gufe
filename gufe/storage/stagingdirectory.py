@@ -200,7 +200,7 @@ class StagingDirectory:
         with open(scratch_path, mode='wb') as f:
             f.write(external_bytes)
 
-    def __truediv__(self, path: Union[PathLike, str, bytes]):
+    def __truediv__(self, path: Union[PathLike, str]):
         return StagingPath(root=self, path=path)
 
     def __fspath__(self):
@@ -237,7 +237,7 @@ class SharedStaging(StagingDirectory):
                          delete_holding=delete_holding)
         self.read_only = read_only
 
-    def get_other_shared(self, prefix: Union[str, PathLike],
+    def get_other_shared(self, prefix: str,
                          delete_holding: Optional[bool] = None):
         """Get a related unit's staging directory.
         """
@@ -254,7 +254,7 @@ class SharedStaging(StagingDirectory):
         )
 
     @contextmanager
-    def other_shared(self, prefix: Union[str, PathLike],
+    def other_shared(self, prefix: str,
                      delete_holding: Optional[bool] = None):
         """Context manager approach for getting a related unit's directory.
 
@@ -335,12 +335,12 @@ class StagingPath:
     :class:`.ExternalStorage`.
     """
     def __init__(self, root: StagingDirectory,
-                 path: Union[PathLike, str, bytes]):
+                 path: Union[PathLike, str]):
         self.root = root
         self.path = Path(path)
         self.root.register_path(self)
 
-    def __truediv__(self, path: Union[PathLike, str, bytes]):
+    def __truediv__(self, path: Union[PathLike, str]):
         return StagingPath(self.root, self.path / path)
 
     def __fspath__(self):

@@ -40,10 +40,10 @@ class _DAGStorageManager(_AbstractDAGContextManager):
     directly; instead, it is created (and used) with its ``running_dag``
     classmethod, typically from within a ``StorageManager``.
     """
-    def __init__(self, storage_manager: StorageLabel, dag_label: str):
+    def __init__(self, storage_manager: StorageManager, dag_label: str):
         self.manager = storage_manager
         self.dag_label = dag_label
-        self.permanents = []
+        self.permanents: list[PermanentStaging] = []
 
     @classmethod  # NB: classmethod must be on top
     @contextmanager
