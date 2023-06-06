@@ -72,7 +72,9 @@ Details: Manangement of the Storage Lifetime
 
 The concepts of the storage lifetimes are important for protocol authors,
 but details of implementation are left to the specific executor. In order to
-facilitate  ???
+facilitate correct treatment of the storage lifecycle, GUFE provides a few
+helpers. The information in this section is mostly of interest to authors of
+executors. The helpers are:
 
 * :class:`.StorageManager`: This is the overall façade interface for
   interacting with the rest of the storage lifecycle tools.
@@ -87,3 +89,11 @@ creates a :class:`.SharedStaging` and a :class:`.PermanentStaging`
 associated with the specific unit. Those staging directories, with the
 scratch directory, are provided to the :class:`.ProtocolDAGUnit`, so that
 these are the only objects protocol authors need to interact with.
+
+In using these, we assume that the label for data from a given unit is of
+the form ``$DAG/$UNIT_INFO/$FILEPATH``. The details of ``$DAG`` and
+``$UNIT_INFO`` are up the executor; in particular, there may be a more
+deeply nested hierarchy for the ``$UNIT_INFO`` (e.g., to account for retries
+of a given unit). An executor that wants to use a data label that doesnt'
+match this format should not use :class:`.StorageManager` and the related
+tools.

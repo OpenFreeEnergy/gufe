@@ -1,11 +1,35 @@
 from typing import Union, Optional
 from pathlib import Path
 from os import PathLike, rmdir, remove
-from .externalresource import ExternalStorage
+from .externalresource import ExternalStorage, FileStorage
 from contextlib import contextmanager
 
 import logging
 _logger = logging.getLogger(__name__)
+
+def _safe_to_delete_holding(external, path, prefix):
+    """Check if deleting ``path`` could delete externally stored data.
+
+    If external storage is a FileStorage, then it will storage files for
+    this unit or dag in the directory ``external.root_dir / prefix``, where
+    ``prefix`` is either the unit label or the dag label. If ``path`` is
+    inside that directory, then deleting it may delete information from the
+    external storage. In that case, this returns False, indicating a
+    conflict. Otherwise, this returns True.
+    """
+    # this is a little brittle; I don't like hard-coding the class here
+    if isinstance(external, FileStorage):
+        root = Path(external.root_dir) / prefix
+    else:
+        return True
+
+    p = Path(path)
+    try:
+        _ = p.relative_to(root)
+    except ValueError:
+        return True
+    else:
+        return False
 
 
 def _delete_empty_dirs(root, delete_root=True):
@@ -95,16 +119,15 @@ class StagingDirectory:
 
         self.registry : set[StagingPath] = set()
         self.preexisting : set[StagingPath] = set()
-        # NOTE: the fact that we use $SCRATCH/$HOLDING/$PREFIX instead of
-        # $SCRATCH/$PREFIX/$HOLDING is important for 2 reasons:
-        # 1. This doesn't take any of the user's namespace from their
-        #    $SCRATCH/$PREFIX directory.
-        # 2. This allows us to easily use an external FileStorage where the
-        #    external storage is exactly the same as this local storage,
-        #    meaning that copies to/from the external storage are no-ops.
-        #    Use FileStorage(scratch / holding) for that.
-        self.staging_dir = self.scratch / prefix / holding
+        self.staging_dir = self.scratch / holding / prefix
         self.staging_dir.mkdir(exist_ok=True, parents=True)
+
+    def _delete_holding_safe(self):
+        return _safe_to_delete_holding(
+            external=self.external,
+            path=self.staging_dir,
+            prefix=self.prefix,
+        )
 
     def transfer_single_file_to_external(self, held_file):
         """Transfer a given file from holding into external storage
@@ -129,7 +152,7 @@ class StagingDirectory:
     def cleanup(self):
         """Perform end-of-lifecycle cleanup.
         """
-        if self.delete_holding:
+        if self.delete_holding and self._delete_holding_safe():
             for file in self.registry - self.preexisting:
                 remove(file)
             _delete_empty_dirs(self.staging_dir)
@@ -268,6 +291,14 @@ class PermanentStaging(StagingDirectory):
         super().__init__(scratch, external, prefix, holding=holding,
                          delete_holding=delete_holding)
         self.shared = shared
+
+    def _delete_holding_safe(self):
+        shared_safe = _safe_to_delete_holding(
+            external=self.shared,
+            path=self.staging_dir,
+            prefix=self.prefix
+        )
+        return shared_safe and super()._delete_holding_safe()
 
     def transfer_single_file_to_external(self, held_file):
         # if we can't find it locally, we load it from shared storage
