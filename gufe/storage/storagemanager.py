@@ -10,7 +10,7 @@ from .externalresource import ExternalStorage, FileStorage
 from .stagingdirectory import SharedStaging, PermanentStaging
 
 
-class _AbstractDAGContextManager:
+class DAGContextManager:
     @classmethod
     @contextmanager
     def running_dag(cls, storage_manager: StorageManager, dag_label: str):
@@ -28,11 +28,9 @@ class _AbstractDAGContextManager:
         """
         raise NotImplementedError()
 
+_DCMType = Type[DAGContextManager]  # to shorten some lines
 
-DAGContextManager = Type[_AbstractDAGContextManager]
-
-# TODO: rename
-class _DAGStorageManager(_AbstractDAGContextManager):
+class SingleProcDAGContextManager(DAGContextManager):
     """Context manager to handle details of storage lifecycle.
 
     Making this a separate class ensures that ``running_unit`` is always
@@ -117,7 +115,7 @@ class StorageManager:
         keep_scratch: bool = False,
         keep_holding: bool = False,
         holding: PathLike = Path(".holding"),
-        DAGContextClass: DAGContextManager = _DAGStorageManager,
+        DAGContextClass: _DCMType = SingleProcDAGContextManager,
     ):
         self.scratch_root = Path(scratch_root)
         self.shared_root = shared_root
