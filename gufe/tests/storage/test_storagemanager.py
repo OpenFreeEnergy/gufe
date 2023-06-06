@@ -215,6 +215,7 @@ class TestKeepScratchAndHoldingStorageManager(LifecycleHarness):
         return self.files_after_unit('dag/unit2')
 
 
+
 class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
@@ -225,6 +226,23 @@ class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
             permanent_root=MemoryStorage(),
             holding="",
         )
+
+    def _in_unit_existing_files(self, unit_label):
+        return {
+            "dag/unit1": {'foo', 'bar', 'baz'},
+            "dag/unit2": {'foo2', 'bar', 'baz'},
+        }[unit_label]
+
+
+    def _after_unit_existing_files(self, unit_label):
+        # same for both; all files come from unit 1
+        return {"bar", "baz"}
+
+    def _after_dag_existing_files(self):
+        # NOTE: currently we don't delete bar at the end of a cycle, but we
+        # don't guarantee that we would not. So it exists, but changing that
+        # isn't API-breaking.
+        return {"bar", "baz"}
 
     def _in_staging_shared(self, unit_label, in_after):
         bar = "dag/unit1/bar.txt"
@@ -238,24 +256,42 @@ class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
             ("dag/unit2", "after"): {baz}
         }[unit_label, in_after]
 
+
+class TestHoldingOverlapsPermanentStorageManager(LifecycleHarness):
+    @pytest.fixture
+    def storage_manager(self, tmp_path):
+        root = tmp_path / "working"
+        return StorageManager(
+            scratch_root=root,
+            permanent_root=FileStorage(root),
+            shared_root=MemoryStorage(),
+            holding="",
+        )
+
     def _in_unit_existing_files(self, unit_label):
         return {
             "dag/unit1": {'foo', 'bar', 'baz'},
-            "dag/unit2": {'foo2', 'bar', 'baz'},
+            "dag/unit2": {"foo2", "baz"},  # no bar because it was temporary
         }[unit_label]
+
+    def _after_dag_existing_files(self):
+        return {"baz"}
+
+    def _in_staging_permanent(self, unit_label, in_after):
+        bar = "dag/unit1/bar.txt"
+        baz = "dag/unit1/baz.txt"
+        foo = "scratch/dag/unit1/foo.txt"
+        foo2 = "scratch/dag/unit2/foo2.txt"
+        return  {
+            ("dag/unit1", "in"): {bar, baz, foo},
+            ("dag/unit1", "after"): {baz},
+            ("dag/unit2", "in"): {baz, foo2},
+            ("dag/unit2", "after"): {baz}
+        }[unit_label, in_after]
 
     def _after_unit_existing_files(self, unit_label):
         # same for both; all files come from unit 1
-        return {"bar", "baz"}
-
-    def _after_dag_existing_files(self):
-        # NOTE: currently we don't delete bar at the end of a cycle, but we
-        # don't guarantee that we would not. So it exists, but changing that
-        # isn't API-breaking.
-        return {"bar", "baz"}
-
-# class TestHoldingOverlapsPermanentStorageManager(LifecycleHarness):
-#     ...
+        return {"baz"}
 
 
 class TestStorageManager:

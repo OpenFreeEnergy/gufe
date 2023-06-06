@@ -189,16 +189,16 @@ class StagingDirectory:
 
     def _load_file_from_external(self, external: ExternalStorage,
                                  staging_path: StagingPath):
-            scratch_path = self.staging_dir / staging_path.path
-            # TODO: switch this to using `get_filename` and `store_path`
-            with external.load_stream(staging_path.label) as f:
-                external_bytes = f.read()
-            if scratch_path.exists():
-                self.preexisting.add(staging_path)
-                ... # TODO: something to check that the bytes are the same?
-            scratch_path.parent.mkdir(exist_ok=True, parents=True)
-            with open(scratch_path, mode='wb') as f:
-                f.write(external_bytes)
+        scratch_path = self.staging_dir / staging_path.path
+        # TODO: switch this to using `get_filename` and `store_path`
+        with external.load_stream(staging_path.label) as f:
+            external_bytes = f.read()
+        if scratch_path.exists():
+            self.preexisting.add(staging_path)
+            ... # TODO: something to check that the bytes are the same?
+        scratch_path.parent.mkdir(exist_ok=True, parents=True)
+        with open(scratch_path, mode='wb') as f:
+            f.write(external_bytes)
 
     def __truediv__(self, path: Union[PathLike, str, bytes]):
         return StagingPath(root=self, path=path)
@@ -216,7 +216,6 @@ class StagingDirectory:
         # in case someone doesn't use this within a context manager
         if self.staging_dir.exists():
             self.cleanup()
-
 
 
 class SharedStaging(StagingDirectory):
