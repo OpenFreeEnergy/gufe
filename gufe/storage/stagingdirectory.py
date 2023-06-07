@@ -9,7 +9,6 @@ from contextlib import contextmanager
 import logging
 _logger = logging.getLogger(__name__)
 
-# TODO: holding -> staging
 
 def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
                             prefix: Union[PathLike, str]) -> bool:
