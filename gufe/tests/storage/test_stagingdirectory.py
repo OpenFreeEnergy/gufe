@@ -6,7 +6,7 @@ import pathlib
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from gufe.storage.stagingdirectory import (
     SharedStaging, PermanentStaging, _delete_empty_dirs,
-    _safe_to_delete_holding
+    _safe_to_delete_staging
 )
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def root(tmp_path):
         scratch=tmp_path,
         external=external,
         prefix="new_unit",
-        delete_holding=False
+        delete_staging=False
     )
     return root
 
@@ -28,23 +28,23 @@ def root_with_contents(root):
 
     return root
 
-def test_safe_to_delete_holding_ok(tmp_path):
+def test_safe_to_delete_staging_ok(tmp_path):
     external = FileStorage(tmp_path / "foo")
     prefix = "bar"
-    holding = tmp_path / "foo" / "baz"
-    assert _safe_to_delete_holding(external, holding, prefix)
+    staging = tmp_path / "foo" / "baz"
+    assert _safe_to_delete_staging(external, staging, prefix)
 
-def test_safe_to_delete_holding_danger(tmp_path):
+def test_safe_to_delete_staging_danger(tmp_path):
     external = FileStorage(tmp_path / "foo")
     prefix = "bar"
-    holding = tmp_path / "foo" / "bar" / "baz"
-    assert not _safe_to_delete_holding(external, holding, prefix)
+    staging = tmp_path / "foo" / "bar" / "baz"
+    assert not _safe_to_delete_staging(external, staging, prefix)
 
-def test_safe_to_delete_holding_not_filestorage(tmp_path):
+def test_safe_to_delete_staging_not_filestorage(tmp_path):
     external = MemoryStorage()
     prefix = "bar"
-    holding = tmp_path / "bar"
-    assert _safe_to_delete_holding(external, holding, prefix)
+    staging = tmp_path / "bar"
+    assert _safe_to_delete_staging(external, staging, prefix)
 
 def test_delete_empty_dirs(tmp_path):
     base = tmp_path / "tmp"
@@ -119,7 +119,7 @@ class TestSharedStaging:
 
         # initial conditions, without touching StagingDirectory/StagingPath
         label = "old_unit/data.txt"
-        on_filesystem = root.scratch / root.holding / "old_unit/data.txt"
+        on_filesystem = root.scratch / root.staging / "old_unit/data.txt"
         assert not on_filesystem.exists()
         assert root.external.exists(label)
 
@@ -136,7 +136,7 @@ class TestSharedStaging:
 
     def test_write_new(self, root):
         label = "new_unit/somefile.txt"
-        on_filesystem = root.scratch / root.holding / "new_unit/somefile.txt"
+        on_filesystem = root.scratch / root.staging / "new_unit/somefile.txt"
         assert not on_filesystem.exists()
         with open(root / "somefile.txt", mode='wb') as f:
             f.write(b"testing")
@@ -155,7 +155,7 @@ class TestSharedStaging:
         path = list(root_with_contents.registry)[0]  # only 1
         assert not root_with_contents.external.exists(path.label)
 
-        root_with_contents.transfer_holding_to_external()
+        root_with_contents.transfer_staging_to_external()
         assert root_with_contents.external.exists(path.label)
 
         with root_with_contents.external.load_stream(path.label) as f:

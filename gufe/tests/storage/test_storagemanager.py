@@ -56,12 +56,12 @@ class LifecycleHarness:
     @staticmethod
     def get_files_dict(storage_manager):
         root = storage_manager.scratch_root
-        holding = storage_manager.holding
+        staging = storage_manager.staging
         return {
             "foo": root / "scratch/dag/unit1/foo.txt",
             "foo2": root / "scratch/dag/unit2/foo2.txt",
-            "bar": root / holding / "dag/unit1/bar.txt",
-            "baz": root / holding / "dag/unit1/baz.txt",
+            "bar": root / staging / "dag/unit1/bar.txt",
+            "baz": root / staging / "dag/unit1/baz.txt",
         }
 
     def test_lifecycle(self, storage_manager, dag_units, tmp_path):
@@ -185,7 +185,7 @@ class TestStandardStorageManager(LifecycleHarness):
         return set()
 
 
-class TestKeepScratchAndHoldingStorageManager(LifecycleHarness):
+class TestKeepScratchAndStagingStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
         return StorageManager(
@@ -193,7 +193,7 @@ class TestKeepScratchAndHoldingStorageManager(LifecycleHarness):
             shared_root=MemoryStorage(),
             permanent_root=MemoryStorage(),
             keep_scratch=True,
-            keep_holding=True
+            keep_staging=True
         )
 
     @staticmethod
@@ -216,7 +216,7 @@ class TestKeepScratchAndHoldingStorageManager(LifecycleHarness):
 
 
 
-class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
+class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
         root = tmp_path / "working"
@@ -224,7 +224,7 @@ class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
             scratch_root=root,
             shared_root=FileStorage(root),
             permanent_root=MemoryStorage(),
-            holding="",
+            staging="",
         )
 
     def _in_unit_existing_files(self, unit_label):
@@ -257,7 +257,7 @@ class TestHoldingOverlapsSharedStorageManager(LifecycleHarness):
         }[unit_label, in_after]
 
 
-class TestHoldingOverlapsPermanentStorageManager(LifecycleHarness):
+class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
         root = tmp_path / "working"
@@ -265,7 +265,7 @@ class TestHoldingOverlapsPermanentStorageManager(LifecycleHarness):
             scratch_root=root,
             permanent_root=FileStorage(root),
             shared_root=MemoryStorage(),
-            holding="",
+            staging="",
         )
 
     def _in_unit_existing_files(self, unit_label):
@@ -302,10 +302,10 @@ class TestStorageManager:
 
     def test_get_permanent(self, storage_manager_std):
         perm = storage_manager_std.get_permanent("dag_label/unit_label")
-        assert perm.__fspath__().endswith(".holding/dag_label/unit_label")
+        assert perm.__fspath__().endswith(".staging/dag_label/unit_label")
         assert isinstance(perm, StagingDirectory)
 
     def test_get_shared(self, storage_manager_std):
         shared = storage_manager_std.get_shared("dag_label/unit_label")
-        assert shared.__fspath__().endswith(".holding/dag_label/unit_label")
+        assert shared.__fspath__().endswith(".staging/dag_label/unit_label")
         assert isinstance(shared, StagingDirectory)

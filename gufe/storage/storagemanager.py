@@ -49,7 +49,7 @@ class SingleProcDAGContextManager(DAGContextManager):
         """DAG level of the storage lifecycle
 
         When the DAG is completed, transfer everything to the permanent
-        storage, and delete the holding area for permanent (if we are
+        storage, and delete the staging area for permanent (if we are
         supposed to).
 
         This is not usually called by users; instead it is called from
@@ -60,9 +60,9 @@ class SingleProcDAGContextManager(DAGContextManager):
             yield dag_manager
         finally:
             for permanent in dag_manager.permanents:
-                permanent.transfer_holding_to_external()
+                permanent.transfer_staging_to_external()
 
-            if not dag_manager.manager.keep_holding:
+            if not dag_manager.manager.keep_staging:
                 for d in dag_manager.permanents:
                     # import pdb; pdb.set_trace()
                     d.cleanup()
@@ -71,10 +71,10 @@ class SingleProcDAGContextManager(DAGContextManager):
     def running_unit(self, unit_label: str):
         """Unit level of the storage lifecycle.
 
-        This provides the holding directories used for scratch, shared, and
+        This provides the staging directories used for scratch, shared, and
         permanent. At the end of the unit, it transfers anything from shared
         to the real shared external storage, cleans up the scratch
-        directory and the shared holding directory.
+        directory and the shared staging directory.
 
         Note that the unit label here is the *entire* label; that is, it
         would also include information identifying the DAG.
@@ -87,7 +87,7 @@ class SingleProcDAGContextManager(DAGContextManager):
         finally:
             # TODO: should some of this be in an else clause instead?
             self.permanents.append(permanent)
-            shared.transfer_holding_to_external()
+            shared.transfer_staging_to_external()
             # everything in permanent must also be available in shared
             for file in permanent.registry:
                 shared.transfer_single_file_to_external(file)
@@ -95,14 +95,14 @@ class SingleProcDAGContextManager(DAGContextManager):
             if not self.manager.keep_scratch:
                 shutil.rmtree(scratch)
 
-            if not self.manager.keep_holding:
+            if not self.manager.keep_staging:
                 shared.cleanup()
 
 
 class StorageManager:
     """Tool to manage the storage lifecycle during a DAG.
 
-    This object primarily contains the logic for getting the holding
+    This object primarily contains the logic for getting the staging
     directories. A separate class, in the ``DAGContextClass`` variable,
     handles the logic for the context managers.
     """
@@ -113,16 +113,16 @@ class StorageManager:
         permanent_root: ExternalStorage,
         *,
         keep_scratch: bool = False,
-        keep_holding: bool = False,
-        holding: PathLike = Path(".holding"),
+        keep_staging: bool = False,
+        staging: PathLike = Path(".staging"),
         DAGContextClass: _DCMType = SingleProcDAGContextManager,
     ):
         self.scratch_root = Path(scratch_root)
         self.shared_root = shared_root
         self.permanent_root = permanent_root
         self.keep_scratch = keep_scratch
-        self.keep_holding = keep_holding
-        self.holding = holding
+        self.keep_staging = keep_staging
+        self.staging = staging
         self.DAGContextClass = DAGContextClass
 
     def get_scratch(self, unit_label: str) -> Path:
@@ -133,22 +133,22 @@ class StorageManager:
         return scratch
 
     def get_permanent(self, unit_label) -> PermanentStaging:
-        """Get the object for this unit's permanent holding directory"""
+        """Get the object for this unit's permanent staging directory"""
         return PermanentStaging(
             scratch=self.scratch_root,
             external=self.permanent_root,
             shared=self.shared_root,
             prefix=unit_label,
-            holding=self.holding,
+            staging=self.staging,
         )
 
     def get_shared(self, unit_label) -> SharedStaging:
-        """Get the object for this unit's shared holding directory"""
+        """Get the object for this unit's shared staging directory"""
         return SharedStaging(
             scratch=self.scratch_root,
             external=self.shared_root,
             prefix=unit_label,
-            holding=self.holding,
+            staging=self.staging,
         )
 
     def running_dag(self, dag_label: str):

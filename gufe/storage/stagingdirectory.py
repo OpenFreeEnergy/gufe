@@ -11,7 +11,7 @@ _logger = logging.getLogger(__name__)
 
 # TODO: holding -> staging
 
-def _safe_to_delete_holding(external: ExternalStorage, path: PathLike,
+def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
                             prefix: Union[PathLike, str]) -> bool:
     """Check if deleting ``path`` could delete externally stored data.
 
@@ -89,11 +89,11 @@ class StagingDirectory:
         it might be ``$DAG_LABEL/$UNIT_LABEL`` or
         ``$DAG_LABEL/$UNIT_LABEL/$UNIT_REPEAT``. It must be a unique
         identifier for this unit within the permanent storage.
-    holding : PathLike
+    staging : PathLike
         name of the subdirectory of scratch where staged results are
-        temporarily stored; default is '.holding'. This must be the same for
+        temporarily stored; default is '.staging'. This must be the same for
         all units within a DAG.
-    delete_holding : bool
+    delete_staging : bool
         whether to delete the contents of the $SCRATCH/$HOLDING/$PREFIX
         directory when this object is deleted
     """
@@ -103,31 +103,31 @@ class StagingDirectory:
         external: ExternalStorage,
         prefix: str,
         *,
-        holding: PathLike = Path(".holding"),
-        delete_holding: bool = True,
+        staging: PathLike = Path(".staging"),
+        delete_staging: bool = True,
     ):
         self.external = external
         self.scratch = Path(scratch)
         self.prefix = Path(prefix)
-        self.delete_holding = delete_holding
-        self.holding = holding
+        self.delete_staging = delete_staging
+        self.staging = staging
 
         self.registry : set[StagingPath] = set()
         self.preexisting : set[StagingPath] = set()
-        self.staging_dir = self.scratch / holding / prefix
+        self.staging_dir = self.scratch / staging / prefix
         self.staging_dir.mkdir(exist_ok=True, parents=True)
 
-    def _delete_holding_safe(self):
+    def _delete_staging_safe(self):
         """Check if deleting staging will remove data from external.
         """
-        return _safe_to_delete_holding(
+        return _safe_to_delete_staging(
             external=self.external,
             path=self.staging_dir,
             prefix=self.prefix,
         )
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
-        """Transfer a given file from holding into external storage
+        """Transfer a given file from staging into external storage
         """
         path = Path(held_file)
         if not path.exists():
@@ -140,7 +140,7 @@ class StagingDirectory:
             _logger.info(f"Transfering {path} to external storage")
             self.external.store_path(held_file.label, path)
 
-    def transfer_holding_to_external(self):
+    def transfer_staging_to_external(self):
         """Transfer all objects in the registry to external storage"""
         for obj in self.registry:
             self.transfer_single_file_to_external(obj)
@@ -148,7 +148,7 @@ class StagingDirectory:
     def cleanup(self):
         """Perform end-of-lifecycle cleanup.
         """
-        if self.delete_holding and self._delete_holding_safe():
+        if self.delete_staging and self._delete_staging_safe():
             for file in self.registry - self.preexisting:
                 if Path(file).exists():
                     _logger.debug(f"Removing file {file}")
@@ -229,39 +229,39 @@ class SharedStaging(StagingDirectory):
         external: ExternalStorage,
         prefix: str,
         *,
-        holding: PathLike = Path(".holding"),
-        delete_holding: bool = True,
+        staging: PathLike = Path(".staging"),
+        delete_staging: bool = True,
         read_only: bool = False,
     ):
-        super().__init__(scratch, external, prefix, holding=holding,
-                         delete_holding=delete_holding)
+        super().__init__(scratch, external, prefix, staging=staging,
+                         delete_staging=delete_staging)
         self.read_only = read_only
 
     def get_other_shared(self, prefix: str,
-                         delete_holding: Optional[bool] = None):
+                         delete_staging: Optional[bool] = None):
         """Get a related unit's staging directory.
         """
-        if delete_holding is None:
-            delete_holding = self.delete_holding
+        if delete_staging is None:
+            delete_staging = self.delete_staging
 
         return SharedStaging(
             scratch=self.scratch,
             external=self.external,
             prefix=prefix,
-            holding=self.holding,
-            delete_holding=delete_holding,
+            staging=self.staging,
+            delete_staging=delete_staging,
             read_only=True,
         )
 
     @contextmanager
     def other_shared(self, prefix: str,
-                     delete_holding: Optional[bool] = None):
+                     delete_staging: Optional[bool] = None):
         """Context manager approach for getting a related unit's directory.
 
         This is usually the recommended way to get a previous unit's shared
         data.
         """
-        other = self.get_other_shared(prefix, delete_holding)
+        other = self.get_other_shared(prefix, delete_staging)
         yield other
         other.cleanup()
 
@@ -272,12 +272,12 @@ class SharedStaging(StagingDirectory):
 
         super().transfer_single_file_to_external(held_file)
 
-    def transfer_holding_to_external(self):
+    def transfer_staging_to_external(self):
         if self.read_only:
             _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
-        super().transfer_holding_to_external()
+        super().transfer_staging_to_external()
 
     def register_path(self, staging_path: StagingPath):
         label_exists = self.external.exists(staging_path.label)
@@ -303,20 +303,20 @@ class PermanentStaging(StagingDirectory):
         shared: ExternalStorage,
         prefix: str,
         *,
-        holding: PathLike = Path(".holding"),
-        delete_holding: bool = True,
+        staging: PathLike = Path(".staging"),
+        delete_staging: bool = True,
     ):
-        super().__init__(scratch, external, prefix, holding=holding,
-                         delete_holding=delete_holding)
+        super().__init__(scratch, external, prefix, staging=staging,
+                         delete_staging=delete_staging)
         self.shared = shared
 
-    def _delete_holding_safe(self):
-        shared_safe = _safe_to_delete_holding(
+    def _delete_staging_safe(self):
+        shared_safe = _safe_to_delete_staging(
             external=self.shared,
             path=self.staging_dir,
             prefix=self.prefix
         )
-        return shared_safe and super()._delete_holding_safe()
+        return shared_safe and super()._delete_staging_safe()
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         # if we can't find it locally, we load it from shared storage
