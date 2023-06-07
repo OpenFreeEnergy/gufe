@@ -42,8 +42,8 @@ protocol authors.  In detail, this provides protocol authors with
 three of these objects actually point to special subdirectories of the
 scratch space for a specific unit, but are managed by context manangers at
 the executor level, which handle the process of moving objects from local
-directories to the actual ``shared`` and ``permanent`` locations, which can
-be external resources.
+staging directories to the actual ``shared`` and ``permanent`` locations,
+which can be external resources.
 
 
 External resource utilities
@@ -78,9 +78,24 @@ executors. The helpers are:
 
 * :class:`.StorageManager`: This is the overall façade interface for
   interacting with the rest of the storage lifecycle tools.
-* ``DAGContextManager``:
-* :class:`.StagingDirectory`:
-* :class:`.StagingPath`:
+* :class:`.DAGContextManager`: This provides context managers at the DAG and
+  unit level to handle the transfer of storage. GUFE provides a
+  :class:`.SingleProcDAGContextManager` to handle the simple case that an
+  entire DAG is run within a single process. If individual units are run on
+  different remote resources, a more complicated :class:`.DAGContextManager`
+  would be needed.
+* :class:`.StagingDirectory`: This represents the root directory for staging
+  the results of a given :class:`.ProtocolUnit`. This is an abstract
+  representation of a local directory. Paths within it register with it, and
+  it handles deletion of the temporary local files when not needed, as well
+  as the download of remote files when necessary for reading. There are two
+  important subclasses of this: :class:`.SharedStaging` for a ``shared``
+  resource, and :class:`.PermanentStaging` for a ``permanent`` resource.
+* :class:`.StagingPath`: This represents a file within the
+  :class:`.StagingDirectory`. It contains both the key (label) used in the
+  key-value store, as well as the actual local path to the file. On
+  creation, it registers itself with its :class:`.StagingDirectory`, which
+  handles managing it over its lifecycle.
 
 In practice, the executor uses the :class:`.StorageManager` to create a
 :class:`.DAGContextManager` at the level of a DAG, and then uses the
