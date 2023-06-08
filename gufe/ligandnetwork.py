@@ -142,7 +142,6 @@ class LigandNetwork(GufeTokenizable):
     @classmethod
     def from_graphml(cls, graphml_str: str):
         """Create ``Network`` from GraphML string.
-
         This is the primary deserialization mechanism for this class.
 
         Parameters
@@ -180,6 +179,119 @@ class LigandNetwork(GufeTokenizable):
             nodes = set([])
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
+
+    def _to_rfe_alchemical_network(
+        self,
+        components: dict[str, gufe.Component],
+        leg_labels: dict[str, list[str]],
+        protocol: gufe.Protocol,
+        *,
+        alchemical_label="ligand",
+        autoname=True,
+        autoname_prefix=""
+    ) -> gufe.AlchemicalNetwork:
+        """
+        Parameters
+        ----------
+        components: dict[str, :class:`.Component`]
+            non-alchemical components (components that will be on both sides
+            of a transformation)
+        leg_label: dict[str, list[str]]
+            mapping of the names for legs (the keys of this dict) to a list
+            of the component names. The componnent names must be the same as
+            as used in the ``componentns`` dict.
+        protocol: :class:`.Protocol`
+            the protocol to apply
+        """
+        transformations = []
+        for edge in self.edges:
+            for leg_name, labels in leg_lables.items():
+
+                # define a couple helper funcs to avoid repeated code
+                def sys_from_dict(component):
+                    syscomps = {alchemical_label: component}
+                    syscomps.update({label: components[label]
+                                     for label in labels})
+
+                    if autoname:
+                        name = f"{sys[alchemical_label].name}_{leg_name}"
+                    else:
+                        name = ""
+
+                    return gufe.ChemicalSystem(syscomps, name=name)
+
+
+                sysA = sys_from_dict(edge.componentA)
+                sysB = sys_from_dict(edge.componentB)
+                if autoname:
+                    name = f"{autoname_prefix}_{sysA.name}_{sysB.name}"
+                else:
+                    name = ""
+
+                mapping = {alchemical_label: edge.mapping}
+
+                transformation = Transformation(sysA, sysB, protocol,
+                                                mapping, name)
+
+                transformations.append(transformation)
+
+        return gufe.AlchemicalNetwork(transformations)
+
+
+    def to_rbfe_alchemical_network(
+        self,
+        solvent: gufe.SolventComponent,
+        protein: gufe.ProteinComponent,
+        protocol: gufe.Protocol,
+        *,
+        autoname: bool = True,
+        autoname_prefix: str = "easy_rbfe",
+        **other_components
+    ):
+        """
+        Parameters
+        ----------
+        protocol: :class:Protocol
+        autoname: bool
+            whether to automatically name objects by the ligand name and
+            state label
+        autoname_prefix: str
+            prefix for the autonaming; only used if autonaming is True
+        other_components:
+            additional non-alchemical components, keyword will be the string
+            label for the component
+        """
+        components = {
+            'protein': protein,
+            'solvent': solvent,
+            **other_components
+        }
+        leg_labels = {
+            "solvent": ["ligand", "solvent"],
+            "complex": ["ligand"] + list(shared_components),
+        }
+        return self._to_rfe_alchemical_network(
+            components=components,
+            leg_labels=leg_labels,
+            protocol=protocol,
+            autoname=autoname,
+            autoname_prefix=autoname_prefix
+        )
+
+    def to_rhfe_alchemical_network(self, *, solvent, protocol,
+                                   autoname=True,
+                                   autoname_prefix="easy_rhfe"):
+        leg_labels = {
+            "solvent": ["ligand", "solvent"],
+            "vacuum": ["ligand"]
+        }
+        return self._to_rfe_alchemical_network(
+            components={"solvent": solvent},
+            leg_lables=leg_lables,
+            protocol=protocol,
+            autoname=autoname,
+            autoname_prefix=autoname_prefix
+        )
 
     def is_connected(self) -> bool:
         """Are all ligands in the network (indirectly) connected to each other
