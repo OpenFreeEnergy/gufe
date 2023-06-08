@@ -359,6 +359,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                 keep_shared: bool = False,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
+                n_retries: int = 0,
                 ) -> ProtocolDAGResult:
     """Locally execute a full ProtocolDAG in-serial, in process.
 
@@ -382,6 +383,8 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         If True, raise an exception if a ProtocolUnit fails, default True
         if False, any exceptions will be stored as `ProtocolUnitFailure`
         objects inside the returned `ProtocolDAGResult`
+    n_retries : int
+        the number of times to attempt, default 0, i.e. try once and only once
 
     Returns
     -------
@@ -389,36 +392,45 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         The result of executing the `ProtocolDAG`.
 
     """
+    if n_retries < 0:
+        raise ValueError("Must give positive number of retries")
+
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
+    all_results = []  # successes AND failures
     shared_paths = []
     for unit in protocoldag.protocol_units:
-
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
-        shared = shared_basedir / f'shared_{str(unit.key)}'
-        shared_paths.append(shared)
-        shared.mkdir()
+        attempt = 0
+        while attempt <= n_retries:
+            shared = shared_basedir / f'shared_{str(unit.key)}_attempt_{attempt}'
+            shared_paths.append(shared)
+            shared.mkdir()
 
-        scratch = scratch_basedir / f'scratch_{str(unit.key)}'
-        scratch.mkdir()
+            scratch = scratch_basedir / f'scratch_{str(unit.key)}_attempt_{attempt}'
+            scratch.mkdir()
 
-        context = Context(shared=shared,
-                          scratch=scratch)
+            context = Context(shared=shared,
+                              scratch=scratch)
 
-        # execute
-        result = unit.execute(
-                context=context,
-                raise_error=raise_error,
-                **inputs)
+            # execute
+            result = unit.execute(
+                    context=context,
+                    raise_error=raise_error,
+                    **inputs)
+            all_results.append(result)
 
-        if not keep_scratch:
-            shutil.rmtree(scratch)
+            if not keep_scratch:
+                shutil.rmtree(scratch)
 
-        # attach result to this `ProtocolUnit`
-        results[unit.key] = result
+            if result.ok():
+                # attach result to this `ProtocolUnit`
+                results[unit.key] = result
+                break
+            attempt += 1
 
         if not result.ok():
             break
@@ -430,7 +442,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     return ProtocolDAGResult(
             name=protocoldag.name, 
             protocol_units=protocoldag.protocol_units, 
-            protocol_unit_results=list(results.values()),
+            protocol_unit_results=all_results,
             transformation_key=protocoldag.transformation_key,
             extends_key=protocoldag.extends_key)
 
