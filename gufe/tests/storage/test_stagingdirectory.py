@@ -1,4 +1,6 @@
 import pytest
+from unittest import mock
+import logging
 
 import os
 import pathlib
@@ -161,7 +163,18 @@ class TestSharedStaging:
         with root_with_contents.external.load_stream(path.label) as f:
             assert f.read() == b"bar"
 
-    def test_transfer_to_external_no_file(self, root):
+    @mock.patch.object(SharedStaging, 'register_path')
+    def test_transfer_to_external_no_file(self, root, caplog):
+        nonfile = root / "does_not_exist.txt"
+        # ensure that we've set this up correctly
+        assert nonfile not in root.registry
+        caplog.set_level(logging.INFO, logger="gufe.storage")
+        root.transfer_single_file_to_external(nonfile)
+        assert len(caplog.records) == 1
+
+
+
+
         ...
 
     def test_tranfer_to_external_directory(self, root):
