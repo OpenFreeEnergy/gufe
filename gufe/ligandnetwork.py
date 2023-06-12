@@ -224,7 +224,8 @@ class LigandNetwork(GufeTokenizable):
                 sysA = sys_from_dict(edge.componentA)
                 sysB = sys_from_dict(edge.componentB)
                 if autoname:
-                    name = f"{autoname_prefix}_{sysA.name}_{sysB.name}"
+                    prefix = f"{autoname_prefix}_" if autoname_prefix else ""
+                    name = f"{prefix}{sysA.name}_{sysB.name}"
                 else:
                     name = ""
 
