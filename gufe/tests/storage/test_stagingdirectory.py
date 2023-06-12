@@ -163,22 +163,30 @@ class TestSharedStaging:
         with root_with_contents.external.load_stream(path.label) as f:
             assert f.read() == b"bar"
 
-    @mock.patch.object(SharedStaging, 'register_path')
     def test_transfer_to_external_no_file(self, root, caplog):
-        nonfile = root / "does_not_exist.txt"
+        with mock.patch.object(root, 'register_path'):
+            nonfile = root / "does_not_exist.txt"
         # ensure that we've set this up correctly
         assert nonfile not in root.registry
-        caplog.set_level(logging.INFO, logger="gufe.storage")
+        logger_name = "gufe.storage.stagingdirectory"
+        caplog.set_level(logging.INFO, logger=logger_name)
         root.transfer_single_file_to_external(nonfile)
         assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert "nonexistent" in record.msg
 
+    def test_transfer_to_external_directory(self, root, caplog):
+        directory = root / "directory"
+        with open(directory / "file.txt", mode='w') as f:
+            f.write("foo")
 
-
-
-        ...
-
-    def test_tranfer_to_external_directory(self, root):
-        ...
+        logger_name = "gufe.storage.stagingdirectory"
+        caplog.set_level(logging.DEBUG, logger=logger_name)
+        root.transfer_single_file_to_external(directory)
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert "Found directory" in record.msg
+        assert "not transfering" in record.msg
 
     def test_existing_local_and_external(self, root):
         ...

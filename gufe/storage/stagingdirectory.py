@@ -177,6 +177,9 @@ class StagingDirectory:
             the path to track
         """
         label_exists = self.external.exists(staging_path.label)
+        fspath = Path(staging_path.__fspath__())
+        if not fspath.parent.exists():
+            fspath.parent.mkdir(parents=True, exist_ok=True)
 
         self.registry.add(staging_path)
 
