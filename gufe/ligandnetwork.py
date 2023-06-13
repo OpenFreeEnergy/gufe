@@ -205,9 +205,9 @@ class LigandNetwork(GufeTokenizable):
         """
         transformations = []
         for edge in self.edges:
-            for leg_name, labels in leg_lables.items():
+            for leg_name, labels in leg_labels.items():
 
-                # define a couple helper funcs to avoid repeated code
+                # define a helper func to avoid repeated code
                 def sys_from_dict(component):
                     syscomps = {alchemical_label: component}
                     syscomps.update({label: components[label]

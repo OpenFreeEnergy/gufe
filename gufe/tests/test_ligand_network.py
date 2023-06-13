@@ -267,6 +267,12 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
     def test_is_not_connected(self, singleton_node_network):
         assert not singleton_node_network.network.is_connected()
 
+    def test_to_rbfe_network(self):
+        pytest.skip()
+
+    def test_to_rhfe_network(self):
+        pytest.skip()
+
 
 def test_empty_ligand_network(mols):
     # issue #217
