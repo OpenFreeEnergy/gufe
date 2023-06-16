@@ -118,7 +118,7 @@ def test_delete_empty_dirs_delete_root(tmp_path, delete_root):
 class TestSharedStaging:
     def test_repr(self, root):
         r = repr(root)
-        assert r.startswith("StagingDirectory")
+        assert r.startswith("SharedStaging")
         assert "MemoryStorage" in r
         assert r.endswith(", new_unit)")
 
@@ -243,6 +243,7 @@ class TestSharedStaging:
         assert old_contents == new_contents
 
     def test_cleanup(self, root_with_contents):
+        root_with_contents.delete_staging = True  # slightly naughty
         path = pathlib.Path(root_with_contents.__fspath__()) / "data.txt"
         assert path.exists()
         root_with_contents.cleanup()
