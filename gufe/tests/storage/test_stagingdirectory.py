@@ -49,6 +49,18 @@ def read_only_with_overwritten(root_with_contents):
 
     return read_only, staged
 
+@pytest.fixture
+def permanent(tmp_path):
+    shared = MemoryStorage()
+    shared.store_bytes("final/old_unit/data.txt", b"foo")
+    perm = PermanentStaging(
+        scratch=tmp_path,
+        external=MemoryStorage(),
+        shared=shared,
+        prefix="final",
+        delete_staging=True
+    )
+    return perm
 
 def test_safe_to_delete_staging_ok(tmp_path):
     external = FileStorage(tmp_path / "foo")
@@ -266,5 +278,16 @@ class TestSharedStaging:
 
 
 class TestPermanentStage:
-    def test_delete_staging_safe(self):
+    def test_delete_staging_safe(self, permanent):
+        ...
+
+    def test_load_missing_for_transfer(self, permanent):
+        fname = pathlib.Path(permanent) / "old_unit/data.txt"
+        assert not fname.exists()
+        staging = permanent / "old_unit/data.txt"
+        assert not fname.exists()
+        assert permanent.external._data == {}
+        permanent.transfer_staging_to_external()
+        assert fname.exists()
+        assert permanent.external._data == {"final/old_unit/data.txt": b"foo"}
         ...
