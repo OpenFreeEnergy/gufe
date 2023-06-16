@@ -30,6 +30,26 @@ def root_with_contents(root):
 
     return root
 
+@pytest.fixture
+def read_only_with_overwritten(root_with_contents):
+    read_only = SharedStaging(
+        scratch=root_with_contents.scratch,
+        external=root_with_contents.external,
+        prefix="old_unit",
+        staging=root_with_contents.staging,
+        delete_staging=root_with_contents.delete_staging,
+        read_only=True
+    )
+    filename = pathlib.Path(read_only) / "data.txt"
+    assert not filename.exists()
+    staged = read_only / "data.txt"
+    assert filename.exists()
+    with open(staged, mode='w') as f:
+        f.write("changed")
+
+    return read_only, staged
+
+
 def test_safe_to_delete_staging_ok(tmp_path):
     external = FileStorage(tmp_path / "foo")
     prefix = "bar"
@@ -188,11 +208,62 @@ class TestSharedStaging:
         assert "Found directory" in record.msg
         assert "not transfering" in record.msg
 
-    def test_existing_local_and_external(self, root):
-        ...
+    def test_single_file_transfer_read_only(self,
+                                            read_only_with_overwritten,
+                                            caplog):
+        read_only, staged = read_only_with_overwritten
+        with read_only.external.load_stream("old_unit/data.txt") as f:
+            old_contents = f.read()
 
-    def test_existing_local_and_external_conflict(self, root):
-        ...
+        assert old_contents == b"foo"
+        logger_name = "gufe.storage.stagingdirectory"
+        caplog.set_level(logging.DEBUG, logger=logger_name)
+        read_only.transfer_single_file_to_external(staged)
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert "Read-only:" in record.msg
+        with read_only.external.load_stream("old_unit/data.txt") as f:
+            new_contents = f.read()
+        assert old_contents == new_contents
 
-    def test_no_transfer_for_read_only(self, root):
+    def test_transfer_read_only(self, read_only_with_overwritten, caplog):
+        read_only, staged = read_only_with_overwritten
+        with read_only.external.load_stream("old_unit/data.txt") as f:
+            old_contents = f.read()
+
+        assert old_contents == b"foo"
+        logger_name = "gufe.storage.stagingdirectory"
+        caplog.set_level(logging.DEBUG, logger=logger_name)
+        read_only.transfer_staging_to_external()
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert "Read-only:" in record.msg
+        with read_only.external.load_stream("old_unit/data.txt") as f:
+            new_contents = f.read()
+        assert old_contents == new_contents
+
+    def test_cleanup(self, root_with_contents):
+        path = pathlib.Path(root_with_contents.__fspath__()) / "data.txt"
+        assert path.exists()
+        root_with_contents.cleanup()
+        assert not path.exists()
+
+    def test_register_cleanup_preexisting_file(self, root):
+        filename = pathlib.Path(root.__fspath__()) / "foo.txt"
+        filename.touch()
+        root.external.store_bytes("new_unit/foo.txt", b"")
+        assert len(root.registry) == 0
+        assert len(root.preexisting) == 0
+        staging = root / "foo.txt"
+        assert staging.label == "new_unit/foo.txt"
+        assert len(root.registry) == 1
+        assert len(root.preexisting) == 1
+
+        assert filename.exists()
+        root.cleanup()
+        assert filename.exists()
+
+
+class TestPermanentStage:
+    def test_delete_staging_safe(self):
         ...

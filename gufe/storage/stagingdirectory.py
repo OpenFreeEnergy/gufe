@@ -210,7 +210,7 @@ class StagingDirectory:
 
     def __repr__(self):
         return (
-            f"StagingDirectory({self.scratch}, {self.external}, "
+            f"{self.__class__.__name__}({self.scratch}, {self.external}, "
             f"{self.prefix})"
         )
 
@@ -286,7 +286,7 @@ class SharedStaging(StagingDirectory):
 
         if self.read_only and not label_exists:
             raise IOError(f"Unable to create '{staging_path.label}'. File "
-                          "does not exist in external storage, and This "
+                          "does not exist in external storage, and this "
                           "staging path is read-only.")
 
         super().register_path(staging_path)
