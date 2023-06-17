@@ -259,6 +259,18 @@ class TestSharedStaging:
         root_with_contents.cleanup()
         assert not path.exists()
 
+    def test_cleanup_missing(self, root, caplog):
+        root.delete_staging = True
+        file = root / "foo.txt"
+        assert file in root.registry
+        assert not pathlib.Path(file).exists()
+        logger_name = "gufe.storage.stagingdirectory"
+        caplog.set_level(logging.WARNING, logger=logger_name)
+        root.cleanup()
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert "can not be found on disk" in record.msg
+
     def test_register_cleanup_preexisting_file(self, root):
         filename = pathlib.Path(root.__fspath__()) / "foo.txt"
         filename.touch()

@@ -153,8 +153,9 @@ class StagingDirectory:
                     _logger.debug(f"Removing file {file}")
                     remove(file)
                 else:
-                    _logger.warning("Request to remove missing file "
-                                    f"{file}")
+                    _logger.warning("During staging cleanup, file "
+                                    f"{file} was marked for deletion, but "
+                                    "can not be found on disk.")
             _delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
