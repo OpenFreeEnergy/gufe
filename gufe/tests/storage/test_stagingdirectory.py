@@ -125,8 +125,6 @@ def test_delete_empty_dirs_delete_root(tmp_path, delete_root):
     assert base.exists() is not delete_root
 
 
-
-
 class TestSharedStaging:
     def test_repr(self, root):
         r = repr(root)
@@ -278,8 +276,18 @@ class TestSharedStaging:
 
 
 class TestPermanentStage:
-    def test_delete_staging_safe(self, permanent):
-        ...
+    @pytest.mark.parametrize('is_safe', [True, False])
+    def test_delete_staging_safe(self, tmp_path, is_safe):
+        staging = ".staging" if is_safe else ""
+        permanent = PermanentStaging(
+            scratch=tmp_path,
+            external=MemoryStorage(),
+            shared=FileStorage(tmp_path),
+            prefix="final",
+            staging=staging,
+            delete_staging=True
+        )
+        assert permanent._delete_staging_safe() is is_safe
 
     def test_load_missing_for_transfer(self, permanent):
         fname = pathlib.Path(permanent) / "old_unit/data.txt"
@@ -290,4 +298,3 @@ class TestPermanentStage:
         permanent.transfer_staging_to_external()
         assert fname.exists()
         assert permanent.external._data == {"final/old_unit/data.txt": b"foo"}
-        ...
