@@ -14,7 +14,7 @@ def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
                             prefix: Union[PathLike, str]) -> bool:
     """Check if deleting ``path`` could delete externally stored data.
 
-    If external storage is a FileStorage, then it will storage files for
+    If external storage is a FileStorage, then it will store files for
     this unit or dag in the directory ``external.root_dir / prefix``, where
     ``prefix`` is either the unit label or the dag label. If ``path`` is
     inside that directory, then deleting it may delete information from the
