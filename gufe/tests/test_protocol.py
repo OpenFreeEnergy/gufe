@@ -670,3 +670,52 @@ class TestProtocolDAGResult:
             dagresult.unit_to_all_results(units[2])
         with pytest.raises(KeyError, match="No such `protocol_unit_result` present"):
             dagresult.result_to_unit(successes[2])
+
+
+def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmpdir):
+    protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
+    dag = protocol.create(
+        stateA=solvated_ligand, stateB=vacuum_ligand, mapping=None,
+    )
+
+    with tmpdir.as_cwd():
+        shared = pathlib.Path('shared')
+        shared.mkdir(parents=True)
+        scratch = pathlib.Path('scratch')
+        scratch.mkdir(parents=True)
+
+        r = execute_DAG(dag,
+                        shared_basedir=shared,
+                        scratch_basedir=scratch,
+                        keep_shared=True,
+                        keep_scratch=True,
+                        raise_error=False,
+                        n_retries=3)
+
+        assert not r.ok()
+        # we did 3 retries, so 4 total failures
+        assert len(r.protocol_unit_results) == 5
+        assert len(r.protocol_unit_failures) == 4
+        assert len(list(shared.iterdir())) == 5
+
+
+def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
+    protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
+    dag = protocol.create(
+        stateA=solvated_ligand, stateB=vacuum_ligand, mapping=None,
+    )
+
+    with tmpdir.as_cwd():
+        shared = pathlib.Path('shared')
+        shared.mkdir(parents=True)
+        scratch = pathlib.Path('scratch')
+        scratch.mkdir(parents=True)
+
+        with pytest.raises(ValueError):
+            r = execute_DAG(dag,
+                            shared_basedir=shared,
+                            scratch_basedir=scratch,
+                            keep_shared=True,
+                            keep_scratch=True,
+                            raise_error=False,
+                            n_retries=-1)
