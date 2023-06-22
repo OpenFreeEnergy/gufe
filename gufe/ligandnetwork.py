@@ -6,6 +6,7 @@ from itertools import chain
 import json
 import networkx as nx
 from typing import FrozenSet, Iterable, Optional
+import gufe
 
 from gufe import SmallMoleculeComponent
 from .mapping import LigandAtomMapping
@@ -186,7 +187,7 @@ class LigandNetwork(GufeTokenizable):
         leg_labels: dict[str, list[str]],
         protocol: gufe.Protocol,
         *,
-        alchemical_label="ligand",
+        alchemical_label: str = "ligand",
         autoname=True,
         autoname_prefix=""
     ) -> gufe.AlchemicalNetwork:
@@ -202,6 +203,9 @@ class LigandNetwork(GufeTokenizable):
             as used in the ``componentns`` dict.
         protocol: :class:`.Protocol`
             the protocol to apply
+        alchemical_label: str
+            the label for the component undergoing an alchemical
+            transformation (default ``'ligand'``)
         """
         transformations = []
         for edge in self.edges:
@@ -229,10 +233,12 @@ class LigandNetwork(GufeTokenizable):
                 else:
                     name = ""
 
-                mapping = {alchemical_label: edge.mapping}
+                mapping: dict[str, gufe.ComponentMapping] = {
+                    alchemical_label: edge,
+                }
 
-                transformation = Transformation(sysA, sysB, protocol,
-                                                mapping, name)
+                transformation = gufe.Transformation(sysA, sysB, protocol,
+                                                     mapping, name)
 
                 transformations.append(transformation)
 
@@ -269,7 +275,7 @@ class LigandNetwork(GufeTokenizable):
         }
         leg_labels = {
             "solvent": ["ligand", "solvent"],
-            "complex": ["ligand"] + list(shared_components),
+            "complex": ["ligand"] + list(other_components),
         }
         return self._to_rfe_alchemical_network(
             components=components,
