@@ -157,7 +157,7 @@ class TestSharedStaging:
 
         # when we create the specific StagingPath, it registers and
         # "downloads" the file
-        old_staging = root.get_other_shared("old_unit")
+        old_staging = root._get_other_shared("old_unit")
         filepath = old_staging / "data.txt"
         assert pathlib.Path(filepath) == on_filesystem
         assert on_filesystem.exists()
@@ -179,7 +179,7 @@ class TestSharedStaging:
         assert not root.external.exists(label)
 
     def test_write_old_fail(self, root):
-        old_staging = root.get_other_shared("old_unit")
+        old_staging = root._get_other_shared("old_unit")
         with pytest.raises(IOError, match="read-only"):
             old_staging / "foo.txt"
 

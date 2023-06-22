@@ -240,7 +240,7 @@ class SharedStaging(StagingDirectory):
                          delete_staging=delete_staging)
         self.read_only = read_only
 
-    def get_other_shared(self, prefix: str,
+    def _get_other_shared(self, prefix: str,
                          delete_staging: Optional[bool] = None):
         """Get a related unit's staging directory.
         """
@@ -264,7 +264,7 @@ class SharedStaging(StagingDirectory):
         This is usually the recommended way to get a previous unit's shared
         data.
         """
-        other = self.get_other_shared(prefix, delete_staging)
+        other = self._get_other_shared(prefix, delete_staging)
         yield other
         other.cleanup()
 
