@@ -213,12 +213,17 @@ class LigandNetwork(GufeTokenizable):
 
                 # define a helper func to avoid repeated code
                 def sys_from_dict(component):
+                    """
+                    Input component alchemically changing. Other info taken
+                    from the outer scope.
+                    """
                     syscomps = {alchemical_label: component}
+                    other_labels = set(labels) - {alchemical_label}
                     syscomps.update({label: components[label]
-                                     for label in labels})
+                                     for label in other_labels})
 
                     if autoname:
-                        name = f"{sys[alchemical_label].name}_{leg_name}"
+                        name = f"{component.name}_{leg_name}"
                     else:
                         name = ""
 
@@ -275,7 +280,8 @@ class LigandNetwork(GufeTokenizable):
         }
         leg_labels = {
             "solvent": ["ligand", "solvent"],
-            "complex": ["ligand"] + list(other_components),
+            "complex": (["ligand", "solvent", "protein"]
+                        + list(other_components)),
         }
         return self._to_rfe_alchemical_network(
             components=components,
@@ -287,14 +293,15 @@ class LigandNetwork(GufeTokenizable):
 
     def to_rhfe_alchemical_network(self, *, solvent, protocol,
                                    autoname=True,
-                                   autoname_prefix="easy_rhfe"):
+                                   autoname_prefix="easy_rhfe",
+                                   **other_components):
         leg_labels = {
-            "solvent": ["ligand", "solvent"],
-            "vacuum": ["ligand"]
+            "solvent": ["ligand", "solvent"] + list(other_components),
+            "vacuum": ["ligand"] + list(other_components),
         }
         return self._to_rfe_alchemical_network(
-            components={"solvent": solvent},
-            leg_lables=leg_lables,
+            components={"solvent": solvent, **other_components},
+            leg_labels=leg_labels,
             protocol=protocol,
             autoname=autoname,
             autoname_prefix=autoname_prefix
