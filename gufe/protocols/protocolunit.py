@@ -142,12 +142,12 @@ class ProtocolUnitResult(GufeTokenizable):
         return True
 
     @property
-    def start_time(self) -> datetime.datetime:
+    def start_time(self) -> Optional[datetime.datetime]:
         """The time execution of this Unit began"""
         return self._start_time
 
     @property
-    def end_time(self) -> datetime.datetime:
+    def end_time(self) -> Optional[datetime.datetime]:
         """The time at which execution of this Unit finished"""
         return self._end_time
 
