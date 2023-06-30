@@ -155,8 +155,19 @@ class ProtocolUnitResult(GufeTokenizable):
 class ProtocolUnitFailure(ProtocolUnitResult):
     """Failed result for a single `ProtocolUnit` execution."""
 
-    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback,
-                 start_time: datetime.datetime, end_time: datetime.datetime):
+    def __init__(
+            self,
+            *,
+            name=None,
+            source_key,
+            inputs,
+            outputs,
+            _key=None,
+            exception,
+            traceback,
+            start_time: Optional[datetime.datetime] = None,
+            end_time: Optional[datetime.datetime] = None,
+        ):
         """
         Parameters
         ----------
