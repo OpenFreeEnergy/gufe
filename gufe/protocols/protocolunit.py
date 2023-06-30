@@ -56,8 +56,8 @@ class ProtocolUnitResult(GufeTokenizable):
             source_key: GufeKey,
             inputs: Dict[str, Any],
             outputs: Dict[str, Any],
-            start_time: datetime.datetime,
-            end_time: datetime.datetime,
+            start_time: Optional[datetime.datetime] = None,
+            end_time: Optional[datetime.datetime] = None,
         ):
         """Generate a `ProtocolUnitResult`.
 
