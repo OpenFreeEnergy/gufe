@@ -56,8 +56,8 @@ class ProtocolUnitResult(GufeTokenizable):
             source_key: GufeKey,
             inputs: Dict[str, Any],
             outputs: Dict[str, Any],
-            start_time: datetime.datetime,
-            end_time: datetime.datetime,
+            start_time: Optional[datetime.datetime] = None,
+            end_time: Optional[datetime.datetime] = None,
         ):
         """Generate a `ProtocolUnitResult`.
 
@@ -142,12 +142,12 @@ class ProtocolUnitResult(GufeTokenizable):
         return True
 
     @property
-    def start_time(self) -> datetime.datetime:
+    def start_time(self) -> Optional[datetime.datetime]:
         """The time execution of this Unit began"""
         return self._start_time
 
     @property
-    def end_time(self) -> datetime.datetime:
+    def end_time(self) -> Optional[datetime.datetime]:
         """The time at which execution of this Unit finished"""
         return self._end_time
 
@@ -155,8 +155,19 @@ class ProtocolUnitResult(GufeTokenizable):
 class ProtocolUnitFailure(ProtocolUnitResult):
     """Failed result for a single `ProtocolUnit` execution."""
 
-    def __init__(self, *, name=None, source_key, inputs, outputs, _key=None, exception, traceback,
-                 start_time: datetime.datetime, end_time: datetime.datetime):
+    def __init__(
+            self,
+            *,
+            name=None,
+            source_key,
+            inputs,
+            outputs,
+            _key=None,
+            exception,
+            traceback,
+            start_time: Optional[datetime.datetime] = None,
+            end_time: Optional[datetime.datetime] = None,
+        ):
         """
         Parameters
         ----------
