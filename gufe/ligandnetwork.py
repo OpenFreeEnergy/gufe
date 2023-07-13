@@ -291,21 +291,23 @@ class LigandNetwork(GufeTokenizable):
             autoname_prefix=autoname_prefix
         )
 
-    def to_rhfe_alchemical_network(self, *, solvent, protocol,
-                                   autoname=True,
-                                   autoname_prefix="easy_rhfe",
-                                   **other_components):
-        leg_labels = {
-            "solvent": ["ligand", "solvent"] + list(other_components),
-            "vacuum": ["ligand"] + list(other_components),
-        }
-        return self._to_rfe_alchemical_network(
-            components={"solvent": solvent, **other_components},
-            leg_labels=leg_labels,
-            protocol=protocol,
-            autoname=autoname,
-            autoname_prefix=autoname_prefix
-        )
+    # on hold until we figure out how to best hack in the PME/NoCutoff
+    # switch
+    # def to_rhfe_alchemical_network(self, *, solvent, protocol,
+    #                                autoname=True,
+    #                                autoname_prefix="easy_rhfe",
+    #                                **other_components):
+    #     leg_labels = {
+    #         "solvent": ["ligand", "solvent"] + list(other_components),
+    #         "vacuum": ["ligand"] + list(other_components),
+    #     }
+    #     return self._to_rfe_alchemical_network(
+    #         components={"solvent": solvent, **other_components},
+    #         leg_labels=leg_labels,
+    #         protocol=protocol,
+    #         autoname=autoname,
+    #         autoname_prefix=autoname_prefix
+    #     )
 
     def is_connected(self) -> bool:
         """Are all ligands in the network (indirectly) connected to each other
