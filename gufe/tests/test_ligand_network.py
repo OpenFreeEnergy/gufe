@@ -357,6 +357,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         pytest.skip()
 
 
+    @pytest.mark.xfail  # method removed and on hold for now
     def test_to_rhfe_alchemical_network(self, real_molecules_network,
                                         solv_comp):
 
