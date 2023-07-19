@@ -169,7 +169,7 @@ class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.
-    Technically a self-loop, or an edge with the same `ChemicalSystem` at
+    Technically a self-loop, or an edge with the same ``ChemicalSystem`` at
     either end.
 
     Functionally used for applying a dynamics protocol to a ``ChemicalSystem``
