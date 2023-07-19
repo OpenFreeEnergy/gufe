@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Optional, Iterable, Dict
+from typing import Optional, Iterable
 import json
 
 from ..tokenization import GufeTokenizable, JSON_HANDLER
@@ -64,7 +64,7 @@ class Transformation(GufeTokenizable):
         return self._protocol
 
     @property
-    def mapping(self) -> Optional[Dict[str, ComponentMapping]]:
+    def mapping(self) -> Optional[dict[str, ComponentMapping]]:
         """
         Mapping of e.g. atoms between ``stateA`` and ``stateB``.
         """
