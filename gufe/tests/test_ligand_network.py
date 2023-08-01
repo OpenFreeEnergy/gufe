@@ -348,14 +348,44 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert edge.mapping['ligand'] in real_molecules_network.edges
 
 
-    def test_to_rbfe_alchemical_network_autoname(
+    def test_to_rbfe_alchemical_network_autoname_false(
         self,
         real_molecules_network,
         prot_comp,
         solv_comp
     ):
-        pytest.skip()
+        rbfe = real_molecules_network.to_rbfe_alchemical_network(
+            solvent=solv_comp,
+            protein=prot_comp,
+            protocol=DummyProtocol(DummyProtocol.default_settings()),
+            autoname=False,
+        )
+        for edge in rbfe.edges:
+            assert edge.name == ""
+            for sys in [edge.stateA, edge.stateB]:
+                assert sys.name == ""
 
+    def test_to_rbfe_alchemical_network_autoname_true(
+        self,
+        real_molecules_network,
+        prot_comp,
+        solv_comp
+    ):
+        rbfe = real_molecules_network.to_rbfe_alchemical_network(
+            solvent=solv_comp,
+            protein=prot_comp,
+            protocol=DummyProtocol(DummyProtocol.default_settings()),
+            autoname=True,
+            autoname_prefix="",
+        )
+        expected_names = {
+            'benzene_complex_toluene_complex',
+            'benzene_solvent_toluene_solvent',
+            'benzene_complex_phenol_complex',
+            'benzene_solvent_phenol_solvent',
+        }
+        names = set(edge.name for edge in rbfe.edges)
+        assert names == expected_names
 
     @pytest.mark.xfail  # method removed and on hold for now
     def test_to_rhfe_alchemical_network(self, real_molecules_network,
