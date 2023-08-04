@@ -260,3 +260,9 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
     def test_from_graphml(self, simple_network, ligandnetwork_graphml):
         assert LigandNetwork.from_graphml(ligandnetwork_graphml) == simple_network.network
+
+    def test_is_connected(self, simple_network):
+        assert simple_network.network.is_connected()
+
+    def test_is_not_connected(self, singleton_node_network):
+        assert not singleton_node_network.network.is_connected()

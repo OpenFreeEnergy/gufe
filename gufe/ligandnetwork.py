@@ -46,7 +46,7 @@ class LigandNetwork(GufeTokenizable):
         return cls.from_graphml(dct['graphml'])
 
     @property
-    def graph(self) -> nx.Graph:
+    def graph(self) -> nx.MultiDiGraph:
         """NetworkX graph for this network"""
         if self._graph is None:
             graph = nx.MultiDiGraph()
@@ -178,3 +178,11 @@ class LigandNetwork(GufeTokenizable):
             nodes = set([])
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
+
+    def is_connected(self) -> bool:
+        """Are all ligands in the network (indirectly) connected to each other
+
+        A "False" value indicates that either some ligands have no edges or that
+        there are separate networks that do not link to each other.
+        """
+        return nx.is_weakly_connected(self.graph)
