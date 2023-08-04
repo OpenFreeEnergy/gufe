@@ -12,23 +12,6 @@ from ..custom_typing import RDKitMol
 from .explicitmoleculecomponent import ExplicitMoleculeComponent, _mol_from_dict
 
 
-from ..molhashing import deserialize_numpy, serialize_numpy
-
-
-_BONDORDERS_OPENMM_TO_RDKIT = {
-    1: BondType.SINGLE,
-    2: BondType.DOUBLE,
-    3: BondType.TRIPLE,
-    app.Single: BondType.SINGLE,
-    app.Double: BondType.DOUBLE,
-    app.Triple: BondType.TRIPLE,
-    app.Aromatic: BondType.AROMATIC,
-    None: BondType.UNSPECIFIED,
-}
-_BONDORDERS_RDKIT_TO_OPENMM = {
-    v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
-}
-
 # builtin dict of strings to enum members, boy I hope this is stable
 _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
 _BONDORDER_RDKIT_TO_STR = {v: k for k, v in _BONDORDER_STR_TO_RDKIT.items()}
@@ -149,6 +132,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         """
         from openmm import app
 
+        BONDORDERS_RDKIT_TO_OPENMM = {
+            Chem.BondType.SINGLE: app.Single,
+            Chem.BondType.DOUBLE: app.Double,
+            Chem.BondType.TRIPLE: app.Triple,
+            Chem.BondType.AROMATIC: app.Aromatic,
+            Chem.BondType.UNSPECIFIED: None,
+        }
+
         def reskey(m):
             """key for defining when a residue has changed from previous
 
@@ -211,7 +202,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             top.addBond(a1, a2,
-                        order=_BONDORDERS_RDKIT_TO_OPENMM.get(
+                        order=BONDORDERS_RDKIT_TO_OPENMM.get(
                             bond.GetBondType(), None))
 
         return top
