@@ -322,6 +322,9 @@ class ProtocolUnit(GufeTokenizable):
                 start_time=start, end_time=datetime.datetime.now(),
             )
 
+        except KeyboardInterrupt:
+            # if we "fail" due to a KeyboardInterrupt, we always want to raise
+            raise
         except Exception as e:
             if raise_error:
                 raise
