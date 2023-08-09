@@ -5,78 +5,13 @@ import logging
 # openff complains about oechem being missing, shhh
 logger = logging.getLogger('openff.toolkit')
 logger.setLevel(logging.ERROR)
-from typing import Any
 
 from rdkit import Chem
 
-from .explicitmoleculecomponent import ExplicitMoleculeComponent
-from ..molhashing import deserialize_numpy, serialize_numpy
-
-
-_INT_TO_ATOMCHIRAL = {
-    0: Chem.rdchem.ChiralType.CHI_UNSPECIFIED,
-    1: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW,
-    2: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW,
-    3: Chem.rdchem.ChiralType.CHI_OTHER,
-}
-# support for non-tetrahedral stereo requires rdkit 2022.09.1+
-if hasattr(Chem.rdchem.ChiralType, 'CHI_TETRAHEDRAL'):
-    _INT_TO_ATOMCHIRAL.update({
-        4: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL,
-        5: Chem.rdchem.ChiralType.CHI_ALLENE,
-        6: Chem.rdchem.ChiralType.CHI_SQUAREPLANAR,
-        7: Chem.rdchem.ChiralType.CHI_TRIGONALBIPYRAMIDAL,
-        8: Chem.rdchem.ChiralType.CHI_OCTAHEDRAL,
-    })
-_ATOMCHIRAL_TO_INT = {v: k for k, v in _INT_TO_ATOMCHIRAL.items()}
-
-
-_INT_TO_BONDTYPE = {
-    0: Chem.rdchem.BondType.UNSPECIFIED,
-    1: Chem.rdchem.BondType.SINGLE,
-    2: Chem.rdchem.BondType.DOUBLE,
-    3: Chem.rdchem.BondType.TRIPLE,
-    4: Chem.rdchem.BondType.QUADRUPLE,
-    5: Chem.rdchem.BondType.QUINTUPLE,
-    6: Chem.rdchem.BondType.HEXTUPLE,
-    7: Chem.rdchem.BondType.ONEANDAHALF,
-    8: Chem.rdchem.BondType.TWOANDAHALF,
-    9: Chem.rdchem.BondType.THREEANDAHALF,
-    10: Chem.rdchem.BondType.FOURANDAHALF,
-    11: Chem.rdchem.BondType.FIVEANDAHALF,
-    12: Chem.rdchem.BondType.AROMATIC,
-    13: Chem.rdchem.BondType.IONIC,
-    14: Chem.rdchem.BondType.HYDROGEN,
-    15: Chem.rdchem.BondType.THREECENTER,
-    16: Chem.rdchem.BondType.DATIVEONE,
-    17: Chem.rdchem.BondType.DATIVE,
-    18: Chem.rdchem.BondType.DATIVEL,
-    19: Chem.rdchem.BondType.DATIVER,
-    20: Chem.rdchem.BondType.OTHER,
-    21: Chem.rdchem.BondType.ZERO}
-_BONDTYPE_TO_INT = {v: k for k, v in _INT_TO_BONDTYPE.items()}
-_INT_TO_BONDSTEREO = {
-    0: Chem.rdchem.BondStereo.STEREONONE,
-    1: Chem.rdchem.BondStereo.STEREOANY,
-    2: Chem.rdchem.BondStereo.STEREOZ,
-    3: Chem.rdchem.BondStereo.STEREOE,
-    4: Chem.rdchem.BondStereo.STEREOCIS,
-    5: Chem.rdchem.BondStereo.STEREOTRANS}
-_BONDSTEREO_TO_INT = {v: k for k, v in _INT_TO_BONDSTEREO.items()}
-
-
-def _setprops(obj, d: dict) -> None:
-    # add props onto rdkit "obj" (atom/bond/mol/conformer)
-    # props are guaranteed one of Bool, Int, Float or String type
-    for k, v in d.items():
-        if isinstance(v, bool):
-            obj.SetBoolProp(k, v)
-        elif isinstance(v, int):
-            obj.SetIntProp(k, v)
-        elif isinstance(v, float):
-            obj.SetDoubleProp(k, v)
-        else:  # isinstance(v, str):
-            obj.SetProp(k, v)
+from .explicitmoleculecomponent import (
+    ExplicitMoleculeComponent,
+    _mol_to_dict, _mol_from_dict,
+)
 
 
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
@@ -106,6 +41,14 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     name : str, optional
         A human readable tag for this molecule.  This name will be used in the hash.
     """
+    @classmethod
+    def _from_dict(cls, d: dict):
+        m = _mol_from_dict(d)
+
+        return cls(rdkit=m)
+
+    def _to_dict(self) -> dict:
+        return _mol_to_dict(self._rdkit)
 
     def to_sdf(self) -> str:
         """Create a string based on SDF.
@@ -192,75 +135,3 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     def from_openff(cls, openff, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
         return cls(openff.to_rdkit(), name=name)
-
-    def _to_dict(self) -> dict:
-        """Serialize to dict representation"""
-        # in a perfect world we'd use ToBinary()
-        # but this format slowly evolves, so the future hash of a SMC could change if rdkit were updated
-        # this is based on that method, with some irrelevant fields cut out
-
-        output: dict[str, Any] = {}
-
-        atoms = []
-        for atom in self._rdkit.GetAtoms():
-            atoms.append((
-                atom.GetAtomicNum(), atom.GetIsotope(), atom.GetFormalCharge(), atom.GetIsAromatic(),
-                _ATOMCHIRAL_TO_INT[atom.GetChiralTag()], atom.GetAtomMapNum(),
-                atom.GetPropsAsDict(includePrivate=False),
-            ))
-        output['atoms'] = atoms
-
-        bonds = []
-        for bond in self._rdkit.GetBonds():
-            bonds.append((
-                bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), _BONDTYPE_TO_INT[bond.GetBondType()],
-                _BONDSTEREO_TO_INT[bond.GetStereo()],
-                bond.GetPropsAsDict(includePrivate=False)
-            ))
-        output['bonds'] = bonds
-
-        conf = self._rdkit.GetConformer()
-        output['conformer'] = (serialize_numpy(conf.GetPositions()), conf.GetPropsAsDict(includePrivate=False))
-
-        output['molprops'] = self._rdkit.GetPropsAsDict(includePrivate=False)
-
-        return output
-
-    @classmethod
-    def _from_dict(cls, d: dict):
-        """Deserialize from dict representation"""
-        m = Chem.Mol()
-        em = Chem.EditableMol(m)
-
-        for atom in d['atoms']:
-            a = Chem.Atom(atom[0])
-            a.SetIsotope(atom[1])
-            a.SetFormalCharge(atom[2])
-            a.SetIsAromatic(atom[3])
-            a.SetChiralTag(_INT_TO_ATOMCHIRAL[atom[4]])
-            a.SetAtomMapNum(atom[5])
-            _setprops(a, atom[6])
-            em.AddAtom(a)
-
-        for bond in d['bonds']:
-            em.AddBond(bond[0], bond[1], _INT_TO_BONDTYPE[bond[2]])
-            # other fields are applied onto the ROMol
-
-        m = em.GetMol()
-
-        for bond, b in zip(d['bonds'], m.GetBonds()):
-            b.SetStereo(_INT_TO_BONDSTEREO[bond[3]])
-            _setprops(b, bond[4])
-
-        pos = deserialize_numpy(d['conformer'][0])
-        c = Chem.Conformer(m.GetNumAtoms())
-        for i, p in enumerate(pos):
-            c.SetAtomPosition(i, p)
-        _setprops(c, d['conformer'][1])
-        m.AddConformer(c)
-
-        _setprops(m, d['molprops'])
-
-        m.UpdatePropertyCache()
-
-        return cls(rdkit=m)
