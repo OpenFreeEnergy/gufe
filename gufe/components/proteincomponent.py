@@ -11,27 +11,16 @@ from rdkit import Chem
 from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
 
 from ..custom_typing import RDKitMol
-from .explicitmoleculecomponent import ExplicitMoleculeComponent
+from .explicitmoleculecomponent import (
+    ExplicitMoleculeComponent,
+    _mol_from_dict, _mol_to_dict,
+)
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
 
 
 from ..molhashing import deserialize_numpy, serialize_numpy
 
-
-_BONDORDERS_OPENMM_TO_RDKIT = {
-    1: BondType.SINGLE,
-    2: BondType.DOUBLE,
-    3: BondType.TRIPLE,
-    app.Single: BondType.SINGLE,
-    app.Double: BondType.DOUBLE,
-    app.Triple: BondType.TRIPLE,
-    app.Aromatic: BondType.AROMATIC,
-    None: BondType.UNSPECIFIED,
-}
-_BONDORDERS_RDKIT_TO_OPENMM = {
-    v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
-}
 
 # builtin dict of strings to enum members, boy I hope this is stable
 _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
@@ -123,65 +112,27 @@ class ProteinComponent(ExplicitMoleculeComponent):
         )
 
     @classmethod
-    def _from_dict(cls, ser_dict: dict, name: str = ""):
+    def _from_dict(cls, ser_dict: dict):
         """Deserialize from dict representation"""
+        monomer_infos = ser_dict.pop('monomer_info')
 
-        # Mol
-        rd_mol = Mol()
-        editable_rdmol = EditableMol(rd_mol)
+        m = _mol_from_dict(ser_dict)
 
-        # Add Atoms
-        for atom in ser_dict["atoms"]:
-            atomic_num = int(atom[0])
-
-            a = Atom(atomic_num)
+        for atom, info in zip(m.GetAtoms(), monomer_infos):
             mi = Chem.AtomPDBResidueInfo()
 
-            mi.SetChainId(atom[1])
-            mi.SetSerialNumber(atom[2])
-            mi.SetSegmentNumber(atom[3])
-            mi.SetInsertionCode(atom[4])
-            mi.SetName(atom[5])
-            mi.SetResidueName(atom[6])
-            mi.SetResidueNumber(int(atom[7]))
-            mi.SetIsHeteroAtom(atom[8] == 'Y')
-            a.SetFormalCharge(atom[9])
+            mi.SetChainId(mi[0])
+            mi.SetSerialNumber(mi[1])
+            mi.SetSegmentNumber(mi[2])
+            mi.SetInsertionCode(mi[3])
+            mi.SetName(mi[4])
+            mi.SetResidueName(mi[5])
+            mi.SetResidueNumber(mi[6])
+            mi.SetIsHeteroAtom(mi[7] == 'Y')
 
-            a.SetMonomerInfo(mi)
+            atom.SetMonomerInfo(mi)
 
-            editable_rdmol.AddAtom(a)
-
-        # Add Bonds
-        for bond in ser_dict["bonds"]:
-            atomBeginIdx = int(bond[0])
-            atomEndIdx = int(bond[1])
-            bondType = _BONDORDER_STR_TO_RDKIT[bond[2]]
-            editable_rdmol.AddBond(
-                beginAtomIdx=atomBeginIdx,
-                endAtomIdx=atomEndIdx,
-                order=bondType,
-            )
-
-        # Set Positions
-        rd_mol = editable_rdmol.GetMol()
-        positions = ser_dict["conformers"]
-        for i, frame_pos in enumerate(positions):
-            frame_pos = deserialize_numpy(frame_pos)
-            conf = Conformer(i)
-            for atom_id, atom_pos in enumerate(frame_pos):
-                conf.SetAtomPosition(atom_id, atom_pos)  # unit: nm
-            rd_mol.AddConformer(conf)
-
-        # Adding missing bond info
-        for bond_id, bond in enumerate(rd_mol.GetBonds()):
-            # Can't set these on an editable mol, go round a second time
-            _, _, _, arom = ser_dict["bonds"][bond_id]
-            bond.SetIsAromatic(arom == 'Y')
-
-        if "name" in ser_dict:
-            name = ser_dict["name"]
-
-        return cls(rdkit=rd_mol, name=name)
+        return cls(rdkit=m)
 
     def to_openmm_topology(self) -> "app.Topology":
         """Convert to an openmm Topology object
@@ -192,6 +143,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
             resulting topology obj.
         """
         from openmm import app
+
+        BONDORDERS_RDKIT_TO_OPENMM = {
+            BondType.SINGLE: app.Single,
+            BondType.DOUBLE: app.Double,
+            BondType.TRIPLE: app.Triple,
+            BondType.AROMATIC: app.Aromatic,
+            BondType.UNSPECIFIED: None,
+        }
 
         def reskey(m):
             """key for defining when a residue has changed from previous
@@ -255,7 +214,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             top.addBond(a1, a2,
-                        order=_BONDORDERS_RDKIT_TO_OPENMM.get(
+                        order=BONDORDERS_RDKIT_TO_OPENMM.get(
                             bond.GetBondType(), None))
 
         return top
@@ -372,15 +331,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     def _to_dict(self) -> dict:
         """Serialize to dict representation"""
+        d = _mol_to_dict(self._rdkit)
 
-        atoms = []
+        monomer_infos = []
         for atom in self._rdkit.GetAtoms():
             mi = atom.GetMonomerInfo()
 
-            # TODO: Stereo?
-            atoms.append(
-                (
-                    atom.GetAtomicNum(),
+            monomer_infos.append((
                     mi.GetChainId(),
                     mi.GetSerialNumber(),
                     mi.GetSegmentNumber(),
@@ -389,32 +346,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     mi.GetResidueName(),
                     mi.GetResidueNumber(),
                     'Y' if mi.GetIsHeteroAtom() else 'N',
-                    atom.GetFormalCharge(),
-                )
-            )
+            ))
 
-        bonds = [
-            (
-                bond.GetBeginAtomIdx(),
-                bond.GetEndAtomIdx(),
-                _BONDORDER_RDKIT_TO_STR[bond.GetBondType()],
-                'Y' if bond.GetIsAromatic() else 'N',
-                # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
-            )
-            for bond in self._rdkit.GetBonds()
-        ]
-
-        conformers = [
-            serialize_numpy(conf.GetPositions())  # .m_as(unit.angstrom)
-            for conf in self._rdkit.GetConformers()
-        ]
-
-        # Result
-        d = {
-            "atoms": atoms,
-            "bonds": bonds,
-            "name": self.name,
-            "conformers": conformers,
-        }
+        d['monomer_info'] = monomer_infos
 
         return d
