@@ -4,8 +4,8 @@
 import importlib.resources
 import urllib.request
 from urllib.error import URLError
-import io
 import functools
+import pooch
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -20,58 +20,42 @@ except URLError:
 else:
     HAS_INTERNET = True
 
+PLB_files = pooch.create(
+    path=pooch.os_cache('pdbinf'),
+    base_url='https://github.com/openforcefield/protein-ligand-benchmark/raw/d3387602bbeb0167abf00dfb81753d8936775dd2/data/',
+    version=None,
+    registry={
+        'p38/01_protein/crd/protein.pdb': '3f0bf718644e7c29f5200cd3def4240ac25ef5fb1948b2e64deb5015d8a45aa4',
+        'mcl1/01_protein/crd/protein.pdb': 'f80ff9dd93a5d9dd6e90091e9631a8ce7fe0dc931e16543e22c1f92009660306',
+        'cdk2/01_protein/crd/protein.pdb': '15d1e509d7951ca45ea266d51a627d5f452dcf0bb5bd48751ae57eb29e28ab69',
+        'shp2/01_protein/crd/protein.pdb': 'd6759cbd135aaddaa658446064df4095d978d3681c014a0528b542d60b2c8770',
+        'pde2/01_protein/crd/protein.pdb': '3b7967c1717789215452cdf919520625602d5438a9d2a18620726b8b1b3a8ef0',
+        'cmet/01_protein/crd/protein.pdb': '155ec32941a9082dbdbbfde460ff97c88d4fe7e100e9a9577edb5a9e7b6467ae',
+        'ptp1b/01_protein/crd/protein.pdb': 'bfa0f9204e96aa463b80946b788c4153cd24701291007eb77638a16fd156634e',
+        'thrombin/01_protein/crd/protein.pdb': 'eb4ea18bef9c4c71dcdc922616d6719ee918112be87a0bd6b274c856eff1dd59',
+        'cdk8/01_protein/crd/protein.pdb': 'b058774526a19775d8f438b14e9d6da331b6de74e0ef9e96db575f6c0bb067b2',
+        'pfkfb3/01_protein/crd/protein.pdb': '4367710db0dbf284cc715ae9a8dd82d06bd77dcc3fb0885678e16632a2732dcc',
+        'tyk2/01_protein/crd/protein.pdb': '9090684f4bdae90afbe5f2698a14c778396c024c19ceb6333de4808d9e29fae6',
+        'syk/01_protein/crd/protein.pdb': 'f6199d0c1818eb5bb24e164426789cf39cae7aa32c8ca2e98f5f44d299a6f82f',
+        'tnks2/01_protein/crd/protein.pdb': 'fc7681a05dbf07590aa8de133f981b6d8ae9cebcc23d54addc2c4fe80be80299',
+        'eg5/01_protein/crd/protein.pdb': 'f2964a785c922502dc86fb4e2e5295d32d41d5b68b8c3246e989de5234c3fd0f',
+        'hif2a/01_protein/crd/protein.pdb': '5bbf520e7c102a65cc7ba0253fd66f43562f77284c82b3b9613e997b7ac76c93',
 
-class URLFileLike:
-    def __init__(self, url, encoding='utf-8'):
-        self.url = url
-        self.encoding = encoding
-        self.data = None
-
-    def __call__(self):
-        if not HAS_INTERNET:  # pragma: no-cover
-            pytest.skip("Skipping because internet seems faulty")
-
-        if self.data is None:
-            req = urllib.request.urlopen(self.url)
-            self.data = req.read().decode(self.encoding)
-
-        return io.StringIO(self.data)
-
-
-def get_test_filename(filename):
-    with importlib.resources.path('gufe.tests.data', filename) as file:
-        return str(file)
-
-
-_benchmark_pdb_names = [
-        "cmet_protein",
-        "hif2a_protein",
-        "mcl1_protein",
-        "p38_protein",
-        "ptp1b_protein",
-        "syk_protein",
-        "thrombin_protein",
-        "tnsk2_protein",
-        "tyk2_protein",
-        ]
-
-
-_pl_benchmark_url_pattern = (
-    "https://github.com/OpenFreeEnergy/openfe-benchmarks/blob/main/openfe_benchmarks/data/{name}.pdb?raw=true"
+    },
 )
 
 
-PDB_BENCHMARK_LOADERS = {
-    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name))
-    for name in _benchmark_pdb_names
-}
-
-PDB_FILE_LOADERS = {
-    name: lambda: get_test_filename(name)
-    for name in ["181l.pdb"]
-}
-
-ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
+@pytest.fixture(params=['p38', 'mcl1', 'cdk2', 'shp2', 'pde2', 'cmet', 'ptp1b',
+                        'thrombin', 'cdk8', 'pfkfb3', 'tyk2', 'syk', 'tnks2',
+                        'eg5', 'hif2a', '181l'])
+def PDB_files(request):
+    if request.param == '181l':
+        with importlib.resources.path('gufe.tests.data', '181l.pdb') as file:
+            return str(file)
+    else:
+        if not HAS_INTERNET:  # pragma: no-cover
+            pytest.skip("Skipping because internet seems faulty")
+        return PLB_files.fetch('{}/01_protein/crd/protein.pdb'.format(request.param))
 
 
 @pytest.fixture
