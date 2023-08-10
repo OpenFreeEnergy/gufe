@@ -121,14 +121,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for atom, info in zip(m.GetAtoms(), monomer_infos):
             mi = Chem.AtomPDBResidueInfo()
 
-            mi.SetChainId(mi[0])
-            mi.SetSerialNumber(mi[1])
-            mi.SetSegmentNumber(mi[2])
-            mi.SetInsertionCode(mi[3])
-            mi.SetName(mi[4])
-            mi.SetResidueName(mi[5])
-            mi.SetResidueNumber(mi[6])
-            mi.SetIsHeteroAtom(mi[7] == 'Y')
+            mi.SetChainId(info[0])
+            mi.SetSerialNumber(info[1])
+            mi.SetSegmentNumber(info[2])
+            mi.SetInsertionCode(info[3])
+            mi.SetName(info[4])
+            mi.SetResidueName(info[5])
+            mi.SetResidueNumber(info[6])
+            mi.SetIsHeteroAtom(info[7] == 'Y')
 
             atom.SetMonomerInfo(mi)
 
