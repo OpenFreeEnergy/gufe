@@ -150,7 +150,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def __hash__(self):
         return hash(self.key)
 
-
     def _gufe_tokenize(self):
         """Return a list of normalized inputs for `gufe.base.tokenize`.
 
