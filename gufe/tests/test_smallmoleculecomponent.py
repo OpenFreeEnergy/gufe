@@ -5,6 +5,7 @@ import importlib
 import importlib.resources
 try:
     import openff.toolkit.topology
+    from openff.units import unit
 except ImportError:
     HAS_OFFTK = False
 else:
@@ -196,6 +197,39 @@ class TestSmallMoleculeComponentConversion:
         off_ethane = named_ethane.to_openff()
 
         assert off_ethane.name == 'ethane'
+
+
+@pytest.mark.skipif(not HAS_OFFTK, reason="no openff tookit available")
+class TestSmallMoleculeComponentPartialCharges:
+    @pytest.fixture(scope='function')
+    def charged_off_ethane(self, ethane):
+        off_ethane = ethane.to_openff()
+        off_ethane.assign_partial_charges(partial_charge_method='am1bcc')
+        return off_ethane
+
+    def test_partial_charges_warning(self, charged_off_ethane):
+        matchmsg = "Partial charges have been provided"
+        with pytest.warns(UserWarning, match=matchmsg):
+            SmallMoleculeComponent.from_openff(charged_off_ethane)
+
+    def test_partial_charges_zero_warning(self, charged_off_ethane):
+        charged_off_ethane.partial_charges[:] = 0 * unit.elementary_charge
+        matchmsg = "Partial charges provided all equal to zero"
+        with pytest.warns(UserWarning, match=matchmsg):
+            SmallMoleculeComponent.from_openff(charged_off_ethane)
+
+    def test_partial_charges_not_formal_error(self, charged_off_ethane):
+        charged_off_ethane.partial_charges[:] = 1 * unit.elementary_charge
+        with pytest.raises(ValueError, match="Sum of partial charges"):
+            SmallMoleculeComponent.from_openff(charged_off_ethane)
+
+    def test_partial_charges_too_few_atoms(self):
+        mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
+        Chem.AllChem.Compute2DCoords(mol)
+        mol.SetProp('atom.dprop.PartialCharge', '1')
+
+        with pytest.raises(ValueError, match="Incorrect number of"):
+            SmallMoleculeComponent.from_rdkit(mol)
 
 
 @pytest.mark.parametrize('mol, charge', [
