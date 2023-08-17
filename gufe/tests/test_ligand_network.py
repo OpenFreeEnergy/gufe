@@ -266,3 +266,11 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
     def test_is_not_connected(self, singleton_node_network):
         assert not singleton_node_network.network.is_connected()
+
+
+def test_empty_ligand_network(mols):
+    # issue #217
+    n = LigandNetwork(edges=[], nodes=[mols[0]])
+
+    assert len(n.edges) == 0
+    assert len(n.nodes) == 1

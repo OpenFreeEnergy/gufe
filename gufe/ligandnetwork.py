@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
+from itertools import chain
 import json
 import networkx as nx
 from typing import FrozenSet, Iterable, Optional
@@ -30,7 +31,8 @@ class LigandNetwork(GufeTokenizable):
             nodes = []
 
         self._edges = frozenset(edges)
-        edge_nodes = set.union(*[{edge.componentA, edge.componentB} for edge in edges])
+        edge_nodes = set(chain.from_iterable((e.componentA, e.componentB)
+                                             for e in edges))
         self._nodes = frozenset(edge_nodes) | frozenset(nodes)
         self._graph = None
 
