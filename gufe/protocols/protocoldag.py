@@ -49,33 +49,30 @@ class DAGMixin:
         return reversed(list(nx.topological_sort(graph)))
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
+        """Optional identifier."""
         return self._name
 
     @property
     def graph(self) -> nx.DiGraph:
-        """DAG of `ProtocolUnit`s that comprise this object.
-
-        """
+        """DAG of `ProtocolUnit` nodes with edges denoting dependencies."""
         return self._graph
 
     @property
     def protocol_units(self) -> list[ProtocolUnit]:
-        """List of `ProtocolUnit`s given in DAG-order.
-
-        """
+        """List of `ProtocolUnit`s given in DAG-dependency order."""
         return list(self._iterate_dag_order(self._graph))
 
     @property
     def transformation_key(self) -> Union[GufeKey, None]:
-        """The `GufeKey` of the `Transformation` this object performs.
+        """
+        The `GufeKey` of the `Transformation` this object performs.
 
         If `None`, then this object was not created from a `Transformation`.
         This may be the case when creating a `ProtocolDAG` from a `Protocol`
         directly, without use of a `Transformation` object.
 
         This functions as a label, indicating where this object came from.
-
         """
         return self._transformation_key
 
@@ -94,37 +91,11 @@ class DAGMixin:
 
 
 class ProtocolDAGResult(GufeTokenizable, DAGMixin):
-    """Result for a single `ProtocolDAG` execution.
+    """
+    Result for a single execution of an entire :class:`ProtocolDAG`.
 
     There may be many of these for a given `Transformation`. Data elements from
     these objects are combined by `Protocol.gather` into a `ProtocolResult`.
-
-    Attributes
-    ----------
-    name : str
-        Optional identifier for this `ProtocolDAGResult`.
-    protocol_units : list[ProtocolUnit]
-        `ProtocolUnit`s (given in DAG-dependency order) used to compute this
-        `ProtocolDAGResult`.
-    protocol_unit_results : list[ProtocolUnitResult]
-        `ProtocolUnitResult`s (given in DAG-dependency order) corresponding to
-        each `ProtocolUnit` used to compute this `ProtocolDAGResult`.
-    graph : nx.DiGraph
-        Graph of `ProtocolUnit`s as nodes, with directed edges to each
-        `ProtocolUnit`'s dependencies.
-    result_graph : nx.DiGraph
-        Graph of `ProtocolUnitResult`s as nodes, with directed edges to each
-        `ProtocolUnitResult`'s dependencies.
-    transformation_key : Union[GufeKey, None]
-        Key of the `Transformation` that this `ProtocolDAGResult` corresponds
-        to, if applicable. This functions as a label for identifying the source
-        of this `ProtocolDAGResult`.
-    extends_key : Optional[GufeKey]
-        Key of the `ProtocolDAGResult` that this `ProtocolDAGResult` extends from.
-        This functions as a label for identifying the source of this `ProtocolDAGResult`;
-        it can be used to reconstruct the tree of extensions from a collection
-        of `ProtocolUnitResult`\s.
-
     """
     _protocol_unit_results: list[ProtocolUnitResult]
     _unit_result_mapping: dict[ProtocolUnit, list[ProtocolUnitResult]]
@@ -181,10 +152,18 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def result_graph(self) -> nx.DiGraph:
+        """
+        DAG of `ProtocolUnitResult` nodes with edges denoting dependencies.
+        """
         return self._result_graph
 
     @property
     def protocol_unit_results(self) -> list[ProtocolUnitResult]:
+        """
+        `ProtocolUnitResult`s for each `ProtocolUnit` used to compute this object.
+
+        Results are given in DAG-dependency order.
+        """
         return list(self._iterate_dag_order(self.result_graph))
 
     @property
@@ -277,12 +256,13 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
-    """An executable directed, acyclic graph (DAG) composed of `ProtocolUnit`
-    with dependencies specified.
+    """
+    An executable directed acyclic graph (DAG) of :class:`ProtocolUnit` objects.
 
-    A single `ProtocolDAG` execution should yield sufficient information to
-    calculate a free energy difference (though perhaps not converged) between
-    two `ChemicalSystem` objects.
+    A ``ProtocolDAG`` is composed of :class:`ProtocolUnit` objects as well as
+    how they depend on each other. A single `ProtocolDAG` execution should
+    yield sufficient information to calculate a free energy difference
+    (though perhaps not converged) between two `ChemicalSystem` objects.
     
     A `ProtocolDAG` yields a `ProtocolDAGResult` when executed.
 
@@ -361,7 +341,8 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                 raise_error: bool = True,
                 n_retries: int = 0,
                 ) -> ProtocolDAGResult:
-    """Locally execute a full ProtocolDAG in-serial, in process.
+    """
+    Locally execute a full :class:`ProtocolDAG` in serial and in-process.
 
     Parameters
     ----------

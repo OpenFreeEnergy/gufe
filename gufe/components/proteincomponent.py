@@ -56,7 +56,8 @@ positive_ions = ["NA", "MG", "ZN"]
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
-    """Wrapper around a Protein representation.
+    """
+    :class:`Component` representing a protein.
 
     In comparison to a SmallMoleculeComponent, this representation additionally contains information
     relating to the residue and chain information.  This is achievable by having the MonomerInfo attributes
