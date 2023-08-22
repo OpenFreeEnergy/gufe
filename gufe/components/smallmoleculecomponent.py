@@ -80,15 +80,17 @@ def _setprops(obj, d: dict) -> None:
 
 
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
-    """A molecule wrapper suitable for small molecules
+    """
+    :class:`Component` representing a small molecule.
 
     .. note::
        This class is a read-only representation of a molecule, if you want to
        edit the molecule do this in an appropriate toolkit **before** creating
        an instance from this class.
 
-    This class supports reading/writing to the `.sdf` format, which is suited to smaller
-    molecules.
+    This class supports reading/writing to the `.sdf` format, which is suited to
+    smaller molecules. Ligands alchemically mutated in a free energy calculation
+    are typically represented with this class.
 
     The name can be explicitly set by the ``name`` attribute, or implicitly set
     based on the tags in the input molecular representation (if supported, as
