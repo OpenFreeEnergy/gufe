@@ -284,7 +284,6 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
     def test_is_not_connected(self, singleton_node_network):
         assert not singleton_node_network.network.is_connected()
 
-    def test_to_rbfe_network(self):
     @pytest.mark.parametrize('with_cofactor', [True, False])
     def test_to_rbfe_alchemical_network(
         self,
@@ -346,7 +345,6 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
             assert list(edge.mapping) == ['ligand']
             assert edge.mapping['ligand'] in real_molecules_network.edges
-
 
     def test_to_rbfe_alchemical_network_autoname_false(
         self,
