@@ -229,7 +229,6 @@ class LigandNetwork(GufeTokenizable):
 
                     return gufe.ChemicalSystem(syscomps, name=name)
 
-
                 sysA = sys_from_dict(edge.componentA)
                 sysB = sys_from_dict(edge.componentB)
                 if autoname:
@@ -248,7 +247,6 @@ class LigandNetwork(GufeTokenizable):
                 transformations.append(transformation)
 
         return gufe.AlchemicalNetwork(transformations)
-
 
     def to_rbfe_alchemical_network(
         self,
