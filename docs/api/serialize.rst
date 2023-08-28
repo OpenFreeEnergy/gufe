@@ -1,4 +1,4 @@
-GUFE Tokenization API
----------------------
+GUFE Serialization API
+----------------------
 
 .. autoclass:: gufe.tokenization.GufeTokenizable
