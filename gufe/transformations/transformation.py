@@ -15,27 +15,7 @@ from ..mapping import ComponentMapping
 class Transformation(GufeTokenizable):
     """An edge of an alchemical network.
 
-    Connects two :class:`.ChemicalSystem`\ s, with directionality.
-
-    Attributes
-    ----------
-    stateA : ChemicalSystem
-        The starting :class:`.ChemicalSystem` for the transformation.
-    stateB : ChemicalSystem
-        The ending :class:`.ChemicalSystem` for the transformation.
-    protocol : Protocol
-        The protocol used to perform the transformation.
-        Includes all details needed to perform required
-        simulations/calculations and encodes the alchemical pathway used.
-        May also correspond to an experimental result.
-    mapping : Optional[Dict[str, ComponentMapping]]
-        Mapping of e.g. atoms between the `stateA` and `stateB`
-        :class:`.ChemicalSystem`\ s.
-    name : Optional[str]
-        Optional identifier for the transformation; set this to a unique value
-        if adding multiple, otherwise identical transformations to the same
-        :class:`.AlchemicalNetwork` to avoid deduplication
-
+    Connects two :class:`ChemicalSystem` objects, with directionality.
     """
 
     def __init__(
@@ -63,31 +43,42 @@ class Transformation(GufeTokenizable):
                f"stateB={self.stateB}, protocol={self.protocol})"
 
     @property
-    def stateA(self):
-        """The starting `ChemicalSystem` for the transformation."""
+    def stateA(self) -> ChemicalSystem:
+        """The starting :class:`ChemicalSystem` for the transformation."""
         return self._stateA
 
     @property
-    def stateB(self):
-        """The ending `ChemicalSystem` for the transformation."""
+    def stateB(self) -> ChemicalSystem:
+        """The ending :class:`ChemicalSystem` for the transformation."""
         return self._stateB
 
     @property
-    def protocol(self):
-        """The protocol for sampling the transformation to derive free energy
-        differences between `stateA` and `stateB` `ChemicalSystem`s.
+    def protocol(self) -> Protocol:
+        """The protocol used to perform the transformation.
 
+        This protocol derives free energy differences between ``stateA`` and
+        ``stateB`` ``ChemicalSystem`` objects. It includes all details needed to
+        perform required simulations/calculations and encodes the alchemical
+        pathway used. May also correspond to an experimental result.
         """
         return self._protocol
 
     @property
-    def mapping(self):
-        """The mapping between atoms in `stateA` to `stateB`"""
+    def mapping(self) -> Optional[dict[str, ComponentMapping]]:
+        """
+        Mapping of e.g. atoms between ``stateA`` and ``stateB``.
+        """
         return self._mapping
 
     @property
-    def name(self):
-        """User-specified for the transformation; used as part of its hash."""
+    def name(self) -> Optional[str]:
+        """
+        Optional identifier for the transformation; used as part of its hash.
+
+        Set this to a unique value if adding multiple, otherwise identical
+        transformations to the same :class:`AlchemicalNetwork` to avoid
+        deduplication.
+        """
         return self._name
 
     def _to_dict(self) -> dict:
@@ -109,7 +100,9 @@ class Transformation(GufeTokenizable):
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
     ) -> ProtocolDAG:
-        """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
+        """
+        Returns a ``ProtocolDAG`` executing this ``Transformation.protocol``.
+        """
         return self.protocol.create(
             stateA=self.stateA,
             stateB=self.stateB,
@@ -122,17 +115,20 @@ class Transformation(GufeTokenizable):
     def gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
     ) -> ProtocolResult:
-        """Gather multiple `ProtocolDAGResult`s into a single `ProtocolResult`.
+        """
+        Gather multiple ``ProtocolDAGResult`` into a single ``ProtocolResult``.
 
         Parameters
         ----------
         protocol_dag_results : Iterable[ProtocolDAGResult]
-            The `ProtocolDAGResult`s to assemble aggregate quantities from.
+            The ``ProtocolDAGResult`` objects to assemble aggregate quantities
+            from.
 
         Returns
         -------
         ProtocolResult
-            Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
+            Aggregated results from many ``ProtocolDAGResult`` objects, all from
+            a given ``Protocol``.
 
         """
         return self.protocol.gather(protocol_dag_results=protocol_dag_results)
@@ -141,7 +137,7 @@ class Transformation(GufeTokenizable):
         """Dump this Transformation to a JSON file.
 
         Note that this is not space-efficient: for example, any
-        ``Component`` which is used in both ``ChemicalSystem``s will be
+        ``Component`` which is used in both ``ChemicalSystem`` objects will be
         represented twice in the JSON output.
 
         Parameters
@@ -173,25 +169,13 @@ class NonTransformation(Transformation):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.
-    Technically a self-loop, or an edge with the same `ChemicalSystem` at
+    Technically a self-loop, or an edge with the same ``ChemicalSystem`` at
     either end.
 
-    Functionally used for applying a dynamics protocol to a `ChemicalSystem`
+    Functionally used for applying a dynamics protocol to a ``ChemicalSystem``
     that performs no alchemical transformation at all. This allows e.g.
-    equilibrium MD to be performed on a `ChemicalSystem` as desired alongside
-    alchemical protocols between it and and other `ChemicalSystem`s.
-
-    Attributes
-    ----------
-    system : ChemicalSystem
-    protocol : Protocol
-        The protocol used to perform the dynamics. Includes all details needed
-        to perform required simulations/calculations.
-    name : Optional[str]
-        Optional identifier for the nontransformation; set this to a unique
-        value if adding multiple, otherwise identical transformations to the
-        same `AlchemicalNetwork` to avoid deduplication
-
+    equilibrium MD to be performed on a ``ChemicalSystem`` as desired alongside
+    alchemical protocols between it and and other ``ChemicalSystem`` objects.
     """
 
     def __init__(
@@ -214,12 +198,17 @@ class NonTransformation(Transformation):
         return self._system
 
     @property
-    def system(self):
+    def system(self) -> ChemicalSystem:
         return self._system
 
     @property
     def protocol(self):
-        """The protocol for sampling dynamics of the `ChemicalSystem`."""
+        """
+        The protocol for sampling dynamics of the `ChemicalSystem`.
+
+        Includes all details needed to perform required
+        simulations/calculations.
+        """
         return self._protocol
 
     def _to_dict(self) -> dict:
@@ -239,7 +228,9 @@ class NonTransformation(Transformation):
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
     ) -> ProtocolDAG:
-        """Returns a `ProtocolDAG` executing this `Transformation.protocol`."""
+        """
+        Returns a ``ProtocolDAG`` executing this ``Transformation.protocol``.
+        """
         return self.protocol.create(
             stateA=self.system,
             stateB=self.system,

@@ -61,6 +61,24 @@ class _GufeTokenizableMeta(type):
         instance = TOKENIZABLE_REGISTRY[key]
         return instance
 
+    def __init__(cls, clsname, bases, attrs):
+        """
+        Restore the signature of __init__ or __new__
+        """
+        if inspect.signature(cls.__new__) != inspect.signature(object.__new__):
+            sig = inspect.signature(cls.__new__)
+        elif inspect.signature(cls.__init__) != inspect.signature(object.__init__):
+            sig = inspect.signature(cls.__init__)
+        else:
+            # No __new__ or __init__ method defined
+            return super().__init__(clsname, bases, attrs)
+
+        # Remove the first parameter (cls/self)
+        parameters = tuple(sig.parameters.values())
+        cls.__signature__ = sig.replace(parameters=parameters[1:])
+
+        return super().__init__(clsname, bases, attrs)
+
 
 class _ABCGufeClassMeta(_GufeTokenizableMeta, abc.ABCMeta):
     # required to make use of abc.ABC in classes that use _ComponentMeta

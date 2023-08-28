@@ -27,6 +27,10 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
     1: BondType.SINGLE,
     2: BondType.DOUBLE,
     3: BondType.TRIPLE,
+    app.Single: BondType.SINGLE,
+    app.Double: BondType.DOUBLE,
+    app.Triple: BondType.TRIPLE,
+    app.Aromatic: BondType.AROMATIC,
     None: BondType.UNSPECIFIED,
 }
 _BONDORDERS_RDKIT_TO_OPENMM = {
@@ -361,7 +365,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             top.addBond(a1, a2,
-                        order=_BONDORDERS_RDKIT_TO_OPENMM[bond.GetBondType()])
+                        order=_BONDORDERS_RDKIT_TO_OPENMM.get(
+                            bond.GetBondType(), None))
 
         return top
 
