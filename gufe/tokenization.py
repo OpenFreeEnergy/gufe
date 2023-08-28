@@ -199,7 +199,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """Dict of default key-value pairs for this `GufeTokenizable` object.
 
         These defaults are stripped from the dict form of this object produced
-        with `to_dict(include_defaults=False)` where default values are present.
+        with ``to_dict(include_defaults=False)`` where default values are present.
 
         """
         return cls._defaults()
