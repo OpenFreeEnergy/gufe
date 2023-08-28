@@ -68,7 +68,7 @@ def _check_partial_charges(mol: RDKitMol) -> None:
                   f"RDKit formal charge {Chem.GetFormalCharge(mol)}")
         raise ValueError(errmsg)
 
-    if np.all(np.isclose(p_chgs, np.zeros([mol.GetNumAtoms()]))):
+    if np.all(np.isclose(p_chgs, 0.0)):
         wmsg = (f"Partial charges provided all equal to "
                 "zero. These may be ignored by some Protocols.")
         warnings.warn(wmsg)
