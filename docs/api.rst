@@ -10,5 +10,5 @@ API docs
    api/protocols
    api/transformation
    api/settings
-   api/tokenization
+   api/serialize
 
