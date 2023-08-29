@@ -57,12 +57,13 @@ positive_ions = ["NA", "MG", "ZN"]
 
 class ProteinComponent(ExplicitMoleculeComponent):
     """
-    :class:`Component` representing a protein.
+    ``Component`` representing the contents of a PDB file, such as a protein.
 
-    In comparison to a SmallMoleculeComponent, this representation additionally contains information
-    relating to the residue and chain information.  This is achievable by having the MonomerInfo attributes
-    present on each atom of the input RDKit molecule, which is done when reading from either PDB or `.mae`
-    file inputs.
+    In comparison to a SmallMoleculeComponent, this representation additionally
+    contains information relating to the residue and chain information.  This
+    is achievable by having the ``MonomerInfo`` attributes present on each atom
+    of the input RDKit molecule, which is done when reading from either PDB or
+    ``.mae`` file inputs.
 
     Note
     ----
