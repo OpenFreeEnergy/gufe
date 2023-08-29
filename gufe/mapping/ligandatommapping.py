@@ -12,7 +12,8 @@ from ..tokenization import JSON_HANDLER
 
 
 class LigandAtomMapping(AtomMapping):
-    """Simple container with the mapping between two Molecules
+    """
+    Simple container for an atom mapping between two small molecule components.
 
     """
     componentA: SmallMoleculeComponent

@@ -8,7 +8,7 @@ from ..tokenization import GufeTokenizable
 
 
 class Component(GufeTokenizable):
-    """Base class for members of a ChemicalSystem"""
+    """Base class for members of a :class:`ChemicalSystem`."""
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name})"
@@ -21,5 +21,5 @@ class Component(GufeTokenizable):
     @property
     @abc.abstractmethod
     def total_charge(self) -> Union[int, None]:
-        """Net formal charge for the Component if defined"""
+        """Net formal charge for the ``Component``, if defined."""
         ...
