@@ -170,7 +170,7 @@ class LigandNetwork(GufeTokenizable):
 
         Returns
         -------
-        :class:`.Network :
+        :class:`.Network` :
             a new network adding the given edges and nodes to this network
         """
         if edges is None:
