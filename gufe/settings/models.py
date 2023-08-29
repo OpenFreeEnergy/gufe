@@ -7,11 +7,24 @@ Pydantic models used for storing settings.
 import abc
 from typing import Optional, Union
 
-import pydantic
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
-from pydantic import Extra, Field, PositiveFloat
+
+try:
+    from pydantic.v1 import (
+        Extra,
+        Field,
+        PositiveFloat,
+        validator,
+    )
+except ImportError
+    from pydantic import (
+        Extra,
+        Field,
+        PositiveFloat,
+        validator,
+    )
 
 
 class SettingsBaseModel(DefaultModel):
@@ -53,7 +66,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
 
     .. note::
        Right now we just basically just grab what we need for the
-       :class:`openmmforcefields.system_generators.SystemGenerator` 
+       :class:`openmmforcefields.system_generators.SystemGenerator`
        signature. See the `OpenMMForceField SystemGenerator documentation`_
        for more details.
 
@@ -82,7 +95,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    @pydantic.validator('constraints')
+    @validator('constraints')
     def constraint_check(cls, v):
         allowed = {'hbonds', 'hangles', 'allbonds'}
 
