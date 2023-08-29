@@ -18,7 +18,7 @@ try:
         PositiveFloat,
         validator,
     )
-except ImportError
+except ImportError:
     from pydantic import (
         Extra,
         Field,
