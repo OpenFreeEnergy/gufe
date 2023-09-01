@@ -21,13 +21,23 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}-latest
-    name: "tests"
+    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }}"
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu', 'macos']
+        os: ['ubuntu']
+        pydantic-version: [">1"]
         python-version:
-          - 3.9
+          - "3.9"
+          - "3.10"
+          - "3.11"  
+        include:
+          - os: "macos"
+            python-version: "3.11"
+            pydantic-version: ">1"
+          - os: "ubuntu"
+            python-version: "3.11"
+            pydantic-version: "<2"
 
     env:
       OE_LICENSE: ${{ github.workspace }}/oe_license.txt
