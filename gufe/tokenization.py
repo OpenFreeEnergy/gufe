@@ -10,6 +10,7 @@ import inspect
 import json
 import logging
 import weakref
+import warnings
 from typing import Any, Dict, List, Tuple, Union
 
 from gufe.custom_codecs import (
@@ -126,6 +127,27 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 
+def new_key_added(dct, new_key, default):
+    dct[new_key] = default
+    return dct
+
+def old_key_removed(dct, old_key, should_warn):
+    if should_warn:
+        # TODO: this should be put elsewhere so that the warning can be more
+        # meaningful (somewhere that knows what class we're recreating)
+        warnings.warn(f"Outdated serialization: '{old_key}', with value "
+                      f"'{dct[old_key]}' is no longer used in this object")
+
+    del dct[old_key]
+    return dct
+
+def key_renamed(dct, old_name, new_name):
+    dct[new_name] = dct.pop(old_name)
+    return dct
+
+def nested_key_moved(dct, old_name, new_name):
+    ...
+
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
@@ -135,6 +157,11 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.
     """
+    @classmethod
+    @property
+    def _version(cls):
+        return 1
+
     def __repr__(self):
         return f"<{self.key}>"
 
@@ -156,6 +183,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return tokenize(self)
         # return normalize(self.to_keyed_dict(include_defaults=False))
+
+    @classmethod
+    def serialization_migration(cls, old_dict, version):
+        return old_dict
 
     @property
     def logger(self):
@@ -495,6 +526,7 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=Tru
 def to_dict(obj: GufeTokenizable) -> Dict:
     dct = obj._to_dict()
     dct.update(module_qualname(obj))
+    dct[':version:'] = obj._version
     return dct
 
 
@@ -539,8 +571,13 @@ def from_dict(dct) -> GufeTokenizable:
 def _from_dict(dct: Dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
+    if ':version:' in dct:
+        version = dct.pop(':version:')
+    else:
+        version = 1
 
     cls = get_class(module, qualname)
+    dct = cls.serialization_migration(dct, version)
     return cls._from_dict(dct)
 
 
