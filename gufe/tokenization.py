@@ -571,10 +571,7 @@ def from_dict(dct) -> GufeTokenizable:
 def _from_dict(dct: Dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
-    if ':version:' in dct:
-        version = dct.pop(':version:')
-    else:
-        version = 1
+    version = dct.pop(':version:', 1)
 
     cls = get_class(module, qualname)
     dct = cls.serialization_migration(dct, version)
