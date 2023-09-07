@@ -8,12 +8,60 @@ from gufe.tokenization import (
     key_renamed,
     nested_key_moved,
     from_dict,
+    _label_to_parts,
+    _pop_nested,
+    _set_nested,
 )
 
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from pydantic import BaseModel
 
 from typing import Optional, Any, Type
+
+
+@pytest.fixture
+def nested_data():
+    return {
+        "foo": {"foo2" : [{"foo3": "foo4"}, "foo5"]},
+        "bar": ["bar2", "bar3"]
+    }
+
+@pytest.mark.parametrize('label, expected', [
+    ("foo", ["foo"]),
+    ("foo.foo2", ["foo", "foo2"]),
+    ("foo.foo2[0]", ["foo", "foo2", 0]),
+    ("foo.foo2[0].foo3", ["foo", "foo2", 0, "foo3"]),
+])
+def test_label_to_parts(label, expected):
+    assert _label_to_parts(label) == expected
+
+@pytest.mark.parametrize('label, popped, remaining', [
+    ("foo", {"foo2" : [{"foo3": "foo4"}, "foo5"]}, {}),
+    ("foo.foo2", [{"foo3": "foo4"}, "foo5"], {"foo": {}}),
+    ("foo.foo2[0]", {"foo3": "foo4"}, {"foo": {"foo2": ["foo5"]}}),
+    ("foo.foo2[0].foo3", "foo4", {"foo": {"foo2": [{}, "foo5"]}}),
+    ("foo.foo2[1]", "foo5", {"foo": {"foo2": [{"foo3": "foo4"}]}}),
+])
+def test_pop_nested(nested_data, label, popped, remaining):
+    val = _pop_nested(nested_data, label)
+    expected_remaining = {"bar": ["bar2", "bar3"]}
+    expected_remaining.update(remaining)
+    assert val == popped
+    assert nested_data == expected_remaining
+
+@pytest.mark.parametrize("label, expected_foo", [
+    ("foo", {"foo": 10}),
+    ("foo.foo2", {"foo": {"foo2": 10}}),
+    ("foo.foo2[0]", {"foo": {"foo2": [10, "foo5"]}}),
+    ("foo.foo2[0].foo3", {"foo": {"foo2": [{"foo3": 10}, "foo5"]}}),
+    ("foo.foo2[1]", {"foo": {"foo2": [{"foo3": "foo4"}, 10]}}),
+])
+def test_set_nested(nested_data, label, expected_foo):
+    _set_nested(nested_data, label, 10)
+    expected = {"bar": ["bar2", "bar3"]}
+    expected.update(expected_foo)
+    assert nested_data == expected
+
 
 class _DefaultBase(GufeTokenizable):
     """Convenience class to avoid rewriting these methods"""

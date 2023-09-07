@@ -147,8 +147,15 @@ def key_renamed(dct, old_name, new_name):
     return dct
 
 def _label_to_parts(label):
+    def _intify_if_possible(part):
+        try:
+            part = int(part)
+        except ValueError:
+            pass
+
+        return part
     parts = [
-        p for p in re.split('\.|\[|\]', label)
+        _intify_if_possible(p) for p in re.split('\.|\[|\]', label)
         if p != ""
     ]
     return parts
