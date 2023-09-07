@@ -9,6 +9,7 @@ import importlib
 import inspect
 import json
 import logging
+import re
 import weakref
 import warnings
 from typing import Any, Dict, List, Tuple, Union
@@ -145,8 +146,33 @@ def key_renamed(dct, old_name, new_name):
     dct[new_name] = dct.pop(old_name)
     return dct
 
+def _label_to_parts(label):
+    parts = [
+        p for p in re.split('\.|\[|\]', label)
+        if p != ""
+    ]
+    return parts
+
+def _pop_nested(container, label):
+    parts = _label_to_parts(label)
+    current = container
+    for part in parts[:-1]:
+        current = current[part]
+
+    return current.pop(parts[-1])
+
+def _set_nested(container, label, value):
+    parts = _label_to_parts(label)
+    current = container
+    for part in parts[:-1]:
+        current = current[part]
+
+    current[parts[-1]] = value
+
 def nested_key_moved(dct, old_name, new_name):
-    ...
+    val = _pop_nested(dct, old_name)
+    _set_nested(dct, new_name, val)
+    return dct
 
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.

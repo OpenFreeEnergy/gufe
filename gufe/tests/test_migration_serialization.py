@@ -93,6 +93,10 @@ class MigrationTester:#(GufeTokenizableTestsMixin):
     kwargs = None
     """kwargs to create an equivalent object from scratch"""
 
+    @property
+    def instance(self):
+        return self.cls(**self.kwargs)
+
     def _prep_dct(self, dct):
         dct = copy.deepcopy(self.input_dict)
         dct['__module__'] = self.cls.__module__
@@ -111,7 +115,7 @@ class MigrationTester:#(GufeTokenizableTestsMixin):
     def test_migration(self):
         dct = self._prep_dct(self.input_dict)
         reconstructed = from_dict(dct)
-        expected = self.cls(**self.kwargs)
+        expected = self.instance
         assert expected == reconstructed
 
 class TestKeyAdded(MigrationTester):
@@ -130,3 +134,73 @@ class TestKeyRenamed(MigrationTester):
     cls = KeyRenamed
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo", "baz": "bar"}
+
+
+# for some reason, we'll move the child from belonging to the son to
+# belonging to the daughter (some sort of family issues, idk)
+_SERIALIZED_NESTED_OLD = {
+    "__module__": ...,
+    "__qualname__": ...,
+    ":version:": 1,
+    "settings": {
+        "son": {
+            "son_child": 10
+        },
+        "daughter": {}
+    }
+}
+
+from pydantic import BaseModel
+
+class SonSettings(BaseModel):
+    """v2 model is empty"""
+
+class DaughterSettings(BaseModel):
+    """v2 model has child; v1 would not"""
+    daughter_child: int
+
+class GrandparentSettings(BaseModel):
+    son: SonSettings
+    daughter: DaughterSettings
+
+class Grandparent(_DefaultBase):
+    def __init__(self, settings: GrandparentSettings):
+        self.settings = settings
+
+    def _to_dict(self):
+        return {'settings': self.settings.dict()}
+
+    @classmethod
+    def _from_dict(cls, dct):
+        settings = GrandparentSettings.parse_obj(dct['settings'])
+        return cls(settings=settings)
+
+    @classmethod
+    @property
+    def _version(cls):
+        return 2
+
+    @classmethod
+    def serialization_migration(cls, dct, version):
+        if version == 1:
+            dct = nested_key_moved(
+                dct,
+                old_name="settings.son.son_child",
+                new_name="settings.daughter.daughter_child"
+            )
+
+        return dct
+
+class TestNestedKeyMoved(MigrationTester):
+    cls = Grandparent
+    input_dict = _SERIALIZED_NESTED_OLD
+    kwargs = {
+        'settings': {'son': {}, 'daughter': {'daughter_child': 10}}
+    }
+
+    @property
+    def instance(self):
+        return self.cls(GrandparentSettings(
+            son=SonSettings(),
+            daughter=DaughterSettings(daughter_child=10)
+        ))
