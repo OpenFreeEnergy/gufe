@@ -259,7 +259,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         with ``to_dict(include_defaults=False)`` where default values are present.
 
         """
-        return cls._defaults()
+        defaults = cls._defaults()
+        defaults[':version:'] = cls._version
+        return defaults
 
     @classmethod
     @abc.abstractmethod
