@@ -13,6 +13,7 @@ from gufe.tokenization import (
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from pydantic import BaseModel
 
+from typing import Optional, Any, Type
 
 class _DefaultBase(GufeTokenizable):
     """Convenience class to avoid rewriting these methods"""
@@ -25,8 +26,7 @@ class _DefaultBase(GufeTokenizable):
         return super()._defaults()
 
     @classmethod
-    @property
-    def _version(self):
+    def _version(cls):
         return 2
 
 
@@ -92,11 +92,9 @@ class KeyRenamed(_DefaultBase):
 
 
 class MigrationTester(GufeTokenizableTestsMixin):
-    cls = None
-    """Class to be tested"""
-    input_dict = None
+    input_dict: Optional[dict[str, Any]] = None
     """Initial input dict (except class name info)"""
-    kwargs = None
+    kwargs: Optional[dict[str, Any]] = None
     """kwargs to create an equivalent object from scratch"""
 
     repr = None
@@ -189,7 +187,6 @@ class Grandparent(_DefaultBase):
         return cls(settings=settings)
 
     @classmethod
-    @property
     def _version(cls):
         return 2
 

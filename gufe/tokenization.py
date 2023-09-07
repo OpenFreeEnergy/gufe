@@ -184,7 +184,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     *across different Python sessions*.
     """
     @classmethod
-    @property
     def _version(cls):
         return 1
 
@@ -260,7 +259,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         defaults = cls._defaults()
-        defaults[':version:'] = cls._version
+        defaults[':version:'] = cls._version()
         return defaults
 
     @classmethod
@@ -554,7 +553,7 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=Tru
 def to_dict(obj: GufeTokenizable) -> Dict:
     dct = obj._to_dict()
     dct.update(module_qualname(obj))
-    dct[':version:'] = obj._version
+    dct[':version:'] = obj._version()
     return dct
 
 
