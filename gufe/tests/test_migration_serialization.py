@@ -11,6 +11,7 @@ from gufe.tokenization import (
 )
 
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
+from pydantic import BaseModel
 
 
 class _DefaultBase(GufeTokenizable):
@@ -22,6 +23,11 @@ class _DefaultBase(GufeTokenizable):
     @classmethod
     def _defaults(cls):
         return super()._defaults()
+
+    @classmethod
+    @property
+    def _version(self):
+        return 2
 
 
 # this represents an "original" object with  fields `foo` and `bar`
@@ -85,7 +91,7 @@ class KeyRenamed(_DefaultBase):
         return {"foo": self.foo, "baz": self.baz}
 
 
-class MigrationTester:#(GufeTokenizableTestsMixin):
+class MigrationTester(GufeTokenizableTestsMixin):
     cls = None
     """Class to be tested"""
     input_dict = None
@@ -93,7 +99,9 @@ class MigrationTester:#(GufeTokenizableTestsMixin):
     kwargs = None
     """kwargs to create an equivalent object from scratch"""
 
-    @property
+    repr = None
+
+    @pytest.fixture
     def instance(self):
         return self.cls(**self.kwargs)
 
@@ -112,28 +120,31 @@ class MigrationTester:#(GufeTokenizableTestsMixin):
         version = dct.pop(':version:')
         assert self.cls.serialization_migration(dct, version) == self.kwargs
 
-    def test_migration(self):
+    def test_migration(self, instance):
         dct = self._prep_dct(self.input_dict)
         reconstructed = from_dict(dct)
-        expected = self.instance
+        expected = instance
         assert expected == reconstructed
 
 class TestKeyAdded(MigrationTester):
     cls = KeyAdded
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo", "bar": "bar", "qux": 10}
+    key = "KeyAdded-ec4a8680cd808b08bdd4be511ed64179"
 
 
 class TestKeyRemoved(MigrationTester):
     cls = KeyRemoved
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo"}
+    key = "KeyRemoved-9c3def5da2aa306b8793b59b082f8688"
 
 
 class TestKeyRenamed(MigrationTester):
     cls = KeyRenamed
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo", "baz": "bar"}
+    key = "KeyRenamed-88d44e33b55f67978c7cd98fbd6a896d"
 
 
 # for some reason, we'll move the child from belonging to the son to
@@ -150,18 +161,20 @@ _SERIALIZED_NESTED_OLD = {
     }
 }
 
-from pydantic import BaseModel
 
 class SonSettings(BaseModel):
     """v2 model is empty"""
+
 
 class DaughterSettings(BaseModel):
     """v2 model has child; v1 would not"""
     daughter_child: int
 
+
 class GrandparentSettings(BaseModel):
     son: SonSettings
     daughter: DaughterSettings
+
 
 class Grandparent(_DefaultBase):
     def __init__(self, settings: GrandparentSettings):
@@ -191,14 +204,16 @@ class Grandparent(_DefaultBase):
 
         return dct
 
+
 class TestNestedKeyMoved(MigrationTester):
     cls = Grandparent
     input_dict = _SERIALIZED_NESTED_OLD
     kwargs = {
         'settings': {'son': {}, 'daughter': {'daughter_child': 10}}
     }
+    key = "Grandparent-afeebf05129104fc56a751e92699a151"
 
-    @property
+    @pytest.fixture
     def instance(self):
         return self.cls(GrandparentSettings(
             son=SonSettings(),
