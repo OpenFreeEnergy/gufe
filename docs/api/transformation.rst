@@ -10,3 +10,8 @@ Alchemical network edges
 .. autoclass:: gufe.transformations.NonTransformation
            :members:
            :show-inheritance:
+
+Alchemical Networks
+===================
+
+.. autoclass:: gufe.network.AlchemicalNetwork

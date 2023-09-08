@@ -2,7 +2,7 @@ import string
 import pytest
 from pathlib import Path
 
-from gufe.protocols.protocolunit import ProtocolUnit, Context, ProtocolUnitFailure
+from gufe.protocols.protocolunit import ProtocolUnit, Context, ProtocolUnitFailure, ProtocolUnitResult
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 
 
@@ -12,6 +12,16 @@ class DummyUnit(ProtocolUnit):
 
         if an_input != 2:
             raise ValueError("`an_input` should always be 2(!!!)")
+
+        return {"foo": "bar"}
+
+
+class DummyKeyboardInterruptUnit(ProtocolUnit):
+    @staticmethod
+    def _execute(ctx: Context, an_input=2, **inputs):
+
+        if an_input != 2:
+            raise KeyboardInterrupt
 
         return {"foo": "bar"}
 
@@ -65,6 +75,26 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
                 unit.execute(context=ctx, raise_error=True, an_input=3)
+
+    def test_execute_KeyboardInterrupt(self, tmpdir):
+        with tmpdir.as_cwd():
+
+            unit = DummyKeyboardInterruptUnit()
+
+            shared = Path('shared') / str(unit.key)
+            shared.mkdir(parents=True)
+
+            scratch = Path('scratch') / str(unit.key)
+            scratch.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch)
+            
+            with pytest.raises(KeyboardInterrupt):
+                unit.execute(context=ctx, an_input=3)
+                
+            u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
+
+            assert u.outputs == {'foo': 'bar'}
 
     def test_normalize(self, dummy_unit):
         thingy = dummy_unit.key

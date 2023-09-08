@@ -51,6 +51,10 @@ def _list_dependencies(inputs, cls):
 
 
 class ProtocolUnitResult(GufeTokenizable):
+    """
+    Successful result of a single :class:`ProtocolUnit` execution.
+    """
+
     def __init__(self, *,
             name: Optional[str] = None,
             source_key: GufeKey,
@@ -59,8 +63,7 @@ class ProtocolUnitResult(GufeTokenizable):
             start_time: Optional[datetime.datetime] = None,
             end_time: Optional[datetime.datetime] = None,
         ):
-        """Generate a `ProtocolUnitResult`.
-
+        """
         Parameters
         ----------
         name : Optional[str]
@@ -153,7 +156,7 @@ class ProtocolUnitResult(GufeTokenizable):
 
 
 class ProtocolUnitFailure(ProtocolUnitResult):
-    """Failed result for a single `ProtocolUnit` execution."""
+    """Failed result of a single :class:`ProtocolUnit` execution."""
 
     def __init__(
             self,
@@ -214,17 +217,7 @@ class ProtocolUnitFailure(ProtocolUnitResult):
 
 
 class ProtocolUnit(GufeTokenizable):
-    """A unit of work within a ProtocolDAG.
-
-    Attributes
-    ----------
-    name : Optional[str]
-        Optional name for the `ProtocolUnit`.
-    inputs : Dict[str, Any]
-        Inputs to the `ProtocolUnit`. Includes any `ProtocolUnit`s this
-        `ProtocolUnit` is dependent on.
-
-    """
+    """A unit of work within a ProtocolDAG."""
     _dependencies: Optional[list[ProtocolUnit]]
 
     def __init__(
@@ -278,11 +271,19 @@ class ProtocolUnit(GufeTokenizable):
         return obj
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
+        """
+        Optional name for the `ProtocolUnit`.
+        """
         return self._name
 
     @property
-    def inputs(self):
+    def inputs(self) -> Dict[str, Any]:
+        """
+        Inputs to the `ProtocolUnit`.
+
+        Includes any `ProtocolUnit` instances this `ProtocolUnit` depends on.
+        """
         return copy(self._inputs)
 
     @property
@@ -322,6 +323,9 @@ class ProtocolUnit(GufeTokenizable):
                 start_time=start, end_time=datetime.datetime.now(),
             )
 
+        except KeyboardInterrupt:
+            # if we "fail" due to a KeyboardInterrupt, we always want to raise
+            raise
         except Exception as e:
             if raise_error:
                 raise

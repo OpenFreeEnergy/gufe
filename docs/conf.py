@@ -36,6 +36,13 @@ extensions = [
 
 autoclass_content = 'both'
 
+autodoc_default_options = {
+    "members": True,
+    "member-order": "bysource",
+    "inherited-members": "GufeTokenizable",
+    "undoc-members": True,
+}
+
 intersphinx_mapping = {
     'rdkit': ('https://www.rdkit.org/docs/', None),
 }
