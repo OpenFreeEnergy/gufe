@@ -11,19 +11,8 @@ from .components import Component
 
 
 class ChemicalSystem(GufeTokenizable, abc.Mapping):
-    """A node of an alchemical network.
-
-    Attributes
-    ----------
-    components
-        The molecular representation of the chemical state, including
-        connectivity and coordinates. This is a frozendict with user-defined
-        labels as keys, :class:`.Component`\ s as values.
-    name
-        Optional identifier for the chemical state; used as part of the
-        (hashable) graph node itself when the chemical state is added to an
-        :class:`.AlchemicalNetwork`.
-
+    """
+    A node of an alchemical network; represents a system of chemicals.
     """
 
     def __init__(
@@ -73,11 +62,24 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         )
 
     @property
-    def components(self):
+    def components(self) -> dict[str, Component]:
+        """
+        The molecular representation of the chemical system.
+
+        Components include atomic connectivity and coordinates. This is a
+        frozendict with user-defined labels as keys and :class:`.Component`
+        instances as values.
+        """
         return dict(self._components)
 
     @property
     def name(self):
+        """
+        Optional identifier for the chemical system.
+
+        Used as part of the (hashable) graph node itself when the chemical state
+        is added to an :class:`.AlchemicalNetwork`.
+        """
         return self._name
 
     @property

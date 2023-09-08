@@ -13,7 +13,8 @@ _ANIONS = {'Cl', 'Br', 'F', 'I'}
 
 # really wanted to make this a dataclass but then can't sort & strip ion input
 class SolventComponent(Component):
-    """Solvent molecules in a chemical state
+    """
+    :class:`Component` representing solvent molecules in a chemical system.
 
     This component represents the abstract idea of the solvent and ions present
     around the other components, rather than a list of specific water molecules

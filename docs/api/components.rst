@@ -25,3 +25,9 @@ Solvent Component
    
 .. autoclass:: gufe.components.SolventComponent
 	       :members:
+
+Chemical System
+===============
+
+.. autoclass:: gufe.chemicalsystem.ChemicalSystem
+	       :members:
