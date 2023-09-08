@@ -8,5 +8,7 @@ API docs
 
    api/components
    api/protocols
+   api/transformation
    api/settings
+   api/serialize
 

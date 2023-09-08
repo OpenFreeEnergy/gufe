@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import warnings
 from rdkit import Chem
 from typing import Optional
@@ -36,6 +37,48 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     return name
 
 
+def _check_partial_charges(mol: RDKitMol) -> None:
+    """
+    Checks for the presence of partial charges.
+
+    Raises
+    ------
+    ValueError
+      * If the partial charges are not of length atoms.
+      * If the sum of partial charges is not equal to the
+        formal charge.
+    UserWarning
+      * If partial charges are found.
+      * If the partial charges are near 0 for all atoms.
+    """
+    if 'atom.dprop.PartialCharge' not in mol.GetPropNames():
+        return
+
+    p_chgs = np.array(
+        mol.GetProp('atom.dprop.PartialCharge').split(), dtype=float
+    )
+
+    if len(p_chgs) != mol.GetNumAtoms():
+        errmsg = (f"Incorrect number of partial charges: {len(p_chgs)} "
+                  f" were provided for {mol.GetNumAtoms()} atoms")
+        raise ValueError(errmsg)
+
+    if (sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
+        errmsg = (f"Sum of partial charges {sum(p_chgs)} differs from "
+                  f"RDKit formal charge {Chem.GetFormalCharge(mol)}")
+        raise ValueError(errmsg)
+
+    if np.all(np.isclose(p_chgs, 0.0)):
+        wmsg = (f"Partial charges provided all equal to "
+                "zero. These may be ignored by some Protocols.")
+        warnings.warn(wmsg)
+    else:
+        wmsg = ("Partial charges have been provided, these will "
+                "preferentially be used instead of generating new "
+                "partial charges")
+        warnings.warn(wmsg)
+
+
 class ExplicitMoleculeComponent(Component):
     """Base class for explicit molecules.
 
@@ -48,6 +91,7 @@ class ExplicitMoleculeComponent(Component):
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
+        _check_partial_charges(rdkit)
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")

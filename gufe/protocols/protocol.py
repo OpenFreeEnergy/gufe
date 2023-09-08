@@ -19,23 +19,16 @@ from .protocolunit import ProtocolUnit
 
 
 class ProtocolResult(GufeTokenizable):
-    """Container for all `ProtocolDAGResult`s for a given `Transformation`.
+    """
+    Container for all results for a single :class:`Transformation`.
 
-    This is an abstract base class; individual `Protocol` implementations
-    should have a corresponding subclass of `ProtocolResult` implemented as
-    well.
+    Contains a collection of :class:`ProtocolDAGResult` instances. This is an
+    abstract base class; individual `Protocol` implementations should have a
+    corresponding subclass of `ProtocolResult` implemented as well.
 
     The following methods should be implemented in any subclass:
     - `get_estimate`
     - `get_uncertainty`
-
-    Attributes
-    ----------
-    data : dict[str,Any]
-        Aggregated data contents from multiple `ProtocolDAGResult`s.
-        The structure of this data is specific to the `Protocol` subclass each
-        `ProtocolResult` subclass corresponds to.
-
     """
 
     def __init__(self, **data):
@@ -53,7 +46,13 @@ class ProtocolResult(GufeTokenizable):
         return cls(**dct)
 
     @property
-    def data(self):
+    def data(self) -> dict[str,Any]:
+        """
+        Aggregated data contents from multiple `ProtocolDAGResult` instances.
+
+        The structure of this data is specific to the `Protocol` subclass each
+        `ProtocolResult` subclass corresponds to.
+        """
         return self._data
 
     @abc.abstractmethod
@@ -79,15 +78,10 @@ class Protocol(GufeTokenizable):
     - `_create`
     - `_gather`
     - `_default_settings`
-
-    Attributes
-    ----------
-    result_cls : type[ProtocolResult]
-        Corresponding `ProtocolResult` subclass
-
     """
     _settings: Settings
     result_cls: type[ProtocolResult]
+    """Corresponding `ProtocolResult` subclass."""
 
     def __init__(self, settings: Settings):
         """Create a new ``Protocol`` instance.

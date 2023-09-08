@@ -3,6 +3,8 @@
 from typing import Iterable, NamedTuple
 import pytest
 import importlib.resources
+import gufe
+from gufe.tests.test_protocol import DummyProtocol
 from gufe import SmallMoleculeComponent, LigandNetwork, LigandAtomMapping
 
 from rdkit import Chem
@@ -17,7 +19,6 @@ def mol_from_smiles(smi):
     m.Compute2DCoords()
 
     return m
-
 
 class _NetworkTestContainer(NamedTuple):
     """Container to facilitate network testing"""
@@ -93,6 +94,22 @@ def singleton_node_network(mols, std_edges):
         n_edges=3,
     )
 
+@pytest.fixture
+def real_molecules_network(benzene, phenol, toluene):
+    """Small network with full mappings"""
+    # benzene to phenol
+    bp_mapping = {i: i for i in range(10)}
+    bp_mapping.update({10: 12, 11:11})
+
+    # benzene to toluene
+    bt_mapping = {i: i + 4 for i in range(10)}
+    bt_mapping.update({10: 2, 11: 14})
+
+    network = gufe.LigandNetwork([
+        gufe.LigandAtomMapping(benzene, toluene, bt_mapping),
+        gufe.LigandAtomMapping(benzene, phenol, bp_mapping),
+    ])
+    return network
 
 @pytest.fixture(params=['simple', 'doubled_edge', 'singleton_node'])
 def network_container(
@@ -260,3 +277,166 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
     def test_from_graphml(self, simple_network, ligandnetwork_graphml):
         assert LigandNetwork.from_graphml(ligandnetwork_graphml) == simple_network.network
+
+    def test_is_connected(self, simple_network):
+        assert simple_network.network.is_connected()
+
+    def test_is_not_connected(self, singleton_node_network):
+        assert not singleton_node_network.network.is_connected()
+
+    @pytest.mark.parametrize('with_cofactor', [True, False])
+    def test_to_rbfe_alchemical_network(
+        self,
+        real_molecules_network,
+        prot_comp,
+        solv_comp,
+        request,
+        with_cofactor,
+    ):
+        # obviously, this particular set of ligands with this particular
+        # protein makes no sense, but we should still be able to set it up
+        if with_cofactor:
+            others = {'cofactor': request.getfixturevalue('styrene')}
+        else:
+            others = {}
+
+        protocol = DummyProtocol(DummyProtocol.default_settings())
+        rbfe = real_molecules_network.to_rbfe_alchemical_network(
+            solvent=solv_comp,
+            protein=prot_comp,
+            protocol=protocol,
+            **others
+        )
+
+        expected_names = {
+            'easy_rbfe_benzene_solvent_toluene_solvent',
+            'easy_rbfe_benzene_complex_toluene_complex',
+            'easy_rbfe_benzene_solvent_phenol_solvent',
+            'easy_rbfe_benzene_complex_phenol_complex',
+        }
+        names = set(edge.name for edge in rbfe.edges)
+        assert names == expected_names
+
+        assert len(rbfe.edges) == 2 * len(real_molecules_network.edges)
+        for edge in rbfe.edges:
+            assert edge.protocol == protocol
+
+            compsA = edge.stateA.components
+            compsB = edge.stateB.components
+            if 'solvent' in edge.name:
+                labels = {'solvent', 'ligand'}
+            elif 'complex' in edge.name:
+                labels = {'solvent', 'ligand', 'protein'}
+                if with_cofactor:
+                    labels.add('cofactor')
+            else:  # -no-cov-
+                raise RuntimeError("Something went weird in testing. Unable "
+                                   f"to get leg for edge {edge}")
+
+            assert set(compsA) == labels
+            assert set(compsB) == labels
+
+            assert compsA['ligand'] != compsB['ligand']
+            assert compsA['ligand'].name == 'benzene'
+            assert compsA['solvent'] == compsB['solvent']
+            # for things that might not always exist, use .get
+            assert compsA.get('protein') == compsB.get('protein')
+            assert compsA.get('cofactor') == compsB.get('cofactor')
+
+            assert list(edge.mapping) == ['ligand']
+            assert edge.mapping['ligand'] in real_molecules_network.edges
+
+    def test_to_rbfe_alchemical_network_autoname_false(
+        self,
+        real_molecules_network,
+        prot_comp,
+        solv_comp
+    ):
+        rbfe = real_molecules_network.to_rbfe_alchemical_network(
+            solvent=solv_comp,
+            protein=prot_comp,
+            protocol=DummyProtocol(DummyProtocol.default_settings()),
+            autoname=False,
+        )
+        for edge in rbfe.edges:
+            assert edge.name == ""
+            for sys in [edge.stateA, edge.stateB]:
+                assert sys.name == ""
+
+    def test_to_rbfe_alchemical_network_autoname_true(
+        self,
+        real_molecules_network,
+        prot_comp,
+        solv_comp
+    ):
+        rbfe = real_molecules_network.to_rbfe_alchemical_network(
+            solvent=solv_comp,
+            protein=prot_comp,
+            protocol=DummyProtocol(DummyProtocol.default_settings()),
+            autoname=True,
+            autoname_prefix="",
+        )
+        expected_names = {
+            'benzene_complex_toluene_complex',
+            'benzene_solvent_toluene_solvent',
+            'benzene_complex_phenol_complex',
+            'benzene_solvent_phenol_solvent',
+        }
+        names = set(edge.name for edge in rbfe.edges)
+        assert names == expected_names
+
+    @pytest.mark.xfail  # method removed and on hold for now
+    def test_to_rhfe_alchemical_network(self, real_molecules_network,
+                                        solv_comp):
+
+        others = {}
+        protocol = DummyProtocol(DummyProtocol.default_settings())
+        rhfe = real_molecules_network.to_rhfe_alchemical_network(
+            solvent=solv_comp,
+            protocol=protocol,
+            **others
+        )
+
+        expected_names = {
+            'easy_rhfe_benzene_vacuum_toluene_vacuum',
+            'easy_rhfe_benzene_solvent_toluene_solvent',
+            'easy_rhfe_benzene_vacuum_phenol_vacuum',
+            'easy_rhfe_benzene_solvent_phenol_solvent',
+        }
+        names = set(edge.name for edge in rhfe.edges)
+        assert names == expected_names
+
+        assert len(rhfe.edges) == 2 * len(real_molecules_network.edges)
+        for edge in rhfe.edges:
+            assert edge.protocol == protocol
+
+            compsA = edge.stateA.components
+            compsB = edge.stateB.components
+
+            if 'vacuum' in edge.name:
+                labels = {'ligand'}
+            elif 'solvent' in edge.name:
+                labels = {'ligand', 'solvent'}
+            else:  # -no-cov-
+                raise RuntimeError("Something went weird in testing. Unable "
+                                   f"to get leg for edge {edge}")
+
+            labels |= set(others)
+
+            assert set(compsA) == labels
+            assert set(compsB) == labels
+
+            assert compsA['ligand'] != compsB['ligand']
+            assert compsA['ligand'].name == 'benzene'
+            assert compsA.get('solvent') == compsB.get('solvent')
+
+            assert list(edge.mapping) == ['ligand']
+            assert edge.mapping['ligand'] in real_molecules_network.edges
+
+
+def test_empty_ligand_network(mols):
+    # issue #217
+    n = LigandNetwork(edges=[], nodes=[mols[0]])
+
+    assert len(n.edges) == 0
+    assert len(n.nodes) == 1

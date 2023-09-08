@@ -13,19 +13,8 @@ from .transformations import Transformation
 class AlchemicalNetwork(GufeTokenizable):
     """A network with all the information needed for a simulation campaign.
 
-    Nodes are :class:`.ChemicalSystem`\ s and edges are
-    :class:`.Transformation`\ s.
-
-    Attributes
-    ----------
-    edges : frozenset[Transformation]
-        The edges of the network, given as a ``frozenset`` of
-        :class:`.Transformation`\ s.
-    nodes : frozenset[ChemicalSystem]
-        The nodes of the network, given as a ``frozenset`` of
-        :class:`.ChemicalSystem` \ s.
-    name : Optional identifier for the network.
-
+    Nodes are :class:`.ChemicalSystem` instances and edges are
+    :class:`.Transformation` instances.
     """
     def __init__(
         self,
@@ -74,14 +63,21 @@ class AlchemicalNetwork(GufeTokenizable):
 
     @property
     def edges(self) -> frozenset[Transformation]:
+        """
+        Network edges as a ``frozenset`` of :class:`.Transformation` instances.
+        """
         return self._edges
 
     @property
     def nodes(self) -> frozenset[ChemicalSystem]:
+        """
+        Network nodes as a ``frozenset`` of :class:`.ChemicalSystem` instances.
+        """
         return self._nodes
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
+        """Optional identifier for the network."""
         return self._name
 
     def _to_dict(self) -> dict:

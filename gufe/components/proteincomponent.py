@@ -27,6 +27,10 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
     1: BondType.SINGLE,
     2: BondType.DOUBLE,
     3: BondType.TRIPLE,
+    app.Single: BondType.SINGLE,
+    app.Double: BondType.DOUBLE,
+    app.Triple: BondType.TRIPLE,
+    app.Aromatic: BondType.AROMATIC,
     None: BondType.UNSPECIFIED,
 }
 _BONDORDERS_RDKIT_TO_OPENMM = {
@@ -52,12 +56,14 @@ positive_ions = ["NA", "MG", "ZN"]
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
-    """Wrapper around a Protein representation.
+    """
+    ``Component`` representing the contents of a PDB file, such as a protein.
 
-    In comparison to a SmallMoleculeComponent, this representation additionally contains information
-    relating to the residue and chain information.  This is achievable by having the MonomerInfo attributes
-    present on each atom of the input RDKit molecule, which is done when reading from either PDB or `.mae`
-    file inputs.
+    In comparison to a SmallMoleculeComponent, this representation additionally
+    contains information relating to the residue and chain information.  This
+    is achievable by having the ``MonomerInfo`` attributes present on each atom
+    of the input RDKit molecule, which is done when reading from either PDB or
+    ``.mae`` file inputs.
 
     Note
     ----
@@ -361,7 +367,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             top.addBond(a1, a2,
-                        order=_BONDORDERS_RDKIT_TO_OPENMM[bond.GetBondType()])
+                        order=_BONDORDERS_RDKIT_TO_OPENMM.get(
+                            bond.GetBondType(), None))
 
         return top
 
