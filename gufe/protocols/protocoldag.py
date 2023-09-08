@@ -17,6 +17,12 @@ from .protocolunit import (
     ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure, Context
 )
 
+from ..storage.storagemanager import StorageManager
+from ..storage.externalresource.filestorage import FileStorage
+
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class DAGMixin:
     _protocol_units: list[ProtocolUnit]
@@ -333,9 +339,26 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
+class ReproduceOldBehaviorStorageManager(StorageManager):
+    # Default behavior has scratch at {dag_label}/scratch/{unit_label} and
+    # shared at {dag_label}/{unit_label}. This little class makes changes
+    # that get us back to the original behavior of this class: scratch at
+    # {dag_label}/scratch_{unit_label} and shared at
+    # {dag_label}/shared_{unit_label}.
+    def _scratch_loc(self, unit_label):
+        return self.scratch_root / f"scratch_{unit_label}"
+
+    def get_shared(self, unit_label):
+        return super().get_shared(f"shared_{unit_label}")
+
+    def get_permanent(self, unit_label):
+        return super().get_permanent(f"shared_{unit_label}")
+
+
 def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared_basedir: Path,
-                scratch_basedir: Path,
+                shared_basedir: PathLike,
+                scratch_basedir: PathLike,
+                permanent: Optional[PathLike] = None,
                 keep_shared: bool = False,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
@@ -379,46 +402,53 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
     all_results = []  # successes AND failures
-    shared_paths = []
-    for unit in protocoldag.protocol_units:
-        # translate each `ProtocolUnit` in input into corresponding
-        # `ProtocolUnitResult`
-        inputs = _pu_to_pur(unit.inputs, results)
 
-        attempt = 0
-        while attempt <= n_retries:
-            shared = shared_basedir / f'shared_{str(unit.key)}_attempt_{attempt}'
-            shared_paths.append(shared)
-            shared.mkdir()
+    # the directory given as shared_root is actually the directory for this
+    # DAG; the "shared_root" for the storage manager is the parent. We'll
+    # force permanent to be the same.
+    filestorage = FileStorage(shared_basedir.parent)
+    dag_label = shared_basedir.name
+    storage_manager = ReproduceOldBehaviorStorageManager(
+        scratch_root=scratch_basedir,
+        shared_root=filestorage,
+        permanent_root=filestorage,
+        keep_scratch=keep_scratch,
+        keep_staging=False,
+        staging=Path(""),  # use the actual directories as the staging
+    )
+    with storage_manager.running_dag(dag_label) as dag_ctx:
+        for unit in protocoldag.protocol_units:
+            attempt = 0
+            while attempt <= n_retries:
+                # translate each `ProtocolUnit` in input into corresponding
+                # `ProtocolUnitResult`
+                inputs = _pu_to_pur(unit.inputs, results)
 
-            scratch = scratch_basedir / f'scratch_{str(unit.key)}_attempt_{attempt}'
-            scratch.mkdir()
+                label = f"{str(unit.key)}_attempt_{attempt}",
+                with dag_ctx.running_unit(label) as (scratch, shared, perm):
+                    context = Context(shared=shared,
+                                      scratch=scratch,
+                                      permanent=perm)
+                    _logger.info("Starting unit {label}")
+                    _logger.info(context)
+                    result = unit.execute(
+                            context=context,
+                            raise_error=raise_error,
+                            **inputs)
+                    all_results.append(result)
 
-            context = Context(shared=shared,
-                              scratch=scratch)
+                if result.ok():
+                    # attach result to this `ProtocolUnit`
+                    results[unit.key] = result
+                    break
+                attempt += 1
 
-            # execute
-            result = unit.execute(
-                    context=context,
-                    raise_error=raise_error,
-                    **inputs)
-            all_results.append(result)
-
-            if not keep_scratch:
-                shutil.rmtree(scratch)
-
-            if result.ok():
-                # attach result to this `ProtocolUnit`
-                results[unit.key] = result
+            if not result.ok():
                 break
-            attempt += 1
-
-        if not result.ok():
-            break
 
     if not keep_shared:
-        for shared_path in shared_paths:
-            shutil.rmtree(shared_path)
+        for objname in filestorage.iter_contents(dag_label):
+            filestorage.delete(objname)
 
     return ProtocolDAGResult(
             name=protocoldag.name, 

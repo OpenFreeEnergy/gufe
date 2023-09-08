@@ -125,10 +125,12 @@ class StorageManager:
         self.staging = staging
         self.DAGContextClass = DAGContextClass
 
+    def _scratch_loc(self, unit_label):
+        return self.scratch_root / "scratch" / unit_label
+
     def get_scratch(self, unit_label: str) -> Path:
         """Get the path for this unit's scratch directory"""
-
-        scratch = self.scratch_root / "scratch" / unit_label
+        scratch = self._scratch_loc(unit_label)
         scratch.mkdir(parents=True, exist_ok=True)
         return scratch
 
