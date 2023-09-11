@@ -121,6 +121,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
             json_str_2 = json.dumps(obj, cls=encoder)
             assert json_str == json_str_2
 
+
 class TestNumpyGenericCodec(TestNumpyCoding):
     def setup_method(self):
         self.codec = NPY_DTYPE_CODEC
@@ -157,6 +158,7 @@ class TestNumpyGenericCodec(TestNumpyCoding):
             assert reconstructed.dtype == obj.dtype
             json_str_2 = json.dumps(obj, cls=encoder)
             assert json_str == json_str_2
+
 
 class TestPathCodec(CustomJSONCodingTest):
     def setup_method(self):
