@@ -14,6 +14,7 @@ from numpy import testing as npt
 from gufe.custom_codecs import (
     BYTES_CODEC,
     NUMPY_CODEC,
+    NPY_DTYPE_CODEC,
     OPENFF_QUANTITY_CODEC,
     OPENFF_UNIT_CODEC,
     PATH_CODEC,
@@ -115,9 +116,28 @@ class TestNumpyCoding(CustomJSONCodingTest):
             json_str = json.dumps(obj, cls=encoder)
             reconstructed = json.loads(json_str, cls=decoder)
             npt.assert_array_equal(reconstructed, obj)
+            assert reconstructed.dtype == obj.dtype
             json_str_2 = json.dumps(obj, cls=encoder)
             assert json_str == json_str_2
 
+class TestNumpyGenericCodec(TestNumpyCoding):
+    def setup_method(self):
+        self.codec = NPY_DTYPE_CODEC
+        self.objs = [np.float16(1.0), np.float32(1.0), np.float64(1.0),
+                     np.complex128(1.0), np.clongdouble(1.0), np.uint64(1),]
+        dtypes = [str(a.dtype) for a in self.objs]
+        byte_reps = [a.tobytes() for a in self.objs]
+        classes = [str(a.dtype) for a in self.objs]
+        self.dcts = [
+            {
+                ":is_custom:": True,
+                "__class__": classname,
+                "__module__": "numpy",
+                "dtype": dtype,
+                "bytes": byte_rep,
+            }
+            for dtype, byte_rep, classname in zip(dtypes, byte_reps, classes)
+        ]
 
 class TestPathCodec(CustomJSONCodingTest):
     def setup_method(self):

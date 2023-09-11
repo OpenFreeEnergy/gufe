@@ -33,6 +33,10 @@ def inherited_is_my_dict(dct, cls):
     stored = gufe.tokenization.get_class(module, classname)
     return cls in stored.mro()
 
+def is_npy_dtype_dict(dct):
+    expected = ["dtype", "bytes"]
+    is_custom = all(exp in dct for exp in expected)
+    return is_custom and ("shape" not in dct)
 
 def is_openff_unit_dict(dct):
     expected = ["pint_unit_registry", "unit_name", ":is_custom:"]
@@ -52,17 +56,33 @@ PATH_CODEC = JSONCodec(
     from_dict=lambda dct: pathlib.PosixPath(dct["path"]),
 )
 
+
 BYTES_CODEC = JSONCodec(
     cls=bytes,
     to_dict=lambda obj: {'latin-1': obj.decode('latin-1')},
     from_dict=lambda dct: dct['latin-1'].encode('latin-1'),
 )
 
+
 DATETIME_CODEC = JSONCodec(
     cls=datetime.datetime,
     to_dict=lambda obj: {'isotime': obj.isoformat()},
     from_dict=lambda dct: datetime.datetime.fromisoformat(dct['isotime']),
 )
+
+
+NPY_DTYPE_CODEC = JSONCodec(
+    cls=np.generic,
+    to_dict=lambda obj: {
+        'dtype': str(obj.dtype),
+        'bytes': obj.tobytes(),
+    },
+    from_dict=lambda dct: np.frombuffer(
+        dct['bytes'], dtype=np.dtype(dct['dtype'])
+    )[0],
+    is_my_dict=is_npy_dtype_dict,
+)
+
 
 NUMPY_CODEC = JSONCodec(
     cls=np.ndarray,
@@ -76,12 +96,14 @@ NUMPY_CODEC = JSONCodec(
     ).reshape(dct['shape'])
 )
 
+
 SETTINGS_CODEC = JSONCodec(
     cls=SettingsBaseModel,
     to_dict=lambda obj: {field: getattr(obj, field) for field in obj.__fields__},
     from_dict=default_from_dict,
     is_my_dict=functools.partial(inherited_is_my_dict, cls=SettingsBaseModel),
 )
+
 
 OPENFF_QUANTITY_CODEC = JSONCodec(
     cls=None,
@@ -97,6 +119,7 @@ OPENFF_QUANTITY_CODEC = JSONCodec(
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Quantity),
     is_my_dict=is_openff_quantity_dict,
 )
+
 
 OPENFF_UNIT_CODEC = JSONCodec(
     cls=None,
