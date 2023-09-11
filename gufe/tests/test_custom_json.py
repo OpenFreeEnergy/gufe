@@ -145,20 +145,6 @@ class TestNumpyGenericCodec(TestNumpyCoding):
             for dtype, byte_rep, classname in zip(dtypes, byte_reps, classes)
         ]
 
-    def test_round_trip(self):
-        encoder, decoder = custom_json_factory([self.codec, BYTES_CODEC])
-        for (obj, dct) in zip(self.objs, self.dcts):
-            print(dct)
-            print(encoder)
-            json_str = json.dumps(obj, cls=encoder)
-            print(json_str)
-            reconstructed = json.loads(json_str, cls=decoder)
-            print(type(reconstructed))
-            npt.assert_array_equal(reconstructed, obj)
-            assert reconstructed.dtype == obj.dtype
-            json_str_2 = json.dumps(obj, cls=encoder)
-            assert json_str == json_str_2
-
 
 class TestPathCodec(CustomJSONCodingTest):
     def setup_method(self):
