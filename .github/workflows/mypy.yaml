@@ -19,16 +19,18 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: "Setup Micromamba"
+        uses: mamba-org/setup-micromamba@v1
         with:
-            auto-update-conda: true
-            use-mamba: true
-            python-version: 3.9
-            miniforge-variant: Mambaforge
-            environment-file: environment.yml
-            activate-environment: gufe
+          environment-file: environment.yml
+          environment-name: gufe
+          cache-environment: true
+          cache-downloads: true
+          create-args: >-
+            python=3.9
+          init-shell: bash
 
       - name: "Install steps"
         run: |
