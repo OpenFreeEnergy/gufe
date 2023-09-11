@@ -9,6 +9,8 @@ from gufe.storage.errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
+from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
+
 # NOTE: Tests for the abstract base are just part of the tests of its
 # subclasses
 
@@ -32,7 +34,15 @@ def file_storage(tmp_path):
     return FileStorage(tmp_path)
 
 
-class TestFileStorage:
+class TestFileStorage(GufeTokenizableTestsMixin):
+    cls = FileStorage
+    key = None
+    repr = None
+
+    @pytest.fixture
+    def instance(self, file_storage):
+        return file_storage
+
     @pytest.mark.parametrize('filename, expected', [
         ('foo.txt', True),
         ('notexisting.txt', False),
@@ -120,7 +130,15 @@ class TestFileStorage:
             file_storage.load_stream("baz.txt")
 
 
-class TestMemoryStorage:
+class TestMemoryStorage(GufeTokenizableTestsMixin):
+    cls = MemoryStorage
+    key = "MemoryStorage-5b2cdb095ca8baa4905a23ab0ed8fc24"
+    repr = f"<{key}>"
+
+    @pytest.fixture
+    def instance(self):
+        return self.storage
+
     def setup_method(self):
         self.contents = {'path/to/foo.txt': 'bar'.encode('utf-8')}
         self.storage = MemoryStorage()

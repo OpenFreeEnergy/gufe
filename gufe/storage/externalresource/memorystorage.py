@@ -15,6 +15,9 @@ class MemoryStorage(ExternalStorage):
     def __init__(self):
         self._data = {}
 
+    def _to_dict(self):
+        return {}
+
     def _exists(self, location):
         return location in self._data
 

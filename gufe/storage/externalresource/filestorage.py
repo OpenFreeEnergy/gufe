@@ -17,6 +17,9 @@ class FileStorage(ExternalStorage):
     def __init__(self, root_dir: Union[pathlib.Path, str]):
         self.root_dir = pathlib.Path(root_dir)
 
+    def _to_dict(self):
+        return {'root_dir': self.root_dir}
+
     def _exists(self, location):
         return self._as_path(location).exists()
 

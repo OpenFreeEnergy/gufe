@@ -14,6 +14,8 @@ from ..errors import (
     MissingExternalResourceError, ChangedExternalResourceError
 )
 
+from gufe.tokenization import GufeTokenizable
+
 
 @dataclasses.dataclass
 class Metadata:
@@ -41,8 +43,16 @@ class _ForceContext:
         return self._context.__exit__(exc_type, exc_value, traceback)
 
 
-class ExternalStorage(abc.ABC):
+class ExternalStorage(GufeTokenizable):
     """Abstract base for external storage."""
+
+    @classmethod
+    def _defaults(cls):
+        return {}
+
+    @classmethod
+    def _from_dict(cls, dct):
+        return cls(**dct)
 
     def _get_hexdigest(self, location) -> str:
         """Default method for getting the md5 hexdigest.

@@ -140,7 +140,11 @@ class GufeTokenizableTestsMixin(abc.ABC):
         #assert ser == reser
 
     def test_key_stable(self, instance):
-        assert self.key == instance.key
+        if self.key is None:
+            # nondeterministic keys
+            assert isinstance(instance.key, GufeKey)
+        else:
+            assert self.key == instance.key
 
     def test_repr(self, instance):
         if self.repr is None:
