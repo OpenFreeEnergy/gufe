@@ -88,8 +88,9 @@ class CustomJSONCodingTest:
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = NUMPY_CODEC
-        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0])]
-        shapes = [[2, 2], [2,]]
+        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0]),
+                     np.array([1.0, 2.0, 3.0], dtype=np.float32),]
+        shapes = [[2, 2], [2,], [3,]]
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
         self.dcts = [
@@ -123,11 +124,15 @@ class TestNumpyCoding(CustomJSONCodingTest):
 class TestNumpyGenericCodec(TestNumpyCoding):
     def setup_method(self):
         self.codec = NPY_DTYPE_CODEC
-        self.objs = [np.float16(1.0), np.float32(1.0), np.float64(1.0),
-                     np.complex128(1.0), np.clongdouble(1.0), np.uint64(1),]
+        self.objs = [np.bool_(True), np.float16(1.0), np.float32(1.0),
+                     np.float64(1.0), np.complex128(1.0),
+                     np.clongdouble(1.0), np.uint64(1),]
         dtypes = [str(a.dtype) for a in self.objs]
         byte_reps = [a.tobytes() for a in self.objs]
-        classes = [str(a.dtype) for a in self.objs]
+        # Overly complicated extraction of the class name
+        # to deal with the bool_ -> bool dtype class name problem
+        classes = [str(a.__class__).split("'")[1].split('.')[1]
+                   for a in self.objs]
         self.dcts = [
             {
                 ":is_custom:": True,
@@ -138,6 +143,20 @@ class TestNumpyGenericCodec(TestNumpyCoding):
             }
             for dtype, byte_rep, classname in zip(dtypes, byte_reps, classes)
         ]
+
+    def test_round_trip(self):
+        encoder, decoder = custom_json_factory([self.codec, BYTES_CODEC])
+        for (obj, dct) in zip(self.objs, self.dcts):
+            print(dct)
+            print(encoder)
+            json_str = json.dumps(obj, cls=encoder)
+            print(json_str)
+            reconstructed = json.loads(json_str, cls=decoder)
+            print(type(reconstructed))
+            npt.assert_array_equal(reconstructed, obj)
+            assert reconstructed.dtype == obj.dtype
+            json_str_2 = json.dumps(obj, cls=encoder)
+            assert json_str == json_str_2
 
 class TestPathCodec(CustomJSONCodingTest):
     def setup_method(self):

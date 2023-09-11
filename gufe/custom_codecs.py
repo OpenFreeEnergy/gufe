@@ -33,10 +33,12 @@ def inherited_is_my_dict(dct, cls):
     stored = gufe.tokenization.get_class(module, classname)
     return cls in stored.mro()
 
+
 def is_npy_dtype_dict(dct):
     expected = ["dtype", "bytes"]
     is_custom = all(exp in dct for exp in expected)
     return is_custom and ("shape" not in dct)
+
 
 def is_openff_unit_dict(dct):
     expected = ["pint_unit_registry", "unit_name", ":is_custom:"]
@@ -80,6 +82,7 @@ NPY_DTYPE_CODEC = JSONCodec(
     from_dict=lambda dct: np.frombuffer(
         dct['bytes'], dtype=np.dtype(dct['dtype'])
     )[0],
+    is_my_obj=lambda obj: isinstance(obj, np.generic),
     is_my_dict=is_npy_dtype_dict,
 )
 
