@@ -43,10 +43,10 @@ class ProtocolResult(GufeTokenizable):
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls(**dct)
+        return cls(**dct['data'])
 
     @property
-    def data(self) -> dict[str,Any]:
+    def data(self) -> dict[str, Any]:
         """
         Aggregated data contents from multiple `ProtocolDAGResult` instances.
 

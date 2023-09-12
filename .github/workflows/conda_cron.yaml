@@ -26,13 +26,15 @@ jobs:
 
     steps:
       - name: setup micromamba
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: False
+          environment-file: environment.yml
           environment-name: gufe
-          channels: conda-forge
-          extra-specs: |
-            python==${{ matrix.python-version }}
+          cache-environment: true
+          cache-downloads: true
+          create-args: >-
+            python=${{ matrix.python-version }}
+          init-shell: bash
 
       - name: install gufe and deps
         run: |
@@ -44,7 +46,7 @@ jobs:
         continue-on-error: true
         run: pytest -n auto --pyargs gufe
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: raise-or-close-issue
         env:
