@@ -43,6 +43,18 @@ class SingleProcDAGContextManager(DAGContextManager):
         self.dag_label = dag_label
         self.permanents: list[PermanentStaging] = []
 
+    def register_dag_result(self, result):
+        # 1. create alchemiscale real permanent based on result
+        # 2. register all paths on self.permanents with new permanent
+        new_permanents = []
+        for perm in self.permanents:
+            new_perm = ...
+            for file in perm.registry:
+                new_perm.register(file.path)
+
+        # 3. replace old permanents with new permanent
+        self.permanents = new_permanents
+
     @classmethod  # NB: classmethod must be on top
     @contextmanager
     def running_dag(cls, storage_manager: StorageManager, dag_label: str):
