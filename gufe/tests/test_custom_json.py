@@ -47,7 +47,7 @@ class TestJSONSerializerDeserializer:
 class CustomJSONCodingTest:
     """Base class for testing codecs.
 
-    In ``setup()``, user must define the following:
+    In ``setup_method()``, user must define the following:
 
     * ``self.codec``: The codec to run
     * ``self.objs``: A list of objects to serialize
@@ -136,7 +136,7 @@ class TestPathCodec(CustomJSONCodingTest):
 
 
 class TestSettingsCodec(CustomJSONCodingTest):
-    def setup(self):
+    def setup_method(self):
         self.codec = SETTINGS_CODEC
         self.objs = [
             models.Settings.get_defaults(),
@@ -207,8 +207,8 @@ class TestSettingsCodec(CustomJSONCodingTest):
             assert dct == as_dct
 
 
-class TestOpenFFQuanityCodec(CustomJSONCodingTest):
-    def setup(self):
+class TestOpenFFQuantityCodec(CustomJSONCodingTest):
+    def setup_method(self):
         self.codec = OPENFF_QUANTITY_CODEC
         self.objs = [
             openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
@@ -224,7 +224,7 @@ class TestOpenFFQuanityCodec(CustomJSONCodingTest):
 
 
 class TestOpenFFUnitCodec(CustomJSONCodingTest):
-    def setup(self):
+    def setup_method(self):
         self.codec = OPENFF_UNIT_CODEC
         self.objs = [
             openff.units.unit.amu,
