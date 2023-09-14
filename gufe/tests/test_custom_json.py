@@ -8,6 +8,7 @@ import pathlib
 
 import numpy as np
 import openff.units
+from openff.units import unit
 import pytest
 from numpy import testing as npt
 
@@ -20,6 +21,7 @@ from gufe.custom_codecs import (
     SETTINGS_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
+from gufe import tokenization
 from gufe.settings import models
 
 
@@ -221,6 +223,19 @@ class TestOpenFFQuantityCodec(CustomJSONCodingTest):
                 "unit": "kilogram * meter / second ** 2",
             },
         ]
+
+
+def test_openff_quantity_array_roundtrip():
+    thing = unit.Quantity.from_list([
+        (i + 1.0)*unit.kelvin for i in range(10)
+    ])
+
+    dumped = json.dumps(thing, cls=tokenization.JSON_HANDLER.encoder)
+
+    returned = json.loads(dumped, cls=tokenization.JSON_HANDLER.decoder)
+
+    assert returned.u == thing.u
+    assert (returned.m == thing.m).all()
 
 
 class TestOpenFFUnitCodec(CustomJSONCodingTest):
