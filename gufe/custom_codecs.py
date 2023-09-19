@@ -74,7 +74,7 @@ DATETIME_CODEC = JSONCodec(
 
 
 NPY_DTYPE_CODEC = JSONCodec(
-    cls=None,
+    cls=np.generic,
     to_dict=lambda obj: {
         'dtype': str(obj.dtype),
         'bytes': obj.tobytes(),
