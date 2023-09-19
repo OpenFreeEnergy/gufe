@@ -1,5 +1,8 @@
 name: "conda_cron"
 on:
+  pull_request:
+    branches:
+      - main
   schedule:
     # At 07:00 UTC every day
     - cron: "0 7 * * *"
@@ -23,17 +26,22 @@ jobs:
         python-version:
           - "3.9"
           - "3.10"
+          - "3.11"
 
     steps:
       - name: setup micromamba
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: environment.yml
           environment-name: gufe
           cache-environment: true
           cache-downloads: true
           create-args: >-
             python=${{ matrix.python-version }}
+            pip
+          condarc: |
+            channels:
+              - jaimergp/label/unsupported-cudatoolkit-shim
+              - conda-forge
           init-shell: bash
 
       - name: install gufe and deps
