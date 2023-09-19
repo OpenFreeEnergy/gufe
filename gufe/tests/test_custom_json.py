@@ -45,6 +45,22 @@ class TestJSONSerializerDeserializer:
         assert len(serialization.codecs) == 1
 
 
+@pytest.mark.parametrize('obj',
+    [np.array([[1.0, 0.0], [2.0, 3.2]]),
+    np.float32(1.1)],
+)
+@pytest.mark.parametrize('codecs', [
+    [BYTES_CODEC, NUMPY_CODEC, NPY_DTYPE_CODEC],
+    [NPY_DTYPE_CODEC, BYTES_CODEC, NUMPY_CODEC],
+])
+def test_numpy_codec_order_roundtrip(obj, codecs):
+    serialization = JSONSerializerDeserializer(codecs)
+    serialized = serialization.serializer(obj)
+    reconstructed = serialization.deserializer(serialized)
+    npt.assert_equal(obj, reconstructed)
+    assert obj.dtype == reconstructed.dtype
+
+
 class CustomJSONCodingTest:
     """Base class for testing codecs.
 
@@ -125,8 +141,11 @@ class TestNumpyCoding(CustomJSONCodingTest):
 class TestNumpyGenericCodec(TestNumpyCoding):
     def setup_method(self):
         self.codec = NPY_DTYPE_CODEC
+        # Note that np.float64 is treated as a float by the
+        # default json encode (and so returns a float not a numpy
+        # object).
         self.objs = [np.bool_(True), np.float16(1.0), np.float32(1.0),
-                     np.float64(1.0), np.complex128(1.0),
+                     np.complex128(1.0),
                      np.clongdouble(1.0), np.uint64(1),]
         dtypes = [str(a.dtype) for a in self.objs]
         byte_reps = [a.tobytes() for a in self.objs]
