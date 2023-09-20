@@ -45,10 +45,10 @@ class TestJSONSerializerDeserializer:
         assert len(serialization.codecs) == 1
 
 
-@pytest.mark.parametrize('obj',
-    [np.array([[1.0, 0.0], [2.0, 3.2]]),
-    np.float32(1.1)],
-)
+@pytest.mark.parametrize('obj', [
+    np.array([[1.0, 0.0], [2.0, 3.2]]),
+    np.float32(1.1)
+])
 @pytest.mark.parametrize('codecs', [
     [BYTES_CODEC, NUMPY_CODEC, NPY_DTYPE_CODEC],
     [NPY_DTYPE_CODEC, BYTES_CODEC, NUMPY_CODEC],
@@ -105,7 +105,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = NUMPY_CODEC
         self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0]),
-                     np.array([1.0, 2.0, 3.0], dtype=np.float32),]
+                     np.array([1.0, 2.0, 3.0], dtype=np.float32)]
         shapes = [[2, 2], [2,], [3,]]
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
@@ -146,7 +146,7 @@ class TestNumpyGenericCodec(TestNumpyCoding):
         # object).
         self.objs = [np.bool_(True), np.float16(1.0), np.float32(1.0),
                      np.complex128(1.0),
-                     np.clongdouble(1.0), np.uint64(1),]
+                     np.clongdouble(1.0), np.uint64(1)]
         dtypes = [str(a.dtype) for a in self.objs]
         byte_reps = [a.tobytes() for a in self.objs]
         # Overly complicated extraction of the class name

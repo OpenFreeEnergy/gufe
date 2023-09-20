@@ -73,6 +73,10 @@ DATETIME_CODEC = JSONCodec(
 )
 
 
+# Note that this has inconsistent behaviour for some generic types
+# which end up being handled by the default JSON encoder/decoder.
+# The main example of this is np.float64 which will be turned into
+# a float type on serialization.
 NPY_DTYPE_CODEC = JSONCodec(
     cls=np.generic,
     to_dict=lambda obj: {
