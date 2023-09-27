@@ -149,7 +149,7 @@ def _draw_molecules(
 
     # get molecule name labels
     labels = [m.GetProp("ofe-name") if(m.HasProp("ofe-name"))
-                else "" for m in mols]
+              else "" for m in mols]
 
     # squash to 2D
     copies = [Chem.Mol(mol) for mol in mols]
