@@ -148,7 +148,7 @@ def _draw_molecules(
             grid_x * 300, grid_y * 300, 300, 300)
 
     # get molecule name labels
-    labels = [m.GetProp("ofe-name") for m in copies]
+    labels = [m.GetProp("ofe-name") if(m.HasProp("ofe-name")) else "" for m in mols]
 
     # squash to 2D
     copies = [Chem.Mol(mol) for mol in mols]
