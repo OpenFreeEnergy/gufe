@@ -68,7 +68,7 @@ autodoc_mock_imports = ["openff.models",
 #
 html_theme = "ofe_sphinx_theme"
 html_theme_options = {
-    "accent_color": "FeelingSpicy",
+    "accent_color": "FeelingFabulous",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
