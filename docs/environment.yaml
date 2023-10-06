@@ -5,7 +5,8 @@ channels:
 dependencies:
 - autodoc-pydantic
 - openff-units
-- pydata-sphinx-theme
-- python=3.9
+- python=3.10
 - sphinx
 - openmm
+- pip:
+  - git+https://github.com/OpenFreeEnergy/ofe-sphinx-theme@main
