@@ -60,7 +60,12 @@ class DAGMixin:
 
     @property
     def protocol_units(self) -> list[ProtocolUnit]:
-        """List of `ProtocolUnit`s given in DAG-dependency order."""
+        """
+        List of `ProtocolUnit`s given in DAG-dependency order.
+
+        DAG-dependency order guarantees that any task is listed after all of its
+        dependencies.
+        """
         return list(self._iterate_dag_order(self._graph))
 
     @property
@@ -154,6 +159,10 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     def result_graph(self) -> nx.DiGraph:
         """
         DAG of `ProtocolUnitResult` nodes with edges denoting dependencies.
+
+        Each edge is directed from a task towards its dependencies; for example,
+        an edge between a production run and its equilibration would point
+        towards the equilibration unit.
         """
         return self._result_graph
 
@@ -162,7 +171,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         """
         `ProtocolUnitResult`s for each `ProtocolUnit` used to compute this object.
 
-        Results are given in DAG-dependency order.
+        Results are given in DAG-dependency order. In this order, tasks are
+        always listed after their dependencies.
         """
         return list(self._iterate_dag_order(self.result_graph))
 
@@ -172,7 +182,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
         Note
         ----
-        These are returned in DAG order
+        These are returned in DAG order, with tasks listed after their
+        dependencies.
         """
         # mypy can't figure out the types here, .ok() will ensure a certain type
         # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=cast#complex-type-tests
@@ -184,7 +195,8 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
         Note
         ----
-        These are returned in DAG order
+        These are returned in DAG order, with tasks listed after their
+        dependencies.
         """
         return [r for r in self.protocol_unit_results if r.ok()]
 
@@ -272,7 +284,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         Optional identifier for this `ProtocolDAGResult`.
     protocol_units : list[ProtocolUnit]
         `ProtocolUnit`s (given in DAG-dependency order) used to compute this
-        `ProtocolDAGResult`.
+        `ProtocolDAGResult`. Tasks are always listed after their dependencies.
     graph : nx.DiGraph
         Graph of `ProtocolUnit`s as nodes, with directed edges to each
         `ProtocolUnit`'s dependencies.
