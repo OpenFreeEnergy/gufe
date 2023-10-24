@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Tuple, Union
 from gufe.custom_codecs import (
     BYTES_CODEC,
     DATETIME_CODEC,
+    NPY_DTYPE_CODEC,
     NUMPY_CODEC,
     OPENFF_QUANTITY_CODEC,
     OPENFF_UNIT_CODEC,
@@ -28,6 +29,7 @@ from gufe.custom_json import JSONSerializerDeserializer
 _default_json_codecs = [
     PATH_CODEC,
     NUMPY_CODEC,
+    NPY_DTYPE_CODEC,
     BYTES_CODEC,
     DATETIME_CODEC,
     SETTINGS_CODEC,
