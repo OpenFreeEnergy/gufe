@@ -129,10 +129,55 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
 
 
 def new_key_added(dct, new_key, default):
+    """Serialization migration: Add a new key to the dictionary.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration`) where a new key has
+    been added to the object's representation (e.g., a new parameter has
+    been added). In order to be migratable, the new key must have an
+    associated default value.
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    new_key: str
+        name of the new key
+    default: Any
+        default value for the new key
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to add the new key
+    """
     dct[new_key] = default
     return dct
 
 def old_key_removed(dct, old_key, should_warn):
+    """Serialization migration: Remove an old key from the dictionary.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration`) where a key has been
+    removed from the object's serialized representation (e.g., an old
+    parameter is no longer allowed). If a parameter has been removed, it is
+    likely that you will want to warn the user that the parameter is no
+    longer used: the ``should_warn`` option allows that.
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    old_key : str
+        name of the key that has been removed
+    should_warn : bool
+        whether to issue a warning for this (generally recommended)
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to remove the old key
+    """
     if should_warn:
         # TODO: this should be put elsewhere so that the warning can be more
         # meaningful (somewhere that knows what class we're recreating)
@@ -143,10 +188,35 @@ def old_key_removed(dct, old_key, should_warn):
     return dct
 
 def key_renamed(dct, old_name, new_name):
+    """Serialization migration: Rename a key in the dictionary.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration`) where a key has been
+    renamed (e.g., a parameter name has changed).
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    old_name : str
+        name of the key in the old serialization representation
+    new_name : str
+        name of the key in the new serialization representation
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to rename the key from the old name to the
+        new one
+    """
     dct[new_name] = dct.pop(old_name)
     return dct
 
 def _label_to_parts(label):
+    """Helper to split labels used for nested objects into parts.
+
+    See :func:`.nested_key_moved` for a description of the label.
+    """
     def _intify_if_possible(part):
         try:
             part = int(part)
@@ -161,6 +231,10 @@ def _label_to_parts(label):
     return parts
 
 def _pop_nested(container, label):
+    """Pop a nested object with the given label from a container.
+
+    See :func:`.nested_key_moved` for a description of the label.
+    """
     parts = _label_to_parts(label)
     current = container
     for part in parts[:-1]:
@@ -169,6 +243,10 @@ def _pop_nested(container, label):
     return current.pop(parts[-1])
 
 def _set_nested(container, label, value):
+    """Set a nested object with the given label to the given value.
+
+    See :func:`.nested_key_moved` for a description of the label.
+    """
     parts = _label_to_parts(label)
     current = container
     for part in parts[:-1]:
@@ -177,9 +255,50 @@ def _set_nested(container, label, value):
     current[parts[-1]] = value
 
 def nested_key_moved(dct, old_name, new_name):
+    """Serialization migration: Move nested key to a new location.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration`) where a key that is
+    nested in a structure of dicts/lists has been moved elsewhere. It uses
+    labels that match Python namespace/list notations. That is, if ``dct``
+    is the following dict::
+
+        {'first': {'inner': ['list', 'of', 'words']}}
+
+    then the label ``'first.inner[1]'`` would refer to the word ``'of'``.
+
+    In that case, the following call::
+
+        nested_key_moved(dct, 'first.inner[1]', 'second')
+
+    would result in the dictionary::
+
+        {'first': {'inner': ['list', 'words']}, 'second': 'of'}
+
+    This is particular useful for things like protocol settings, which
+    present as nested objects like this.
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    old_name : str
+        label for the old location (see above for description of label
+        format)
+    new_name : str
+        label for the new location (see above for description of label
+        format)
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to move the value at the old location to
+        the new location
+    """
     val = _pop_nested(dct, old_name)
     _set_nested(dct, new_name, val)
     return dct
+
 
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
@@ -191,7 +310,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     *across different Python sessions*.
     """
     @classmethod
-    def _version(cls):
+    def _version(cls) -> int:
         return 1
 
     def __repr__(self):
@@ -217,7 +336,53 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         # return normalize(self.to_keyed_dict(include_defaults=False))
 
     @classmethod
-    def serialization_migration(cls, old_dict, version):
+    def serialization_migration(cls, old_dict: dict, version: int) -> dict:
+        """Migrate old serialization dicts to the current form.
+
+        The input dict ``old_dict`` comes from some previous serialization
+        version, given by ``version``. The output dict should be in the
+        format of the current serialization dict.
+
+        The recommended pattern to use looks like this:
+
+        .. code::
+
+            def serialization_migration(cls, old_dict, version):
+                if version == 1:
+                    ...  # do things for migrating version 1->2
+                if version <= 2:
+                    ...  # do things for migrating version 2->3
+                if version <= 3:
+                    ...  # do things for migrating version 3->4
+                # etc
+
+        This approach steps through each old serialization model on its way
+        to the current version. It keeps code relatively minimal and
+        readable.
+
+        As a convenience, the following functions are available to simplify
+        the various kinds of changes that are likely to occur in as
+        serializtion versions change:
+
+        * :func:`.new_key_added`
+        * :func:`.old_key_removed`
+        * :func:`.key_renamed`
+        * :func:`.nested_key_moved`
+
+        Parameters
+        ----------
+        old_dict : dict
+            dict as received from a serialized form
+        version: int
+            the serialization version of ``old_dict``
+
+        Returns
+        -------
+        dict :
+            serialization dict suitable for the current implmentation of
+            ``from_dict``.
+
+        """
         return old_dict
 
     @property
