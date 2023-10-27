@@ -43,6 +43,8 @@ def read_only_with_overwritten(root_with_contents):
     filename = pathlib.Path(read_only) / "data.txt"
     assert not filename.exists()
     staged = read_only / "data.txt"
+    assert not filename.exists()
+    staged.__fspath__()
     assert filename.exists()
     with open(staged, mode='w') as f:
         f.write("changed")
@@ -180,8 +182,9 @@ class TestSharedStaging:
 
     def test_write_old_fail(self, root):
         old_staging = root._get_other_shared("old_unit")
+        staged = old_staging / "foo.txt"
         with pytest.raises(IOError, match="read-only"):
-            old_staging / "foo.txt"
+            staged.__fspath__()
 
     def test_transfer_to_external(self, root_with_contents):
         path = list(root_with_contents.registry)[0]  # only 1
@@ -262,6 +265,7 @@ class TestSharedStaging:
     def test_cleanup_missing(self, root, caplog):
         root.delete_staging = True
         file = root / "foo.txt"
+        file.__fspath__()
         assert file in root.registry
         assert not pathlib.Path(file).exists()
         logger_name = "gufe.storage.stagingdirectory"
@@ -279,6 +283,9 @@ class TestSharedStaging:
         assert len(root.preexisting) == 0
         staging = root / "foo.txt"
         assert staging.label == "new_unit/foo.txt"
+        assert len(root.registry) == 0
+        assert len(root.preexisting) == 0
+        staging.__fspath__()
         assert len(root.registry) == 1
         assert len(root.preexisting) == 1
 
@@ -305,6 +312,7 @@ class TestPermanentStage:
         fname = pathlib.Path(permanent) / "old_unit/data.txt"
         assert not fname.exists()
         staging = permanent / "old_unit/data.txt"
+        staging.__fspath__()
         assert not fname.exists()
         assert permanent.external._data == {}
         permanent.transfer_staging_to_external()

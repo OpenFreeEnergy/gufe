@@ -178,7 +178,7 @@ class StagingDirectory:
             the path to track
         """
         label_exists = self.external.exists(staging_path.label)
-        fspath = Path(staging_path.__fspath__())
+        fspath = Path(staging_path.fspath)
         if not fspath.parent.exists():
             fspath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -336,18 +336,30 @@ class StagingPath:
     On creation, this registers with a :class:`.StagingDirectory` that will
     manage the local path and transferring data with its
     :class:`.ExternalStorage`.
+
+    This object can always be used as a FileLike (using, e.g., the standard
+    ``open`` builtin). This requires that a staged path that exists on an
+    external resource be downloaded into a local file when it is referenced.
+
+    For a representation of a file that does not require the download (for
+    example, when deserializing results that point to files) instead use
+    :class:`.ExternalFile`.
     """
     def __init__(self, root: StagingDirectory,
                  path: Union[PathLike, str]):
         self.root = root
         self.path = Path(path)
-        self.root.register_path(self)
 
     def __truediv__(self, path: Union[PathLike, str]):
         return StagingPath(self.root, self.path / path)
 
-    def __fspath__(self):
+    @property
+    def fspath(self):
         return str(self.root.staging_dir / self.path)
+
+    def __fspath__(self):
+        self.root.register_path(self)
+        return self.fspath
 
     @property
     def label(self) -> str:
