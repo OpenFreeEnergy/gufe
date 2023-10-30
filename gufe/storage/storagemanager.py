@@ -110,6 +110,31 @@ class SingleProcDAGContextManager(DAGContextManager):
             if not self.manager.keep_staging:
                 shared.cleanup()
 
+class PerUnitContextManager:
+    """Variant to use when doing only a single process per unit"""
+    def __init__(self, storage_manager: StorageManager, dag_label: str):
+        self.manager = storage_manager
+        self.dag_label = dag_label
+
+    @classmethod
+    @contextmanager
+    def running_dag(cls, storage_manager, dag_label):
+        yield cls(storage_manager, dag_label)
+
+    @contextmanager
+    def running_unit(self, unit_label: str):
+        scratch = self.manager.get_scratch(unit_label)
+        shared = self.manager.get_shared(unit_label)
+        permanent = self.manager.get_permanent(unit_label)
+        try:
+            yield scratch, shared, permanent
+        finally:
+            shared.tranfer_staging_to_external()
+            for file in permanent.registry:
+                shared.transfer_single_file_to_expected(file)
+
+            permanent.transfer_staging_to_external()
+
 
 class StorageManager:
     """Tool to manage the storage lifecycle during a DAG.

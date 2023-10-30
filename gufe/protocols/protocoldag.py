@@ -19,6 +19,7 @@ from .protocolunit import (
 
 from ..storage.storagemanager import StorageManager
 from ..storage.externalresource.filestorage import FileStorage
+from ..storage.externalresource.base import ExternalStorage
 
 import logging
 _logger = logging.getLogger(__name__)

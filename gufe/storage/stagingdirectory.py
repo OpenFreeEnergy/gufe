@@ -367,9 +367,49 @@ class StagingPath:
         return str(self.root.prefix / self.path)
 
     def __repr__(self):
-        return f"StagingPath({self.__fspath__()})"
+        return f"StagingPath({self.fspath})"
 
     # TODO: how much of the pathlib.Path interface do we want to wrap?
     # although edge cases may be a pain, we can get most of it with, e.g.:
     # def exists(self): return Path(self).exists()
     # but also, can do pathlib.Path(staging_path) and get hte whole thing
+
+
+class StagingPathCodec:
+    def __init__(self, manager):
+        self.manager = manager
+        self.codec = JSONCodec(
+            cls=StagingPath,
+            is_my_dict=self.is_my_dict,
+            to_dict=self.to_dict,
+            from_dict=self.from_dict,
+        )
+        self.encoder, self.decoder = ...
+
+    def to_dict(self, path):
+        # scratch, shared, permanent may form nested with progressively
+        # smaller contexts, so the last of those it is in is where it should
+        # be labelled
+        loc = None
+        if path in self.manager.scratch_root:
+            loc = "scratch"
+        if path in self.manager.shared_root:
+            loc = "shared"
+        if path in self.manager.permanent_root:
+            loc = "permanent"
+
+        return {
+            ':container:': loc,
+            ':unit_label:': path.root.prefix,
+            ':path:': path.path,
+        }
+
+    def from_dict(self, dct):
+        loader = getattr(self.manager, f"get_{dct[':container:']}")
+        staging_dir = loader(dct[':unit_label:'])
+        return staging_dir / dct[':path:']
+
+    def is_my_dict(self, dct):
+        ...
+
+
