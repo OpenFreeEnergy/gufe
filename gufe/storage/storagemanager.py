@@ -110,7 +110,8 @@ class SingleProcDAGContextManager(DAGContextManager):
             if not self.manager.keep_staging:
                 shared.cleanup()
 
-class PerUnitContextManager:
+
+class PerUnitDAGContextManager(DAGContextManager):
     """Variant to use when doing only a single process per unit"""
     def __init__(self, storage_manager: StorageManager, dag_label: str):
         self.manager = storage_manager

@@ -394,7 +394,7 @@ class StagingPathSerialization:
     #    moved that directory (with use cases of (a) I moved the absolute
     #    path; (b) it is at a different relative path with respect to my
     #    pwd.
-    # 4. I'm working with files from two different permenant storages. I
+    # 4. I'm working with files from two different permanent storages. I
     #    need to be able to load from both in the same Python process.
     #
     # Outputs from a protocol may contain a :class:`.StagingPath`. Note that
@@ -406,9 +406,9 @@ class StagingPathSerialization:
     # need to inject that context in to the deserialization.
     #
     # This object injects the relevant context, provided by the
-    # :class:`.StorageManager`. It creates a JSONSerialierDeserializer based
-    # on the one being used by gufe in this process, using all the installed
-    # codecs plus an additional codec specific to this context.
+    # :class:`.StorageManager`. It creates a JSONSerializerDeserializer
+    # based on the one being used by gufe in this process, using all the
+    # installed codecs plus an additional codec specific to this context.
     #
     # User stories 1 and 2 are handled by the nature of the
     # :class:`.StagingPath` object. The external file downloads as part of
@@ -433,14 +433,11 @@ class StagingPathSerialization:
             to_dict=self.to_dict,
             from_dict=self.from_dict,
         )
+        self.refresh_handler()
+
+    def refresh_handler(self):
         codecs = JSON_HANDLER.codecs + [self.codec]
         self.json_handler = JSONSerializeDeserializer(codecs)
-
-    def serialize(self, obj):
-        return self.json_handler.serialize(obj)
-
-    def deserialize(self, string):
-        retrun self.json_handler.deserialize(string)
 
     def to_dict(self, path):
         # scratch, shared, permanent may form nested with progressively

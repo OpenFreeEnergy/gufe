@@ -418,6 +418,13 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         keep_staging=False,
         staging=Path(""),  # use the actual directories as the staging
     )
+    return new_execute_DAG(protocoldag, storage_manager, n_retries)
+
+
+def new_execute_DAG(protocoldag, storage_manager, n_retries):
+    # this simplifies setup of execute_DAG by allowing you to directly
+    # provide the storage_manager; the extra option in the old one just
+    # configure the storage_manager
     with storage_manager.running_dag(dag_label) as dag_ctx:
         for unit in protocoldag.protocol_units:
             attempt = 0
