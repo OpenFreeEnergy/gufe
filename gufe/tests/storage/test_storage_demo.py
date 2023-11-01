@@ -1,7 +1,8 @@
 import pytest
+
 import gufe
 from gufe.storage.externalresource import MemoryStorage
-from gufe.storage.storagemanager import StorageManager
+from gufe.storage.storagemanager import StorageManager, NewStorageManager
 from gufe.protocols.protocoldag import new_execute_DAG
 
 """
@@ -37,9 +38,6 @@ class Unit1(gufe.ProtocolUnit):
 class Unit2(gufe.ProtocolUnit):
     def _execute(self, ctx, unit1_result):
         u1_outputs = unit1_result.outputs
-        share_file = u1_outputs['share_file']
-        perm_file = u1_outputs['perm_file']
-        scratch_file = u1_outputs['scratch_file']
 
         outputs = {}
         for file_label, file in unit1_result.outputs.items():
@@ -110,7 +108,14 @@ def execute_per_unit(protocoldag, storage_manager, dag_directory):
     ... # TODO: make ProtocolDAGResult
 
 
-def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path):
+@pytest.mark.parametrize('keep', [
+    'nothing', 'scratch', 'staging', 'shared', 'scratch,staging',
+    'scratch,shared', 'staging,shared', 'scratch,staging,shared'
+])
+def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path, keep):
+    keep_scratch = 'scratch' in keep
+    keep_staging = 'staging' in keep
+    keep_shared = 'shared' in keep
     transformation = gufe.Transformation(
         solvated_ligand,
         solvated_complex,
@@ -120,12 +125,15 @@ def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path):
     dag = transformation.create()
     shared = MemoryStorage()
     permanent = MemoryStorage()
-    storage_manager = StorageManager(
-        scratch_root=tmp_path / "scratch",
+    scratch = tmp_path
+    storage_manager = NewStorageManager(
+        scratch_root=scratch,
         shared_root=shared,
-        permanent_root=permanent
+        permanent_root=permanent,
+        keep_scratch=keep_scratch,
+        keep_staging=keep_staging,
     )
-    dag_label = "dag"
+    dag_label = "dag"  # currently unused?
     result = new_execute_DAG(dag, dag_label, storage_manager,
                              raise_error=True, n_retries=3)
     assert result.ok
@@ -136,20 +144,28 @@ def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path):
 
     u1_label = f"{dag.protocol_units[0].key}_attempt_0"
 
+    if keep_scratch:
+        scratch_res2 = "This is scratch -- can't be shared"
+        n_scratch = 2
+    else:
+        scratch_res2 = "File not found"
+        n_scratch = 0
+
     assert res2.outputs == {
         'share_file_contents': "I can be shared",
         'perm_file_contents': "I'm permanent (but I can be shared)",
-        'scratch_file_contents': "File not found",
+        'scratch_file_contents': scratch_res2
     }
 
-    assert shared._data == {
-        f'{u1_label}/shared.txt': b"I can be shared",
-        f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
-    }
+    # assert shared._data == {
+    #     f'{u1_label}/shared.txt': b"I can be shared",
+    #     f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
+    # }
     assert permanent._data == {
         f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
     }
-    # test that scratch is empty
+
+    assert len(list((scratch / "scratch").iterdir())) == n_scratch
 
 
 

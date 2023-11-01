@@ -79,6 +79,8 @@ class SingleProcDAGContextManager(DAGContextManager):
                     # import pdb; pdb.set_trace()
                     d.cleanup()
 
+            # TODO: remove scratch root if empty
+
     @contextmanager
     def running_unit(self, unit_label: str):
         """Unit level of the storage lifecycle.
@@ -99,16 +101,17 @@ class SingleProcDAGContextManager(DAGContextManager):
         finally:
             # TODO: should some of this be in an else clause instead?
             self.permanents.append(permanent)
-            shared.transfer_staging_to_external()
+            shared.root.transfer_staging_to_external()
             # everything in permanent must also be available in shared
             for file in permanent.registry:
-                shared.transfer_single_file_to_external(file)
+                shared.root.transfer_single_file_to_external(file)
 
             if not self.manager.keep_scratch:
                 shutil.rmtree(scratch)
 
             if not self.manager.keep_staging:
-                shared.cleanup()
+                # TODO: for some reason this isn't cleaning up as expected?
+                shared.root.cleanup()
 
 
 class PerUnitDAGContextManager(DAGContextManager):
@@ -137,6 +140,78 @@ class PerUnitDAGContextManager(DAGContextManager):
             permanent.transfer_staging_to_external()
 
 
+class NewStorageManager:
+    def __init__(
+        self,
+        scratch_root: PathLike,
+        shared_root: ExternalStorage,
+        permanent_root: ExternalStorage,
+        *,
+        keep_scratch: bool = False,
+        keep_staging: bool = False,
+        staging: PathLike = Path(".staging"),
+        DAGContextClass: _DCMType = SingleProcDAGContextManager,
+    ):
+        self.scratch_root = Path(scratch_root)
+        self.shared_root = shared_root
+        self.permanent_root = permanent_root
+        self.keep_scratch = keep_scratch
+        self.keep_staging = keep_staging
+        self.staging = staging
+        self.DAGContextClass = DAGContextClass
+
+        self.permanent_staging = PermanentStaging(
+            scratch=self.scratch_root,
+            external=self.permanent_root,
+            shared=self.shared_root,
+            staging=self.staging,
+            prefix=""
+        )
+
+        self.shared_staging = SharedStaging(
+            scratch=self.scratch_root,
+            external=self.shared_root,
+            staging=self.staging,
+            prefix=""
+        )
+
+    def _scratch_loc(self, unit_label):
+        return self.scratch_root / "scratch" / unit_label
+
+    @contextmanager
+    def running_dag(self, dag_label=None):
+        # TODO: remove dag_label
+        try:
+            yield self
+        finally:
+            self.permanent_staging.transfer_staging_to_external()
+
+            if not self.keep_staging:
+                self.permanent_staging.cleanup()
+
+            # TODO: remove empty dirs
+
+    @contextmanager
+    def running_unit(self, unit_label):
+        scratch = self._scratch_loc(unit_label)
+        scratch.mkdir(parents=True, exist_ok=True)
+        shared = self.shared_staging / unit_label
+        permanent = self.permanent_staging / unit_label
+        try:
+            yield scratch, shared, permanent
+        finally:
+            self.shared_staging.transfer_staging_to_external()
+
+        if not self.keep_scratch:
+            shutil.rmtree(scratch)
+
+        if not self.keep_staging:
+            self.shared_staging.cleanup()
+
+
+
+
+
 class StorageManager:
     """Tool to manage the storage lifecycle during a DAG.
 
@@ -163,6 +238,19 @@ class StorageManager:
         self.staging = staging
         self.DAGContextClass = DAGContextClass
 
+        self.permanent_staging = PermanentStaging(
+            scratch=self.scratch_root,
+            external=self.permanent_root,
+            shared=self.shared_root,
+            staging=self.staging
+        )
+
+        self.shared_staging = SharedStaging(
+            scratch=self.scratch_root,
+            external=self.shared_root,
+            staging=self.staging,
+        )
+
     def _scratch_loc(self, unit_label):
         return self.scratch_root / "scratch" / unit_label
 
@@ -174,6 +262,7 @@ class StorageManager:
 
     def get_permanent(self, unit_label) -> PermanentStaging:
         """Get the object for this unit's permanent staging directory"""
+        return self.permanent_staging / unit_label
         return PermanentStaging(
             scratch=self.scratch_root,
             external=self.permanent_root,
@@ -184,6 +273,7 @@ class StorageManager:
 
     def get_shared(self, unit_label) -> SharedStaging:
         """Get the object for this unit's shared staging directory"""
+        return self.shared_staging / unit_label
         return SharedStaging(
             scratch=self.scratch_root,
             external=self.shared_root,

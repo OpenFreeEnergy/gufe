@@ -435,6 +435,7 @@ def new_execute_DAG(
 
     with storage_manager.running_dag(dag_label) as dag_ctx:
         for unit in protocoldag.protocol_units:
+            # import pdb; pdb.set_trace()
             attempt = 0
             while attempt <= n_retries:
                 # translate each `ProtocolUnit` in input into corresponding
