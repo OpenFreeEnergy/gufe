@@ -397,13 +397,6 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         The result of executing the `ProtocolDAG`.
 
     """
-    if n_retries < 0:
-        raise ValueError("Must give positive number of retries")
-
-    # iterate in DAG order
-    results: dict[GufeKey, ProtocolUnitResult] = {}
-    all_results = []  # successes AND failures
-
     # the directory given as shared_root is actually the directory for this
     # DAG; the "shared_root" for the storage manager is the parent. We'll
     # force permanent to be the same.
@@ -418,13 +411,28 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         keep_staging=False,
         staging=Path(""),  # use the actual directories as the staging
     )
-    return new_execute_DAG(protocoldag, storage_manager, n_retries)
+    return new_execute_DAG(protocoldag, dag_label, storage_manager,
+                           keep_shared, raise_error, n_retries)
 
 
-def new_execute_DAG(protocoldag, storage_manager, n_retries):
+def new_execute_DAG(
+    protocoldag,
+    dag_label,
+    storage_manager,
+    keep_shared=False,
+    raise_error=False,
+    n_retries=0
+):
     # this simplifies setup of execute_DAG by allowing you to directly
     # provide the storage_manager; the extra option in the old one just
     # configure the storage_manager
+    if n_retries < 0:
+        raise ValueError("Must give positive number of retries")
+
+    # iterate in DAG order
+    results: dict[GufeKey, ProtocolUnitResult] = {}
+    all_results = []  # successes AND failures
+
     with storage_manager.running_dag(dag_label) as dag_ctx:
         for unit in protocoldag.protocol_units:
             attempt = 0
@@ -433,7 +441,7 @@ def new_execute_DAG(protocoldag, storage_manager, n_retries):
                 # `ProtocolUnitResult`
                 inputs = _pu_to_pur(unit.inputs, results)
 
-                label = f"{str(unit.key)}_attempt_{attempt}",
+                label = f"{str(unit.key)}_attempt_{attempt}"
                 with dag_ctx.running_unit(label) as (scratch, shared, perm):
                     context = Context(shared=shared,
                                       scratch=scratch,
@@ -456,8 +464,9 @@ def new_execute_DAG(protocoldag, storage_manager, n_retries):
                 break
 
     if not keep_shared:
-        for objname in filestorage.iter_contents(dag_label):
-            filestorage.delete(objname)
+        shared = storage_manager.shared_root
+        for objname in shared.iter_contents(dag_label):
+            shared.delete(objname)
 
     return ProtocolDAGResult(
             name=protocoldag.name, 

@@ -1,12 +1,22 @@
+import pytest
 import gufe
+from gufe.storage.externalresource import MemoryStorage
+from gufe.storage.storagemanager import StorageManager
+from gufe.protocols.protocoldag import new_execute_DAG
 
 """
-This module contains a complete integration test for the
+This module contains complete integration tests for the storage lifecycle,
+using an actual protocol as an example.
+
+These tests are largely redundant from the perspective of unit testing, but
+the :class:`.StoragedDemoProtocol` is useful as an example for
+implementation. Furthermore, as integration tests, they ensure that the
+whole setup works together.
 """
 
 
 class Unit1(gufe.ProtocolUnit):
-    def _execute(ctx):
+    def _execute(self, ctx):
         share_file = ctx.shared / "shared.txt"
         with open(share_file, mode='w') as f:
             f.write("I can be shared")
@@ -25,7 +35,7 @@ class Unit1(gufe.ProtocolUnit):
 
 
 class Unit2(gufe.ProtocolUnit):
-    def _execute(ctx, unit1_result):
+    def _execute(self, ctx, unit1_result):
         u1_outputs = unit1_result.outputs
         share_file = u1_outputs['share_file']
         perm_file = u1_outputs['perm_file']
@@ -53,10 +63,9 @@ class StorageDemoProtocol(gufe.Protocol):
     def _defaults(cls):
         return {}
 
-    def _create(self, *, stateA, stateB, mapping, extends, name,
-                transformation_key):
+    def _create(self, stateA, stateB, mapping, extends):
         u1 = Unit1()
-        u2 = Unit2(unit1_results=u1)
+        u2 = Unit2(unit1_result=u1)
         return [u1, u2]
 
     def _gather(self, protocol_dag_results):
@@ -103,9 +112,9 @@ def execute_per_unit(protocoldag, storage_manager, dag_directory):
 
 def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path):
     transformation = gufe.Transformation(
-        solvated_liquid,
+        solvated_ligand,
         solvated_complex,
-        protocol=StorageDemoProtocol(),
+        protocol=StorageDemoProtocol(StorageDemoProtocol.default_settings()),
         mapping=None
     )
     dag = transformation.create()
@@ -116,23 +125,29 @@ def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path):
         shared_root=shared,
         permanent_root=permanent
     )
-    result = gufe.protocols.new_execute_DAG(dag, storage_manager,
-                                            n_retries=3)
+    dag_label = "dag"
+    result = new_execute_DAG(dag, dag_label, storage_manager,
+                             raise_error=True, n_retries=3)
     assert result.ok
     assert len(result.protocol_unit_results) == 2
     res1, res2 = result.protocol_unit_results
     assert set(res1.outputs) == {'share_file', 'perm_file', 'scratch_file'}
     # further tests of res1?
 
-    assert res2.outputs = {
-        ...
+    u1_label = f"{dag.protocol_units[0].key}_attempt_0"
+
+    assert res2.outputs == {
+        'share_file_contents': "I can be shared",
+        'perm_file_contents': "I'm permanent (but I can be shared)",
+        'scratch_file_contents': "File not found",
     }
 
-    assert shared._data = {
-        'shared.txt': "I can be shared"
+    assert shared._data == {
+        f'{u1_label}/shared.txt': b"I can be shared",
+        f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
     }
-    assert permanent._data = {
-        'permanent.txt': "I'm permanent (but I can be shared)",
+    assert permanent._data == {
+        f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
     }
     # test that scratch is empty
 
