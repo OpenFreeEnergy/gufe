@@ -128,7 +128,7 @@ class StagingDirectory:
     def transfer_single_file_to_external(self, held_file: StagingPath):
         """Transfer a given file from staging into external storage
         """
-        path = Path(held_file)
+        path = Path(held_file.fspath)
         if not path.exists():
             _logger.info(f"Found nonexistent path {path}, not "
                          "transfering to external storage")
@@ -138,20 +138,31 @@ class StagingDirectory:
         else:
             _logger.info(f"Transfering {path} to external storage")
             self.external.store_path(held_file.label, path)
+            return held_file
+        
+        return None  # no transfer
+
 
     def transfer_staging_to_external(self):
-        """Transfer all objects in the registry to external storage"""
-        for obj in self.registry:
-            self.transfer_single_file_to_external(obj)
+        """Transfer all objects in the registry to external storage
+
+        """
+        return [
+            transferred
+            for file in self.registry
+            if (transferred := self.transfer_single_file_to_external(file))
+        ]
 
     def cleanup(self):
         """Perform end-of-lifecycle cleanup.
         """
         if self.delete_staging and self._delete_staging_safe():
             for file in self.registry - self.preexisting:
-                if Path(file).exists():
+                path = Path(file.fspath)
+                if path.exists():
                     _logger.debug(f"Removing file {file}")
-                    remove(file)
+                    path.unlink()
+                    self.registry.remove(file)
                 else:
                     _logger.warning("During staging cleanup, file "
                                     f"{file} was marked for deletion, but "
@@ -192,13 +203,16 @@ class StagingDirectory:
 
     def _load_file_from_external(self, external: ExternalStorage,
                                  staging_path: StagingPath):
+        # import pdb; pdb.set_trace()
         scratch_path = self.staging_dir / staging_path.path
         # TODO: switch this to using `get_filename` and `store_path`
-        with external.load_stream(staging_path.label) as f:
-            external_bytes = f.read()
         if scratch_path.exists():
             self.preexisting.add(staging_path)
-            ... # TODO: something to check that the bytes are the same?
+
+        with external.load_stream(staging_path.label) as f:
+            external_bytes = f.read()
+            ... # TODO: check that the bytes are the same if preexisting?
+
         scratch_path.parent.mkdir(exist_ok=True, parents=True)
         with open(scratch_path, mode='wb') as f:
             f.write(external_bytes)
@@ -211,7 +225,7 @@ class StagingDirectory:
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}({self.scratch}, {self.external}, "
+            f"{self.__class__.__name__}('{self.scratch}', {self.external}, "
             f"{self.prefix})"
         )
 
@@ -273,14 +287,14 @@ class SharedStaging(StagingDirectory):
             _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
-        super().transfer_single_file_to_external(held_file)
+        return super().transfer_single_file_to_external(held_file)
 
     def transfer_staging_to_external(self):
         if self.read_only:
             _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
-        super().transfer_staging_to_external()
+        return super().transfer_staging_to_external()
 
     def register_path(self, staging_path: StagingPath):
         label_exists = self.external.exists(staging_path.label)
@@ -323,7 +337,7 @@ class PermanentStaging(StagingDirectory):
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         # if we can't find it locally, we load it from shared storage
-        path = Path(held_file)
+        path = Path(held_file.fspath)
         if not path.exists():
             self._load_file_from_external(self.shared, held_file)
 

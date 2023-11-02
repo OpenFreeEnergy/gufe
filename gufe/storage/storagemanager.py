@@ -149,6 +149,7 @@ class NewStorageManager:
         *,
         keep_scratch: bool = False,
         keep_staging: bool = False,
+        keep_shared: bool = False,
         staging: PathLike = Path(".staging"),
         DAGContextClass: _DCMType = SingleProcDAGContextManager,
     ):
@@ -157,8 +158,10 @@ class NewStorageManager:
         self.permanent_root = permanent_root
         self.keep_scratch = keep_scratch
         self.keep_staging = keep_staging
+        self.keep_shared = keep_shared
         self.staging = staging
         self.DAGContextClass = DAGContextClass
+        self.shared_xfer = set()
 
         self.permanent_staging = PermanentStaging(
             scratch=self.scratch_root,
@@ -179,15 +182,21 @@ class NewStorageManager:
         return self.scratch_root / "scratch" / unit_label
 
     @contextmanager
-    def running_dag(self, dag_label=None):
-        # TODO: remove dag_label
+    def running_dag(self, dag_label):
+        # TODO: remove (or use) dag_label
         try:
             yield self
         finally:
+            # import pdb; pdb.set_trace()
+            # clean up after DAG completes
             self.permanent_staging.transfer_staging_to_external()
 
             if not self.keep_staging:
                 self.permanent_staging.cleanup()
+
+            if not self.keep_shared:
+                for file in self.shared_xfer:
+                    self.shared_root.delete(file.label)
 
             # TODO: remove empty dirs
 
@@ -200,13 +209,17 @@ class NewStorageManager:
         try:
             yield scratch, shared, permanent
         finally:
-            self.shared_staging.transfer_staging_to_external()
+            # import pdb; pdb.set_trace()
+            # clean up after unit
+            self.shared_xfer.update(set(
+                self.shared_staging.transfer_staging_to_external()
+            ))
 
-        if not self.keep_scratch:
-            shutil.rmtree(scratch)
+            if not self.keep_scratch:
+                shutil.rmtree(scratch)
 
-        if not self.keep_staging:
-            self.shared_staging.cleanup()
+            if not self.keep_staging:
+                self.shared_staging.cleanup()
 
 
 

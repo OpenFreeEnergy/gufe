@@ -1,8 +1,11 @@
 import pytest
 
+import pathlib
+
 import gufe
 from gufe.storage.externalresource import MemoryStorage
 from gufe.storage.storagemanager import StorageManager, NewStorageManager
+from gufe.storage.stagingdirectory import StagingPath
 from gufe.protocols.protocoldag import new_execute_DAG
 
 """
@@ -41,6 +44,7 @@ class Unit2(gufe.ProtocolUnit):
 
         outputs = {}
         for file_label, file in unit1_result.outputs.items():
+            # import pdb; pdb.set_trace()
             # labels are, e.g., share_file; file is StagingPath
             key = f"{file_label}_contents"
             try:
@@ -107,15 +111,8 @@ def execute_per_unit(protocoldag, storage_manager, dag_directory):
 
     ... # TODO: make ProtocolDAGResult
 
-
-@pytest.mark.parametrize('keep', [
-    'nothing', 'scratch', 'staging', 'shared', 'scratch,staging',
-    'scratch,shared', 'staging,shared', 'scratch,staging,shared'
-])
-def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path, keep):
-    keep_scratch = 'scratch' in keep
-    keep_staging = 'staging' in keep
-    keep_shared = 'shared' in keep
+@pytest.fixture
+def demo_dag(solvated_ligand, solvated_complex):
     transformation = gufe.Transformation(
         solvated_ligand,
         solvated_complex,
@@ -123,33 +120,25 @@ def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path, keep):
         mapping=None
     )
     dag = transformation.create()
-    shared = MemoryStorage()
-    permanent = MemoryStorage()
-    scratch = tmp_path
-    storage_manager = NewStorageManager(
-        scratch_root=scratch,
-        shared_root=shared,
-        permanent_root=permanent,
-        keep_scratch=keep_scratch,
-        keep_staging=keep_staging,
-    )
-    dag_label = "dag"  # currently unused?
-    result = new_execute_DAG(dag, dag_label, storage_manager,
-                             raise_error=True, n_retries=3)
+    return dag
+
+
+def assert_dag_result(result, u1_label, keep_scratch):
+    # no matter how you set up storage, the DAGResult and UnitResults from
+    # this protocol should be the same
     assert result.ok
     assert len(result.protocol_unit_results) == 2
     res1, res2 = result.protocol_unit_results
     assert set(res1.outputs) == {'share_file', 'perm_file', 'scratch_file'}
-    # further tests of res1?
+    assert isinstance(res1.outputs['scratch_file'], pathlib.Path)
+    assert isinstance(res1.outputs['share_file'], StagingPath)
+    assert isinstance(res1.outputs['perm_file'], StagingPath)
 
-    u1_label = f"{dag.protocol_units[0].key}_attempt_0"
 
     if keep_scratch:
         scratch_res2 = "This is scratch -- can't be shared"
-        n_scratch = 2
     else:
         scratch_res2 = "File not found"
-        n_scratch = 0
 
     assert res2.outputs == {
         'share_file_contents': "I can be shared",
@@ -157,16 +146,61 @@ def test_execute_DAG(solvated_ligand, solvated_complex, tmp_path, keep):
         'scratch_file_contents': scratch_res2
     }
 
-    # assert shared._data == {
-    #     f'{u1_label}/shared.txt': b"I can be shared",
-    #     f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
-    # }
+def _parse_keep(keep):
+    return (
+        'scratch' in keep,
+        'staging' in keep,
+        'shared' in keep
+    )
+
+
+
+@pytest.mark.parametrize('keep', [
+    'nothing', 'scratch', 'staging', 'shared', 'scratch,staging',
+    'scratch,shared', 'staging,shared', 'scratch,staging,shared'
+])
+def test_execute_DAG(demo_dag, tmp_path, keep):
+    keep_scratch, keep_staging, keep_shared = _parse_keep(keep)
+    dag = demo_dag
+
+    shared = MemoryStorage()
+    permanent = MemoryStorage()
+    scratch = tmp_path
+
+    storage_manager = NewStorageManager(
+        scratch_root=scratch,
+        shared_root=shared,
+        permanent_root=permanent,
+        keep_scratch=keep_scratch,
+        keep_shared=keep_shared,
+        keep_staging=keep_staging,
+    )
+
+    dag_label = "dag"  # currently unused?
+    result = new_execute_DAG(dag, dag_label, storage_manager,
+                             raise_error=True, n_retries=3)
+
+    # test the ProtocolDAGResult that comes out
+    u1_label = f"{dag.protocol_units[0].key}_attempt_0"
+    assert_dag_result(result, u1_label, keep_scratch)
+
+    # test the shared/permanent storage
     assert permanent._data == {
         f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
     }
+    if keep_shared:
+        assert shared._data == {
+            f'{u1_label}/shared.txt': b"I can be shared",
+            # f'{u1_label}/permanent.txt': b"I'm permanent (but I can be shared)",
+        }
+    else:
+        assert shared._data == {}
 
+    # test the directories that we generated
+    n_scratch = 2 if keep_scratch else 0
     assert len(list((scratch / "scratch").iterdir())) == n_scratch
 
-
-
-
+    if keep_staging:
+        ...
+    else:
+        assert ".staging" not in list(scratch.iterdir())

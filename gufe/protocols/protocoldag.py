@@ -408,18 +408,18 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         shared_root=shared,
         permanent_root=shared,
         keep_scratch=keep_scratch,
+        keep_shared=keep_shared,
         keep_staging=False,
         staging=Path(""),  # use the actual directories as the staging
     )
     return new_execute_DAG(protocoldag, dag_label, storage_manager,
-                           keep_shared, raise_error, n_retries)
+                           raise_error, n_retries)
 
 
 def new_execute_DAG(
     protocoldag,
     dag_label,
     storage_manager,
-    keep_shared=False,
     raise_error=False,
     n_retries=0
 ):
@@ -463,11 +463,6 @@ def new_execute_DAG(
 
             if not result.ok():
                 break
-
-    if not keep_shared:
-        shared = storage_manager.shared_root
-        for objname in shared.iter_contents(dag_label):
-            shared.delete(objname)
 
     return ProtocolDAGResult(
             name=protocoldag.name, 
