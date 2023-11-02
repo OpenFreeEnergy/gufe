@@ -6,6 +6,8 @@ from os import PathLike, rmdir, remove
 from .externalresource import ExternalStorage, FileStorage
 from contextlib import contextmanager
 
+from gufe.utils import delete_empty_dirs
+
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -35,27 +37,6 @@ def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
     else:
         return False
 
-
-def _delete_empty_dirs(root: PathLike, delete_root: bool = True):
-    """Delete all empty directories.
-
-    Repeats so that directories that only contained empty directories also
-    get deleted.
-    """
-    root = Path(root)
-
-    def find_empty_dirs(directory):
-        if not (paths := list(directory.iterdir())):
-            return [directory]
-        directories = [p for p in paths if p.is_dir()]
-        return sum([find_empty_dirs(d) for d in directories], [])
-
-    while root.exists() and (empties := find_empty_dirs(root)):
-        if empties == [root] and not delete_root:
-            return
-        for directory in empties:
-            _logger.debug(f"Removing '{directory}'")
-            rmdir(directory)
 
 
 class StagingDirectory:
@@ -167,7 +148,7 @@ class StagingDirectory:
                     _logger.warning("During staging cleanup, file "
                                     f"{file} was marked for deletion, but "
                                     "can not be found on disk.")
-            _delete_empty_dirs(self.staging_dir)
+            delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
         """

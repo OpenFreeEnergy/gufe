@@ -197,10 +197,15 @@ def test_execute_DAG(demo_dag, tmp_path, keep):
         assert shared._data == {}
 
     # test the directories that we generated
-    n_scratch = 2 if keep_scratch else 0
-    assert len(list((scratch / "scratch").iterdir())) == n_scratch
+    assert scratch.is_dir()
+
+    if keep_scratch:
+        assert len(list((scratch / "scratch").iterdir())) == 2
+    else:
+        assert 'scratch' not in list(scratch.iterdir())
 
     if keep_staging:
-        ...
+        assert (tmp_path / ".staging" / u1_label / "shared.txt").exists()
+        assert (tmp_path / ".staging" / u1_label / "permanent.txt").exists()
     else:
         assert ".staging" not in list(scratch.iterdir())

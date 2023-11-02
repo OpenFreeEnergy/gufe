@@ -4,6 +4,8 @@ from pathlib import Path
 from contextlib import contextmanager
 import shutil
 
+from gufe.utils import delete_empty_dirs
+
 from typing import Type
 
 from .externalresource import ExternalStorage, FileStorage
@@ -178,8 +180,15 @@ class NewStorageManager:
             prefix=""
         )
 
+    def _make_label(self, dag_label, unit_label):
+        return f"{dag_label}/{unit_label}"
+
+    @property
+    def _scratch_base(self):
+        return self.scratch_root / "scratch"
+
     def _scratch_loc(self, unit_label):
-        return self.scratch_root / "scratch" / unit_label
+        return self._scratch_base / unit_label
 
     @contextmanager
     def running_dag(self, dag_label):
@@ -193,11 +202,14 @@ class NewStorageManager:
 
             if not self.keep_staging:
                 self.permanent_staging.cleanup()
+                delete_empty_dirs(self.scratch_root / self.staging)
 
             if not self.keep_shared:
                 for file in self.shared_xfer:
                     self.shared_root.delete(file.label)
 
+            if not self.keep_scratch:
+                delete_empty_dirs(self._scratch_base, delete_root=False)
             # TODO: remove empty dirs
 
     @contextmanager
@@ -220,9 +232,6 @@ class NewStorageManager:
 
             if not self.keep_staging:
                 self.shared_staging.cleanup()
-
-
-
 
 
 class StorageManager:
@@ -276,23 +285,10 @@ class StorageManager:
     def get_permanent(self, unit_label) -> PermanentStaging:
         """Get the object for this unit's permanent staging directory"""
         return self.permanent_staging / unit_label
-        return PermanentStaging(
-            scratch=self.scratch_root,
-            external=self.permanent_root,
-            shared=self.shared_root,
-            prefix=unit_label,
-            staging=self.staging,
-        )
 
     def get_shared(self, unit_label) -> SharedStaging:
         """Get the object for this unit's shared staging directory"""
         return self.shared_staging / unit_label
-        return SharedStaging(
-            scratch=self.scratch_root,
-            external=self.shared_root,
-            prefix=unit_label,
-            staging=self.staging,
-        )
 
     def running_dag(self, dag_label: str):
         """Return a context manager that handles storage.
