@@ -153,6 +153,27 @@ Details of how the object is recognized for encoding or how the dictionary
 is recognized for decoding can be changed by passing functions to the
 ``is_my_obj`` or ``is_my_dict`` parameters of :class:`.JSONCodec`.
 
+.. warning::
+    The Custom encoders & decoders only override the default JSON
+    encoder/decoder if they are not able to natively handle the object.
+    This leads to some odd / lossy behaviour for some objects such
+    as ``np.float64`` which is natively converted to a ``float`` type
+    by the default encoder, whilst other numpy generic types are
+    appropriately roundtripped.
+
+On the use of NumPy generic types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to their inconsistent behaviour in how they are handled by the default
+JSON encoder/decoder routines (see warning above), it is our suggestion
+that Python types should be used preferrentially instead of NumPy generic
+types. For example if one would be looking to store a single float value,
+a ``float`` would be prefered to a ``np.float32`` or ``np.float64``.
+
+Please note that this only applied to generic types being used **outside of
+numpy arrays**. NumPy arrays are, as far as we know, always handled
+in a consistent manner.
+
 Dumping arbitrary objects to JSON
 ---------------------------------
 
