@@ -135,7 +135,7 @@ class PerUnitDAGContextManager(DAGContextManager):
         try:
             yield scratch, shared, permanent
         finally:
-            shared.tranfer_staging_to_external()
+            shared.transfer_staging_to_external()
             for file in permanent.registry:
                 shared.transfer_single_file_to_expected(file)
 
@@ -153,7 +153,7 @@ class NewStorageManager:
         keep_staging: bool = False,
         keep_shared: bool = False,
         staging: PathLike = Path(".staging"),
-        DAGContextClass: _DCMType = SingleProcDAGContextManager,
+        delete_empty_dirs: bool = True,
     ):
         self.scratch_root = Path(scratch_root)
         self.shared_root = shared_root
@@ -162,7 +162,7 @@ class NewStorageManager:
         self.keep_staging = keep_staging
         self.keep_shared = keep_shared
         self.staging = staging
-        self.DAGContextClass = DAGContextClass
+        self.delete_empty_dirs = delete_empty_dirs
         self.shared_xfer = set()
 
         self.permanent_staging = PermanentStaging(
@@ -170,6 +170,7 @@ class NewStorageManager:
             external=self.permanent_root,
             shared=self.shared_root,
             staging=self.staging,
+            delete_empty_dirs=delete_empty_dirs,
             prefix=""
         )
 
@@ -177,6 +178,7 @@ class NewStorageManager:
             scratch=self.scratch_root,
             external=self.shared_root,
             staging=self.staging,
+            delete_empty_dirs=delete_empty_dirs,
             prefix=""
         )
 
@@ -202,15 +204,13 @@ class NewStorageManager:
 
             if not self.keep_staging:
                 self.permanent_staging.cleanup()
-                delete_empty_dirs(self.scratch_root / self.staging)
 
             if not self.keep_shared:
                 for file in self.shared_xfer:
                     self.shared_root.delete(file.label)
 
-            if not self.keep_scratch:
+            if self.delete_empty_dirs:
                 delete_empty_dirs(self._scratch_base, delete_root=False)
-            # TODO: remove empty dirs
 
     @contextmanager
     def running_unit(self, unit_label):
@@ -223,9 +223,8 @@ class NewStorageManager:
         finally:
             # import pdb; pdb.set_trace()
             # clean up after unit
-            self.shared_xfer.update(set(
-                self.shared_staging.transfer_staging_to_external()
-            ))
+            shared_xfers = self.shared_staging.transfer_staging_to_external()
+            self.shared_xfer.update(set(shared_xfers))
 
             if not self.keep_scratch:
                 shutil.rmtree(scratch)

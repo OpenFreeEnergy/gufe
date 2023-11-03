@@ -55,7 +55,7 @@ class StagingDirectory:
     2. When requested, it transfers any newly created files to the
        :class:`.ExternalStorage`.
 
-    3. It can delete all of the files it manages
+    3. It can delete all of the files it manages.
 
     Parameters
     ----------
@@ -85,11 +85,13 @@ class StagingDirectory:
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
+        delete_empty_dirs: bool = True,
     ):
         self.external = external
         self.scratch = Path(scratch)
         self.prefix = Path(prefix)
         self.delete_staging = delete_staging
+        self.delete_empty_dirs = delete_empty_dirs
         self.staging = staging
 
         self.registry : set[StagingPath] = set()
@@ -120,7 +122,7 @@ class StagingDirectory:
             _logger.info(f"Transfering {path} to external storage")
             self.external.store_path(held_file.label, path)
             return held_file
-        
+
         return None  # no transfer
 
 
@@ -148,7 +150,9 @@ class StagingDirectory:
                     _logger.warning("During staging cleanup, file "
                                     f"{file} was marked for deletion, but "
                                     "can not be found on disk.")
-            delete_empty_dirs(self.staging_dir)
+
+            if self.delete_empty_dirs:
+                delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
         """
@@ -229,10 +233,12 @@ class SharedStaging(StagingDirectory):
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
+        delete_empty_dirs: bool = True,
         read_only: bool = False,
     ):
         super().__init__(scratch, external, prefix, staging=staging,
-                         delete_staging=delete_staging)
+                         delete_staging=delete_staging,
+                         delete_empty_dirs=delete_empty_dirs)
         self.read_only = read_only
 
     def _get_other_shared(self, prefix: str,
@@ -303,9 +309,11 @@ class PermanentStaging(StagingDirectory):
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
+        delete_empty_dirs: bool = True,
     ):
         super().__init__(scratch, external, prefix, staging=staging,
-                         delete_staging=delete_staging)
+                         delete_staging=delete_staging,
+                         delete_empty_dirs=delete_empty_dirs)
         self.shared = shared
 
     def _delete_staging_safe(self):
