@@ -8,18 +8,21 @@ import pathlib
 
 import numpy as np
 import openff.units
+from openff.units import unit
 import pytest
 from numpy import testing as npt
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
     NUMPY_CODEC,
+    NPY_DTYPE_CODEC,
     OPENFF_QUANTITY_CODEC,
     OPENFF_UNIT_CODEC,
     PATH_CODEC,
     SETTINGS_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
+from gufe import tokenization
 from gufe.settings import models
 
 
@@ -44,10 +47,26 @@ class TestJSONSerializerDeserializer:
         assert len(serialization.codecs) == 1
 
 
+@pytest.mark.parametrize('obj', [
+    np.array([[1.0, 0.0], [2.0, 3.2]]),
+    np.float32(1.1)
+])
+@pytest.mark.parametrize('codecs', [
+    [BYTES_CODEC, NUMPY_CODEC, NPY_DTYPE_CODEC],
+    [NPY_DTYPE_CODEC, BYTES_CODEC, NUMPY_CODEC],
+])
+def test_numpy_codec_order_roundtrip(obj, codecs):
+    serialization = JSONSerializerDeserializer(codecs)
+    serialized = serialization.serializer(obj)
+    reconstructed = serialization.deserializer(serialized)
+    npt.assert_equal(obj, reconstructed)
+    assert obj.dtype == reconstructed.dtype
+
+
 class CustomJSONCodingTest:
     """Base class for testing codecs.
 
-    In ``setup()``, user must define the following:
+    In ``setup_method()``, user must define the following:
 
     * ``self.codec``: The codec to run
     * ``self.objs``: A list of objects to serialize
@@ -87,8 +106,9 @@ class CustomJSONCodingTest:
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = NUMPY_CODEC
-        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0])]
-        shapes = [[2, 2], [2,]]
+        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0]),
+                     np.array([1.0, 2.0, 3.0], dtype=np.float32)]
+        shapes = [[2, 2], [2,], [3,]]
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
         self.dcts = [
@@ -115,8 +135,36 @@ class TestNumpyCoding(CustomJSONCodingTest):
             json_str = json.dumps(obj, cls=encoder)
             reconstructed = json.loads(json_str, cls=decoder)
             npt.assert_array_equal(reconstructed, obj)
+            assert reconstructed.dtype == obj.dtype
             json_str_2 = json.dumps(obj, cls=encoder)
             assert json_str == json_str_2
+
+
+class TestNumpyGenericCodec(TestNumpyCoding):
+    def setup_method(self):
+        self.codec = NPY_DTYPE_CODEC
+        # Note that np.float64 is treated as a float by the
+        # default json encode (and so returns a float not a numpy
+        # object).
+        self.objs = [np.bool_(True), np.float16(1.0), np.float32(1.0),
+                     np.complex128(1.0),
+                     np.clongdouble(1.0), np.uint64(1)]
+        dtypes = [str(a.dtype) for a in self.objs]
+        byte_reps = [a.tobytes() for a in self.objs]
+        # Overly complicated extraction of the class name
+        # to deal with the bool_ -> bool dtype class name problem
+        classes = [str(a.__class__).split("'")[1].split('.')[1]
+                   for a in self.objs]
+        self.dcts = [
+            {
+                ":is_custom:": True,
+                "__class__": classname,
+                "__module__": "numpy",
+                "dtype": dtype,
+                "bytes": byte_rep,
+            }
+            for dtype, byte_rep, classname in zip(dtypes, byte_reps, classes)
+        ]
 
 
 class TestPathCodec(CustomJSONCodingTest):
@@ -136,7 +184,7 @@ class TestPathCodec(CustomJSONCodingTest):
 
 
 class TestSettingsCodec(CustomJSONCodingTest):
-    def setup(self):
+    def setup_method(self):
         self.codec = SETTINGS_CODEC
         self.objs = [
             models.Settings.get_defaults(),
@@ -207,8 +255,8 @@ class TestSettingsCodec(CustomJSONCodingTest):
             assert dct == as_dct
 
 
-class TestOpenFFQuanityCodec(CustomJSONCodingTest):
-    def setup(self):
+class TestOpenFFQuantityCodec(CustomJSONCodingTest):
+    def setup_method(self):
         self.codec = OPENFF_QUANTITY_CODEC
         self.objs = [
             openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
@@ -223,8 +271,21 @@ class TestOpenFFQuanityCodec(CustomJSONCodingTest):
         ]
 
 
+def test_openff_quantity_array_roundtrip():
+    thing = unit.Quantity.from_list([
+        (i + 1.0)*unit.kelvin for i in range(10)
+    ])
+
+    dumped = json.dumps(thing, cls=tokenization.JSON_HANDLER.encoder)
+
+    returned = json.loads(dumped, cls=tokenization.JSON_HANDLER.decoder)
+
+    assert returned.u == thing.u
+    assert (returned.m == thing.m).all()
+
+
 class TestOpenFFUnitCodec(CustomJSONCodingTest):
-    def setup(self):
+    def setup_method(self):
         self.codec = OPENFF_UNIT_CODEC
         self.objs = [
             openff.units.unit.amu,
