@@ -103,17 +103,17 @@ class SingleProcDAGContextManager(DAGContextManager):
         finally:
             # TODO: should some of this be in an else clause instead?
             self.permanents.append(permanent)
-            shared.root.transfer_staging_to_external()
+            shared.transfer_staging_to_external()
             # everything in permanent must also be available in shared
             for file in permanent.registry:
-                shared.root.transfer_single_file_to_external(file)
+                shared.transfer_single_file_to_external(file)
 
             if not self.manager.keep_scratch:
                 shutil.rmtree(scratch)
 
             if not self.manager.keep_staging:
                 # TODO: for some reason this isn't cleaning up as expected?
-                shared.root.cleanup()
+                shared.cleanup()
 
 
 class PerUnitDAGContextManager(DAGContextManager):
@@ -259,19 +259,6 @@ class StorageManager:
         self.staging = staging
         self.DAGContextClass = DAGContextClass
 
-        self.permanent_staging = PermanentStaging(
-            scratch=self.scratch_root,
-            external=self.permanent_root,
-            shared=self.shared_root,
-            staging=self.staging
-        )
-
-        self.shared_staging = SharedStaging(
-            scratch=self.scratch_root,
-            external=self.shared_root,
-            staging=self.staging,
-        )
-
     def _scratch_loc(self, unit_label):
         return self.scratch_root / "scratch" / unit_label
 
@@ -283,11 +270,22 @@ class StorageManager:
 
     def get_permanent(self, unit_label) -> PermanentStaging:
         """Get the object for this unit's permanent staging directory"""
-        return self.permanent_staging / unit_label
+        return PermanentStaging(
+            scratch=self.scratch_root,
+            external=self.permanent_root,
+            shared=self.shared_root,
+            prefix=unit_label,
+            staging=self.staging,
+        )
 
     def get_shared(self, unit_label) -> SharedStaging:
         """Get the object for this unit's shared staging directory"""
-        return self.shared_staging / unit_label
+        return SharedStaging(
+            scratch=self.scratch_root,
+            external=self.shared_root,
+            prefix=unit_label,
+            staging=self.staging,
+        )
 
     def running_dag(self, dag_label: str):
         """Return a context manager that handles storage.

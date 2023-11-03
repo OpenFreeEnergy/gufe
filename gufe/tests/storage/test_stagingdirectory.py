@@ -7,8 +7,8 @@ import pathlib
 
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from gufe.storage.stagingdirectory import (
-    SharedStaging, PermanentStaging, _delete_empty_dirs,
-    _safe_to_delete_staging
+    SharedStaging, PermanentStaging, _safe_to_delete_staging,
+    delete_empty_dirs,  # TODO: move to appropriate place
 )
 
 @pytest.fixture
@@ -99,7 +99,7 @@ def test_delete_empty_dirs(tmp_path):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch()
 
-    _delete_empty_dirs(base)
+    delete_empty_dirs(base)
     for path in paths:
         assert path.exists()
 
@@ -118,7 +118,7 @@ def test_delete_empty_dirs_delete_root(tmp_path, delete_root):
     for directory in dirs:
         directory.mkdir(parents=True, exist_ok=True)
 
-    _delete_empty_dirs(base, delete_root=delete_root)
+    delete_empty_dirs(base, delete_root=delete_root)
 
     for directory in dirs:
         assert not directory.exists()
