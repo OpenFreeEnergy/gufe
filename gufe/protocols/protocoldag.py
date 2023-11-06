@@ -17,7 +17,7 @@ from .protocolunit import (
     ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure, Context
 )
 
-from ..storage.storagemanager import StorageManager
+from ..storage.storagemanager import NewStorageManager
 from ..storage.externalresource.filestorage import FileStorage
 from ..storage.externalresource.base import ExternalStorage
 
@@ -352,20 +352,18 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
-class ReproduceOldBehaviorStorageManager(StorageManager):
+class ReproduceOldBehaviorStorageManager(NewStorageManager):
     # Default behavior has scratch at {dag_label}/scratch/{unit_label} and
     # shared at {dag_label}/{unit_label}. This little class makes changes
     # that get us back to the original behavior of this class: scratch at
     # {dag_label}/scratch_{unit_label} and shared at
     # {dag_label}/shared_{unit_label}.
-    def _scratch_loc(self, unit_label):
-        return self.scratch_root / f"scratch_{unit_label}"
+    def _scratch_loc(self, dag_label, unit_label, attempt):
+        return self.scratch_root / f"scratch_{unit_label}_attempt_{attempt}"
 
-    def get_shared(self, unit_label):
-        return super().get_shared(f"shared_{unit_label}")
+    def make_label(self, dag_label, unit_label, attempt):
+        return f"{dag_label}/shared_{unit_label}_attempt_{attempt}"
 
-    def get_permanent(self, unit_label):
-        return super().get_permanent(f"shared_{unit_label}")
 
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
@@ -421,8 +419,9 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         permanent_root=shared,
         keep_scratch=keep_scratch,
         keep_shared=keep_shared,
-        keep_staging=False,
-        staging=Path(""),  # use the actual directories as the staging
+        keep_staging=True,
+        delete_empty_dirs=False,
+        #staging=Path(""),  # use the actual directories as the staging
     )
     return new_execute_DAG(protocoldag, dag_label, storage_manager,
                            raise_error, n_retries)
@@ -454,8 +453,12 @@ def new_execute_DAG(
                 # `ProtocolUnitResult`
                 inputs = _pu_to_pur(unit.inputs, results)
 
-                label = f"{str(unit.key)}_attempt_{attempt}"
-                with dag_ctx.running_unit(label) as (scratch, shared, perm):
+                label = storage_manager.make_label(dag_label, unit.key,
+                                                   attempt=attempt)
+                with dag_ctx.running_unit(dag_label, unit.key, attempt=attempt) as (
+                    scratch, shared, perm
+                ):
+                    # TODO: context manager should return context
                     context = Context(shared=shared,
                                       scratch=scratch,
                                       permanent=perm)

@@ -179,17 +179,23 @@ class NewStorageManager:
             external=self.shared_root,
             staging=self.staging,
             delete_empty_dirs=delete_empty_dirs,
-            prefix=""
+            prefix=""  # TODO: remove prefix
         )
 
-    def _make_label(self, dag_label, unit_label):
+    def make_label(self, dag_label, unit_label, **kwargs):
+        """
+
+        The specific executor may change this by making a very simple
+        adapter subclass and overriding this method, which can take
+        arbitrary additional kwargs that may tie it to a specific executor.
+        """
         return f"{dag_label}/{unit_label}"
 
     @property
     def _scratch_base(self):
         return self.scratch_root / "scratch"
 
-    def _scratch_loc(self, unit_label):
+    def _scratch_loc(self, dag_label, unit_label, **kwargs):
         return self._scratch_base / unit_label
 
     @contextmanager
@@ -213,11 +219,12 @@ class NewStorageManager:
                 delete_empty_dirs(self._scratch_base, delete_root=False)
 
     @contextmanager
-    def running_unit(self, unit_label):
-        scratch = self._scratch_loc(unit_label)
+    def running_unit(self, dag_label, unit_label, **kwargs):
+        scratch = self._scratch_loc(dag_label, unit_label, **kwargs)
+        label = self.make_label(dag_label, unit_label, **kwargs)
         scratch.mkdir(parents=True, exist_ok=True)
-        shared = self.shared_staging / unit_label
-        permanent = self.permanent_staging / unit_label
+        shared = self.shared_staging / label
+        permanent = self.permanent_staging / label
         try:
             yield scratch, shared, permanent
         finally:
@@ -259,7 +266,7 @@ class StorageManager:
         self.staging = staging
         self.DAGContextClass = DAGContextClass
 
-    def _scratch_loc(self, unit_label):
+    def _scratch_loc(self, unit_label, **kwargs):
         return self.scratch_root / "scratch" / unit_label
 
     def get_scratch(self, unit_label: str) -> Path:

@@ -30,8 +30,9 @@ class FileStorage(ExternalStorage):
             f.write(byte_data)
 
     def _store_path(self, location, path):
-        my_path = self._as_path(location)
-        if path.resolve() != my_path.resolve():
+        my_path = self._as_path(location).resolve()
+        if path.resolve() != my_path:
+            my_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, my_path)
 
     def _iter_contents(self, prefix):
