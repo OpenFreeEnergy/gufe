@@ -365,7 +365,6 @@ class ReproduceOldBehaviorStorageManager(NewStorageManager):
         return f"{dag_label}/shared_{unit_label}_attempt_{attempt}"
 
 
-
 def execute_DAG(protocoldag: ProtocolDAG, *,
                 shared_basedir: Optional[PathLike],
                 scratch_basedir: PathLike,

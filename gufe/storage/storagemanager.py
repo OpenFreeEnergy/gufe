@@ -23,7 +23,7 @@ class DAGContextManager:
         raise NotImplementedError()
 
     @contextmanager
-    def running_unit(self, unit_label: str):
+    def running_unit(self, dag_label: str, unit_label: str, **kwargs):
         """Return a context manager for when unit is started.
 
         This context manager handles the unit scale of the lifecycle.
@@ -84,7 +84,7 @@ class SingleProcDAGContextManager(DAGContextManager):
             # TODO: remove scratch root if empty
 
     @contextmanager
-    def running_unit(self, unit_label: str):
+    def running_unit(self, dag_label: str, unit_label: str, **kwargs):
         """Unit level of the storage lifecycle.
 
         This provides the staging directories used for scratch, shared, and
@@ -182,21 +182,22 @@ class NewStorageManager:
             prefix=""  # TODO: remove prefix
         )
 
-    def make_label(self, dag_label, unit_label, **kwargs):
+    def make_label(self, dag_label, unit_label, attempt, **kwargs):
         """
 
         The specific executor may change this by making a very simple
         adapter subclass and overriding this method, which can take
         arbitrary additional kwargs that may tie it to a specific executor.
         """
-        return f"{dag_label}/{unit_label}"
+        return f"{dag_label}/{unit_label}_attempt_{attempt}"
 
     @property
     def _scratch_base(self):
         return self.scratch_root / "scratch"
 
-    def _scratch_loc(self, dag_label, unit_label, **kwargs):
-        return self._scratch_base / unit_label
+    def _scratch_loc(self, dag_label, unit_label, attempt, **kwargs):
+        label = self.make_label(dag_label, unit_label, attempt)
+        return self._scratch_base / label
 
     @contextmanager
     def running_dag(self, dag_label):

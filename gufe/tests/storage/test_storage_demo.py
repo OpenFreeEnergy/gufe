@@ -213,7 +213,8 @@ class ExecutionStorageDemoTest:
 
         if keep_scratch:
             n_expected = 1 if del_empty_dirs else 2
-            assert len(list((scratch / "scratch").iterdir())) == n_expected
+            dag_dir = scratch / "scratch/dag"
+            assert len(list(dag_dir.iterdir())) == n_expected
         else:
             assert 'scratch' not in list(scratch.iterdir())
 
@@ -237,12 +238,12 @@ class ExecutionStorageDemoTest:
     @staticmethod
     def u1_label(dag):
         """Unit 1 label"""
-        return f"{dag.protocol_units[0].key}_attempt_0"
+        return f"dag/{dag.protocol_units[0].key}_attempt_0"
 
     @staticmethod
-    def u2_label(dag_label, dag):
+    def u2_label(dag):
         """Unit 2 label"""
-        return f"{dag.protocol_units[1].key}_attempt_0"
+        return f"dag/{dag.protocol_units[1].key}_attempt_0"
 
     def get_storage_manager(self, keep, tmp_path):
         keep_scr, keep_sta, keep_sha, empties = self._parse_keep(keep)
