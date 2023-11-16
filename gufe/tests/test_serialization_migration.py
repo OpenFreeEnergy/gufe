@@ -74,7 +74,7 @@ class _DefaultBase(GufeTokenizable):
         return super()._defaults()
 
     @classmethod
-    def _version(cls):
+    def _schema_version(cls):
         return 2
 
 
@@ -235,7 +235,7 @@ class Grandparent(_DefaultBase):
         return cls(settings=settings)
 
     @classmethod
-    def _version(cls):
+    def _schema_version(cls):
         return 2
 
     @classmethod
