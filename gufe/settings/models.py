@@ -27,6 +27,15 @@ except ImportError:
     )
 
 
+def _find_key_walk(d: dict, target: str, prefix=()):
+    # generator for recursively walking Settings for find_field
+    for k, v in d.items():
+        if k == target:
+            yield prefix + (k,)
+        elif isinstance(v, dict):
+            yield from _find_key_walk(v, target, prefix=prefix + (k,))
+
+
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
 
@@ -34,6 +43,63 @@ class SettingsBaseModel(DefaultModel):
         extra = Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
+
+    def find_field(self, fieldname: str) -> list[tuple[str]]:
+        """Return places within this Settings tree where fieldname occurs
+
+        Searches recursive through the settings tree and returns lists of the
+        "route" to fields called fieldname.
+
+        E.g. if this class had the field 'foo' both inside the class and also
+        within a settings object called 'bar', this function would return::
+
+          [('foo',), ('bar', 'foo')]
+        """
+        return list(_find_key_walk(self.dict(), fieldname))
+
+    def set_field(self, fieldname, value):
+        """Set a parameter to value, searching through the settings tree
+
+        Designed as a convenience, this will search recursively through the
+        different Settings objects held by this settings object to find all
+        instances of *fieldname*. If only one instance is found, then this is
+        set to *value*, otherwise an error is raised as the field being referred
+        to is ambiguous.
+
+        Parameters
+        ----------
+        fieldname : str
+          the field you wish to set
+        value : Any
+          the value to set fieldname to
+
+        Raises
+        ------
+        ValueError
+          if the fieldname appears more than once in the settings tree
+        AttributeError
+          if the fieldname is never found in the settings tree
+        """
+        targets = self.find_field(fieldname)
+
+        if not targets:
+            raise AttributeError(f"Failed to find '{fieldname}' in Settings")
+        if len(targets) > 1:
+            # tidy up this state for better error message
+            hits = ["'" + '.'.join(vals) + "'" for vals in targets]
+            raise ValueError("Ambiguous fieldname, found possibilities at: "
+                             f"{', '.join(hits)}")
+
+        target = targets[0]
+
+        roots, attrname = target[:-1], target[-1]
+        # e.g. fieldname 'foo' is held at self.bar.baz
+        # target = ['bar', 'baz', 'foo']
+        # roots = ['bar', 'baz'], attrname = 'foo'
+        obj = self
+        for r in roots:
+            obj = getattr(obj, r)
+        setattr(obj, fieldname, value)
 
 
 class ThermoSettings(SettingsBaseModel):
