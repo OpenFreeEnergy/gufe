@@ -4,7 +4,7 @@ import pathlib
 
 import gufe
 from gufe.storage.externalresource import MemoryStorage, FileStorage
-from gufe.storage.storagemanager import StorageManager, NewStorageManager
+from gufe.storage.storagemanager import StorageManager
 from gufe.storage.stagingdirectory import StagingPath
 from gufe.protocols.protocoldag import new_execute_DAG
 
@@ -252,7 +252,7 @@ class ExecutionStorageDemoTest:
         del_empty_dirs = not empties
         shared, permanent = self.get_shared_and_permanent()
 
-        storage_manager = NewStorageManager(
+        storage_manager = StorageManager(
             scratch_root=tmp_path,
             shared_root=shared,
             permanent_root=permanent,
@@ -342,7 +342,7 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
         keep_scr, keep_sta, keep_sha, empties = self._parse_keep(keep)
         del_empty_dirs = not empties
         backend = FileStorage(tmp_path)
-        storage_manager = NewStorageManager(
+        storage_manager = StorageManager(
             scratch_root=tmp_path,
             shared_root=backend,
             permanent_root=backend,

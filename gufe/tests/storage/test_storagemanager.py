@@ -1,14 +1,12 @@
 import pytest
-from gufe.storage.storagemanager import (
-    StorageManager, NewStorageManager
-)
+from gufe.storage.storagemanager import StorageManager
 from gufe.storage.stagingdirectory import StagingDirectory
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from pathlib import Path
 
 @pytest.fixture
 def storage_manager_std(tmp_path):
-    return NewStorageManager(
+    return StorageManager(
         scratch_root=tmp_path / "working",
         shared_root=MemoryStorage(),
         permanent_root=MemoryStorage(),
@@ -195,7 +193,7 @@ class TestStandardStorageManager(LifecycleHarness):
 class TestKeepScratchAndStagingStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
-        return NewStorageManager(
+        return StorageManager(
             scratch_root=tmp_path / "working",
             shared_root=MemoryStorage(),
             permanent_root=MemoryStorage(),
@@ -227,7 +225,7 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
         root = tmp_path / "working"
-        return NewStorageManager(
+        return StorageManager(
             scratch_root=root,
             shared_root=FileStorage(root),
             permanent_root=MemoryStorage(),
@@ -266,7 +264,7 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
         root = tmp_path / "working"
-        return NewStorageManager(
+        return StorageManager(
             scratch_root=root,
             permanent_root=FileStorage(root),
             shared_root=MemoryStorage(),

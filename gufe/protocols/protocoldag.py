@@ -17,7 +17,7 @@ from .protocolunit import (
     ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure, Context
 )
 
-from ..storage.storagemanager import NewStorageManager
+from ..storage.storagemanager import StorageManager
 from ..storage.externalresource.filestorage import FileStorage
 from ..storage.externalresource.base import ExternalStorage
 
@@ -352,7 +352,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
-class ReproduceOldBehaviorStorageManager(NewStorageManager):
+class ReproduceOldBehaviorStorageManager(StorageManager):
     # Default behavior has scratch at {dag_label}/scratch/{unit_label} and
     # shared at {dag_label}/{unit_label}. This little class makes changes
     # that get us back to the original behavior of this class: scratch at
