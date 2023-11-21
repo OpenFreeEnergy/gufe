@@ -75,7 +75,7 @@ class LifecycleHarness:
                     scratch, shared, perm
                 ):
                     results.append(unit.run(scratch, shared, perm))
-                    import pdb; pdb.set_trace()
+                    # import pdb; pdb.set_trace()
                     self.in_unit_asserts(storage_manager, label)
                 self.after_unit_asserts(storage_manager, label)
         self.after_dag_asserts(storage_manager)
@@ -246,10 +246,8 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
         return {"bar", "baz"}
 
     def _after_dag_existing_files(self):
-        # NOTE: currently we don't delete bar at the end of a cycle, but we
-        # don't guarantee that we would not. So it exists, but changing that
-        # isn't API-breaking.
-        return {"bar", "baz"}
+        # these get deleted because we don't keep shared here
+        return set()
 
     def _in_staging_shared(self, unit_label, in_after):
         bar = "dag/unit1_attempt_0/bar.txt"

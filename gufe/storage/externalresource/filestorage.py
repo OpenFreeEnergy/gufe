@@ -20,6 +20,12 @@ class FileStorage(ExternalStorage):
     def _exists(self, location):
         return self._as_path(location).exists()
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, FileStorage)
+            and self.root_dir == other.root_dir
+        )
+
     def _store_bytes(self, location, byte_data):
         path = self._as_path(location)
         directory = path.parent

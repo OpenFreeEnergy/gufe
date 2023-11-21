@@ -193,9 +193,11 @@ class ExecutionStorageDemoTest:
             assert f.read() == b"I'm permanent (but I can be shared)"
 
         if keep_shared:
-            assert list(shared.iter_contents()) == [shared_file]
+            assert list(shared.iter_contents()) == [shared_file, perm_file]
             with shared.load_stream(shared_file) as f:
                 assert f.read() == b"I can be shared"
+            with shared.load_stream(perm_file) as f:
+                assert f.read() == b"I'm permanent (but I can be shared)"
         else:
             assert list(shared.iter_contents()) == []
 

@@ -163,7 +163,11 @@ class NewStorageManager:
         self.keep_shared = keep_shared
         self.staging = staging
         self.delete_empty_dirs = delete_empty_dirs
+
+        # these are used to track what files can be deleted from shared if
+        # keep_shared is False
         self.shared_xfer = set()
+        self.permanent_xfer = set()
 
         self.permanent_staging = PermanentStaging(
             scratch=self.scratch_root,
@@ -216,6 +220,10 @@ class NewStorageManager:
                 for file in self.shared_xfer:
                     self.shared_root.delete(file.label)
 
+                for file in self.permanent_xfer:
+                    if self.shared_root != self.permanent_root:
+                        self.shared_root.delete(file.label)
+
             if self.delete_empty_dirs:
                 delete_empty_dirs(self._scratch_base, delete_root=False)
 
@@ -231,8 +239,16 @@ class NewStorageManager:
         finally:
             # import pdb; pdb.set_trace()
             # clean up after unit
+
+            # track the files that were in shared so that we can delete them
+            # at the end of the DAG if requires
             shared_xfers = self.shared_staging.transfer_staging_to_external()
             self.shared_xfer.update(set(shared_xfers))
+
+            # everything in permanent should also be in shared
+            for file in self.permanent_staging.registry:
+                self.shared_staging.transfer_single_file_to_external(file)
+                self.permanent_xfer.add(file)
 
             if not self.keep_scratch:
                 shutil.rmtree(scratch)
