@@ -9,6 +9,7 @@ import json
 import pathlib
 import shutil
 
+
 @pytest.fixture
 def storage_manager(tmp_path):
     return StorageManager(
@@ -16,6 +17,7 @@ def storage_manager(tmp_path):
         shared_root=MemoryStorage(),
         permanent_root=MemoryStorage(),
     )
+
 
 @pytest.fixture
 def shared_path(storage_manager):
@@ -27,6 +29,7 @@ def shared_path(storage_manager):
     storage_manager.shared_staging.transfer_staging_to_external()
     return path
 
+
 @pytest.fixture
 def permanent_path(storage_manager):
     label = storage_manager.make_label("dag", "unit", attempt=0)
@@ -37,15 +40,18 @@ def permanent_path(storage_manager):
     storage_manager.permanent_staging.transfer_staging_to_external()
     return path
 
+
 @pytest.fixture
 def scratch_path(storage_manager):
     scratch_dir = storage_manager._scratch_loc("dag", "unit", attempt=0)
     path = scratch_dir / "file.txt"
     return path
 
+
 @pytest.fixture
 def serialization_handler(storage_manager):
     return StagingPathSerialization(storage_manager)
+
 
 class TestStagingPathSerialization:
     @pytest.mark.parametrize('pathtype', ['scratch', 'shared', 'permanent'])

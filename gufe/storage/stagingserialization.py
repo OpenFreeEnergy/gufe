@@ -2,6 +2,7 @@ from gufe.tokenization import JSON_HANDLER
 from gufe.custom_json import JSONCodec, JSONSerializerDeserializer
 from .stagingdirectory import StagingPath
 
+
 class StagingPathSerialization:
     # TODO: where should this go? I think maybe on the storage manager
 
