@@ -147,6 +147,10 @@ def _draw_molecules(
         d2d = Draw.rdMolDraw2D.MolDraw2DCairo(
             grid_x * 300, grid_y * 300, 300, 300)
 
+    # get molecule name labels
+    labels = [m.GetProp("ofe-name") if(m.HasProp("ofe-name"))
+              else "" for m in mols]
+
     # squash to 2D
     copies = [Chem.Mol(mol) for mol in mols]
     for mol in copies:
@@ -170,6 +174,7 @@ def _draw_molecules(
         highlightBonds=bonds_list,
         highlightAtomColors=atom_colors,
         highlightBondColors=bond_colors,
+        legends=labels,
     )
     d2d.FinishDrawing()
     return d2d.GetDrawingText()

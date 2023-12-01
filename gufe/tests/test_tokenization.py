@@ -171,14 +171,15 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         def leaf_dict(a):
             return {'__module__': __name__, '__qualname__': "Leaf", "a": a,
-                    "b": 2}
+                    "b": 2, ':version:': 1}
 
         self.expected_deep = {
             '__qualname__': "Container",
             '__module__': __name__,
             'obj': leaf_dict(leaf_dict("foo")),
             'lst': [leaf_dict("foo"), 0],
-            'dct': {"leaf": leaf_dict("foo"), "a": "b"}
+            'dct': {"leaf": leaf_dict("foo"), "a": "b"},
+            ':version:': 1,
         }
 
         self.expected_shallow = {
@@ -187,6 +188,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             'obj': bar,
             'lst': [leaf, 0],
             'dct': {'leaf': leaf, 'a': 'b'},
+            ':version:': 1,
         }
 
         self.expected_keyed = {
@@ -194,7 +196,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             '__module__': __name__,
             'obj': {":gufe-key:": bar.key},
             'lst': [{":gufe-key:": leaf.key}, 0],
-            'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
+            'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'},
+            ':version:': 1,
         }
 
     def test_set_key(self):
