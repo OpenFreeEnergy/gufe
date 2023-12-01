@@ -1,8 +1,5 @@
 name: "conda_cron"
 on:
-  pull_request:
-    branches:
-      - main
   schedule:
     # At 07:00 UTC every day
     - cron: "0 7 * * *"
