@@ -70,6 +70,12 @@ class TestFileStorage:
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
 
+    def test_eq(self, tmp_path):
+        reference = FileStorage(tmp_path)
+        assert reference == FileStorage(tmp_path)
+        assert reference != FileStorage(tmp_path / "foo")
+        assert reference != MemoryStorage()
+
     def test_delete(self, file_storage):
         path = file_storage.root_dir / "foo.txt"
         assert path.exists()
@@ -162,6 +168,11 @@ class TestMemoryStorage:
             storage.store_path(label, path)
 
         assert storage._data == self.contents
+
+    def test_eq(self):
+        reference = MemoryStorage()
+        assert reference == reference
+        assert reference != MemoryStorage()
 
     @pytest.mark.parametrize('prefix,expected', [
         ("", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
