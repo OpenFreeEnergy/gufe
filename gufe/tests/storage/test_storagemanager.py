@@ -1,7 +1,5 @@
 import pytest
-from gufe.storage.storagemanager import (
-    StorageManager
-)
+from gufe.storage.storagemanager import StorageManager
 from gufe.storage.stagingdirectory import StagingDirectory
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from pathlib import Path
@@ -35,7 +33,7 @@ def dag_units():
             (scratch / "foo2.txt").touch()
             # TODO: this will change; the inputs should include a way to get
             # the previous shared unit label
-            with shared.other_shared("dag/unit1") as prev_shared:
+            with shared.root.other_shared("dag/unit1_attempt_0") as prev_shared:
                 with open(prev_shared / "bar.txt", mode='r') as f:
                     bar = f.read()
 
@@ -48,6 +46,7 @@ def dag_units():
 
     return [Unit1(), Unit2()]
 
+
 class LifecycleHarness:
     @pytest.fixture
     def storage_manager(self, tmp_path):
@@ -58,10 +57,10 @@ class LifecycleHarness:
         root = storage_manager.scratch_root
         staging = storage_manager.staging
         return {
-            "foo": root / "scratch/dag/unit1/foo.txt",
-            "foo2": root / "scratch/dag/unit2/foo2.txt",
-            "bar": root / staging / "dag/unit1/bar.txt",
-            "baz": root / staging / "dag/unit1/baz.txt",
+            "foo": root / "scratch/dag/unit1_attempt_0/foo.txt",
+            "foo2": root / "scratch/dag/unit2_attempt_0/foo2.txt",
+            "bar": root / staging / "dag/unit1_attempt_0/bar.txt",
+            "baz": root / staging / "dag/unit1_attempt_0/baz.txt",
         }
 
     def test_lifecycle(self, storage_manager, dag_units, tmp_path):
@@ -69,9 +68,12 @@ class LifecycleHarness:
         dag_label = "dag"
         with storage_manager.running_dag(dag_label) as dag_ctx:
             for unit in dag_units:
-                label = f"{dag_ctx.dag_label}/{unit.key}"
-                with dag_ctx.running_unit(label) as (scratch, shared, perm):
+                label = f"{dag_label}/{unit.key}"
+                with dag_ctx.running_unit(dag_label, unit.key, attempt=0) as (
+                    scratch, shared, perm
+                ):
                     results.append(unit.run(scratch, shared, perm))
+                    # import pdb; pdb.set_trace()
                     self.in_unit_asserts(storage_manager, label)
                 self.after_unit_asserts(storage_manager, label)
         self.after_dag_asserts(storage_manager)
@@ -117,7 +119,8 @@ class LifecycleHarness:
         permanent_root = storage_manager.permanent_root
         expected_in_shared = {
             "dag/unit1": set(),
-            "dag/unit2": {"dag/unit1/bar.txt", "dag/unit1/baz.txt"}
+            "dag/unit2": {"dag/unit1_attempt_0/bar.txt",
+                          "dag/unit1_attempt_0/baz.txt"}
         }[unit_label] | self._in_staging_shared(unit_label, "in")
         assert set(shared_root.iter_contents()) == expected_in_shared
 
@@ -134,7 +137,8 @@ class LifecycleHarness:
         permanent_root = storage_manager.permanent_root
         shared_extras = self._in_staging_shared(unit_label, "after")
         permanent_extras = self._in_staging_permanent(unit_label, "after")
-        expected_in_shared = {"dag/unit1/bar.txt", "dag/unit1/baz.txt"}
+        expected_in_shared = {"dag/unit1_attempt_0/bar.txt",
+                              "dag/unit1_attempt_0/baz.txt"}
         expected_in_shared |= shared_extras
         assert set(shared_root.iter_contents()) == expected_in_shared
         assert set(permanent_root.iter_contents()) == permanent_extras
@@ -155,7 +159,8 @@ class LifecycleHarness:
         # expected_in_shared = {"dag/unit1/bar.txt", "dag/unit1/baz.txt"}
         # expected_in_shared |= shared_extras
         # assert set(shared_root.iter_contents()) == expected_in_shared
-        expected_in_permanent = {"dag/unit1/baz.txt"} | permanent_extras
+        expected_in_permanent = ({"dag/unit1_attempt_0/baz.txt"}
+                                 | permanent_extras)
         assert set(permanent_root.iter_contents()) == expected_in_permanent
 
         # manager-specific check for files
@@ -239,16 +244,14 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
         return {"bar", "baz"}
 
     def _after_dag_existing_files(self):
-        # NOTE: currently we don't delete bar at the end of a cycle, but we
-        # don't guarantee that we would not. So it exists, but changing that
-        # isn't API-breaking.
-        return {"bar", "baz"}
+        # these get deleted because we don't keep shared here
+        return set()
 
     def _in_staging_shared(self, unit_label, in_after):
-        bar = "dag/unit1/bar.txt"
-        baz = "dag/unit1/baz.txt"
-        foo = "scratch/dag/unit1/foo.txt"
-        foo2 = "scratch/dag/unit2/foo2.txt"
+        bar = "dag/unit1_attempt_0/bar.txt"
+        baz = "dag/unit1_attempt_0/baz.txt"
+        foo = "scratch/dag/unit1_attempt_0/foo.txt"
+        foo2 = "scratch/dag/unit2_attempt_0/foo2.txt"
         return  {
             ("dag/unit1", "in"): {bar, baz, foo},
             ("dag/unit1", "after"): {bar, baz},
@@ -278,10 +281,10 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
         return {"baz"}
 
     def _in_staging_permanent(self, unit_label, in_after):
-        bar = "dag/unit1/bar.txt"
-        baz = "dag/unit1/baz.txt"
-        foo = "scratch/dag/unit1/foo.txt"
-        foo2 = "scratch/dag/unit2/foo2.txt"
+        bar = "dag/unit1_attempt_0/bar.txt"
+        baz = "dag/unit1_attempt_0/baz.txt"
+        foo = "scratch/dag/unit1_attempt_0/foo.txt"
+        foo2 = "scratch/dag/unit2_attempt_0/foo2.txt"
         return  {
             ("dag/unit1", "in"): {bar, baz, foo},
             ("dag/unit1", "after"): {baz},
@@ -292,20 +295,3 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
     def _after_unit_existing_files(self, unit_label):
         # same for both; all files come from unit 1
         return {"baz"}
-
-
-class TestStorageManager:
-    def test_get_scratch(self, storage_manager_std):
-        scratch = storage_manager_std.get_scratch("dag_label/unit_label")
-        assert str(scratch).endswith("scratch/dag_label/unit_label")
-        assert isinstance(scratch, Path)
-
-    def test_get_permanent(self, storage_manager_std):
-        perm = storage_manager_std.get_permanent("dag_label/unit_label")
-        assert perm.__fspath__().endswith(".staging/dag_label/unit_label")
-        assert isinstance(perm, StagingDirectory)
-
-    def test_get_shared(self, storage_manager_std):
-        shared = storage_manager_std.get_shared("dag_label/unit_label")
-        assert shared.__fspath__().endswith(".staging/dag_label/unit_label")
-        assert isinstance(shared, StagingDirectory)

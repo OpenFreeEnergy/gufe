@@ -6,6 +6,8 @@ from os import PathLike, rmdir, remove
 from .externalresource import ExternalStorage, FileStorage
 from contextlib import contextmanager
 
+from gufe.utils import delete_empty_dirs
+
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -36,27 +38,6 @@ def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
         return False
 
 
-def _delete_empty_dirs(root: PathLike, delete_root: bool = True):
-    """Delete all empty directories.
-
-    Repeats so that directories that only contained empty directories also
-    get deleted.
-    """
-    root = Path(root)
-
-    def find_empty_dirs(directory):
-        if not (paths := list(directory.iterdir())):
-            return [directory]
-        directories = [p for p in paths if p.is_dir()]
-        return sum([find_empty_dirs(d) for d in directories], [])
-
-    while root.exists() and (empties := find_empty_dirs(root)):
-        if empties == [root] and not delete_root:
-            return
-        for directory in empties:
-            _logger.debug(f"Removing '{directory}'")
-            rmdir(directory)
-
 
 class StagingDirectory:
     """PathLike local representation of an :class:`.ExternalStorage`.
@@ -74,7 +55,7 @@ class StagingDirectory:
     2. When requested, it transfers any newly created files to the
        :class:`.ExternalStorage`.
 
-    3. It can delete all of the files it manages
+    3. It can delete all of the files it manages.
 
     Parameters
     ----------
@@ -104,11 +85,13 @@ class StagingDirectory:
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
+        delete_empty_dirs: bool = True,
     ):
         self.external = external
         self.scratch = Path(scratch)
         self.prefix = Path(prefix)
         self.delete_staging = delete_staging
+        self.delete_empty_dirs = delete_empty_dirs
         self.staging = staging
 
         self.registry : set[StagingPath] = set()
@@ -128,7 +111,7 @@ class StagingDirectory:
     def transfer_single_file_to_external(self, held_file: StagingPath):
         """Transfer a given file from staging into external storage
         """
-        path = Path(held_file)
+        path = Path(held_file.fspath)
         if not path.exists():
             _logger.info(f"Found nonexistent path {path}, not "
                          "transfering to external storage")
@@ -138,25 +121,39 @@ class StagingDirectory:
         else:
             _logger.info(f"Transfering {path} to external storage")
             self.external.store_path(held_file.label, path)
+            return held_file
+
+        return None  # no transfer
+
 
     def transfer_staging_to_external(self):
-        """Transfer all objects in the registry to external storage"""
-        for obj in self.registry:
-            self.transfer_single_file_to_external(obj)
+        """Transfer all objects in the registry to external storage
+
+        """
+        return [
+            transferred
+            for file in self.registry
+            if (transferred := self.transfer_single_file_to_external(file))
+        ]
 
     def cleanup(self):
         """Perform end-of-lifecycle cleanup.
         """
         if self.delete_staging and self._delete_staging_safe():
             for file in self.registry - self.preexisting:
-                if Path(file).exists():
+                path = Path(file.fspath)
+                if path.exists():
                     _logger.debug(f"Removing file {file}")
-                    remove(file)
+                    # TODO: handle special case of directory?
+                    path.unlink()
+                    self.registry.remove(file)
                 else:
                     _logger.warning("During staging cleanup, file "
                                     f"{file} was marked for deletion, but "
                                     "can not be found on disk.")
-            _delete_empty_dirs(self.staging_dir)
+
+            if self.delete_empty_dirs:
+                delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
         """
@@ -178,7 +175,11 @@ class StagingDirectory:
             the path to track
         """
         label_exists = self.external.exists(staging_path.label)
-        fspath = Path(staging_path.__fspath__())
+        fspath = Path(staging_path.fspath)
+
+        # TODO: what if the staging path is a directory? not sure that we
+        # have a way to know that; but not sure that adding it to the
+        # registry is right either
         if not fspath.parent.exists():
             fspath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -192,13 +193,16 @@ class StagingDirectory:
 
     def _load_file_from_external(self, external: ExternalStorage,
                                  staging_path: StagingPath):
+        # import pdb; pdb.set_trace()
         scratch_path = self.staging_dir / staging_path.path
         # TODO: switch this to using `get_filename` and `store_path`
-        with external.load_stream(staging_path.label) as f:
-            external_bytes = f.read()
         if scratch_path.exists():
             self.preexisting.add(staging_path)
-            ... # TODO: something to check that the bytes are the same?
+
+        with external.load_stream(staging_path.label) as f:
+            external_bytes = f.read()
+            ... # TODO: check that the bytes are the same if preexisting?
+
         scratch_path.parent.mkdir(exist_ok=True, parents=True)
         with open(scratch_path, mode='wb') as f:
             f.write(external_bytes)
@@ -211,7 +215,7 @@ class StagingDirectory:
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}({self.scratch}, {self.external}, "
+            f"{self.__class__.__name__}('{self.scratch}', {self.external}, "
             f"{self.prefix})"
         )
 
@@ -234,10 +238,12 @@ class SharedStaging(StagingDirectory):
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
+        delete_empty_dirs: bool = True,
         read_only: bool = False,
     ):
         super().__init__(scratch, external, prefix, staging=staging,
-                         delete_staging=delete_staging)
+                         delete_staging=delete_staging,
+                         delete_empty_dirs=delete_empty_dirs)
         self.read_only = read_only
 
     def _get_other_shared(self, prefix: str,
@@ -273,14 +279,14 @@ class SharedStaging(StagingDirectory):
             _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
-        super().transfer_single_file_to_external(held_file)
+        return super().transfer_single_file_to_external(held_file)
 
     def transfer_staging_to_external(self):
         if self.read_only:
             _logger.debug("Read-only: Not transfering to external storage")
             return  # early exit
 
-        super().transfer_staging_to_external()
+        return super().transfer_staging_to_external()
 
     def register_path(self, staging_path: StagingPath):
         label_exists = self.external.exists(staging_path.label)
@@ -308,9 +314,11 @@ class PermanentStaging(StagingDirectory):
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
+        delete_empty_dirs: bool = True,
     ):
         super().__init__(scratch, external, prefix, staging=staging,
-                         delete_staging=delete_staging)
+                         delete_staging=delete_staging,
+                         delete_empty_dirs=delete_empty_dirs)
         self.shared = shared
 
     def _delete_staging_safe(self):
@@ -323,7 +331,7 @@ class PermanentStaging(StagingDirectory):
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         # if we can't find it locally, we load it from shared storage
-        path = Path(held_file)
+        path = Path(held_file.fspath)
         if not path.exists():
             self._load_file_from_external(self.shared, held_file)
 
@@ -336,18 +344,46 @@ class StagingPath:
     On creation, this registers with a :class:`.StagingDirectory` that will
     manage the local path and transferring data with its
     :class:`.ExternalStorage`.
+
+    This object can always be used as a FileLike (using, e.g., the standard
+    ``open`` builtin). This requires that a staged path that exists on an
+    external resource be downloaded into a local file when it is referenced.
+
+    For a representation of a file that does not require the download (for
+    example, when deserializing results that point to files) instead use
+    :class:`.ExternalFile`.
     """
     def __init__(self, root: StagingDirectory,
                  path: Union[PathLike, str]):
         self.root = root
         self.path = Path(path)
+
+    def register(self):
+        """Register this path with its StagingDirectory.
+
+        If a file associated with this path exists in an external storage,
+        it will be downloaded to the staging area as part of registration.
+        """
         self.root.register_path(self)
 
     def __truediv__(self, path: Union[PathLike, str]):
         return StagingPath(self.root, self.path / path)
 
-    def __fspath__(self):
+    def __eq__(self, other):
+        return (isinstance(other, StagingPath)
+                and self.root == other.root
+                and self.path == other.path)
+
+    def __hash__(self):
+        return hash((self.root, self.path))
+
+    @property
+    def fspath(self):
         return str(self.root.staging_dir / self.path)
+
+    def __fspath__(self):
+        self.register()
+        return self.fspath
 
     @property
     def label(self) -> str:
@@ -355,9 +391,11 @@ class StagingPath:
         return str(self.root.prefix / self.path)
 
     def __repr__(self):
-        return f"StagingPath({self.__fspath__()})"
+        return f"StagingPath('{self.fspath}')"
 
     # TODO: how much of the pathlib.Path interface do we want to wrap?
     # although edge cases may be a pain, we can get most of it with, e.g.:
     # def exists(self): return Path(self).exists()
     # but also, can do pathlib.Path(staging_path) and get hte whole thing
+
+
