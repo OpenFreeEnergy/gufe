@@ -52,14 +52,16 @@ class TestFileStorage:
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
 
-    def test_store_path(self, file_storage):
+    @pytest.mark.parametrize('nested', [True, False])
+    def test_store_path(self, file_storage, nested):
         orig_file = file_storage.root_dir / ".hidden" / "bar.txt"
         orig_file.parent.mkdir()
         as_bytes = "This is bar".encode('utf-8')
         with open(orig_file, 'wb') as f:
             f.write(as_bytes)
 
-        fileloc = file_storage.root_dir / "bar.txt"
+        nested_dir = "nested" if nested else ""
+        fileloc = file_storage.root_dir / nested_dir / "bar.txt"
         assert not fileloc.exists()
 
         file_storage.store_path(fileloc, orig_file)
