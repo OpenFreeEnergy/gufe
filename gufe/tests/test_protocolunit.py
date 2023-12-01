@@ -57,8 +57,12 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path('scratch') / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
-            
+            permanent = Path('permanent') / str(unit.key)
+            permanent.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch,
+                          permanent=permanent)
+
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
 
@@ -70,8 +74,12 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path('scratch') / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
-            
+            permanent = Path('permanent') / str(unit.key)
+            permanent.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch,
+                          permanent=permanent)
+
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
                 unit.execute(context=ctx, raise_error=True, an_input=3)
@@ -87,8 +95,12 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path('scratch') / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
-            
+            permanent = Path('permanent') / str(unit.key)
+            permanent.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch,
+                          permanent=permanent)
+
             with pytest.raises(KeyboardInterrupt):
                 unit.execute(context=ctx, an_input=3)
                 
