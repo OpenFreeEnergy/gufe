@@ -425,15 +425,40 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
                            raise_error, n_retries)
 
 
-def new_execute_DAG(
-    protocoldag,
-    dag_label,
-    storage_manager,
-    raise_error=False,
-    n_retries=0
-):
+def new_execute_DAG(  # TODO: this is a terrible name
+    protocoldag: ProtocolDAG,
+    dag_label: str,
+    storage_manager: StorageManager,
+    raise_error: bool = False,
+    n_retries: int = 0
+) -> ProtocolDAGResult:
+    """
+    Locally execute a full :class:`ProtocolDAG` in serial and in-process.
+
+    Alternate input signature to generalize execute_DAG
+
+    Parameters
+    ----------
+    protocoldag : ProtocolDAG
+        The :class:``ProtocolDAG`` to execute.
+    dag_label : str
+        Label to use for the DAG
+    storage_manager : StorageManager
+        The :class:`.StorageManager` to handle storing files.
+    raise_error : bool
+        If True, raise an exception if a ProtocolUnit fails, default True
+        if False, any exceptions will be stored as `ProtocolUnitFailure`
+        objects inside the returned `ProtocolDAGResult`
+    n_retries : int
+        the number of times to attempt, default 0, i.e. try once and only once
+
+    Returns
+    -------
+    ProtocolDAGResult
+        The result of executing the `ProtocolDAG`.
+    """
     # this simplifies setup of execute_DAG by allowing you to directly
-    # provide the storage_manager; the extra option in the old one just
+    # provide the storage_manager; the extra options in the old one just
     # configure the storage_manager
     if n_retries < 0:
         raise ValueError("Must give positive number of retries")
