@@ -10,6 +10,7 @@ from typing import Type
 
 from .externalresource import ExternalStorage, FileStorage
 from .stagingdirectory import SharedStaging, PermanentStaging
+from .stagingdirectory import StagingPath  # typing
 
 
 class StorageManager:
@@ -36,8 +37,8 @@ class StorageManager:
 
         # these are used to track what files can be deleted from shared if
         # keep_shared is False
-        self.shared_xfer = set()
-        self.permanent_xfer = set()
+        self.shared_xfer: set[StagingPath] = set()
+        self.permanent_xfer: set[StagingPath] = set()
 
         self.permanent_staging = PermanentStaging(
             scratch=self.scratch_root,
