@@ -366,9 +366,8 @@ class ReproduceOldBehaviorStorageManager(StorageManager):
 
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared_basedir: Optional[PathLike],
+                shared_basedir: PathLike,
                 scratch_basedir: PathLike,
-                shared: Optional[ExternalStorage] = None,
                 keep_shared: bool = False,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
@@ -409,8 +408,8 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     # the directory given as shared_root is actually the directory for this
     # DAG; the "shared_root" for the storage manager is the parent. We'll
     # force permanent to be the same.
-    if shared is None:
-        shared = FileStorage(shared_basedir.parent)
+    shared_basedir = Path(shared_basedir)
+    shared = FileStorage(shared_basedir.parent)
     dag_label = shared_basedir.name
     storage_manager = ReproduceOldBehaviorStorageManager(
         scratch_root=scratch_basedir,
