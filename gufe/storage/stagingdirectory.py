@@ -38,7 +38,6 @@ def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
         return False
 
 
-
 class StagingDirectory:
     """PathLike local representation of an :class:`.ExternalStorage`.
 
@@ -94,8 +93,8 @@ class StagingDirectory:
         self.delete_empty_dirs = delete_empty_dirs
         self.staging = staging
 
-        self.registry : set[StagingPath] = set()
-        self.preexisting : set[StagingPath] = set()
+        self.registry: set[StagingPath] = set()
+        self.preexisting: set[StagingPath] = set()
         self.staging_dir = self.scratch / staging / prefix
         self.staging_dir.mkdir(exist_ok=True, parents=True)
 
@@ -124,7 +123,6 @@ class StagingDirectory:
             return held_file
 
         return None  # no transfer
-
 
     def transfer_staging_to_external(self):
         """Transfer all objects in the registry to external storage
@@ -201,7 +199,7 @@ class StagingDirectory:
 
         with external.load_stream(staging_path.label) as f:
             external_bytes = f.read()
-            ... # TODO: check that the bytes are the same if preexisting?
+            ...  # TODO: check that the bytes are the same if preexisting?
 
         scratch_path.parent.mkdir(exist_ok=True, parents=True)
         with open(scratch_path, mode='wb') as f:
@@ -247,7 +245,7 @@ class SharedStaging(StagingDirectory):
         self.read_only = read_only
 
     def _get_other_shared(self, prefix: str,
-                         delete_staging: Optional[bool] = None):
+                          delete_staging: Optional[bool] = None):
         """Get a related unit's staging directory.
         """
         if delete_staging is None:
@@ -397,5 +395,3 @@ class StagingPath:
     # although edge cases may be a pain, we can get most of it with, e.g.:
     # def exists(self): return Path(self).exists()
     # but also, can do pathlib.Path(staging_path) and get hte whole thing
-
-

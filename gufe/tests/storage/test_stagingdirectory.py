@@ -11,6 +11,7 @@ from gufe.storage.stagingdirectory import (
     delete_empty_dirs,  # TODO: move to appropriate place
 )
 
+
 @pytest.fixture
 def root(tmp_path):
     external = MemoryStorage()
@@ -23,12 +24,14 @@ def root(tmp_path):
     )
     return root
 
+
 @pytest.fixture
 def root_with_contents(root):
     with open(root / "data.txt", mode='wb') as f:
         f.write(b"bar")
 
     return root
+
 
 @pytest.fixture
 def read_only_with_overwritten(root_with_contents):
@@ -51,6 +54,7 @@ def read_only_with_overwritten(root_with_contents):
 
     return read_only, staged
 
+
 @pytest.fixture
 def permanent(tmp_path):
     shared = MemoryStorage()
@@ -64,11 +68,13 @@ def permanent(tmp_path):
     )
     return perm
 
+
 def test_safe_to_delete_staging_ok(tmp_path):
     external = FileStorage(tmp_path / "foo")
     prefix = "bar"
     staging = tmp_path / "foo" / "baz"
     assert _safe_to_delete_staging(external, staging, prefix)
+
 
 def test_safe_to_delete_staging_danger(tmp_path):
     external = FileStorage(tmp_path / "foo")
@@ -76,11 +82,13 @@ def test_safe_to_delete_staging_danger(tmp_path):
     staging = tmp_path / "foo" / "bar" / "baz"
     assert not _safe_to_delete_staging(external, staging, prefix)
 
+
 def test_safe_to_delete_staging_not_filestorage(tmp_path):
     external = MemoryStorage()
     prefix = "bar"
     staging = tmp_path / "bar"
     assert _safe_to_delete_staging(external, staging, prefix)
+
 
 def test_delete_empty_dirs(tmp_path):
     base = tmp_path / "tmp"
@@ -107,6 +115,7 @@ def test_delete_empty_dirs(tmp_path):
         assert not directory.exists()
 
     assert not (base / "foo" / "bar").exists()
+
 
 @pytest.mark.parametrize('delete_root', [True, False])
 def test_delete_empty_dirs_delete_root(tmp_path, delete_root):

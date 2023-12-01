@@ -59,7 +59,6 @@ class ensure_filelike:
             self.context.close()
 
 
-
 def delete_empty_dirs(root: PathLike, delete_root: bool = True):
     """Delete all empty directories.
 

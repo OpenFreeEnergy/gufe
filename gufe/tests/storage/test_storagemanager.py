@@ -4,6 +4,7 @@ from gufe.storage.stagingdirectory import StagingDirectory
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from pathlib import Path
 
+
 @pytest.fixture
 def storage_manager_std(tmp_path):
     return StorageManager(
@@ -11,6 +12,7 @@ def storage_manager_std(tmp_path):
         shared_root=MemoryStorage(),
         permanent_root=MemoryStorage(),
     )
+
 
 @pytest.fixture
 def dag_units():
@@ -33,7 +35,9 @@ def dag_units():
             (scratch / "foo2.txt").touch()
             # TODO: this will change; the inputs should include a way to get
             # the previous shared unit label
-            with shared.root.other_shared("dag/unit1_attempt_0") as prev_shared:
+            with (
+                shared.root.other_shared("dag/unit1_attempt_0") as prev_shared
+            ):
                 with open(prev_shared / "bar.txt", mode='r') as f:
                     bar = f.read()
 
@@ -220,7 +224,6 @@ class TestKeepScratchAndStagingStorageManager(LifecycleHarness):
         return self.files_after_unit('dag/unit2')
 
 
-
 class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
@@ -237,7 +240,6 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
             "dag/unit1": {'foo', 'bar', 'baz'},
             "dag/unit2": {'foo2', 'bar', 'baz'},
         }[unit_label]
-
 
     def _after_unit_existing_files(self, unit_label):
         # same for both; all files come from unit 1
