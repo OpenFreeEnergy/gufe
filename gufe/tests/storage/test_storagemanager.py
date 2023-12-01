@@ -254,7 +254,7 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
         baz = "dag/unit1_attempt_0/baz.txt"
         foo = "scratch/dag/unit1_attempt_0/foo.txt"
         foo2 = "scratch/dag/unit2_attempt_0/foo2.txt"
-        return  {
+        return {
             ("dag/unit1", "in"): {bar, baz, foo},
             ("dag/unit1", "after"): {bar, baz},
             ("dag/unit2", "in"): {bar, baz, foo2},
@@ -287,7 +287,7 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
         baz = "dag/unit1_attempt_0/baz.txt"
         foo = "scratch/dag/unit1_attempt_0/foo.txt"
         foo2 = "scratch/dag/unit2_attempt_0/foo2.txt"
-        return  {
+        return {
             ("dag/unit1", "in"): {bar, baz, foo},
             ("dag/unit1", "after"): {baz},
             ("dag/unit2", "in"): {baz, foo2},
