@@ -295,20 +295,3 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
     def _after_unit_existing_files(self, unit_label):
         # same for both; all files come from unit 1
         return {"baz"}
-
-
-class TestStorageManager: pass
-    # def test_get_scratch(self, storage_manager_std):
-    #     scratch = storage_manager_std.get_scratch("dag_label/unit_label")
-    #     assert str(scratch).endswith("scratch/dag_label/unit_label")
-    #     assert isinstance(scratch, Path)
-
-    # def test_get_permanent(self, storage_manager_std):
-    #     perm = storage_manager_std.get_permanent("dag_label/unit_label")
-    #     assert perm.__fspath__().endswith(".staging/dag_label/unit_label")
-    #     assert isinstance(perm, StagingDirectory)
-
-    # def test_get_shared(self, storage_manager_std):
-    #     shared = storage_manager_std.get_shared("dag_label/unit_label")
-    #     assert shared.__fspath__().endswith(".staging/dag_label/unit_label")
-    #     assert isinstance(shared, StagingDirectory)

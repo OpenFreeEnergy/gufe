@@ -54,7 +54,6 @@ class StagingPathSerialization:
         self.manager = manager
         self.codec = JSONCodec(
             cls=StagingPath,
-            is_my_dict=self.is_my_dict,
             to_dict=self.to_dict,
             from_dict=self.from_dict,
         )
@@ -64,30 +63,32 @@ class StagingPathSerialization:
         codecs = JSON_HANDLER.codecs + [self.codec]
         self.json_handler = JSONSerializerDeserializer(codecs)
 
+    @property
+    def encoder(self):
+        return self.json_handler.encoder
+
+    @property
+    def decoder(self):
+        return self.json_handler.decoder
+
     def to_dict(self, path):
         # scratch, shared, permanent may form nested with progressively
         # smaller contexts, so the last of those it is in is where it should
-        # be labelled
+        # be labelled. TODO: opportunity for performance improvement if
+        # needed
         loc = None
-        if path in self.manager.scratch_root:
+        if path.label in self.manager.scratch_root.iterdir():
             loc = "scratch"
-        if path in self.manager.shared_root:
+        if path.label in self.manager.shared_root.iter_contents():
             loc = "shared"
-        if path in self.manager.permanent_root:
+        if path.label in self.manager.permanent_root.iter_contents():
             loc = "permanent"
 
         return {
             ':container:': loc,
-            ':unit_label:': path.root.prefix,
-            ':path:': path.path,
+            ':label:': path.label,
         }
 
     def from_dict(self, dct):
-        loader = getattr(self.manager, f"get_{dct[':container:']}")
-        staging_dir = loader(dct[':unit_label:'])
-        return staging_dir / dct[':path:']
-
-    def is_my_dict(self, dct):
-        return set(dct) == {':container:', ':unit_label:', ':path:'}
-
-
+        staging = getattr(self.manager, f"{dct[':container:']}_staging")
+        return staging / dct[':label:']

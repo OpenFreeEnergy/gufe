@@ -73,44 +73,6 @@ class StorageDemoProtocol(gufe.Protocol):
     def _gather(self, protocol_dag_results):
         return {}
 
-
-# TODO: execute_unit should actually be moved somewhere else; this is likely
-# to be the starting point for a real approach to do that
-def execute_unit(dag_label, protocolunit, storage_manager, inputs):
-    label = f"{str(unit.key)}"
-    with storage_manager(running_dag(dag_label)) as dag_ctx:
-        with dag_ctx.running_unit(label) as (scratch, shared, perm):
-            context = Context(shared=shared,
-                              scratch=scratch,
-                              permanent=perm)
-
-            unit_result = protocolunit.execute(context,
-                                               raise_error=False,
-                                               **inputs)
-
-    return unit_result
-
-
-def execute_per_unit(protocoldag, storage_manager, dag_directory):
-    # fake like we're executing each unit in a different process
-    all_unit_filenames = []
-    dag_label = protocoldag.key  # TODO: we can change this
-    for num, unit in enumerate(protocoldag.protocol_units):
-        unit_result = execute_unit(dag_label, unit, storage_manager)
-        fname = dag_directory / f"result_{num}.json"
-        # serialize the unit result
-        with open(fname, mode='w') as f:
-            f.write(json.dumps(unit_result.to_dict(),
-                               cls=storage_manager.json_encoder))
-
-        all_unit_filenames.append(fname)
-
-        # now let's force the unit_result to get cleared from memory
-        del unit_result
-        assert gc.is_finalized(unit_result)
-
-    ... # TODO: make ProtocolDAGResult
-
 @pytest.fixture
 def demo_dag(solvated_ligand, solvated_complex):
     transformation = gufe.Transformation(

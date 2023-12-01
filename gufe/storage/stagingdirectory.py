@@ -144,6 +144,7 @@ class StagingDirectory:
                 path = Path(file.fspath)
                 if path.exists():
                     _logger.debug(f"Removing file {file}")
+                    # TODO: handle special case of directory?
                     path.unlink()
                     self.registry.remove(file)
                 else:
@@ -175,6 +176,10 @@ class StagingDirectory:
         """
         label_exists = self.external.exists(staging_path.label)
         fspath = Path(staging_path.fspath)
+
+        # TODO: what if the staging path is a directory? not sure that we
+        # have a way to know that; but not sure that adding it to the
+        # registry is right either
         if not fspath.parent.exists():
             fspath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -353,15 +358,31 @@ class StagingPath:
         self.root = root
         self.path = Path(path)
 
+    def register(self):
+        """Register this path with its StagingDirectory.
+
+        If a file associated with this path exists in an external storage,
+        it will be downloaded to the staging area as part of registration.
+        """
+        self.root.register_path(self)
+
     def __truediv__(self, path: Union[PathLike, str]):
         return StagingPath(self.root, self.path / path)
+
+    def __eq__(self, other):
+        return (isinstance(other, StagingPath)
+                and self.root == other.root
+                and self.path == other.path)
+
+    def __hash__(self):
+        return hash((self.root, self.path))
 
     @property
     def fspath(self):
         return str(self.root.staging_dir / self.path)
 
     def __fspath__(self):
-        self.root.register_path(self)
+        self.register()
         return self.fspath
 
     @property
