@@ -73,6 +73,7 @@ class StorageDemoProtocol(gufe.Protocol):
     def _gather(self, protocol_dag_results):
         return {}
 
+
 @pytest.fixture
 def demo_dag(solvated_ligand, solvated_complex):
     transformation = gufe.Transformation(

@@ -419,7 +419,7 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         keep_shared=keep_shared,
         keep_staging=True,
         delete_empty_dirs=False,
-        #staging=Path(""),  # use the actual directories as the staging
+        # staging=Path(""),  # use the actual directories as the staging
     )
     return new_execute_DAG(protocoldag, dag_label, storage_manager,
                            raise_error, n_retries)
@@ -478,9 +478,9 @@ def new_execute_DAG(  # TODO: this is a terrible name
 
                 label = storage_manager.make_label(dag_label, unit.key,
                                                    attempt=attempt)
-                with dag_ctx.running_unit(dag_label, unit.key, attempt=attempt) as (
-                    scratch, shared, perm
-                ):
+                with dag_ctx.running_unit(
+                    dag_label, unit.key, attempt=attempt
+                ) as (scratch, shared, perm):
                     # TODO: context manager should return context
                     context = Context(shared=shared,
                                       scratch=scratch,
