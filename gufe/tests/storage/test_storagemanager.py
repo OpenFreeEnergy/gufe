@@ -1,6 +1,5 @@
 import pytest
 from gufe.storage.storagemanager import StorageManager
-from gufe.storage.stagingdirectory import StagingDirectory
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from pathlib import Path
 

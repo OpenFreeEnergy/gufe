@@ -9,8 +9,8 @@ from gufe.utils import delete_empty_dirs
 from typing import Type
 
 from .externalresource import ExternalStorage, FileStorage
-from .stagingdirectory import SharedStaging, PermanentStaging
-from .stagingdirectory import StagingPath  # typing
+from .stagingregistry import SharedStaging, PermanentStaging
+from .stagingregistry import StagingPath  # typing
 
 
 class StorageManager:

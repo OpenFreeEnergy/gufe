@@ -6,7 +6,7 @@ import os
 import pathlib
 
 from gufe.storage.externalresource import MemoryStorage, FileStorage
-from gufe.storage.stagingdirectory import (
+from gufe.storage.stagingregistry import (
     SharedStaging, PermanentStaging, _safe_to_delete_staging,
     delete_empty_dirs,  # TODO: move to appropriate place
 )
@@ -160,7 +160,7 @@ class TestSharedStaging:
         # When the file doesn't exist locally, it should be pulled down the
         # first time that we register the path.
 
-        # initial conditions, without touching StagingDirectory/StagingPath
+        # initial conditions, without touching StagingRegistry/StagingPath
         label = "old_unit/data.txt"
         on_filesystem = root.scratch / root.staging / "old_unit/data.txt"
         assert not on_filesystem.exists()
@@ -210,7 +210,7 @@ class TestSharedStaging:
             nonfile = root / "does_not_exist.txt"
         # ensure that we've set this up correctly
         assert nonfile not in root.registry
-        logger_name = "gufe.storage.stagingdirectory"
+        logger_name = "gufe.storage.stagingregistry"
         caplog.set_level(logging.INFO, logger=logger_name)
         root.transfer_single_file_to_external(nonfile)
         assert len(caplog.records) == 1
@@ -222,7 +222,7 @@ class TestSharedStaging:
         with open(directory / "file.txt", mode='w') as f:
             f.write("foo")
 
-        logger_name = "gufe.storage.stagingdirectory"
+        logger_name = "gufe.storage.stagingregistry"
         caplog.set_level(logging.DEBUG, logger=logger_name)
         root.transfer_single_file_to_external(directory)
         assert len(caplog.records) == 1
@@ -238,7 +238,7 @@ class TestSharedStaging:
             old_contents = f.read()
 
         assert old_contents == b"foo"
-        logger_name = "gufe.storage.stagingdirectory"
+        logger_name = "gufe.storage.stagingregistry"
         caplog.set_level(logging.DEBUG, logger=logger_name)
         read_only.transfer_single_file_to_external(staged)
         assert len(caplog.records) == 1
@@ -254,7 +254,7 @@ class TestSharedStaging:
             old_contents = f.read()
 
         assert old_contents == b"foo"
-        logger_name = "gufe.storage.stagingdirectory"
+        logger_name = "gufe.storage.stagingregistry"
         caplog.set_level(logging.DEBUG, logger=logger_name)
         read_only.transfer_staging_to_external()
         assert len(caplog.records) == 1
@@ -277,7 +277,7 @@ class TestSharedStaging:
         file.__fspath__()
         assert file in root.registry
         assert not pathlib.Path(file).exists()
-        logger_name = "gufe.storage.stagingdirectory"
+        logger_name = "gufe.storage.stagingregistry"
         caplog.set_level(logging.WARNING, logger=logger_name)
         root.cleanup()
         assert len(caplog.records) == 1

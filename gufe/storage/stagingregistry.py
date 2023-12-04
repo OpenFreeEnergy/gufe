@@ -38,7 +38,7 @@ def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
         return False
 
 
-class StagingDirectory:
+class StagingRegistry:
     """PathLike local representation of an :class:`.ExternalStorage`.
 
     This connects objects on a local filesystem to the key-value store of a
@@ -73,7 +73,7 @@ class StagingDirectory:
         temporarily stored; default is '.staging'. This must be the same for
         all units within a DAG.
     delete_staging : bool
-        whether to delete the contents of the $SCRATCH/$HOLDING/$PREFIX
+        whether to delete the contents of the $SCRATCH/$STAGING/$PREFIX
         directory when this object is deleted
     """
     def __init__(
@@ -155,7 +155,7 @@ class StagingDirectory:
 
     def register_path(self, staging_path: StagingPath):
         """
-        Register a :class:`.StagingPath` with this :class:`.StagingDirectory`.
+        Register a :class:`.StagingPath` with this :class:`.StagingRegistry`.
 
         This marks a given path as something for this object to manage, by
         loading it into the ``registry``. This way it is tracked such that
@@ -223,7 +223,7 @@ class StagingDirectory:
             self.cleanup()
 
 
-class SharedStaging(StagingDirectory):
+class SharedStaging(StagingRegistry):
     """Staging for shared external storage.
 
     This enables read-only versions to be loaded from other units.
@@ -297,7 +297,7 @@ class SharedStaging(StagingDirectory):
         super().register_path(staging_path)
 
 
-class PermanentStaging(StagingDirectory):
+class PermanentStaging(StagingRegistry):
     """Staging directory for the permanent storage.
 
     This allows files to be downloaded from a shared
@@ -339,7 +339,7 @@ class PermanentStaging(StagingDirectory):
 class StagingPath:
     """PathLike object linking local path with label for external storage.
 
-    On creation, this registers with a :class:`.StagingDirectory` that will
+    On creation, this registers with a :class:`.StagingRegistry` that will
     manage the local path and transferring data with its
     :class:`.ExternalStorage`.
 
@@ -351,13 +351,13 @@ class StagingPath:
     example, when deserializing results that point to files) instead use
     :class:`.ExternalFile`.
     """
-    def __init__(self, root: StagingDirectory,
+    def __init__(self, root: StagingRegistry,
                  path: Union[PathLike, str]):
         self.root = root
         self.path = Path(path)
 
     def register(self):
-        """Register this path with its StagingDirectory.
+        """Register this path with its StagingRegistry.
 
         If a file associated with this path exists in an external storage,
         it will be downloaded to the staging area as part of registration.
