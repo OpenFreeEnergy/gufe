@@ -23,8 +23,8 @@ class StorageManager:
         keep_scratch: bool = False,
         keep_staging: bool = False,
         keep_shared: bool = False,
+        keep_empty_dirs: bool = False,
         staging: PathLike = Path(".staging"),
-        delete_empty_dirs: bool = True,
     ):
         self.scratch_root = Path(scratch_root)
         self.shared_root = shared_root
@@ -33,7 +33,7 @@ class StorageManager:
         self.keep_staging = keep_staging
         self.keep_shared = keep_shared
         self.staging = staging
-        self.delete_empty_dirs = delete_empty_dirs
+        self.keep_empty_dirs = keep_empty_dirs
 
         # these are used to track what files can be deleted from shared if
         # keep_shared is False
@@ -45,14 +45,14 @@ class StorageManager:
             external=self.permanent_root,
             shared=self.shared_root,
             staging=self.staging,
-            delete_empty_dirs=delete_empty_dirs,
+            keep_empty_dirs=keep_empty_dirs,
         )
 
         self.shared_staging = SharedStaging(
             scratch=self.scratch_root,
             external=self.shared_root,
             staging=self.staging,
-            delete_empty_dirs=delete_empty_dirs,
+            keep_empty_dirs=keep_empty_dirs,
         )
 
     def make_label(self, dag_label, unit_label, attempt, **kwargs):
@@ -102,7 +102,7 @@ class StorageManager:
                     if self.shared_root != self.permanent_root:
                         self.shared_root.delete(file.label)
 
-            if self.delete_empty_dirs:
+            if not self.keep_empty_dirs:
                 delete_empty_dirs(self._scratch_base, delete_root=False)
 
     @contextmanager

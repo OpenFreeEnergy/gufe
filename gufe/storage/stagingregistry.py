@@ -69,12 +69,12 @@ class StagingRegistry:
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
-        delete_empty_dirs: bool = True,
+        keep_empty_dirs: bool = False,
     ):
         self.external = external
         self.scratch = Path(scratch)
         self.delete_staging = delete_staging
-        self.delete_empty_dirs = delete_empty_dirs
+        self.keep_empty_dirs = keep_empty_dirs
         self.staging = staging
 
         self.registry: set[StagingPath] = set()
@@ -137,7 +137,7 @@ class StagingRegistry:
                 if self._delete_file_safe(file):
                     self._delete_file(file)
 
-            if self.delete_empty_dirs:
+            if not self.keep_empty_dirs:
                 delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
@@ -221,12 +221,12 @@ class SharedStaging(StagingRegistry):
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
-        delete_empty_dirs: bool = True,
+        keep_empty_dirs: bool = False,
         read_only: bool = False,
     ):
         super().__init__(scratch, external, staging=staging,
                          delete_staging=delete_staging,
-                         delete_empty_dirs=delete_empty_dirs)
+                         keep_empty_dirs=keep_empty_dirs)
         self.read_only = read_only
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
@@ -268,11 +268,11 @@ class PermanentStaging(StagingRegistry):
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
-        delete_empty_dirs: bool = True,
+        keep_empty_dirs: bool = False,
     ):
         super().__init__(scratch, external, staging=staging,
                          delete_staging=delete_staging,
-                         delete_empty_dirs=delete_empty_dirs)
+                         keep_empty_dirs=keep_empty_dirs)
         self.shared = shared
 
     def _delete_file_safe(self, file):
