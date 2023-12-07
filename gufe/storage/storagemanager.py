@@ -46,7 +46,6 @@ class StorageManager:
             shared=self.shared_root,
             staging=self.staging,
             delete_empty_dirs=delete_empty_dirs,
-            prefix=""
         )
 
         self.shared_staging = SharedStaging(
@@ -54,7 +53,6 @@ class StorageManager:
             external=self.shared_root,
             staging=self.staging,
             delete_empty_dirs=delete_empty_dirs,
-            prefix=""  # TODO: remove prefix
         )
 
     def make_label(self, dag_label, unit_label, attempt, **kwargs):
@@ -87,8 +85,17 @@ class StorageManager:
             if not self.keep_staging:
                 self.permanent_staging.cleanup()
 
+
             if not self.keep_shared:
-                for file in self.shared_xfer:
+                # we'd like to do something like loop over
+                # self.shared_xfer - self.permanent_xfer; however,
+                # StagedPaths have different staging registries. This gives
+                # the set of paths we do want to delete
+                perm_xfer_paths = {p.fspath for p in self.permanent_xfer}
+                shared_xfer_to_delete = {p for p in self.shared_xfer
+                                         if p.fspath not in perm_xfer_paths}
+
+                for file in shared_xfer_to_delete:
                     self.shared_root.delete(file.label)
 
                 for file in self.permanent_xfer:
