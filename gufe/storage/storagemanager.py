@@ -12,6 +12,8 @@ from .externalresource import ExternalStorage, FileStorage
 from .stagingregistry import SharedStaging, PermanentStaging
 from .stagingregistry import StagingPath  # typing
 
+from gufe.protocols.protocolunit import Context
+
 
 class StorageManager:
     def __init__(
@@ -112,8 +114,13 @@ class StorageManager:
         scratch.mkdir(parents=True, exist_ok=True)
         shared = self.shared_staging / label
         permanent = self.permanent_staging / label
+        context = Context(
+            scratch=scratch,
+            shared=shared,
+            permanent=permanent
+        )
         try:
-            yield scratch, shared, permanent
+            yield context
         finally:
             # import pdb; pdb.set_trace()
             # clean up after unit

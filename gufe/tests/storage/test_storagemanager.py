@@ -71,9 +71,12 @@ class LifecycleHarness:
             for unit in dag_units:
                 label = f"{dag_label}/{unit.key}"
                 with dag_ctx.running_unit(dag_label, unit.key, attempt=0) as (
-                    scratch, shared, perm
+                    context
                 ):
                     # import pdb; pdb.set_trace()
+                    scratch = context.scratch
+                    shared = context.shared
+                    perm = context.permanent
                     results.append(unit.run(scratch, shared, perm))
                     self.in_unit_asserts(storage_manager, label)
                 self.after_unit_asserts(storage_manager, label)

@@ -480,11 +480,7 @@ def new_execute_DAG(  # TODO: this is a terrible name
                                                    attempt=attempt)
                 with dag_ctx.running_unit(
                     dag_label, unit.key, attempt=attempt
-                ) as (scratch, shared, perm):
-                    # TODO: context manager should return context
-                    context = Context(shared=shared,
-                                      scratch=scratch,
-                                      permanent=perm)
+                ) as context:
                     _logger.info("Starting unit {label}")
                     _logger.info(context)
                     result = unit.execute(

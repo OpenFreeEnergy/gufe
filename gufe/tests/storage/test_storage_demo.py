@@ -5,7 +5,7 @@ import pathlib
 import gufe
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from gufe.storage.storagemanager import StorageManager
-from gufe.storage.stagingdirectory import StagingPath
+from gufe.storage.stagingregistry import StagingPath
 from gufe.protocols.protocoldag import new_execute_DAG
 
 """
@@ -173,7 +173,7 @@ class ExecutionStorageDemoTest:
         """
         scratch = storage_manager.scratch_root
         keep_scratch = storage_manager.keep_scratch
-        del_empty_dirs = storage_manager.delete_empty_dirs
+        del_empty_dirs = not storage_manager.keep_empty_dirs
         assert scratch.is_dir()
 
         if keep_scratch:
@@ -212,7 +212,6 @@ class ExecutionStorageDemoTest:
 
     def get_storage_manager(self, keep, tmp_path):
         keep_scr, keep_sta, keep_sha, empties = self._parse_keep(keep)
-        del_empty_dirs = not empties
         shared, permanent = self.get_shared_and_permanent()
 
         storage_manager = StorageManager(
@@ -222,7 +221,7 @@ class ExecutionStorageDemoTest:
             keep_scratch=keep_scr,
             keep_staging=keep_sta,
             keep_shared=keep_sha,
-            delete_empty_dirs=del_empty_dirs,
+            keep_empty_dirs=empties,
         )
         return storage_manager
 
@@ -303,7 +302,6 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
 
     def get_storage_manager(self, keep, tmp_path):
         keep_scr, keep_sta, keep_sha, empties = self._parse_keep(keep)
-        del_empty_dirs = not empties
         backend = FileStorage(tmp_path)
         storage_manager = StorageManager(
             scratch_root=tmp_path,
@@ -312,7 +310,7 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
             keep_scratch=keep_scr,
             keep_staging=keep_sta,
             keep_shared=keep_sha,
-            delete_empty_dirs=del_empty_dirs,
+            keep_empty_dirs=empties,
             staging="",
         )
         return storage_manager
