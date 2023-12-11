@@ -364,6 +364,48 @@ class ReproduceOldBehaviorStorageManager(StorageManager):
     def make_label(self, dag_label, unit_label, attempt):
         return f"{dag_label}/shared_{unit_label}_attempt_{attempt}"
 
+    @classmethod
+    def from_old_args(
+        cls,
+        shared_basedir: PathLike,
+        scratch_basedir: PathLike, *,
+        keep_shared: bool = False,
+        keep_scratch: bool = False,
+    ):
+        """
+        Create an new storage manager based on the old execute_DAG args.
+
+        Parameters
+        ----------
+        shared_basedir : Path
+            Filesystem path to use for shared space that persists across whole DAG
+            execution. Used by a `ProtocolUnit` to pass file contents to dependent
+            class:``ProtocolUnit`` instances.
+        scratch_basedir : Path
+            Filesystem path to use for `ProtocolUnit` `scratch` space.
+        keep_shared : bool
+            If True, don't remove shared directories for `ProtocolUnit`s after
+            the `ProtocolDAG` is executed.
+        keep_scratch : bool
+            If True, don't remove scratch directories for a `ProtocolUnit` after
+            it is executed.
+        """
+        # doing this here makes it easier to test than putting in
+        # execute_DAG
+        shared_basedir = Path(shared_basedir)
+        shared = FileStorage(shared_basedir.parent)
+        storage_manager = cls(
+            scratch_root=scratch_basedir,
+            shared_root=shared,
+            permanent_root=shared,
+            keep_scratch=keep_scratch,
+            keep_shared=keep_shared,
+            keep_staging=True,
+            keep_empty_dirs=True,
+            # staging=Path(""),  # use the actual directories as the staging
+        )
+        return storage_manager
+
 
 def execute_DAG(protocoldag: ProtocolDAG, *,
                 shared_basedir: PathLike,
@@ -408,19 +450,13 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
     # the directory given as shared_root is actually the directory for this
     # DAG; the "shared_root" for the storage manager is the parent. We'll
     # force permanent to be the same.
-    shared_basedir = Path(shared_basedir)
-    shared = FileStorage(shared_basedir.parent)
-    dag_label = shared_basedir.name
-    storage_manager = ReproduceOldBehaviorStorageManager(
-        scratch_root=scratch_basedir,
-        shared_root=shared,
-        permanent_root=shared,
-        keep_scratch=keep_scratch,
+    storage_manager = ReproduceOldBehaviorStorageManager.from_old_args(
+        shared_basedir=shared_basedir,
+        scratch_basedir=scratch_basedir,
         keep_shared=keep_shared,
-        keep_staging=True,
-        delete_empty_dirs=False,
-        # staging=Path(""),  # use the actual directories as the staging
+        keep_scratch=keep_scratch
     )
+    dag_label = shared_basedir.name
     return new_execute_DAG(protocoldag, dag_label, storage_manager,
                            raise_error, n_retries)
 

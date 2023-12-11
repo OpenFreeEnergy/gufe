@@ -72,6 +72,11 @@ def writefile_dag():
     return p.create(stateA=s1, stateB=s2, mapping={})
 
 
+class TestReproduceOldBehaviorStorageManager:
+    def test_context(self):
+        ...
+
+
 @pytest.mark.parametrize('keep_shared', [False, True])
 @pytest.mark.parametrize('keep_scratch', [False, True])
 def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
