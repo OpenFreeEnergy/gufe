@@ -7,6 +7,7 @@ from openff.units import unit
 
 import gufe
 from gufe.protocols import execute_DAG
+from gufe.protocols.protocoldag import ReproduceOldBehaviorStorageManager
 
 
 class WriterUnit(gufe.ProtocolUnit):
@@ -73,8 +74,37 @@ def writefile_dag():
 
 
 class TestReproduceOldBehaviorStorageManager:
-    def test_context(self):
-        ...
+    def test_context(self, tmp_path):
+        # check that the paths are the ones we expect
+        base = tmp_path / "working"
+        manager = ReproduceOldBehaviorStorageManager.from_old_args(
+            scratch_basedir=base,
+            shared_basedir=base
+        )
+        dag_label = "dag"
+        unit_label = "unit"
+        expected_scratch = "working/dag/scratch_unit_attempt_0/scratch.txt"
+        expected_shared = "working/dag/shared_unit_attempt_0/shared.txt"
+        expected_perm = "working/dag/shared_unit_attempt_0/perm.txt"
+        with manager.running_dag(dag_label) as dag_ctx:
+            with dag_ctx.running_unit(
+                dag_label, unit_label, attempt=0
+            ) as ctx:
+                scratch_f = ctx.scratch / "scratch.txt"
+                shared_f = ctx.shared / "shared.txt"
+                perm_f = ctx.permanent / "perm.txt"
+
+        found_scratch = pathlib.Path(scratch_f).relative_to(tmp_path)
+        found_shared = pathlib.Path(shared_f.fspath).relative_to(tmp_path)
+        found_perm = pathlib.Path(perm_f.fspath).relative_to(tmp_path)
+
+        assert str(found_scratch) == expected_scratch
+        assert str(found_shared) == expected_shared
+        assert str(found_perm) == expected_perm
+        # the label is the relative path to the base directory for a
+        # FileStorage
+        assert "working/" + shared_f.label == expected_shared
+        assert "working/" + perm_f.label == expected_perm
 
 
 @pytest.mark.parametrize('keep_shared', [False, True])

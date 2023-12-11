@@ -359,7 +359,10 @@ class ReproduceOldBehaviorStorageManager(StorageManager):
     # {dag_label}/scratch_{unit_label} and shared at
     # {dag_label}/shared_{unit_label}.
     def _scratch_loc(self, dag_label, unit_label, attempt):
-        return self.scratch_root / f"scratch_{unit_label}_attempt_{attempt}"
+        return (
+            self.scratch_root
+            / f"{dag_label}/scratch_{unit_label}_attempt_{attempt}"
+        )
 
     def make_label(self, dag_label, unit_label, attempt):
         return f"{dag_label}/shared_{unit_label}_attempt_{attempt}"
@@ -402,7 +405,7 @@ class ReproduceOldBehaviorStorageManager(StorageManager):
             keep_shared=keep_shared,
             keep_staging=True,
             keep_empty_dirs=True,
-            # staging=Path(""),  # use the actual directories as the staging
+            staging=Path(""),  # use the actual directories as the staging
         )
         return storage_manager
 
