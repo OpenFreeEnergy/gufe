@@ -168,9 +168,6 @@ class StagingRegistry:
         label_exists = self.external.exists(staging_path.label)
         fspath = Path(staging_path.fspath)
 
-        # TODO: what if the staging path is a directory? not sure that we
-        # have a way to know that; but not sure that adding it to the
-        # registry is right either
         if not fspath.parent.exists():
             fspath.parent.mkdir(parents=True, exist_ok=True)
 
