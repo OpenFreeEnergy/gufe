@@ -15,13 +15,13 @@ correspond to three lifetimes of data:
 
 * ``scratch``: This is temporary data that is only needed for the lifetime
   of a :class:`.ProtocolUnit`. This data is not guaranteed to be available
-  beyown the single :class:`.ProtocolUnit` where it is created, but may be
+  beyond the single :class:`.ProtocolUnit` where it is created, but may be
   reused within that :class:`.ProtocolUnit`.
 * ``shared``: This is data that is shared between different units in a
   :class:`.ProtocolDAG`. For example, a single equilibration stage might be
   shared between multiple production runs. The output snapshot of the
   equilibration would be suitable for as something to put in ``shared``
-  data. This data is guarateed to be present from when it is created until
+  data. This data is guaranteed to be present from when it is created until
   the end of the :class:`.ProtocolDAG`, but is not guaranteed to exist after
   the :class:`.ProtocolDAG` terminates.
 * ``permanent``: This is the data that will be needed beyond the scope of a
@@ -40,10 +40,10 @@ between stages of the GUFE storage system, and simplifies the API for
 protocol authors.  In detail, this provides protocol authors with
 ``PathLike`` objects for ``scratch``, ``shared``, and ``permanent``. All
 three of these objects actually point to special subdirectories of the
-scratch space for a specific unit, but are managed by context manangers at
-the executor level, which handle the process of moving objects from local
-staging directories to the actual ``shared`` and ``permanent`` locations,
-which can be external resources.
+local scratch space for a specific unit, but are managed by context
+managers at the executor level, which handle the process of moving objects
+from local staging directories to the actual ``shared`` and ``permanent``
+locations, which can be external resources.
 
 
 External resource utilities
@@ -77,30 +77,30 @@ helpers. The information in this section is mostly of interest to authors of
 executors. The helpers are:
 
 * :class:`.StorageManager`: This is the overall façade interface for
-  interacting with the rest of the storage lifecycle tools.
-* :class:`.DAGContextManager`: This provides context managers at the DAG and
-  unit level to handle the transfer of storage. GUFE provides a
-  :class:`.SingleProcDAGContextManager` to handle the simple case that an
-  entire DAG is run within a single process. If individual units are run on
-  different remote resources, a more complicated :class:`.DAGContextManager`
-  would be needed.
-* :class:`.StagingDirectory`: This represents the root directory for staging
-  the results of a given :class:`.ProtocolUnit`. This is an abstract
+  interacting with the rest of the storage lifecycle tools. It provides two
+  methods to generate context managers; one for the :class:`.ProtocolDAG`
+  level of the lifecycle, and one for the :class:`.ProtocoUnit` level of the
+  lifecycle. This class is designed for the use case that the entire DAG is
+  run in serial within a single process. Subclasses of this can be created
+  for other execution architectures, where the main logic changes would be
+  in the methods that return those context managers.
+* :class:`.StagingRegistry`: This handles the logic around staging paths
+  within a :class:`.ProtocolUnit`. Think of this as an abstract
   representation of a local directory. Paths within it register with it, and
   it handles deletion of the temporary local files when not needed, as well
   as the download of remote files when necessary for reading. There are two
   important subclasses of this: :class:`.SharedStaging` for a ``shared``
   resource, and :class:`.PermanentStaging` for a ``permanent`` resource.
 * :class:`.StagingPath`: This represents a file within the
-  :class:`.StagingDirectory`. It contains both the key (label) used in the
-  key-value store, as well as the actual local path to the file. On
-  creation, it registers itself with its :class:`.StagingDirectory`, which
-  handles managing it over its lifecycle.
+  :class:`.StagingRegistry`. It contains both the key (label) used in the
+  key-value store, as well as the actual local path to the file. When its
+  ``__fspath__`` method is called, it registers itself with its
+  :class:`.StagingRegistry`, which handles managing it over its lifecycle.
 
 In practice, the executor uses the :class:`.StorageManager` to create a
 :class:`.DAGContextManager` at the level of a DAG, and then uses the
 :class:`.DAGContextManager` to create a context to run a unit. That context
 creates a :class:`.SharedStaging` and a :class:`.PermanentStaging`
 associated with the specific unit. Those staging directories, with the
-scratch directory, are provided to the :class:`.ProtocolDAGUnit`, so that
+scratch directory, are provided to the :class:`.ProtocolUnit`, so that
 these are the only objects protocol authors need to interact with.

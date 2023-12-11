@@ -11,35 +11,26 @@ from gufe.utils import delete_empty_dirs
 import logging
 _logger = logging.getLogger(__name__)
 
-
-def _safe_to_delete_staging(external: ExternalStorage, path: PathLike,
-                            prefix: Union[PathLike, str]) -> bool:
-    """Check if deleting ``path`` could delete externally stored data.
-
-    If external storage is a FileStorage, then it will store files for
-    this unit or dag in the directory ``external.root_dir / prefix``, where
-    ``prefix`` is either the unit label or the dag label. If ``path`` is
-    inside that directory, then deleting it may delete information from the
-    external storage. In that case, this returns False, indicating a
-    conflict. Otherwise, this returns True.
-    """
-    # this is a little brittle; I don't like hard-coding the class here
+def _safe_to_delete_file(
+    external: ExternalStorage,
+    path: PathLike
+) -> bool:
+    """Check that deleting this file will not remove it from external"""
+    # kind of brittle: deals with internals of FileStorage
     if isinstance(external, FileStorage):
-        root = Path(external.root_dir) / prefix
+        root = external.root_dir
     else:
         return True
 
     p = Path(path)
     try:
-        _ = p.relative_to(root)
+        label = str(p.relative_to(root))
     except ValueError:
         return True
-    else:
-        return False
+    return not external.exists(label)
 
 
-
-class StagingDirectory:
+class StagingRegistry:
     """PathLike local representation of an :class:`.ExternalStorage`.
 
     This connects objects on a local filesystem to the key-value store of a
@@ -63,49 +54,39 @@ class StagingDirectory:
         the scratch directory shared by all objects on this host
     external : :class:`.ExternalStorage`
         external storage resource where objects should eventualy go
-    prefix : str
-        label for this specific unit; this should be a slash-separated
-        description of where this unit fits in the hierarchy. For example,
-        it might be ``$DAG_LABEL/$UNIT_LABEL`` or
-        ``$DAG_LABEL/$UNIT_LABEL/$UNIT_REPEAT``. It must be a unique
-        identifier for this unit within the permanent storage.
     staging : PathLike
         name of the subdirectory of scratch where staged results are
         temporarily stored; default is '.staging'. This must be the same for
         all units within a DAG.
     delete_staging : bool
-        whether to delete the contents of the $SCRATCH/$HOLDING/$PREFIX
+        whether to delete the contents of the $SCRATCH/$STAGING
         directory when this object is deleted
     """
     def __init__(
         self,
         scratch: PathLike,
         external: ExternalStorage,
-        prefix: str,
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
-        delete_empty_dirs: bool = True,
+        keep_empty_dirs: bool = False,
     ):
         self.external = external
         self.scratch = Path(scratch)
-        self.prefix = Path(prefix)
         self.delete_staging = delete_staging
-        self.delete_empty_dirs = delete_empty_dirs
+        self.keep_empty_dirs = keep_empty_dirs
         self.staging = staging
 
-        self.registry : set[StagingPath] = set()
-        self.preexisting : set[StagingPath] = set()
-        self.staging_dir = self.scratch / staging / prefix
+        self.registry: set[StagingPath] = set()
+        self.preexisting: set[StagingPath] = set()
+        self.staging_dir = self.scratch / staging
         self.staging_dir.mkdir(exist_ok=True, parents=True)
 
-    def _delete_staging_safe(self):
-        """Check if deleting staging will remove data from external.
-        """
-        return _safe_to_delete_staging(
+    def _delete_file_safe(self, file):
+        """Check if deleting this file will remove it from external."""
+        return _safe_to_delete_file(
             external=self.external,
-            path=self.staging_dir,
-            prefix=self.prefix,
+            path=file
         )
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
@@ -125,7 +106,6 @@ class StagingDirectory:
 
         return None  # no transfer
 
-
     def transfer_staging_to_external(self):
         """Transfer all objects in the registry to external storage
 
@@ -136,28 +116,39 @@ class StagingDirectory:
             if (transferred := self.transfer_single_file_to_external(file))
         ]
 
+    def _delete_file(self, file: StagingPath):
+        path = Path(file.fspath)
+        if path.exists():
+            if not path.is_dir():
+                _logger.debug(f"Removing file '{file}'")
+                path.unlink()
+            else:
+                _logger.debug(
+                    f"During staging cleanup, the directory '{file}' was "
+                    "found as a staged path. This will be deleted only if "
+                    "`keep_empty` is False."
+                )
+            self.registry.remove(file)
+        else:
+            _logger.warning(
+                f"During staging cleanup, file '{file}' was marked for "
+                "deletion, but can not be found on disk."
+            )
+
     def cleanup(self):
         """Perform end-of-lifecycle cleanup.
         """
-        if self.delete_staging and self._delete_staging_safe():
+        if self.delete_staging:
             for file in self.registry - self.preexisting:
-                path = Path(file.fspath)
-                if path.exists():
-                    _logger.debug(f"Removing file {file}")
-                    # TODO: handle special case of directory?
-                    path.unlink()
-                    self.registry.remove(file)
-                else:
-                    _logger.warning("During staging cleanup, file "
-                                    f"{file} was marked for deletion, but "
-                                    "can not be found on disk.")
+                if self._delete_file_safe(file):
+                    self._delete_file(file)
 
-            if self.delete_empty_dirs:
+            if not self.keep_empty_dirs:
                 delete_empty_dirs(self.staging_dir)
 
     def register_path(self, staging_path: StagingPath):
         """
-        Register a :class:`.StagingPath` with this :class:`.StagingDirectory`.
+        Register a :class:`.StagingPath` with this :class:`.StagingRegistry`.
 
         This marks a given path as something for this object to manage, by
         loading it into the ``registry``. This way it is tracked such that
@@ -201,7 +192,7 @@ class StagingDirectory:
 
         with external.load_stream(staging_path.label) as f:
             external_bytes = f.read()
-            ... # TODO: check that the bytes are the same if preexisting?
+            ...  # TODO: check that the bytes are the same if preexisting?
 
         scratch_path.parent.mkdir(exist_ok=True, parents=True)
         with open(scratch_path, mode='wb') as f:
@@ -215,8 +206,7 @@ class StagingDirectory:
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}('{self.scratch}', {self.external}, "
-            f"{self.prefix})"
+            f"{self.__class__.__name__}('{self.scratch}', {self.external})"
         )
 
     def __del__(self):  # -no-cov-
@@ -225,7 +215,7 @@ class StagingDirectory:
             self.cleanup()
 
 
-class SharedStaging(StagingDirectory):
+class SharedStaging(StagingRegistry):
     """Staging for shared external storage.
 
     This enables read-only versions to be loaded from other units.
@@ -234,45 +224,16 @@ class SharedStaging(StagingDirectory):
         self,
         scratch: PathLike,
         external: ExternalStorage,
-        prefix: str,
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
-        delete_empty_dirs: bool = True,
+        keep_empty_dirs: bool = False,
         read_only: bool = False,
     ):
-        super().__init__(scratch, external, prefix, staging=staging,
+        super().__init__(scratch, external, staging=staging,
                          delete_staging=delete_staging,
-                         delete_empty_dirs=delete_empty_dirs)
+                         keep_empty_dirs=keep_empty_dirs)
         self.read_only = read_only
-
-    def _get_other_shared(self, prefix: str,
-                         delete_staging: Optional[bool] = None):
-        """Get a related unit's staging directory.
-        """
-        if delete_staging is None:
-            delete_staging = self.delete_staging
-
-        return SharedStaging(
-            scratch=self.scratch,
-            external=self.external,
-            prefix=prefix,
-            staging=self.staging,
-            delete_staging=delete_staging,
-            read_only=True,
-        )
-
-    @contextmanager
-    def other_shared(self, prefix: str,
-                     delete_staging: Optional[bool] = None):
-        """Context manager approach for getting a related unit's directory.
-
-        This is usually the recommended way to get a previous unit's shared
-        data.
-        """
-        other = self._get_other_shared(prefix, delete_staging)
-        yield other
-        other.cleanup()
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         if self.read_only:
@@ -299,7 +260,7 @@ class SharedStaging(StagingDirectory):
         super().register_path(staging_path)
 
 
-class PermanentStaging(StagingDirectory):
+class PermanentStaging(StagingRegistry):
     """Staging directory for the permanent storage.
 
     This allows files to be downloaded from a shared
@@ -310,24 +271,22 @@ class PermanentStaging(StagingDirectory):
         scratch: PathLike,
         external: ExternalStorage,
         shared: ExternalStorage,
-        prefix: str,
         *,
         staging: PathLike = Path(".staging"),
         delete_staging: bool = True,
-        delete_empty_dirs: bool = True,
+        keep_empty_dirs: bool = False,
     ):
-        super().__init__(scratch, external, prefix, staging=staging,
+        super().__init__(scratch, external, staging=staging,
                          delete_staging=delete_staging,
-                         delete_empty_dirs=delete_empty_dirs)
+                         keep_empty_dirs=keep_empty_dirs)
         self.shared = shared
 
-    def _delete_staging_safe(self):
-        shared_safe = _safe_to_delete_staging(
+    def _delete_file_safe(self, file):
+        shared_safe = _safe_to_delete_file(
             external=self.shared,
-            path=self.staging_dir,
-            prefix=self.prefix
+            path=file
         )
-        return shared_safe and super()._delete_staging_safe()
+        return shared_safe and super()._delete_file_safe(file)
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         # if we can't find it locally, we load it from shared storage
@@ -341,7 +300,7 @@ class PermanentStaging(StagingDirectory):
 class StagingPath:
     """PathLike object linking local path with label for external storage.
 
-    On creation, this registers with a :class:`.StagingDirectory` that will
+    On creation, this registers with a :class:`.StagingRegistry` that will
     manage the local path and transferring data with its
     :class:`.ExternalStorage`.
 
@@ -353,13 +312,13 @@ class StagingPath:
     example, when deserializing results that point to files) instead use
     :class:`.ExternalFile`.
     """
-    def __init__(self, root: StagingDirectory,
+    def __init__(self, root: StagingRegistry,
                  path: Union[PathLike, str]):
         self.root = root
         self.path = Path(path)
 
     def register(self):
-        """Register this path with its StagingDirectory.
+        """Register this path with its StagingRegistry.
 
         If a file associated with this path exists in an external storage,
         it will be downloaded to the staging area as part of registration.
@@ -388,7 +347,7 @@ class StagingPath:
     @property
     def label(self) -> str:
         """Label used in :class:`.ExternalStorage` for this path"""
-        return str(self.root.prefix / self.path)
+        return str(self.path)
 
     def __repr__(self):
         return f"StagingPath('{self.fspath}')"
@@ -397,5 +356,3 @@ class StagingPath:
     # although edge cases may be a pain, we can get most of it with, e.g.:
     # def exists(self): return Path(self).exists()
     # but also, can do pathlib.Path(staging_path) and get hte whole thing
-
-

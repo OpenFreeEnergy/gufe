@@ -1,8 +1,8 @@
 import pytest
 from gufe.storage.storagemanager import StorageManager
-from gufe.storage.stagingdirectory import StagingDirectory
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from pathlib import Path
+
 
 @pytest.fixture
 def storage_manager_std(tmp_path):
@@ -11,6 +11,7 @@ def storage_manager_std(tmp_path):
         shared_root=MemoryStorage(),
         permanent_root=MemoryStorage(),
     )
+
 
 @pytest.fixture
 def dag_units():
@@ -33,14 +34,14 @@ def dag_units():
             (scratch / "foo2.txt").touch()
             # TODO: this will change; the inputs should include a way to get
             # the previous shared unit label
-            with shared.root.other_shared("dag/unit1_attempt_0") as prev_shared:
-                with open(prev_shared / "bar.txt", mode='r') as f:
-                    bar = f.read()
+            prev_shared = shared.root / "dag/unit1_attempt_0"
+            with open(prev_shared / "bar.txt", mode='r') as f:
+                bar = f.read()
 
-                # note that you can open a file from permanent as if it was
-                # from shared -- everything in permanent is in shared
-                with open(prev_shared / "baz.txt", mode='r') as f:
-                    baz = f.read()
+            # note that you can open a file from permanent as if it was
+            # from shared -- everything in permanent is in shared
+            with open(prev_shared / "baz.txt", mode='r') as f:
+                baz = f.read()
 
             return {"bar": bar, "baz": baz}
 
@@ -72,8 +73,8 @@ class LifecycleHarness:
                 with dag_ctx.running_unit(dag_label, unit.key, attempt=0) as (
                     scratch, shared, perm
                 ):
-                    results.append(unit.run(scratch, shared, perm))
                     # import pdb; pdb.set_trace()
+                    results.append(unit.run(scratch, shared, perm))
                     self.in_unit_asserts(storage_manager, label)
                 self.after_unit_asserts(storage_manager, label)
         self.after_dag_asserts(storage_manager)
@@ -177,7 +178,8 @@ class TestStandardStorageManager(LifecycleHarness):
     def _in_unit_existing_files(self, unit_label):
         return {
             "dag/unit1": {'bar', 'baz', 'foo'},
-            "dag/unit2": {'foo2', 'baz'}
+            "dag/unit2": {'foo2', 'baz', 'bar'},
+            # bar was deleted, but gets brought back in unit2
         }[unit_label]
 
     def _after_unit_existing_files(self, unit_label):
@@ -220,7 +222,6 @@ class TestKeepScratchAndStagingStorageManager(LifecycleHarness):
         return self.files_after_unit('dag/unit2')
 
 
-
 class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
     @pytest.fixture
     def storage_manager(self, tmp_path):
@@ -238,7 +239,6 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
             "dag/unit2": {'foo2', 'bar', 'baz'},
         }[unit_label]
 
-
     def _after_unit_existing_files(self, unit_label):
         # same for both; all files come from unit 1
         return {"bar", "baz"}
@@ -252,7 +252,7 @@ class TestStagingOverlapsSharedStorageManager(LifecycleHarness):
         baz = "dag/unit1_attempt_0/baz.txt"
         foo = "scratch/dag/unit1_attempt_0/foo.txt"
         foo2 = "scratch/dag/unit2_attempt_0/foo2.txt"
-        return  {
+        return {
             ("dag/unit1", "in"): {bar, baz, foo},
             ("dag/unit1", "after"): {bar, baz},
             ("dag/unit2", "in"): {bar, baz, foo2},
@@ -274,7 +274,7 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
     def _in_unit_existing_files(self, unit_label):
         return {
             "dag/unit1": {'foo', 'bar', 'baz'},
-            "dag/unit2": {"foo2", "baz"},  # no bar because it was temporary
+            "dag/unit2": {"foo2", "baz", "bar"},  # bar is resurrected
         }[unit_label]
 
     def _after_dag_existing_files(self):
@@ -285,10 +285,10 @@ class TestStagingOverlapsPermanentStorageManager(LifecycleHarness):
         baz = "dag/unit1_attempt_0/baz.txt"
         foo = "scratch/dag/unit1_attempt_0/foo.txt"
         foo2 = "scratch/dag/unit2_attempt_0/foo2.txt"
-        return  {
+        return {
             ("dag/unit1", "in"): {bar, baz, foo},
             ("dag/unit1", "after"): {baz},
-            ("dag/unit2", "in"): {baz, foo2},
+            ("dag/unit2", "in"): {baz, foo2, bar},  # bar is resurrected
             ("dag/unit2", "after"): {baz}
         }[unit_label, in_after]
 
