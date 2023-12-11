@@ -26,6 +26,9 @@ class MemoryStorage(ExternalStorage):
                 f"Unable to delete '{location}': key does not exist"
             )
 
+    def __eq__(self, other):
+        return self is other
+
     def _store_bytes(self, location, byte_data):
         self._data[location] = byte_data
         return location, self.get_metadata(location)

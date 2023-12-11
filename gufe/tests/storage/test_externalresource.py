@@ -52,14 +52,16 @@ class TestFileStorage:
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
 
-    def test_store_path(self, file_storage):
+    @pytest.mark.parametrize('nested', [True, False])
+    def test_store_path(self, file_storage, nested):
         orig_file = file_storage.root_dir / ".hidden" / "bar.txt"
         orig_file.parent.mkdir()
         as_bytes = "This is bar".encode('utf-8')
         with open(orig_file, 'wb') as f:
             f.write(as_bytes)
 
-        fileloc = file_storage.root_dir / "bar.txt"
+        nested_dir = "nested" if nested else ""
+        fileloc = file_storage.root_dir / nested_dir / "bar.txt"
         assert not fileloc.exists()
 
         file_storage.store_path(fileloc, orig_file)
@@ -67,6 +69,12 @@ class TestFileStorage:
         assert fileloc.exists()
         with open(fileloc, 'rb') as f:
             assert as_bytes == f.read()
+
+    def test_eq(self, tmp_path):
+        reference = FileStorage(tmp_path)
+        assert reference == FileStorage(tmp_path)
+        assert reference != FileStorage(tmp_path / "foo")
+        assert reference != MemoryStorage()
 
     def test_delete(self, file_storage):
         path = file_storage.root_dir / "foo.txt"
@@ -160,6 +168,11 @@ class TestMemoryStorage:
             storage.store_path(label, path)
 
         assert storage._data == self.contents
+
+    def test_eq(self):
+        reference = MemoryStorage()
+        assert reference == reference
+        assert reference != MemoryStorage()
 
     @pytest.mark.parametrize('prefix,expected', [
         ("", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
