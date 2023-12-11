@@ -119,9 +119,15 @@ class StagingRegistry:
     def _delete_file(self, file: StagingPath):
         path = Path(file.fspath)
         if path.exists():
-            _logger.debug(f"Removing file '{file}'")
-            # TODO: handle special case of directory?
-            path.unlink()
+            if not path.is_dir():
+                _logger.debug(f"Removing file '{file}'")
+                path.unlink()
+            else:
+                _logger.debug(
+                    f"During staging cleanup, the directory '{file}' was "
+                    "found as a staged path. This will be deleted only if "
+                    "`keep_empty` is False."
+                )
             self.registry.remove(file)
         else:
             _logger.warning(

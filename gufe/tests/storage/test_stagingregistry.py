@@ -285,6 +285,23 @@ class TestSharedStaging:
         record = caplog.records[0]
         assert "can not be found on disk" in record.msg
 
+    def test_cleanup_directory(self, root, caplog):
+        root.delete_staging = True
+        dirname = root / "old_unit"
+        assert dirname not in root.registry
+        dirname.register()
+        assert dirname in root.registry
+
+        assert not pathlib.Path(dirname).exists()
+        file = dirname / "foo.txt"
+        file.register()
+        # directory is created when something in the directory registered
+        assert pathlib.Path(dirname).exists()
+        logger_name = "gufe.storage.stagingregistry"
+        caplog.set_level(logging.DEBUG, logger=logger_name)
+        root.cleanup()
+        assert "During staging cleanup, the directory" in caplog.text
+
     def test_register_cleanup_preexisting_file(self, root):
         filename = pathlib.Path(root.__fspath__()) / "new_unit/foo.txt"
         filename.parent.mkdir(parents=True, exist_ok=True)
