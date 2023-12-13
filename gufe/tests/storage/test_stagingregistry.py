@@ -191,7 +191,7 @@ class TestSharedStaging:
     @pytest.mark.xfail  # Need test that read-only errors on new files
     def test_write_old_fail(self, root):
         old_staging = root._get_other_shared("old_unit")
-        staged = old_,tstaging / "foo.txt"
+        staged = old_staging / "foo.txt"
         with pytest.raises(IOError, match="read-only"):
             staged.__fspath__()
 

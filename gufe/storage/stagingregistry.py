@@ -11,6 +11,7 @@ from gufe.utils import delete_empty_dirs
 import logging
 _logger = logging.getLogger(__name__)
 
+
 def _safe_to_delete_file(
     external: ExternalStorage,
     path: PathLike

@@ -85,7 +85,6 @@ class StorageManager:
             if not self.keep_staging:
                 self.permanent_staging.cleanup()
 
-
             if not self.keep_shared:
                 # we'd like to do something like loop over
                 # self.shared_xfer - self.permanent_xfer; however,
