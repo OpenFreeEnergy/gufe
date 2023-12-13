@@ -166,7 +166,7 @@ class TestSharedStaging:
         # when we create the specific StagingPath, it registers and
         # "downloads" the file
         filepath = root / "old_unit/data.txt"
-        assert pathlib.Path(filepath.fspath) == on_filesystem
+        assert filepath.as_path() == on_filesystem
 
         assert not on_filesystem.exists()
         filepath.register()
@@ -344,7 +344,7 @@ class TestPermanentStaging:
         my_file = permanent / "foo.txt"
 
         # double check that we set things up correctly
-        assert (str(external_file_loc) != my_file.fspath) is is_safe
+        assert (str(external_file_loc) != my_file._fspath) is is_safe
 
         # test the code
         assert permanent._delete_file_safe(my_file) is is_safe

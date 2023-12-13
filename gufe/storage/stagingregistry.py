@@ -92,7 +92,7 @@ class StagingRegistry:
     def transfer_single_file_to_external(self, held_file: StagingPath):
         """Transfer a given file from staging into external storage
         """
-        path = Path(held_file.fspath)
+        path = held_file.as_path()
         if not path.exists():
             _logger.info(f"Found nonexistent path {path}, not "
                          "transfering to external storage")
@@ -117,7 +117,7 @@ class StagingRegistry:
         ]
 
     def _delete_file(self, file: StagingPath):
-        path = Path(file.fspath)
+        path = file.as_path()
         if path.exists():
             if not path.is_dir():
                 _logger.debug(f"Removing file '{file}'")
@@ -166,7 +166,7 @@ class StagingRegistry:
             the path to track
         """
         label_exists = self.external.exists(staging_path.label)
-        fspath = Path(staging_path.fspath)
+        fspath = staging_path.as_path()
 
         # TODO: what if the staging path is a directory? not sure that we
         # have a way to know that; but not sure that adding it to the
@@ -290,7 +290,7 @@ class PermanentStaging(StagingRegistry):
 
     def transfer_single_file_to_external(self, held_file: StagingPath):
         # if we can't find it locally, we load it from shared storage
-        path = Path(held_file.fspath)
+        path = held_file.as_path()
         if not path.exists():
             self._load_file_from_external(self.shared, held_file)
 
@@ -336,13 +336,17 @@ class StagingPath:
     def __hash__(self):
         return hash((self.root, self.path))
 
+    def as_path(self):
+        """Return the pathlib.Path where this is staged"""
+        return Path(self._fspath)
+
     @property
-    def fspath(self):
+    def _fspath(self):
         return str(self.root.staging_dir / self.path)
 
     def __fspath__(self):
         self.register()
-        return self.fspath
+        return self._fspath
 
     @property
     def label(self) -> str:
@@ -350,7 +354,7 @@ class StagingPath:
         return str(self.path)
 
     def __repr__(self):
-        return f"StagingPath('{self.fspath}')"
+        return f"StagingPath('{self._fspath}')"
 
     # TODO: how much of the pathlib.Path interface do we want to wrap?
     # although edge cases may be a pain, we can get most of it with, e.g.:
