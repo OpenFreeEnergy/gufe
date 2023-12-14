@@ -214,11 +214,27 @@ class ExecutionStorageDemoTest:
         else:
             assert ".staging" not in list(scratch_root.iterdir())
 
-    def assert_final_directories(self, storage_manager, dag):
-        if storage_manager.keep_empty_dirs:
-            ...
-        else:
-            ...
+    def assert_empty_directories(self, storage_manager, dag):
+        """Check the final status for empty directories."""
+        u1_label = self.u1_label(dag)
+        staging = storage_manager.scratch_root / storage_manager.staging
+
+        directories = [
+            staging / u1_label / "nested",
+            staging / u1_label / "implicit",
+        ]
+
+        # name these conditions so the logic takes less thought
+        expected_empty = (storage_manager.keep_empty_dirs
+                          and not storage_manager.keep_staging)
+        dir_exists = expected_empty or storage_manager.keep_staging
+
+        for directory in directories:
+            assert directory.exists() == dir_exists
+            if dir_exists:
+                assert directory.is_dir()
+                actual_empty = len(list(directory.iterdir())) == 0
+                assert actual_empty == expected_empty
 
     @staticmethod
     def u1_label(dag):
@@ -245,19 +261,24 @@ class ExecutionStorageDemoTest:
         )
         return storage_manager
 
+    def execute(self, storage_manager, dag, dag_label):
+        result = new_execute_DAG(dag, dag_label, storage_manager,
+                                 raise_error=True, n_retries=2)
+        return result
+
     @pytest.mark.parametrize('keep', [
         'nothing', 'scratch', 'staging', 'shared', 'scratch,staging',
         'scratch,shared', 'staging,shared', 'scratch,staging,shared',
-        'scratch,empties', 'scratch,shared,empties',
+        'scratch,empties', 'scratch,shared,empties', 'staging,empties',
     ])
     def test_execute_dag(self, demo_dag, keep, tmp_path):
         storage_manager = self.get_storage_manager(keep, tmp_path)
 
         dag_label = "dag"
-        result = new_execute_DAG(demo_dag, dag_label, storage_manager,
-                                 raise_error=True, n_retries=2)
+        result = self.execute(storage_manager, demo_dag, dag_label)
 
         self.assert_dag_result(result, demo_dag, storage_manager)
+        self.assert_empty_directories(storage_manager, demo_dag)
         self.assert_shared_and_permanent(storage_manager, demo_dag)
         self.assert_scratch(storage_manager)
         self.assert_staging(storage_manager, demo_dag)
@@ -338,6 +359,11 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
         )
         return storage_manager
 
+    def test_overlap_directories(storage_manager):
+        # test that the staging and shared/permanent backends overlap as
+        # expected
+        pytest.skip()
+
     def assert_shared_and_permanent(self, storage_manager, dag):
         shared = storage_manager.shared_root
         permanent = storage_manager.permanent_root
@@ -387,3 +413,22 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
 
         if keep_shared:
             assert (u1_staging / "shared.txt").exists()
+
+    def assert_empty_directories(self, storage_manager, dag):
+        # in this case, the staging directories should not have been cleaned
+        # (because they overlap with storage), so all should exist. They
+        # will only be empty if `keep_shared is False`
+        u1_label = self.u1_label(dag)
+        staging = storage_manager.scratch_root / storage_manager.staging
+
+        directories = [
+            staging / u1_label / "nested",
+            staging / u1_label / "implicit",
+        ]
+
+        for directory in directories:
+            assert directory.exists()
+            assert directory.is_dir()
+            expected_empty = not storage_manager.keep_shared
+            actual_empty = len(list(directory.iterdir())) == 0
+            assert actual_empty == expected_empty
