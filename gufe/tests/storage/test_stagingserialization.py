@@ -1,7 +1,7 @@
 import pytest
 from gufe.storage.stagingserialization import StagingPathSerialization
 
-from gufe.storage.stagingdirectory import StagingPath
+from gufe.storage.stagingregistry import StagingPath
 from gufe.storage.storagemanager import StorageManager
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 
@@ -92,7 +92,7 @@ class TestStagingPathSerialization:
         path = request.getfixturevalue(f"{pathtype}_path")
 
         # remove the file (remains in the MemoryStorage)
-        p = pathlib.Path(path.fspath)
+        p = path.as_path()
         assert p.exists()
         p.unlink()
         assert not p.exists()
@@ -228,13 +228,13 @@ class TestStagingPathSerialization:
         json_str2 = json.dumps(path2, cls=handler2.encoder)
 
         # delete all staged files
-        assert pathlib.Path(path1.fspath).exists()
+        assert path1.as_path().exists()
         manager1.permanent_staging.cleanup()
-        assert not pathlib.Path(path1.fspath).exists()
+        assert not path1.as_path().exists()
 
-        assert pathlib.Path(path2.fspath).exists()
+        assert path2.as_path().exists()
         manager2.permanent_staging.cleanup()
-        assert not pathlib.Path(path2.fspath).exists()
+        assert not path2.as_path().exists()
 
         # reload and check contents of both permanent files
         reloaded1 = json.loads(json_str1, cls=handler1.decoder)
@@ -242,12 +242,12 @@ class TestStagingPathSerialization:
 
         assert isinstance(reloaded1, StagingPath)
         assert reloaded1.label == path1.label
-        assert not pathlib.Path(reloaded1.fspath).exists()
+        assert not reloaded1.as_path().exists()
         with open(reloaded1, mode='r') as f:
             assert f.read() == "contents 1"
 
         assert isinstance(reloaded2, StagingPath)
         assert reloaded2.label == path2.label
-        assert not pathlib.Path(reloaded2.fspath).exists()
+        assert not reloaded2.as_path().exists()
         with open(reloaded2, mode='r') as f:
             assert f.read() == "contents 2"

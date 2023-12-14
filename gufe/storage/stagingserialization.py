@@ -1,6 +1,6 @@
 from gufe.tokenization import JSON_HANDLER
 from gufe.custom_json import JSONCodec, JSONSerializerDeserializer
-from .stagingdirectory import StagingPath
+from .stagingregistry import StagingPath
 
 
 class StagingPathSerialization:
