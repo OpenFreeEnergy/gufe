@@ -359,10 +359,26 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
         )
         return storage_manager
 
-    def test_overlap_directories(storage_manager):
+    def test_overlap_directories(self, tmp_path):
         # test that the staging and shared/permanent backends overlap as
-        # expected
-        pytest.skip()
+        # expected; basic idea is that creating a file in staging
+        # automatically creates a file in the shared/permanent external
+        # resources
+        storage_manager = self.get_storage_manager(keep="nothing",
+                                                   tmp_path=tmp_path)
+        shared = storage_manager.shared_root
+        perm = storage_manager.permanent_root
+        stage1 = storage_manager.shared_staging / "foo/file.txt"
+        assert len(storage_manager.shared_staging.registry) == 0
+        assert list(shared.iter_contents()) == []
+        assert list(perm.iter_contents()) == []
+        pathlib.Path(stage1).touch()
+        assert len(storage_manager.shared_staging.registry) == 1
+        # because iter_contents actually loops over the directory, these
+        # have effectively been automatically added to the external storage
+        # resources
+        assert list(shared.iter_contents()) == ["foo/file.txt"]
+        assert list(perm.iter_contents()) == ["foo/file.txt"]
 
     def assert_shared_and_permanent(self, storage_manager, dag):
         shared = storage_manager.shared_root
@@ -417,7 +433,9 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
     def assert_empty_directories(self, storage_manager, dag):
         # in this case, the staging directories should not have been cleaned
         # (because they overlap with storage), so all should exist. They
-        # will only be empty if `keep_shared is False`
+        # will only be empty if `keep_shared is False`. NOTE: I don't think
+        # it would be an API break here if code changed to ensure that all
+        # empty directories were cleaned out
         u1_label = self.u1_label(dag)
         staging = storage_manager.scratch_root / storage_manager.staging
 
