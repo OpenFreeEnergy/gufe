@@ -196,10 +196,10 @@ class TestStagingPathSerialization:
         assert contents == "contents here"
 
     def test_two_different_permanent_storages(self, tmp_path):
-        # I'm working with files from two different permanent storages. I
-        # need to be able to load from both in the same Python process.
-        # (NOTE: this user story is primarily to prevent us from changing to
-        # a solution based on global/class vars to set context.)
+        # USER STORY: I'm working with files from two different permanent
+        # storages. I need to be able to load from both in the same Python
+        # process.  (NOTE: this user story is primarily to prevent us from
+        # changing to a solution based on global/class vars to set context.)
         manager1 = StorageManager(
             scratch_root=tmp_path / "working1",
             shared_root=MemoryStorage(),
@@ -251,3 +251,50 @@ class TestStagingPathSerialization:
         assert not reloaded2.as_path().exists()
         with open(reloaded2, mode='r') as f:
             assert f.read() == "contents 2"
+
+    def test_change_storage_backend(self, tmp_path):
+        # USER STORY: I have generated data in one backend, and I tranferred
+        # it to another backend. It needs to be readable from the other
+        # backend. (Use case: data is in long-term cloud storage that
+        # requires credentials, but I want to share some part of that data
+        # with someone else by transferring it to a disk.)
+        cloud_manager = StorageManager(
+            scratch_root=tmp_path / "cloud",
+            shared_root=MemoryStorage(),
+            permanent_root=MemoryStorage(),
+        )
+        cloud_serialization = StagingPathSerialization(cloud_manager)
+
+        local_manager = StorageManager(
+            scratch_root=tmp_path / "local_scratch",
+            shared_root=MemoryStorage(),
+            permanent_root=FileStorage(tmp_path / "local_perm"),
+        )
+        local_serialization = StagingPathSerialization(local_manager)
+
+        # TODO: maybe add some more safety asserts in here? that each step
+        # goes as expected, to better diagnose potential failures?
+        # load data into the cloud storage
+        with cloud_manager.running_dag("dag") as dag_ctx:
+            with dag_ctx.running_unit("dag", "unit", attempt=0) as ctx:
+                cloud_path = ctx.permanent / "data.txt"
+                with open(cloud_path, mode='w') as f:
+                    f.write("will store on cloud")
+
+        # serialize the cloud_path (assume it is saved somewhere)
+        serialized = json.dumps(cloud_path, cls=cloud_serialization.encoder)
+
+        # transfer from cloud storage to the local_manager
+        for label in cloud_manager.permanent_root.iter_contents("dag/unit"):
+            with cloud_manager.permanent_root.load_stream(label) as f:
+                local_manager.permanent_root.store_bytes(label, f.read())
+
+        # ensure that we can reload objects from the local manager
+        local_path = json.loads(serialized, cls=local_serialization.decoder)
+
+        assert local_path != cloud_path
+
+        with open(local_path, mode='r') as f:
+            contents = f.read()
+
+        assert contents == "will store on cloud"
