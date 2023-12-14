@@ -25,6 +25,14 @@ class Unit1(gufe.ProtocolUnit):
         with open(share_file, mode='w') as f:
             f.write("I can be shared")
 
+        nested_file = ctx.shared / "nested" / "shared.txt"
+        with open(nested_file, mode='w') as f:
+            f.write("Nested files work as well")
+
+        implicit_nested_file = ctx.shared / "implicit/nested.txt"
+        with open(implicit_nested_file, mode='w') as f:
+            f.write("Even if the new diretory is implicit")
+
         perm_file = ctx.permanent / "permanent.txt"
         with open(perm_file, mode='w') as f:
             f.write("I'm permanent (but I can be shared)")
@@ -150,13 +158,17 @@ class ExecutionStorageDemoTest:
 
         perm_file = f"{u1_label}/permanent.txt"
         shared_file = f"{u1_label}/shared.txt"
+        nested_file = f"{u1_label}/nested/shared.txt"
+        implicit_nested_file = f"{u1_label}/implicit/nested.txt"
 
         assert list(permanent.iter_contents()) == [perm_file]
         with permanent.load_stream(perm_file) as f:
             assert f.read() == b"I'm permanent (but I can be shared)"
 
         if keep_shared:
-            assert list(shared.iter_contents()) == [shared_file, perm_file]
+            assert set(shared.iter_contents()) == {
+                shared_file, perm_file, nested_file, implicit_nested_file
+            }
             with shared.load_stream(shared_file) as f:
                 assert f.read() == b"I can be shared"
             with shared.load_stream(perm_file) as f:
@@ -197,8 +209,16 @@ class ExecutionStorageDemoTest:
         if keep_staging:
             assert (u1_staging / "shared.txt").exists()
             assert (u1_staging / "permanent.txt").exists()
+            assert (u1_staging / "nested/shared.txt").exists()
+            assert (u1_staging / "implicit/nested.txt").exists()
         else:
             assert ".staging" not in list(scratch_root.iterdir())
+
+    def assert_final_directories(self, storage_manager, dag):
+        if storage_manager.keep_empty_dirs:
+            ...
+        else:
+            ...
 
     @staticmethod
     def u1_label(dag):
@@ -270,12 +290,15 @@ class TestExecuteStorageDemoSameBackend(ExecutionStorageDemoTest):
 
         perm_file = f"{u1_label}/permanent.txt"
         shared_file = f"{u1_label}/shared.txt"
+        nested_file = f"{u1_label}/nested/shared.txt"
+        implicit_nested_file = f"{u1_label}/implicit/nested.txt"
 
         assert shared is permanent
         # we'll test everything in permanent, because shared is identical
 
         if keep_shared:
-            expected = {perm_file, shared_file}
+            expected = {perm_file, shared_file, nested_file,
+                        implicit_nested_file}
         else:
             expected = {perm_file}
 
@@ -324,6 +347,8 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
 
         perm_file = f"{u1_label}/permanent.txt"
         shared_file = f"{u1_label}/shared.txt"
+        nested_file = f"{u1_label}/nested/shared.txt"
+        implicit_nested_file = f"{u1_label}/implicit/nested.txt"
         scratch_file = f"scratch/{u1_label}/scratch.txt"
 
         assert shared is permanent
@@ -332,7 +357,8 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
         expected = {perm_file}
 
         if keep_shared:
-            expected.add(shared_file)
+            expected.update({shared_file, nested_file,
+                             implicit_nested_file})
 
         if keep_scratch:
             expected.add(scratch_file)
