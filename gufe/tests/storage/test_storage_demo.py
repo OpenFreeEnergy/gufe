@@ -5,7 +5,7 @@ import pathlib
 import gufe
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 from gufe.storage.storagemanager import StorageManager
-from gufe.storage.stagingdirectory import StagingPath
+from gufe.storage.stagingregistry import StagingPath
 from gufe.protocols.protocoldag import new_execute_DAG
 
 """
@@ -24,6 +24,14 @@ class Unit1(gufe.ProtocolUnit):
         share_file = ctx.shared / "shared.txt"
         with open(share_file, mode='w') as f:
             f.write("I can be shared")
+
+        nested_file = ctx.shared / "nested" / "shared.txt"
+        with open(nested_file, mode='w') as f:
+            f.write("Nested files work as well")
+
+        implicit_nested_file = ctx.shared / "implicit/nested.txt"
+        with open(implicit_nested_file, mode='w') as f:
+            f.write("Even if the new diretory is implicit")
 
         perm_file = ctx.permanent / "permanent.txt"
         with open(perm_file, mode='w') as f:
@@ -72,6 +80,7 @@ class StorageDemoProtocol(gufe.Protocol):
 
     def _gather(self, protocol_dag_results):
         return {}
+
 
 @pytest.fixture
 def demo_dag(solvated_ligand, solvated_complex):
@@ -149,13 +158,17 @@ class ExecutionStorageDemoTest:
 
         perm_file = f"{u1_label}/permanent.txt"
         shared_file = f"{u1_label}/shared.txt"
+        nested_file = f"{u1_label}/nested/shared.txt"
+        implicit_nested_file = f"{u1_label}/implicit/nested.txt"
 
         assert list(permanent.iter_contents()) == [perm_file]
         with permanent.load_stream(perm_file) as f:
             assert f.read() == b"I'm permanent (but I can be shared)"
 
         if keep_shared:
-            assert list(shared.iter_contents()) == [shared_file, perm_file]
+            assert set(shared.iter_contents()) == {
+                shared_file, perm_file, nested_file, implicit_nested_file
+            }
             with shared.load_stream(shared_file) as f:
                 assert f.read() == b"I can be shared"
             with shared.load_stream(perm_file) as f:
@@ -172,7 +185,7 @@ class ExecutionStorageDemoTest:
         """
         scratch = storage_manager.scratch_root
         keep_scratch = storage_manager.keep_scratch
-        del_empty_dirs = storage_manager.delete_empty_dirs
+        del_empty_dirs = not storage_manager.keep_empty_dirs
         assert scratch.is_dir()
 
         if keep_scratch:
@@ -196,8 +209,32 @@ class ExecutionStorageDemoTest:
         if keep_staging:
             assert (u1_staging / "shared.txt").exists()
             assert (u1_staging / "permanent.txt").exists()
+            assert (u1_staging / "nested/shared.txt").exists()
+            assert (u1_staging / "implicit/nested.txt").exists()
         else:
             assert ".staging" not in list(scratch_root.iterdir())
+
+    def assert_empty_directories(self, storage_manager, dag):
+        """Check the final status for empty directories."""
+        u1_label = self.u1_label(dag)
+        staging = storage_manager.scratch_root / storage_manager.staging
+
+        directories = [
+            staging / u1_label / "nested",
+            staging / u1_label / "implicit",
+        ]
+
+        # name these conditions so the logic takes less thought
+        expected_empty = (storage_manager.keep_empty_dirs
+                          and not storage_manager.keep_staging)
+        dir_exists = expected_empty or storage_manager.keep_staging
+
+        for directory in directories:
+            assert directory.exists() == dir_exists
+            if dir_exists:
+                assert directory.is_dir()
+                actual_empty = len(list(directory.iterdir())) == 0
+                assert actual_empty == expected_empty
 
     @staticmethod
     def u1_label(dag):
@@ -211,7 +248,6 @@ class ExecutionStorageDemoTest:
 
     def get_storage_manager(self, keep, tmp_path):
         keep_scr, keep_sta, keep_sha, empties = self._parse_keep(keep)
-        del_empty_dirs = not empties
         shared, permanent = self.get_shared_and_permanent()
 
         storage_manager = StorageManager(
@@ -221,23 +257,28 @@ class ExecutionStorageDemoTest:
             keep_scratch=keep_scr,
             keep_staging=keep_sta,
             keep_shared=keep_sha,
-            delete_empty_dirs=del_empty_dirs,
+            keep_empty_dirs=empties,
         )
         return storage_manager
+
+    def execute(self, storage_manager, dag, dag_label):
+        result = new_execute_DAG(dag, dag_label, storage_manager,
+                                 raise_error=True, n_retries=2)
+        return result
 
     @pytest.mark.parametrize('keep', [
         'nothing', 'scratch', 'staging', 'shared', 'scratch,staging',
         'scratch,shared', 'staging,shared', 'scratch,staging,shared',
-        'scratch,empties', 'scratch,shared,empties',
+        'scratch,empties', 'scratch,shared,empties', 'staging,empties',
     ])
     def test_execute_dag(self, demo_dag, keep, tmp_path):
         storage_manager = self.get_storage_manager(keep, tmp_path)
 
         dag_label = "dag"
-        result = new_execute_DAG(demo_dag, dag_label, storage_manager,
-                                 raise_error=True, n_retries=2)
+        result = self.execute(storage_manager, demo_dag, dag_label)
 
         self.assert_dag_result(result, demo_dag, storage_manager)
+        self.assert_empty_directories(storage_manager, demo_dag)
         self.assert_shared_and_permanent(storage_manager, demo_dag)
         self.assert_scratch(storage_manager)
         self.assert_staging(storage_manager, demo_dag)
@@ -270,12 +311,15 @@ class TestExecuteStorageDemoSameBackend(ExecutionStorageDemoTest):
 
         perm_file = f"{u1_label}/permanent.txt"
         shared_file = f"{u1_label}/shared.txt"
+        nested_file = f"{u1_label}/nested/shared.txt"
+        implicit_nested_file = f"{u1_label}/implicit/nested.txt"
 
         assert shared is permanent
         # we'll test everything in permanent, because shared is identical
 
         if keep_shared:
-            expected = {perm_file, shared_file}
+            expected = {perm_file, shared_file, nested_file,
+                        implicit_nested_file}
         else:
             expected = {perm_file}
 
@@ -302,7 +346,6 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
 
     def get_storage_manager(self, keep, tmp_path):
         keep_scr, keep_sta, keep_sha, empties = self._parse_keep(keep)
-        del_empty_dirs = not empties
         backend = FileStorage(tmp_path)
         storage_manager = StorageManager(
             scratch_root=tmp_path,
@@ -311,10 +354,31 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
             keep_scratch=keep_scr,
             keep_staging=keep_sta,
             keep_shared=keep_sha,
-            delete_empty_dirs=del_empty_dirs,
+            keep_empty_dirs=empties,
             staging="",
         )
         return storage_manager
+
+    def test_overlap_directories(self, tmp_path):
+        # test that the staging and shared/permanent backends overlap as
+        # expected; basic idea is that creating a file in staging
+        # automatically creates a file in the shared/permanent external
+        # resources
+        storage_manager = self.get_storage_manager(keep="nothing",
+                                                   tmp_path=tmp_path)
+        shared = storage_manager.shared_root
+        perm = storage_manager.permanent_root
+        stage1 = storage_manager.shared_staging / "foo/file.txt"
+        assert len(storage_manager.shared_staging.registry) == 0
+        assert list(shared.iter_contents()) == []
+        assert list(perm.iter_contents()) == []
+        pathlib.Path(stage1).touch()
+        assert len(storage_manager.shared_staging.registry) == 1
+        # because iter_contents actually loops over the directory, these
+        # have effectively been automatically added to the external storage
+        # resources
+        assert list(shared.iter_contents()) == ["foo/file.txt"]
+        assert list(perm.iter_contents()) == ["foo/file.txt"]
 
     def assert_shared_and_permanent(self, storage_manager, dag):
         shared = storage_manager.shared_root
@@ -325,6 +389,8 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
 
         perm_file = f"{u1_label}/permanent.txt"
         shared_file = f"{u1_label}/shared.txt"
+        nested_file = f"{u1_label}/nested/shared.txt"
+        implicit_nested_file = f"{u1_label}/implicit/nested.txt"
         scratch_file = f"scratch/{u1_label}/scratch.txt"
 
         assert shared is permanent
@@ -333,7 +399,8 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
         expected = {perm_file}
 
         if keep_shared:
-            expected.add(shared_file)
+            expected.update({shared_file, nested_file,
+                             implicit_nested_file})
 
         if keep_scratch:
             expected.add(scratch_file)
@@ -362,3 +429,24 @@ class TestExecuteStorageDemoStagingOverlap(TestExecuteStorageDemoSameBackend):
 
         if keep_shared:
             assert (u1_staging / "shared.txt").exists()
+
+    def assert_empty_directories(self, storage_manager, dag):
+        # in this case, the staging directories should not have been cleaned
+        # (because they overlap with storage), so all should exist. They
+        # will only be empty if `keep_shared is False`. NOTE: I don't think
+        # it would be an API break here if code changed to ensure that all
+        # empty directories were cleaned out
+        u1_label = self.u1_label(dag)
+        staging = storage_manager.scratch_root / storage_manager.staging
+
+        directories = [
+            staging / u1_label / "nested",
+            staging / u1_label / "implicit",
+        ]
+
+        for directory in directories:
+            assert directory.exists()
+            assert directory.is_dir()
+            expected_empty = not storage_manager.keep_shared
+            actual_empty = len(list(directory.iterdir())) == 0
+            assert actual_empty == expected_empty

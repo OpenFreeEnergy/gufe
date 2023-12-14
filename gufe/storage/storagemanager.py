@@ -9,8 +9,10 @@ from gufe.utils import delete_empty_dirs
 from typing import Type
 
 from .externalresource import ExternalStorage, FileStorage
-from .stagingdirectory import SharedStaging, PermanentStaging
-from .stagingdirectory import StagingPath  # typing
+from .stagingregistry import SharedStaging, PermanentStaging
+from .stagingregistry import StagingPath  # typing
+
+from gufe.protocols.protocolunit import Context
 
 
 class StorageManager:
@@ -23,8 +25,8 @@ class StorageManager:
         keep_scratch: bool = False,
         keep_staging: bool = False,
         keep_shared: bool = False,
+        keep_empty_dirs: bool = False,
         staging: PathLike = Path(".staging"),
-        delete_empty_dirs: bool = True,
     ):
         self.scratch_root = Path(scratch_root)
         self.shared_root = shared_root
@@ -33,7 +35,7 @@ class StorageManager:
         self.keep_staging = keep_staging
         self.keep_shared = keep_shared
         self.staging = staging
-        self.delete_empty_dirs = delete_empty_dirs
+        self.keep_empty_dirs = keep_empty_dirs
 
         # these are used to track what files can be deleted from shared if
         # keep_shared is False
@@ -45,16 +47,14 @@ class StorageManager:
             external=self.permanent_root,
             shared=self.shared_root,
             staging=self.staging,
-            delete_empty_dirs=delete_empty_dirs,
-            prefix=""
+            keep_empty_dirs=keep_empty_dirs,
         )
 
         self.shared_staging = SharedStaging(
             scratch=self.scratch_root,
             external=self.shared_root,
             staging=self.staging,
-            delete_empty_dirs=delete_empty_dirs,
-            prefix=""  # TODO: remove prefix
+            keep_empty_dirs=keep_empty_dirs,
         )
 
     def make_label(self, dag_label, unit_label, attempt, **kwargs):
@@ -88,14 +88,24 @@ class StorageManager:
                 self.permanent_staging.cleanup()
 
             if not self.keep_shared:
-                for file in self.shared_xfer:
+                # we'd like to do something like loop over
+                # self.shared_xfer - self.permanent_xfer; however,
+                # StagedPaths have different staging registries. This gives
+                # the set of paths we do want to delete
+                perm_xfer_paths = {p.as_path() for p in self.permanent_xfer}
+                shared_xfer_to_delete = {
+                    p for p in self.shared_xfer
+                    if p.as_path() not in perm_xfer_paths
+                }
+
+                for file in shared_xfer_to_delete:
                     self.shared_root.delete(file.label)
 
                 for file in self.permanent_xfer:
                     if self.shared_root != self.permanent_root:
                         self.shared_root.delete(file.label)
 
-            if self.delete_empty_dirs:
+            if not self.keep_empty_dirs:
                 delete_empty_dirs(self._scratch_base, delete_root=False)
 
     @contextmanager
@@ -105,8 +115,13 @@ class StorageManager:
         scratch.mkdir(parents=True, exist_ok=True)
         shared = self.shared_staging / label
         permanent = self.permanent_staging / label
+        context = Context(
+            scratch=scratch,
+            shared=shared,
+            permanent=permanent
+        )
         try:
-            yield scratch, shared, permanent
+            yield context
         finally:
             # import pdb; pdb.set_trace()
             # clean up after unit

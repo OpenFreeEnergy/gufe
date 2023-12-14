@@ -23,7 +23,7 @@ from ..tokenization import (
     GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
 )
 
-from ..storage.stagingdirectory import StagingDirectory
+from ..storage.stagingregistry import StagingRegistry
 
 
 @dataclass
@@ -33,8 +33,8 @@ class Context:
 
     """
     scratch: PathLike
-    shared: StagingDirectory
-    permanent: StagingDirectory
+    shared: StagingRegistry
+    permanent: StagingRegistry
 
 
 def _list_dependencies(inputs, cls):
