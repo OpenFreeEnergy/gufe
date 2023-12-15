@@ -298,3 +298,17 @@ class TestStagingPathSerialization:
             contents = f.read()
 
         assert contents == "will store on cloud"
+
+    def test_requires_new_codec(self, tmp_path):
+        # USER STORY: I am interfacing with a package that adds
+        # serialization types to the gufe JSON_HANDLER via an external
+        # JSONCodec. Maybe, in the worst case, the external codec gets added
+        # *after* I've created my serialization object. I need to be able to
+        # serialize those custom types. (NOTE: A better solution here is to
+        # have JSONCodecs also include some codec identifier in their
+        # `:is_custom:` field. That would allow us to dynamically add any
+        # missing codec, and only to do so when deserialization is needed.
+        # This is a change to the custom JSON stuff which hasn't been made
+        # yet. This might also allow faster deserialization by having
+        # :is_custom: map to something that can be used in a dispatch table.)
+        # TODO: implement test based on this user story
