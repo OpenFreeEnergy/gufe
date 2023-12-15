@@ -6,6 +6,11 @@ from .stagingregistry import StagingPath
 class StagingPathSerialization:
     """Class for managing serialization of a :class:`.StagingPath`.
 
+    This class is only created internally. Developers of executors will
+    interface with this indirectly through the :class:`.StorageManager`; the
+    expectation is that the only thing they will need is access to the
+    ``encoder`` and ``decoder`` properties.
+
     Serialization of a :class:`.StagingPath` needs to strip the specific
     storage context (path to external files storage) because we should able
     to change that out-of-process (e.g., move the directory containing
@@ -139,7 +144,7 @@ class StagingPathSerialization:
         }
 
     def from_dict(self, dct: dict) -> StagingPath:
-        """Recreate a StagingPath from its dict represnetation.
+        """Recreate a StagingPath from its dict representation.
 
         This undoes the process from :method:`.to_dict`. It injects the
         storage context in ``self.storage_manager`` into the deserialized
