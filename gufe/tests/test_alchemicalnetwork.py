@@ -13,8 +13,8 @@ from .test_tokenization import GufeTokenizableTestsMixin
 class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
 
     cls = AlchemicalNetwork
-    key = "AlchemicalNetwork-44993b48101debfff70e360627487a5b"
-    repr = "<AlchemicalNetwork-44993b48101debfff70e360627487a5b>"
+    key = "AlchemicalNetwork-d1035e11493ca60ff7bac5171eddfee3"
+    repr = "<AlchemicalNetwork-d1035e11493ca60ff7bac5171eddfee3>"
 
     @pytest.fixture
     def instance(self, benzene_variants_star_map):
