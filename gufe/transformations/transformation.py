@@ -23,7 +23,7 @@ class Transformation(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[list[ComponentMapping]] = None,
         name: Optional[str] = None,
     ):
 
