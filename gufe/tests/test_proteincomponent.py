@@ -14,7 +14,7 @@ from openmm.app import pdbfile
 from openmm import unit
 from numpy.testing import assert_almost_equal
 
-from .conftest import ALL_PDB_LOADERS
+from .conftest import PLB_files
 
 
 @pytest.fixture
@@ -94,11 +94,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
     def instance(self, PDB_181L_path):
         return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
 
-    # From
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_from_pdb_file(self, in_pdb_path):
-        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        p = self.cls.from_pdb_file(in_pdb_io, name="Steve")
+    def test_from_pdb_file(self, PDB_files):
+        p = self.cls.from_pdb_file(PDB_files, name="Steve")
 
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
@@ -177,21 +174,16 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             output_func=p.to_pdb_file
         )
 
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
-        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-
-        p = self.cls.from_pdb_file(in_pdb_io, name="Wuff")
-        out_file_name = "tmp_"+in_pdb_path+".pdb"
+    def test_to_pdb_round_trip(self, PDB_files, tmp_path):
+        p = self.cls.from_pdb_file(PDB_files, name="Wuff")
+        out_file_name = "tmp_foo.pdb"
         out_file = tmp_path / out_file_name
 
         p.to_pdb_file(str(out_file))
 
-        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-
         # generate openMM reference file:
-        openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
-        out_ref_file_name = "tmp_"+in_pdb_path+"_openmm_ref.pdb"
+        openmm_pdb = pdbfile.PDBFile(PDB_files)
+        out_ref_file_name = "tmp_foo_openmm_ref.pdb"
         out_ref_file = tmp_path / out_ref_file_name
 
         pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
@@ -213,16 +205,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert p == p2
 
-    # parametrize
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_to_openmm_positions(self, in_pdb_path):
-        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-
-        openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
+    def test_to_openmm_positions(self, PDB_files):
+        openmm_pdb = pdbfile.PDBFile(PDB_files)
         openmm_pos = openmm_pdb.positions
 
-        p = self.cls.from_pdb_file(in_pdb_io, name="Bob")
+        p = self.cls.from_pdb_file(PDB_files, name="Bob")
         gufe_openmm_pos = p.to_openmm_positions()
 
         v1 = gufe_openmm_pos.value_in_unit(unit.nanometer)
@@ -230,16 +217,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
-    # parametrize
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
-    def test_to_openmm_topology(self, in_pdb_path):
-        in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-        ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-
-        openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
+    def test_to_openmm_topology(self, PDB_files):
+        openmm_pdb = pdbfile.PDBFile(PDB_files)
         openmm_top = openmm_pdb.topology
 
-        p = self.cls.from_pdb_file(in_pdb_io, name="Bob")
+        p = self.cls.from_pdb_file(PDB_files, name="Bob")
         gufe_openmm_top = p.to_openmm_topology()
         assert_topology_equal(openmm_top, gufe_openmm_top)
 
@@ -290,7 +272,9 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert m1.total_charge == 7
 
     def test_protein_total_charge_thromb(self):
-        m1 = self.cls.from_pdb_file(ALL_PDB_LOADERS["thrombin_protein"]())
+        f = PLB_files.fetch('thrombin/01_protein/crd/protein.pdb')
+
+        m1 = self.cls.from_pdb_file(f)
 
         assert m1.total_charge == 6
 
