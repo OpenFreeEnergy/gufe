@@ -5,6 +5,9 @@ from gufe.storage.stagingregistry import StagingPath
 from gufe.storage.storagemanager import StorageManager
 from gufe.storage.externalresource import MemoryStorage, FileStorage
 
+from gufe.tokenization import GufeTokenizable, from_dict
+from gufe.custom_json import JSONCodec
+
 import json
 import pathlib
 import shutil
@@ -51,6 +54,15 @@ def scratch_path(storage_manager):
 @pytest.fixture
 def serialization_handler(storage_manager):
     return StagingPathSerialization(storage_manager)
+
+
+class NewType:
+    # used in new codec test (putting as a nested class required fancier
+    # serialization approaches, easier to put it at module level)
+    # class where any instance is equivalent (carries no data)
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+
 
 
 class TestStagingPathSerialization:
@@ -311,4 +323,44 @@ class TestStagingPathSerialization:
         # This is a change to the custom JSON stuff which hasn't been made
         # yet. This might also allow faster deserialization by having
         # :is_custom: map to something that can be used in a dispatch table.)
-        # TODO: implement test based on this user story
+        manager = StorageManager(
+            scratch_root=tmp_path / "working",
+            shared_root=MemoryStorage(),
+            permanent_root=MemoryStorage(),
+        )
+        serialization = StagingPathSerialization(manager)
+
+        # add a new custom codec for serialization
+        new_type_codec = JSONCodec(
+            cls=NewType,
+            to_dict=lambda obj: {},
+            from_dict=lambda dct: NewType(),
+        )
+
+        # Create a dict to serialize; this represents the output dict that
+        # might come from a unit_result object. NB: including the file stuff
+        # here is actually extraneous (unless implementation changes
+        # significantly).
+        with manager.running_dag("dag") as dag_ctx:
+            with manager.running_unit("dag", "unit", attempt=0) as context:
+                file = context.permanent / "dag/unit/file.txt"
+                with open(file, mode='w') as f:
+                    f.write("contents")
+
+        output_dict = {
+            'new_type_result': NewType(),
+            'file_result': file,
+        }
+
+        # before codec registration, error as not JSON serializable
+        with pytest.raises(TypeError, match="not JSON serializable"):
+            _ = json.dumps(output_dict, cls=serialization.encoder)
+
+        # register codec and it works
+        from gufe.tokenization import JSON_HANDLER
+        JSON_HANDLER.add_codec(new_type_codec)
+        dumped = json.dumps(output_dict, cls=serialization.encoder)
+
+        reloaded = json.loads(dumped, cls=serialization.decoder)
+
+        assert reloaded == output_dict
