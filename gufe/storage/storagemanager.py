@@ -10,6 +10,7 @@ from typing import Type
 
 from .externalresource import ExternalStorage, FileStorage
 from .stagingregistry import SharedStaging, PermanentStaging
+from .stagingserialization import StagingPathSerialization
 from .stagingregistry import StagingPath  # typing
 
 from gufe.protocols.protocolunit import Context
@@ -56,6 +57,16 @@ class StorageManager:
             staging=self.staging,
             keep_empty_dirs=keep_empty_dirs,
         )
+
+        self._serialization = StagingPathSerialization(self)
+
+    @property
+    def json_encoder(self):
+        return self._serialization.encoder
+
+    @property
+    def json_decoder(self):
+        return self._serialization.decoder
 
     def make_label(self, dag_label, unit_label, attempt, **kwargs):
         """

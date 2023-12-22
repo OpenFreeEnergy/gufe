@@ -157,7 +157,6 @@ class TestStagingPathSerialization:
             shared_root=FileStorage("old/shared"),
             permanent_root=FileStorage("old/permanent")
         )
-        old_handler = StagingPathSerialization(old_manager)
         old_path = old_manager.permanent_staging / "dag/unit/result.txt"
         with open(old_path, mode='w') as f:
             f.write("contents here")
@@ -167,7 +166,7 @@ class TestStagingPathSerialization:
         assert perm_p.exists()
 
         # serialize the path object
-        json_str = json.dumps(old_path, cls=old_handler.encoder)
+        json_str = json.dumps(old_path, cls=old_manager.json_encoder)
 
         # move the storage subdirectory; create a new, associated storage
         # manager/serialization handler
@@ -192,10 +191,8 @@ class TestStagingPathSerialization:
             raise RuntimeWarning(f"Bad test parameter '{move}': should be "
                                  "'relative' or 'absolute'")
 
-        new_handler = StagingPathSerialization(new_manager)
-
         # deserialize the path using the new serialization handler
-        reloaded = json.loads(json_str, cls=new_handler.decoder)
+        reloaded = json.loads(json_str, cls=new_manager.json_decoder)
 
         # ensure that the path exists and that the data can be reloaded
         assert isinstance(reloaded, StagingPath)
@@ -222,8 +219,6 @@ class TestStagingPathSerialization:
             shared_root=MemoryStorage(),
             permanent_root=MemoryStorage(),
         )
-        handler1 = StagingPathSerialization(manager1)
-        handler2 = StagingPathSerialization(manager2)
 
         path1 = manager1.permanent_staging / "file1.txt"
         with open(path1, mode='w') as f:
@@ -236,8 +231,8 @@ class TestStagingPathSerialization:
         manager2.permanent_staging.transfer_staging_to_external()
 
         # serialize the paths
-        json_str1 = json.dumps(path1, cls=handler1.encoder)
-        json_str2 = json.dumps(path2, cls=handler2.encoder)
+        json_str1 = json.dumps(path1, cls=manager1.json_encoder)
+        json_str2 = json.dumps(path2, cls=manager2.json_encoder)
 
         # delete all staged files
         assert path1.as_path().exists()
@@ -249,8 +244,8 @@ class TestStagingPathSerialization:
         assert not path2.as_path().exists()
 
         # reload and check contents of both permanent files
-        reloaded1 = json.loads(json_str1, cls=handler1.decoder)
-        reloaded2 = json.loads(json_str2, cls=handler2.decoder)
+        reloaded1 = json.loads(json_str1, cls=manager1.json_decoder)
+        reloaded2 = json.loads(json_str2, cls=manager2.json_decoder)
 
         assert isinstance(reloaded1, StagingPath)
         assert reloaded1.label == path1.label
@@ -275,14 +270,12 @@ class TestStagingPathSerialization:
             shared_root=MemoryStorage(),
             permanent_root=MemoryStorage(),
         )
-        cloud_serialization = StagingPathSerialization(cloud_manager)
 
         local_manager = StorageManager(
             scratch_root=tmp_path / "local_scratch",
             shared_root=MemoryStorage(),
             permanent_root=FileStorage(tmp_path / "local_perm"),
         )
-        local_serialization = StagingPathSerialization(local_manager)
 
         # TODO: maybe add some more safety asserts in here? that each step
         # goes as expected, to better diagnose potential failures?
@@ -294,7 +287,7 @@ class TestStagingPathSerialization:
                     f.write("will store on cloud")
 
         # serialize the cloud_path (assume it is saved somewhere)
-        serialized = json.dumps(cloud_path, cls=cloud_serialization.encoder)
+        serialized = json.dumps(cloud_path, cls=cloud_manager.json_encoder)
 
         # transfer from cloud storage to the local_manager
         for label in cloud_manager.permanent_root.iter_contents("dag/unit"):
@@ -302,7 +295,7 @@ class TestStagingPathSerialization:
                 local_manager.permanent_root.store_bytes(label, f.read())
 
         # ensure that we can reload objects from the local manager
-        local_path = json.loads(serialized, cls=local_serialization.decoder)
+        local_path = json.loads(serialized, cls=local_manager.json_decoder)
 
         assert local_path != cloud_path
 
@@ -328,7 +321,6 @@ class TestStagingPathSerialization:
             shared_root=MemoryStorage(),
             permanent_root=MemoryStorage(),
         )
-        serialization = StagingPathSerialization(manager)
 
         # add a new custom codec for serialization
         new_type_codec = JSONCodec(
@@ -354,13 +346,13 @@ class TestStagingPathSerialization:
 
         # before codec registration, error as not JSON serializable
         with pytest.raises(TypeError, match="not JSON serializable"):
-            _ = json.dumps(output_dict, cls=serialization.encoder)
+            _ = json.dumps(output_dict, cls=manager.json_encoder)
 
         # register codec and it works
         from gufe.tokenization import JSON_HANDLER
         JSON_HANDLER.add_codec(new_type_codec)
-        dumped = json.dumps(output_dict, cls=serialization.encoder)
+        dumped = json.dumps(output_dict, cls=manager.json_encoder)
 
-        reloaded = json.loads(dumped, cls=serialization.decoder)
+        reloaded = json.loads(dumped, cls=manager.json_decoder)
 
         assert reloaded == output_dict
