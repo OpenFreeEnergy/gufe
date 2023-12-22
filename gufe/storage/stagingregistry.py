@@ -32,7 +32,7 @@ def _safe_to_delete_file(
 
 
 class StagingRegistry:
-    """PathLike local representation of an :class:`.ExternalStorage`.
+    """Local representation of an :class:`.ExternalStorage`.
 
     This connects objects on a local filesystem to the key-value store of a
     (possibly remote) :class:`.ExternalStorage`. It presents a FileLike
@@ -201,9 +201,6 @@ class StagingRegistry:
 
     def __truediv__(self, path: Union[PathLike, str]):
         return StagingPath(root=self, path=path)
-
-    def __fspath__(self):
-        return str(self.staging_dir)
 
     def __repr__(self):
         return (

@@ -42,7 +42,7 @@ def read_only_with_overwritten(root_with_contents):
         delete_staging=root_with_contents.delete_staging,
         read_only=True
     )
-    filename = pathlib.Path(read_only) / "old_unit/data.txt"
+    filename = (read_only / "old_unit/data.txt").as_path()
     assert not filename.exists()
     staged = read_only / "old_unit/data.txt"
     assert not filename.exists()
@@ -139,6 +139,12 @@ class TestSharedStaging:
         r = repr(root)
         assert r.startswith("SharedStaging")
         assert "MemoryStorage" in r
+
+    def test_fspath_fail(self, root):
+        # ensure that we get an error on os.path.join (or really, anything
+        # that hits os.fspath)
+        with pytest.raises(TypeError):
+            os.path.join(root, "filename.txt")
 
     @pytest.mark.parametrize('pathlist', [
         ['file.txt'], ['dir', 'file.txt']
@@ -266,8 +272,7 @@ class TestSharedStaging:
 
     def test_cleanup(self, root_with_contents):
         root_with_contents.delete_staging = True  # slightly naughty
-        root_path = pathlib.Path(root_with_contents.__fspath__())
-        path = root_path / "new_unit/data.txt"
+        path = (root_with_contents / "new_unit/data.txt").as_path()
         assert path.exists()
         root_with_contents.cleanup()
         assert not path.exists()
@@ -303,7 +308,7 @@ class TestSharedStaging:
         assert "During staging cleanup, the directory" in caplog.text
 
     def test_register_cleanup_preexisting_file(self, root):
-        filename = pathlib.Path(root.__fspath__()) / "new_unit/foo.txt"
+        filename = (root / "new_unit/foo.txt").as_path()
         filename.parent.mkdir(parents=True, exist_ok=True)
         filename.touch()
         root.external.store_bytes("new_unit/foo.txt", b"")
@@ -350,7 +355,7 @@ class TestPermanentStaging:
         assert permanent._delete_file_safe(my_file) is is_safe
 
     def test_load_missing_for_transfer(self, permanent):
-        fname = pathlib.Path(permanent) / "old_unit/data.txt"
+        fname = (permanent / "old_unit/data.txt").as_path()
         assert not fname.exists()
         staging = permanent / "old_unit/data.txt"
         staging.__fspath__()
