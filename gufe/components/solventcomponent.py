@@ -13,7 +13,7 @@ _ANIONS = {'Cl', 'Br', 'F', 'I'}
 _ALLOWED_BOX_TYPES = {'cube', 'dodecahedron', 'octahedron'}
 
 
-def _box_vectors_are_in_reduced_form(box_vectors: Quantity) -> bool:
+def _box_vectors_are_in_reduced_form(box_vectors: unit.Quantity) -> bool:
     """
     Return ``True`` if the box is in OpenMM reduced form; ``False`` otherwise.
 
