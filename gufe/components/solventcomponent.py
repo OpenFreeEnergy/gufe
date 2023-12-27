@@ -78,7 +78,7 @@ class SolventComponent(Component):
         box_vectors : openff.units.unit.Quantity, optional
           Vectors defining the solvent box. Cannot be defined alongside
           `box_shape`. Cannot be defined alongside both `num_solvent` and
-          `solvent_density`. Default `None
+          `solvent_density`. Default `None`
 
         Raises
         ------
