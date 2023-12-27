@@ -9,6 +9,7 @@ from .component import Component
 
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
+_ALLOWED_BOX_TYPES = {'cube', 'dodecahedron', 'octahedron'}
 
 
 # really wanted to make this a dataclass but then can't sort & strip ion input
@@ -164,7 +165,7 @@ class SolventComponent(Component):
                 raise ValueError(errmsg)
 
             if solvent_padding.m < 0:
-                errmsg = ("solvent padding must be positive, "
+                errmsg = ("solvent_padding must be positive, "
                           f"got: {solvent_padding}")
                 raise ValueError(errmsg)
 
@@ -175,7 +176,7 @@ class SolventComponent(Component):
             if (not isinstance(solvent_density, unit.Quantity) or
                 not solvent_density.is_compatible_with(unit.gram / unit.milliliter)):
                 errmsg = ("solvent_density must be given in units compatible "
-                          f"g/mL, got: {solvent_density}")
+                          f"with g/mL, got: {solvent_density}")
                 raise ValueError(errmsg)
 
             if solvent_density.m < 0:
@@ -187,8 +188,10 @@ class SolventComponent(Component):
 
         # Validate box shape
         if box_shape is not None:
-            if box_shape.lower() not in ['cube', 'dodecahedron', 'octahedron']:
-                raise ValueError(f"Unknown box_shape passed, got: {box_shape}")
+            if box_shape.lower() not in _ALLOWED_BOX_TYPES:
+                errmsg = (f"Unknown box_shape passed, got: {box_shape}, "
+                          f"must be one of {', '.join(_ALLOWED_BOX_TYPES)}")
+                raise ValueError(errmsg)
 
         self._box_shape = box_shape
 

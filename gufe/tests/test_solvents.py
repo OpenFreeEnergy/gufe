@@ -1,5 +1,5 @@
 import pytest
-
+import numpy as np
 from gufe import SolventComponent
 from openff.units import unit
 
@@ -57,7 +57,8 @@ def test_conc():
                           1.5 * unit.kg,  # probably a tad much salt
                           -0.1 * unit.molar])  # negative conc
 def test_bad_conc(conc):
-    with pytest.raises(ValueError):
+    errmsg = "ion_concentration must be"
+    with pytest.raises(ValueError, match=errmsg):
         _ = SolventComponent(positive_ion='Na', negative_ion='Cl',
                              ion_concentration=conc)
 
@@ -74,8 +75,89 @@ def test_solvent_charge():
     ('F', 'I'),
 ])
 def test_bad_inputs(pos, neg):
-    with pytest.raises(ValueError):
+    errmsg = "Invalid"
+    with pytest.raises(ValueError, match=errmsg):
         _ = SolventComponent(positive_ion=pos, negative_ion=neg)
+
+
+@pytest.mark.parametrize('nsolv', [0, -42])
+def test_negative_num_solvent(nsolv):
+    errmsg = "num_solvent must be greater than zero"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(num_solvent=nsolv)
+
+
+@pytest.mark.parametrize('box_vectors,solvent_padding', [
+    [None, 1.2*unit.nanometer],
+    [20 * np.identity(3) * unit.angstrom, None],
+])
+def test_defined_solvent_with_defined_box_error(box_vectors, solvent_padding):
+    errmsg = "Cannot define the number of solvent molecules"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            num_solvent=42,
+            solvent_density=850*unit.kilogram/unit.meter**3,
+            solvent_padding=solvent_padding,
+            box_vectors=box_vectors,
+        )
+
+
+def test_solvent_padding_box_vectors_error():
+    errmsg = "cannot be defined alongside box_vectors"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_padding=1.2*unit.nanometer,
+            box_vectors=20*np.identity(3)*unit.angstrom,
+        )
+
+
+def test_solvent_padding_not_distance_error():
+    errmsg = "solvent_padding must be given in units of"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_padding=1.2*unit.molar,
+        )
+
+
+def test_negative_solvent_padding_error():
+    errmsg = "solvent_padding must be positive"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_padding=-1*unit.nanometer
+        )
+
+
+def test_incompatible_density_error():
+    errmsg = "solvent_density must be given in units compatible with g/mL"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_density=1*unit.nanometer
+        )
+
+
+def test_negative_density_error():
+    errmsg = "solvent_density cannot be negative"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_density=-850*unit.kilogram/unit.meter**3,
+        )
+
+
+def test_unknown_box_type_error():
+    errmsg = "Unknown box_shape passed"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            box_shape='rhombic'
+        )
+
+
+def test_no_units_box_vectors():
+    errmsg = "box_vector must be defined as a unit.Quantity"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_padding=None,
+            box_vectors=20 * np.identity(3),
+        )
 
 
 class TestSolventComponent(GufeTokenizableTestsMixin):
