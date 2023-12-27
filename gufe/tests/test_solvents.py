@@ -29,18 +29,49 @@ def test_hash(pos, neg):
     assert s2.negative_ion == 'Cl-'
 
 
-def test_neq():
-    s1 = SolventComponent(positive_ion='Na', negative_ion='Cl')
-    s2 = SolventComponent(positive_ion='K', negative_ion='Cl')
+@pytest.mark.parametrize('args1, args2', [
+    [{'positive_ion': 'Na', 'negative_ion': 'Cl'},
+     {'positive_ion': 'K', 'negative_ion': 'Cl'}],
+    [{'num_solvent': 2}, {'num_solvent': 4}],
+    [{'solvent_padding': 1.2*unit.nanometer},
+     {'solvent_padding': 2.0*unit.nanometer}],
+    [{'solvent_density': 850*unit.kilogram/unit.meter**3},
+     {'solvent_density': 750*unit.kilogram/unit.meter**3}],
+    [{'box_shape': 'cube'}, {'box_shape': 'dodecahedron'}],
+    [{'solvent_padding': None,
+      'box_vectors': 20 * np.identity(3) * unit.angstrom},
+     {'solvent_padding': None,
+      'box_vectors': 10 * np.identity(3) * unit.angstrom}],
+])
+def test_neq(args1, args2):
+    s1 = SolventComponent(**args1)
+    s2 = SolventComponent(**args2)
 
     assert s1 != s2
 
 
-@pytest.mark.parametrize('conc', [0.0 * unit.molar, 1.75 * unit.molar])
-def test_from_dict(conc):
-    s1 = SolventComponent(positive_ion='Na', negative_ion='Cl',
-                          ion_concentration=conc,
-                          neutralize=False)
+@pytest.mark.parametrize('args', [
+    {'positive_ion': 'Na',
+     'negative_ion': 'Cl',
+     'ion_concentration': 0.0 * unit.molar,
+     'neutralize': False,
+     'num_solvent': 20,
+     'solvent_padding': 1.5 * unit.nanometer,
+     'solvent_density': None,
+     'box_shape': 'dodecahedron',
+     'box_vectors': None},
+    {'positive_ion': 'Na',
+     'negative_ion': 'Cl',
+     'ion_concentration': 1.75 * unit.molar,
+     'neutralize': False,
+     'num_solvent': None,
+     'solvent_padding': None,
+     'solvent_density': 850 * unit.kilogram / unit.meter**3,
+     'box_shape': 'cube',
+     'box_vectors': 20 * np.identity(3) * unit.nanometer},
+])
+def test_from_dict(args):
+    s1 = SolventComponent(**args)
 
     assert SolventComponent.from_dict(s1.to_dict()) == s1
 
@@ -152,11 +183,28 @@ def test_unknown_box_type_error():
 
 
 def test_no_units_box_vectors():
-    errmsg = "box_vector must be defined as a unit.Quantity"
+    errmsg = "box_vectors must be defined as a unit.Quantity"
     with pytest.raises(ValueError, match=errmsg):
         _ = SolventComponent(
             solvent_padding=None,
-            box_vectors=20 * np.identity(3),
+            box_vectors=20*np.identity(3),
+        )
+
+
+@pytest.mark.parametrize('box_vectors', [
+    20 * np.identity(2) * unit.angstrom,
+    np.asarray([
+        [0.5, 0.5, np.sqrt(2.0) / 2.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0],
+    ]) * unit.angstrom,
+])
+def test_box_vectors_not_reduced_form_error(box_vectors):
+    errmsg = "box_vectors are not in reduced form"
+    with pytest.raises(ValueError, match=errmsg):
+        _ = SolventComponent(
+            solvent_padding=None,
+            box_vectors=box_vectors,
         )
 
 

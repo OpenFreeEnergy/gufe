@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
+import numpy as np
 from openff.units import unit
 from typing import Optional, Tuple, Literal
 
@@ -10,6 +11,38 @@ from .component import Component
 _CATIONS = {'Cs', 'K', 'Li', 'Na', 'Rb'}
 _ANIONS = {'Cl', 'Br', 'F', 'I'}
 _ALLOWED_BOX_TYPES = {'cube', 'dodecahedron', 'octahedron'}
+
+
+def _box_vectors_are_in_reduced_form(box_vectors: Quantity) -> bool:
+    """
+    Return ``True`` if the box is in OpenMM reduced form; ``False`` otherwise.
+
+    These conditions are shared by OpenMM and GROMACS and greatly simplify
+    working with triclinic boxes. Any periodic system can be represented in this
+    form by rotating the system and lattice reduction.
+    See http://docs.openmm.org/latest/userguide/theory/05_other_features.html#periodic-boundary-conditions
+
+    Acknowledgement
+    ---------------
+    Taken from openff.interchange's openff.interchange.components._packmol
+    """
+    if box_vectors.shape != (3, 3):
+        return False
+
+    a, b, c = box_vectors.m
+    ax, ay, az = a
+    bx, by, bz = b
+    cx, cy, cz = c
+    return (
+        [ay, az] == [0, 0]
+        and bz == 0
+        and ax > 0
+        and by > 0
+        and cz > 0
+        and ax >= 2 * np.abs(bx)
+        and ax >= 2 * np.abs(cx)
+        and by >= 2 * np.abs(cy)
+    )
 
 
 # really wanted to make this a dataclass but then can't sort & strip ion input
@@ -76,8 +109,11 @@ class SolventComponent(Component):
           'cube', 'dodecahedron', and 'octahedron'. Cannot be defined alongside
           `box_vectors`. Default 'cube'
         box_vectors : openff.units.unit.Quantity, optional
-          Vectors defining the solvent box. Cannot be defined alongside
-          `box_shape`. Cannot be defined alongside both `num_solvent` and
+          Vectors defining the solvent box. Box vectors must be provided in
+          `OpenMM reduced form <http://docs.openmm.org/latest/userguide/theory/05_other_features.html#periodic-boundary-conditions>`_
+          as a unit.Quantity array of shape (3, 3).
+          Cannot be defined alongside `box_shape`.
+          Cannot be defined alongside both `num_solvent` and
           `solvent_density`. Default `None`
 
         Raises
@@ -198,7 +234,12 @@ class SolventComponent(Component):
         # Validate box vectors
         if box_vectors is not None:
             if not isinstance(box_vectors, unit.Quantity):
-                errmsg = ("box_vector must be defined as a unit.Quantity, "
+                errmsg = ("box_vectors must be defined as a unit.Quantity, "
+                          f"got: {box_vectors}")
+                raise ValueError(errmsg)
+
+            if not _box_vectors_are_in_reduced_form(box_vectors):
+                errmsg = ("box_vectors are not in reduced form, "
                           f"got: {box_vectors}")
                 raise ValueError(errmsg)
 
