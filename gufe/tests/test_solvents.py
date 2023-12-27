@@ -82,7 +82,7 @@ class TestSolventComponent(GufeTokenizableTestsMixin):
 
     cls = SolventComponent
     key = "SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f"
-    repr = "SolventComponent(name=O, Na+, Cl-)"
+    repr = "SolventComponent(name=O, Na+, Cl-, None, 0.15 molar, 1.2 nanometer, 1.2 nanometer, cube, None)"
 
     @pytest.fixture
     def instance(self):
