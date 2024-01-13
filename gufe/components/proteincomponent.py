@@ -51,7 +51,7 @@ _CHIRALITY_STR_TO_RDKIT = {
 }
 
 
-negative_ions = ["F", "CL", "Br", "I"]
+negative_ions = ["F", "CL", "BR", "I"]
 positive_ions = ["NA", "MG", "CA", "ZN"]
 
 
