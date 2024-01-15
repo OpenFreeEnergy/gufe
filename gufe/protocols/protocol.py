@@ -171,7 +171,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Union[dict[str, ComponentMapping], None],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], None]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
         transformation_key: Optional[GufeKey] = None
@@ -193,9 +193,9 @@ class Protocol(GufeTokenizable):
             The starting `ChemicalSystem` for the transformation.
         stateB : ChemicalSystem
             The ending `ChemicalSystem` for the transformation.
-        mapping : Optional[dict[str, ComponentMapping]]
+        mapping : Optional[ComponentMapping | list[ComponentMapping]]
             Mappings of e.g. atoms between a labelled component in the
-             stateA and stateB `ChemicalSystem` .
+            stateA and stateB `ChemicalSystem` .
         extends : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for
