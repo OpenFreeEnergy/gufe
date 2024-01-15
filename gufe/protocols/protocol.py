@@ -135,15 +135,16 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
-        This method should take two `ChemicalSystem`s, and optionally a
-        dict mapping string to ``ComponentMapping``, and prepare a collection of ``ProtocolUnit`` instances
-        that when executed in order give sufficient information to estimate the
-        free energy difference between those two `ChemicalSystem`s.
+        This method should take two `ChemicalSystem`s, and optionally one or
+        more ``ComponentMapping`` objects, and prepare a collection of
+        ``ProtocolUnit`` instances that when executed in order give sufficient
+        information to estimate the free energy difference between those two
+        `ChemicalSystem`s.
 
         This method should return a list of `ProtocolUnit` instances.
         For an instance in which another `ProtocolUnit` is given as a parameter
