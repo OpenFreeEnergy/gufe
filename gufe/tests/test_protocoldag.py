@@ -69,7 +69,7 @@ def writefile_dag():
 
     p = WriterProtocol(settings=WriterProtocol.default_settings())
 
-    return p.create(stateA=s1, stateB=s2, mapping={})
+    return p.create(stateA=s1, stateB=s2, mapping=[])
 
 
 @pytest.mark.parametrize('keep_shared', [False, True])

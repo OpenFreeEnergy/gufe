@@ -20,7 +20,7 @@ class Transformation(GufeTokenizable):
     _stateA: ChemicalSystem
     _stateB: ChemicalSystem
     _name: Optional[str]
-    _mapping: Optional[list[ComponentMapping]]
+    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
     _protocol: Protocol
 
     def __init__(
@@ -31,11 +31,8 @@ class Transformation(GufeTokenizable):
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
         name: Optional[str] = None,
     ):
-
         self._stateA = stateA
         self._stateB = stateB
-        if isinstance(mapping, ComponentMapping):
-            mapping = [mapping]
         self._mapping = mapping
         self._name = name
 
@@ -71,7 +68,7 @@ class Transformation(GufeTokenizable):
         return self._protocol
 
     @property
-    def mapping(self) -> Optional[list[ComponentMapping]]:
+    def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
         """The mappings relevant for this Transformation"""
         return self._mapping
 
