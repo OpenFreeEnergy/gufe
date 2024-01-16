@@ -112,7 +112,7 @@ class DummyProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        mapping: list[ComponentMapping],
         extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
@@ -172,7 +172,7 @@ class BrokenProtocol(DummyProtocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        mapping: list[ComponentMapping],
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
 
@@ -513,7 +513,7 @@ class NoDepsProtocol(Protocol):
             self,
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
-            mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+            mapping: list[ComponentMapping],
             extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings,

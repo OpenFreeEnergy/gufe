@@ -135,13 +135,13 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        mapping: list[ComponentMapping],
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
-        This method should take two `ChemicalSystem`s, and optionally one or
-        more ``ComponentMapping`` objects, and prepare a collection of
+        This method should take two `ChemicalSystem`s, and zero or more
+        ``ComponentMapping`` objects, and prepare a collection of
         ``ProtocolUnit`` instances that when executed in order give sufficient
         information to estimate the free energy difference between those two
         `ChemicalSystem`s.
@@ -215,6 +215,14 @@ class Protocol(GufeTokenizable):
             A directed, acyclic graph that can be executed by a `Scheduler`.
 
         """
+        # coerce mapping argument into list for _create signature
+        # top level "create" allows more intuitive input
+        # internal "_create" provides guaranteed type
+        if mapping is None:
+            mapping = []
+        elif isinstance(mapping, ComponentMapping):
+            mapping = [mapping]
+
         return ProtocolDAG(
             name=name,
             protocol_units=self._create(
