@@ -264,3 +264,16 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m.UpdatePropertyCache()
 
         return cls(rdkit=m)
+
+    def copy_with_replacements(self, **replacements):
+        # this implementation first makes a copy with the name replaced
+        # only, then does any other replacements that are necessary
+        if 'name' in self.replacements:
+            name = replacements.pop('name')
+            dct = self._to_dict()
+            dct['molprops']['Name'] = name
+            obj = self._from_dict(dct)
+        else:
+            obj = self
+
+        return super(SmallMoleculeComponent, obj).copy_with_replacements(**replacements)
