@@ -520,7 +520,7 @@ def new_execute_DAG(  # TODO: this is a terrible name
                 with dag_ctx.running_unit(
                     dag_label, unit.key, attempt=attempt
                 ) as context:
-                    _logger.info("Starting unit {label}")
+                    _logger.info(f"Starting unit {label}")
                     _logger.info(context)
                     result = unit.execute(
                             context=context,
