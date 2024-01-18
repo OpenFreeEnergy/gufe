@@ -185,6 +185,45 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane is not copy
         assert named_ethane.smiles == copy.smiles
 
+    @pytest.mark.parametrize('replacements', (
+        ['name'],
+        ['mol'],
+        ['name', 'mol'],
+    ))
+    def test_copy_with_replacements(self, named_ethane, replacements):
+        default_atoms = [
+                (6, 0, 0, False, 0, 0, {'origNoImplicit': False}),
+                (6, 0, 0, False, 0, 0, {'origNoImplicit': False}),
+                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
+                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
+                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
+                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
+                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
+                (1, 0, 0, False, 0, 0, {'isImplicit': 1})
+        ]
+        repl = {}
+        if 'name' in replacements:
+            repl['name'] = "foo"
+
+        if 'mol' in replacements:
+            rdmol = Chem.AddHs(Chem.MolFromSmiles("CO"))
+            Chem.AllChem.Compute2DCoords(rdmol)
+            mol = SmallMoleculeComponent.from_rdkit(rdmol)
+            dct = mol._to_dict()
+            for item in ['atoms', 'bonds', 'conformer']:
+                repl[item] = dct[item]
+
+        new = named_ethane.copy_with_replacements(**repl)
+        if 'name' in replacements:
+            assert new.name == "foo"
+        else:
+            assert new.name == "ethane"
+
+        if 'mol' in replacements:
+            assert new.smiles == "CO"
+        else:
+            assert new.smiles == "CC"
+
 
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
