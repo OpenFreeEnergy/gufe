@@ -185,41 +185,35 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane is not copy
         assert named_ethane.smiles == copy.smiles
 
-    @pytest.mark.parametrize('replacements', (
+    @pytest.mark.parametrize('replace', (
         ['name'],
         ['mol'],
         ['name', 'mol'],
     ))
-    def test_copy_with_replacements(self, named_ethane, replacements):
-        default_atoms = [
-                (6, 0, 0, False, 0, 0, {'origNoImplicit': False}),
-                (6, 0, 0, False, 0, 0, {'origNoImplicit': False}),
-                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
-                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
-                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
-                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
-                (1, 0, 0, False, 0, 0, {'isImplicit': 1}),
-                (1, 0, 0, False, 0, 0, {'isImplicit': 1})
-        ]
-        repl = {}
-        if 'name' in replacements:
-            repl['name'] = "foo"
+    def test_copy_with_replacements(self, named_ethane, replace):
+        replacements = {}
+        if 'name' in replace:
+            replacements['name'] = "foo"
 
-        if 'mol' in replacements:
+        if 'mol' in replace:
+            # it is a little weird to use copy_with_replacements to replace
+            # the whole molecule (possibly keeping the same name), but it
+            # should work if someone does! (could more easily imagine only
+            # using a new conformer)
             rdmol = Chem.AddHs(Chem.MolFromSmiles("CO"))
             Chem.AllChem.Compute2DCoords(rdmol)
             mol = SmallMoleculeComponent.from_rdkit(rdmol)
             dct = mol._to_dict()
             for item in ['atoms', 'bonds', 'conformer']:
-                repl[item] = dct[item]
+                replacements[item] = dct[item]
 
-        new = named_ethane.copy_with_replacements(**repl)
-        if 'name' in replacements:
+        new = named_ethane.copy_with_replacements(**replacements)
+        if 'name' in replace:
             assert new.name == "foo"
         else:
             assert new.name == "ethane"
 
-        if 'mol' in replacements:
+        if 'mol' in replace:
             assert new.smiles == "CO"
         else:
             assert new.smiles == "CC"
