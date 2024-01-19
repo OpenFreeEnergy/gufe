@@ -135,13 +135,13 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: list[ComponentMapping],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
-        This method should take two `ChemicalSystem`s, and zero or more
-        ``ComponentMapping`` objects, and prepare a collection of
+        This method should take two `ChemicalSystem`s, and optionally one or
+         more ``ComponentMapping`` objects, and prepare a collection of
         ``ProtocolUnit`` instances that when executed in order give sufficient
         information to estimate the free energy difference between those two
         `ChemicalSystem`s.
@@ -193,7 +193,7 @@ class Protocol(GufeTokenizable):
             The starting `ChemicalSystem` for the transformation.
         stateB : ChemicalSystem
             The ending `ChemicalSystem` for the transformation.
-        mapping : Optional[ComponentMapping | list[ComponentMapping]]
+        mapping : Optional[ComponentMapping, list[ComponentMapping]]
             Mappings of e.g. atoms between a labelled component in the
             stateA and stateB `ChemicalSystem` .
         extends : Optional[ProtocolDAGResult]
