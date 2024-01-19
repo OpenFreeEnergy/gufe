@@ -171,7 +171,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], None]],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
         transformation_key: Optional[GufeKey] = None
@@ -215,14 +215,6 @@ class Protocol(GufeTokenizable):
             A directed, acyclic graph that can be executed by a `Scheduler`.
 
         """
-        # coerce mapping argument into list for _create signature
-        # top level "create" allows more intuitive input
-        # internal "_create" provides guaranteed type
-        if mapping is None:
-            mapping = []
-        elif isinstance(mapping, ComponentMapping):
-            mapping = [mapping]
-
         return ProtocolDAG(
             name=name,
             protocol_units=self._create(
