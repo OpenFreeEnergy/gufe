@@ -20,6 +20,12 @@ class FileStorage(ExternalStorage):
     def _exists(self, location):
         return self._as_path(location).exists()
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, FileStorage)
+            and self.root_dir == other.root_dir
+        )
+
     def _store_bytes(self, location, byte_data):
         path = self._as_path(location)
         directory = path.parent
@@ -30,8 +36,9 @@ class FileStorage(ExternalStorage):
             f.write(byte_data)
 
     def _store_path(self, location, path):
-        my_path = self._as_path(location)
-        if path.resolve() != my_path.resolve():
+        my_path = self._as_path(location).resolve()
+        if path.resolve() != my_path:
+            my_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, my_path)
 
     def _iter_contents(self, prefix):
