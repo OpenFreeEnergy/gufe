@@ -193,7 +193,7 @@ class Protocol(GufeTokenizable):
             The starting `ChemicalSystem` for the transformation.
         stateB : ChemicalSystem
             The ending `ChemicalSystem` for the transformation.
-        mapping : Optional[ComponentMapping, list[ComponentMapping]]
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
             Mappings of e.g. atoms between a labelled component in the
             stateA and stateB `ChemicalSystem` .
         extends : Optional[ProtocolDAGResult]
