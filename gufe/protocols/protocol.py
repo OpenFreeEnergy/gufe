@@ -96,8 +96,8 @@ class Protocol(GufeTokenizable):
 
     @property
     def settings(self) -> Settings:
-        """A copy of the full settings for this ``Protocol`` instance.  This is read only"""
-        return self._settings.frozen_copy()
+        """A read-only view of the settings for this ``Protocol`` instance."""
+        return self._settings
 
     @classmethod
     def _defaults(cls):
