@@ -9,7 +9,11 @@ import json
 from openff.units import unit
 import pytest
 
-from gufe.settings.models import Settings, OpenMMSystemGeneratorFFSettings
+from gufe.settings.models import (
+    OpenMMSystemGeneratorFFSettings,
+    Settings,
+    ThermoSettings,
+)
 
 
 def test_model_schema():
@@ -95,3 +99,15 @@ class TestFreezing:
         s2 = s.frozen_copy()
 
         assert s == s2
+
+    def test_set_subsection(self):
+        # check that attempting to set a subsection of settings still respects
+        # frozen state of parent object
+        s = Settings.get_defaults().frozen_copy()
+
+        assert s.is_frozen
+
+        ts = ThermoSettings(temperature=301 * unit.kelvin)
+
+        with pytest.raises(AttributeError, match="immutable"):
+            s.thermo_settings = ts
