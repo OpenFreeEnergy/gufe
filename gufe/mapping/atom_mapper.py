@@ -4,10 +4,11 @@ import abc
 from collections.abc import Iterator
 import gufe
 
+from ..tokenization import GufeTokenizable
 from .atom_mapping import AtomMapping
 
 
-class AtomMapper(abc.ABC):
+class AtomMapper(GufeTokenizable):
     """A class for manufacturing mappings"""
     @abc.abstractmethod
     def suggest_mappings(self, A: gufe.Component,
