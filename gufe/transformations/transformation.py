@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Union
 import json
 
 from ..tokenization import GufeTokenizable, JSON_HANDLER
@@ -17,16 +17,20 @@ class Transformation(GufeTokenizable):
 
     Connects two :class:`ChemicalSystem` objects, with directionality.
     """
+    _stateA: ChemicalSystem
+    _stateB: ChemicalSystem
+    _name: Optional[str]
+    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
+    _protocol: Protocol
 
     def __init__(
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
         name: Optional[str] = None,
     ):
-
         self._stateA = stateA
         self._stateB = stateB
         self._mapping = mapping
@@ -64,10 +68,8 @@ class Transformation(GufeTokenizable):
         return self._protocol
 
     @property
-    def mapping(self) -> Optional[dict[str, ComponentMapping]]:
-        """
-        Mapping of e.g. atoms between ``stateA`` and ``stateB``.
-        """
+    def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
+        """The mappings relevant for this Transformation"""
         return self._mapping
 
     @property

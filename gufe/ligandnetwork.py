@@ -197,10 +197,10 @@ class LigandNetwork(GufeTokenizable):
         components: dict[str, :class:`.Component`]
             non-alchemical components (components that will be on both sides
             of a transformation)
-        leg_label: dict[str, list[str]]
+        leg_labels: dict[str, list[str]]
             mapping of the names for legs (the keys of this dict) to a list
-            of the component names. The componnent names must be the same as
-            as used in the ``componentns`` dict.
+            of the component names. The component names must be the same as
+            used in the ``components`` dict.
         protocol: :class:`.Protocol`
             the protocol to apply
         alchemical_label: str
@@ -237,12 +237,9 @@ class LigandNetwork(GufeTokenizable):
                 else:
                     name = ""
 
-                mapping: dict[str, gufe.ComponentMapping] = {
-                    alchemical_label: edge,
-                }
-
                 transformation = gufe.Transformation(sysA, sysB, protocol,
-                                                     mapping, name)
+                                                     mapping=edge,
+                                                     name=name)
 
                 transformations.append(transformation)
 

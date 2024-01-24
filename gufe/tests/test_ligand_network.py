@@ -343,8 +343,8 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert compsA.get('protein') == compsB.get('protein')
             assert compsA.get('cofactor') == compsB.get('cofactor')
 
-            assert list(edge.mapping) == ['ligand']
-            assert edge.mapping['ligand'] in real_molecules_network.edges
+            assert isinstance(edge.mapping, gufe.ComponentMapping)
+            assert edge.mapping in real_molecules_network.edges
 
     def test_to_rbfe_alchemical_network_autoname_false(
         self,
