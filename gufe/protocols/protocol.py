@@ -9,7 +9,7 @@ import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
 
-from ..settings import Settings
+from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
@@ -89,13 +89,14 @@ class Protocol(GufeTokenizable):
         Parameters
         ----------
         settings : Settings
-            The full settings for this ``Protocol`` instance.
+            The full settings for this ``Protocol`` instance.  Must be passed an instance of Settings or a
+            subclass which is specialised for a particular Protocol
         """
-        self._settings = settings
+        self._settings = settings.frozen_copy()
 
     @property
     def settings(self) -> Settings:
-        """The full settings for this ``Protocol`` instance."""
+        """A read-only view of the settings for this ``Protocol`` instance."""
         return self._settings
 
     @classmethod

@@ -306,7 +306,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(succeeded_units) > 0
 
     def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand, tmpdir):
-        protocol = BrokenProtocol(settings=None)
+        protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
             mapping=None,
@@ -507,7 +507,7 @@ class NoDepsProtocol(Protocol):
 
     @classmethod
     def _default_settings(cls):
-        return {}
+        return settings.Settings.get_defaults()
 
     def _create(
             self,
@@ -719,3 +719,23 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
                             keep_scratch=True,
                             raise_error=False,
                             n_retries=-1)
+
+
+def test_settings_readonly():
+    # checks that settings aren't editable once inside a Protocol
+    p = DummyProtocol(DummyProtocol.default_settings())
+
+    before = p.settings.n_repeats
+
+    with pytest.raises(AttributeError, match="immutable"):
+        p.settings.n_repeats = before + 1
+
+    assert p.settings.n_repeats == before
+
+    # also check child settings
+    before = p.settings.thermo_settings.temperature
+
+    with pytest.raises(AttributeError, match="immutable"):
+        p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
+
+    assert p.settings.thermo_settings.temperature == before
