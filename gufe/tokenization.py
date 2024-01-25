@@ -14,6 +14,8 @@ import weakref
 import warnings
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
+
 from gufe.custom_codecs import (
     BYTES_CODEC,
     DATETIME_CODEC,
@@ -535,7 +537,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         if not include_defaults:
             for key, value in self.defaults().items():
-                if dct.get(key) == value:
+                if np.all(dct.get(key) == value):
                     dct.pop(key)
 
         return dct

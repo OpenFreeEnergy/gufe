@@ -119,7 +119,7 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem
     key = "ChemicalSystem-92176395ceb86ecd7787ce2585b24218"
-    repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
+    repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-, None, 0.0 molar, 1.2 nanometer, 1.2 nanometer, cube, None), 'ligand': SmallMoleculeComponent(name=toluene)})"
 
     @pytest.fixture
     def instance(self, solv_comp, toluene_ligand_comp):
