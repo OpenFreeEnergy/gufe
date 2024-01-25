@@ -211,7 +211,6 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     ":is_custom:": True,
                     "constraints": "hbonds",
                     "rigid_water": True,
-                    "remove_com": False,
                     "hydrogen_mass": 3.0,
                     "forcefields": [
                         "amber/ff14SB.xml",
