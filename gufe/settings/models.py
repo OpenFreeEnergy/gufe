@@ -27,6 +27,7 @@ except ImportError:
         PrivateAttr,
         validator,
     )
+import pydantic
 from pydantic import ConfigDict
 
 
@@ -35,7 +36,7 @@ class SettingsBaseModel(DefaultModel):
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
     model_config = ConfigDict(
-        extra='forbid',
+        extra=pydantic.Extra.forbid,
         arbitrary_types_allowed=False,
     )
 
