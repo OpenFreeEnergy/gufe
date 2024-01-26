@@ -1,3 +1,5 @@
+"""The building blocks for defining systems"""
+
 from .component import Component
 
 from .smallmoleculecomponent import SmallMoleculeComponent

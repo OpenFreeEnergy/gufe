@@ -161,7 +161,7 @@ class JSONSerializerDeserializer(object):
 
     Parameters
     ----------
-    codecs : list of :class:`.JSONCodec`s
+    codecs : list of :class:`.JSONCodec`\s
         codecs supported
     """
     def __init__(self, codecs: Iterable[JSONCodec]):
