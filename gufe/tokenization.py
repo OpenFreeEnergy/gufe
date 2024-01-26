@@ -39,11 +39,14 @@ _default_json_codecs = [
 JSON_HANDLER = JSONSerializerDeserializer(_default_json_codecs)
 
 # maps qualified name strings to the class
-TOKENIZABLE_CLASS_REGISTRY: Dict[Tuple[str, str], "GufeTokenizable"] = {}
+TOKENIZABLE_CLASS_REGISTRY: dict[tuple[str, str], "GufeTokenizable"] = {}
+""":noindex:"""
+
 # maps fully qualified names to a new location
 # e.g. if we did a rename:
 # ('gufe', 'ProteinComponent') -> ('gufe', 'BiopolymerComponent')
-REMAPPED_CLASSES: Dict[Tuple[str, str], Tuple[str, str]] = {}
+REMAPPED_CLASSES: dict[tuple[str, str], tuple[str, str]] = {}
+""":noindex:"""
 
 
 def register_tokenizable_class(cls):
