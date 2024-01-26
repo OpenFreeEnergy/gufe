@@ -125,7 +125,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    key = "NonTransformation-8c81ca1e263572bc3235a15a11bad376"
+    key = "NonTransformation-c4ddc34c8f2b6cbd3cc41eeb031bc906"
     repr = "NonTransformation(stateA=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-6d82d776ce3e240e4d1e98f29bea3b28>)"
 
     @pytest.fixture
