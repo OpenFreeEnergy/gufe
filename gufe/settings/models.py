@@ -165,6 +165,36 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
+    nonbonded_method = 'PME'
+    """
+    Method for treating nonbonded interactions, currently only PME and
+    NoCutoff are allowed. Default PME.
+    """
+    nonbonded_cutoff: FloatQuantity['nanometer'] = 1.0 * unit.nanometer
+    """
+    Cutoff value for short range nonbonded interactions.
+    Default 1.0 * unit.nanometer.
+    """
+
+    @validator('nonbonded_method')
+    def allowed_nonbonded(cls, v):
+        if v.lower() not in ['pme', 'nocutoff']:
+            errmsg = (
+                "Only PME and NoCutoff are allowed nonbonded_methods")
+            raise ValueError(errmsg)
+        return v
+
+    @validator('nonbonded_cutoff')
+    def is_positive_distance(cls, v):
+        # these are time units, not simulation steps
+        if not v.is_compatible_with(unit.nanometer):
+            raise ValueError("nonbonded_cutoff must be in distance units "
+                             "(i.e. nanometers)")
+        if v < 0:
+            errmsg = "nonbonded_cutoff must be a positive value"
+            raise ValueError(errmsg)
+        return v
+
     @validator('constraints')
     def constraint_check(cls, v):
         allowed = {'hbonds', 'hangles', 'allbonds'}
