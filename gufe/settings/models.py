@@ -27,16 +27,17 @@ except ImportError:
         PrivateAttr,
         validator,
     )
+from pydantic import ConfigDict
 
 
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
-    class Config:
-        extra = Extra.forbid
-        arbitrary_types_allowed = False
-        smart_union = True
+    model_config = ConfigDict(
+        extra='forbid',
+        arbitrary_types_allowed=False,
+    )
 
     def frozen_copy(self):
         """A copy of this Settings object which cannot be modified
