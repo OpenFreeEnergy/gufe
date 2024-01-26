@@ -16,6 +16,7 @@ try:
         Extra,
         Field,
         PositiveFloat,
+        PrivateAttr,
         validator,
     )
 except ImportError:
@@ -23,17 +24,76 @@ except ImportError:
         Extra,
         Field,
         PositiveFloat,
+        PrivateAttr,
         validator,
     )
 
 
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
+    _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
     class Config:
         extra = Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
+
+    def frozen_copy(self):
+        """A copy of this Settings object which cannot be modified
+
+        This is intended to be used by Protocols to make their stored Settings
+        read-only
+        """
+        copied = self.copy(deep=True)
+
+        def freeze_model(model):
+            submodels = (
+                mod for field in model.__fields__
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+            )
+            for mod in submodels:
+                freeze_model(mod)
+
+            if not model._is_frozen:
+                model._is_frozen = True
+
+        freeze_model(copied)
+        return copied
+
+    def unfrozen_copy(self):
+        """A copy of this Settings object, which can be modified
+
+        Settings objects become frozen when within a Protocol.  If you *really*
+        need to reverse this, this method is how.
+        """
+        copied = self.copy(deep=True)
+
+        def unfreeze_model(model):
+            submodels = (
+                mod for field in model.__fields__
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+            )
+            for mod in submodels:
+                unfreeze_model(mod)
+
+            model._is_frozen = False
+
+        unfreeze_model(copied)
+
+        return copied
+
+    @property
+    def is_frozen(self):
+        """If this Settings object is frozen and cannot be modified"""
+        return self._is_frozen
+
+    def __setattr__(self, name, value):
+        if name != "_is_frozen" and self._is_frozen:
+            raise AttributeError(
+                f"Cannot set '{name}': Settings are immutable once attached"
+                " to a Protocol and cannot be modified. Modify Settings "
+                "*before* creating the Protocol.")
+        return super().__setattr__(name, value)
 
 
 class ThermoSettings(SettingsBaseModel):
