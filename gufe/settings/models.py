@@ -137,9 +137,8 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     constraints: Optional[str] = 'hbonds'
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
-
     rigid_water: bool = True
-    remove_com: bool = False
+    """Whether to use a rigid water model. Default True"""
     hydrogen_mass: float = 3.0
     """Mass to be repartitioned to hydrogens from neighbouring
        heavy atoms (in amu), default 3.0"""
