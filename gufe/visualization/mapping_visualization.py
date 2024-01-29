@@ -4,6 +4,7 @@ from typing import Any, Collection, Optional
 from itertools import chain
 
 from rdkit import Chem
+from rdkit import Geometry
 from rdkit.Chem import Draw
 from rdkit.Chem import AllChem
 
@@ -102,7 +103,7 @@ def _draw_molecules(
     atom_colors: Collection[dict[Any, tuple[float, float, float, float]]],
     bond_colors: Collection[dict[int, tuple[float, float, float, float]]],
     highlight_color: tuple[float, float, float, float],
-    atom_mapping: Optional[dict[tuple[int, int], dict[int, int]]] = None,
+    atom_mapping: Optional[dict[int, int]] = None,
 ) -> str:
     """
     Internal method to visualize a molecule, possibly with mapping info
@@ -113,7 +114,7 @@ def _draw_molecules(
         renderer to draw the molecule; currently we only support
         rdkit.rdMolDraw2D
     mols : Collection[RDKitMol]
-        molecules to visualize
+        molecules to visualize, either one or two molecules
     atoms_list: Collection[Set[int]]
         iterable containing one set per molecule in ``mols``, with each set
         containing the indices of the atoms to highlight
@@ -130,11 +131,10 @@ def _draw_molecules(
     highlight_color: Tuple[float, float, float, float]
         RGBA tuple for the default highlight color used in the mapping
         visualization
-    atom_mapping: Dict[Tuple[int,int], Dict[int, int]], optional
-        used to align the molecules to each othter for clearer visualization.
-        The structure contains the indices of the molecules in mols as key
-        Tuple[molA, molB] and maps the atom indices via the value Dict[
-        molA_atom_idx, molB_atom_idx]
+    atom_mapping: dict[int, int], optional
+        if two molecules are supplied, used to align the molecules to each other
+        for clearer visualization.  The dict contains indices of the first mol
+        as keys mapping to indices of the second mol
         default None
     """
     # input standardization:
@@ -153,15 +153,26 @@ def _draw_molecules(
 
     # squash to 2D
     copies = [Chem.Mol(mol) for mol in mols]
-    for mol in copies:
-        AllChem.Compute2DCoords(mol)
+    # create layout of first molecule
+    # TODO:
+    #  could align either first mol to second or second to first.
+    #  Therefore could pick the most hard to draw molecule as the mol which goes
+    #  first into Compute2dCoords and make the other mol work around that.
+    #  As a first approximation, the largest molecule is harder to draw
+    AllChem.Compute2DCoords(copies[0])
 
-    # mol alignments if atom_mapping present
-    for (i, j), atomMap in atom_mapping.items():
-        AllChem.AlignMol(
-            copies[j], copies[i],
-            atomMap=[(k, v) for v, k in atomMap.items()]
-        )
+    if len(copies) > 1:
+        conf = copies[0].GetConformer()
+        twod_mapping = {}
+        for i, j in atom_mapping.items():
+            # conf holds Point3D, constructor of Point2D downcasts them
+            twod_mapping[j] = Geometry.Point2D(
+                conf.GetAtomPosition(i)
+            )
+        # compute 2D coords for other molecule, freezing mapped atoms to the
+        # same position as the first molecule
+        AllChem.Compute2DCoords(copies[1],
+                                coordMap=twod_mapping)
 
     # standard settings for our visualization
     d2d.drawOptions().useBWAtomPalette()
@@ -238,7 +249,7 @@ def draw_mapping(
         atom_colors=atom_colors,
         bond_colors=bond_colors,
         highlight_color=RED,
-        atom_mapping={(0, 1): mol1_to_mol2},
+        atom_mapping=mol1_to_mol2,
     )
 
 
