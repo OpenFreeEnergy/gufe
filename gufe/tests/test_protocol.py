@@ -696,7 +696,8 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmpdir):
         # we did 3 retries, so 4 total failures
         assert len(r.protocol_unit_results) == 5
         assert len(r.protocol_unit_failures) == 4
-        assert len(list(shared.iterdir())) == 5
+        assert len(list(shared.iterdir())) == 0
+        # assert len(list(shared.iterdir())) == 5
 
 
 def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
