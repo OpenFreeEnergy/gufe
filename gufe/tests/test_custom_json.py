@@ -219,6 +219,8 @@ class TestSettingsCodec(CustomJSONCodingTest):
                         "amber/phosaa10.xml",
                     ],
                     "small_molecule_forcefield": "openff-2.0.0",
+                    "nonbonded_method": "PME",
+                    "nonbonded_cutoff": 1.0 * unit.nanometer,
                 },
                 "thermo_settings": {
                     "__class__": "ThermoSettings",
