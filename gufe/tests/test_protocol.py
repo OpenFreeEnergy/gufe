@@ -203,9 +203,8 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-6d82d776ce3e240e4d1e98f29bea3b28"
-    repr = "<DummyProtocol-6d82d776ce3e240e4d1e98f29bea3b28>"
-
+    key = "DummyProtocol-140583b69a04f875265977f9e5f114d8"
+    repr = "<DummyProtocol-140583b69a04f875265977f9e5f114d8>"
     @pytest.fixture
     def instance(self):
         return DummyProtocol(settings=DummyProtocol.default_settings())
