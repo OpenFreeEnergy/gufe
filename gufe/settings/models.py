@@ -27,6 +27,7 @@ except ImportError:
         PrivateAttr,
         validator,
     )
+import pydantic
 
 
 class SettingsBaseModel(DefaultModel):
@@ -34,7 +35,10 @@ class SettingsBaseModel(DefaultModel):
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
     class Config:
-        extra = Extra.forbid
+        """
+        :noindex:
+        """
+        extra = pydantic.Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
 
@@ -118,6 +122,9 @@ class ThermoSettings(SettingsBaseModel):
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
+    class Config:
+        """:noindex:"""
+        pass
     ...
 
 
@@ -134,6 +141,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
+    class Config:
+        """:noindex:"""
+        pass
+    
     constraints: Optional[str] = 'hbonds'
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""

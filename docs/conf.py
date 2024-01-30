@@ -29,6 +29,7 @@ author = 'The OpenFE Development Team'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'sphinxcontrib.autodoc_pydantic',
     'sphinx.ext.intersphinx',
@@ -42,6 +43,8 @@ autodoc_default_options = {
     "inherited-members": "GufeTokenizable",
     "undoc-members": True,
 }
+
+autosummary_generate = True
 
 intersphinx_mapping = {
     'rdkit': ('https://www.rdkit.org/docs/', None),

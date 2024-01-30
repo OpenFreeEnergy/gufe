@@ -61,7 +61,7 @@ class DAGMixin:
     @property
     def protocol_units(self) -> list[ProtocolUnit]:
         """
-        List of `ProtocolUnit`s given in DAG-dependency order.
+        List of `ProtocolUnit` s given in DAG-dependency order.
 
         DAG-dependency order guarantees that any task is listed after all of its
         dependencies.
@@ -275,7 +275,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     how they depend on each other. A single `ProtocolDAG` execution should
     yield sufficient information to calculate a free energy difference
     (though perhaps not converged) between two `ChemicalSystem` objects.
-    
+
     A `ProtocolDAG` yields a `ProtocolDAGResult` when executed.
 
     Attributes
@@ -288,17 +288,6 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     graph : nx.DiGraph
         Graph of `ProtocolUnit`s as nodes, with directed edges to each
         `ProtocolUnit`'s dependencies.
-    transformation_key : Union[GufeKey, None]
-        Key of the `Transformation` that this `ProtocolDAG` corresponds to, if
-        applicable. This functions as a label for identifying the source of
-        this `ProtocolDAG`. This label will be passed on to the
-        `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
-    extends_key : Optional[GufeKey]
-        Key of the `ProtocolDAGResult` that this `ProtocolDAG` extends from.
-        This functions as a label for identifying the source of this
-        `ProtocolDAG`. This label will be passed on to the
-        `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
-
     """
 
     def __init__(
@@ -309,13 +298,23 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         extends_key: Optional[GufeKey] = None,
         name: Optional[str] = None,
     ):
-        """Create a new `ProtocolDAG`.
+        """Create a new `ProtocolDAG`
 
         Parameters
         ----------
         protocol_units : Iterable[ProtocolUnit]
-            The `ProtocolUnit`s that make up this `ProtocolDAG`, with
+            The `ProtocolUnit` s that make up this `ProtocolDAG`, with
             dependencies included as inputs.
+        transformation_key : Optional[GufeKey]
+            Key of the `Transformation` that this `ProtocolDAG` corresponds to, if
+            applicable. This functions as a label for identifying the source of
+            this `ProtocolDAG`. This label will be passed on to the
+            `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
+        extends_key : Optional[GufeKey]
+            Key of the `ProtocolDAGResult` that this `ProtocolDAG` extends from.
+            This functions as a label for identifying the source of this
+            `ProtocolDAG`. This label will be passed on to the
+            `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
         name : str
             Unique identifier for this `ProtocolDAG`.
 
