@@ -107,7 +107,7 @@ NUMPY_CODEC = JSONCodec(
 SETTINGS_CODEC = JSONCodec(
     cls=SettingsBaseModel,
     to_dict=lambda obj: {field: getattr(obj, field) for field in obj.__fields__},
-    from_dict=default_from_dict,
+    from_dict=lambda x: x, #default_from_dict,
     is_my_dict=functools.partial(inherited_is_my_dict, cls=SettingsBaseModel),
 )
 

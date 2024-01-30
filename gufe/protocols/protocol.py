@@ -8,9 +8,14 @@
 import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
+import functools
+import json
 
 from ..settings import Settings
-from ..tokenization import GufeTokenizable, GufeKey
+from ..tokenization import GufeTokenizable, GufeKey, JSON_HANDLER
+from ..custom_json import JSONSerializerDeserializer, JSONCodec
+from ..custom_codecs import default_from_dict, inherited_is_my_dict
+from gufe.settings.models import SettingsBaseModel
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 
@@ -107,6 +112,22 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     def _from_dict(cls, dct: dict):
+        # This is an ugly band-aid on the problem, but it enables settings
+        # migration
+        settings_codec = JSONCodec(
+            cls=SettingsBaseModel,
+            to_dict=lambda obj: {field: getattr(obj, field)
+                                 for field in obj.__fields__},
+            from_dict=default_from_dict,
+            is_my_dict=functools.partial(inherited_is_my_dict,
+                                         cls=SettingsBaseModel),
+        )
+        # by putting ours first, it gets hit before the one that shows up
+        # later
+        handler = JSONSerializerDeserializer([settings_codec] +
+                                             JSON_HANDLER.codecs)
+        json_str = json.dumps(dct, cls=JSON_HANDLER.encoder)
+        updated_dct = json.loads(json_str, cls=handler.decoder)
         return cls(**dct)
 
     @classmethod

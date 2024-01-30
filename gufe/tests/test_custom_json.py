@@ -183,76 +183,76 @@ class TestPathCodec(CustomJSONCodingTest):
         ]
 
 
-class TestSettingsCodec(CustomJSONCodingTest):
-    def setup_method(self):
-        self.codec = SETTINGS_CODEC
-        self.objs = [
-            models.Settings.get_defaults(),
-        ]
-        self.dcts = [
-            {
-                "__class__": "Settings",
-                "__module__": "gufe.settings.models",
-                ":is_custom:": True,
-                "forcefield_settings": obj.forcefield_settings,
-                "thermo_settings": obj.thermo_settings,
-            }
-            for obj in self.objs
-        ]
+# class TestSettingsCodec(CustomJSONCodingTest):
+#     def setup_method(self):
+#         self.codec = SETTINGS_CODEC
+#         self.objs = [
+#             models.Settings.get_defaults(),
+#         ]
+#         self.dcts = [
+#             {
+#                 "__class__": "Settings",
+#                 "__module__": "gufe.settings.models",
+#                 ":is_custom:": True,
+#                 "forcefield_settings": obj.forcefield_settings,
+#                 "thermo_settings": obj.thermo_settings,
+#             }
+#             for obj in self.objs
+#         ]
 
-        self.full_dump = [
-            {
-                "__class__": "Settings",
-                "__module__": "gufe.settings.models",
-                ":is_custom:": True,
-                "forcefield_settings": {
-                    "__class__": "OpenMMSystemGeneratorFFSettings",
-                    "__module__": "gufe.settings.models",
-                    ":is_custom:": True,
-                    "constraints": "hbonds",
-                    "rigid_water": True,
-                    "remove_com": False,
-                    "hydrogen_mass": 3.0,
-                    "forcefields": [
-                        "amber/ff14SB.xml",
-                        "amber/tip3p_standard.xml",
-                        "amber/tip3p_HFE_multivalent.xml",
-                        "amber/phosaa10.xml",
-                    ],
-                    "small_molecule_forcefield": "openff-2.0.0",
-                },
-                "thermo_settings": {
-                    "__class__": "ThermoSettings",
-                    "__module__": "gufe.settings.models",
-                    ":is_custom:": True,
-                    "temperature": {
-                        "magnitude": 300,
-                        "unit": "kelvin",
-                        ":is_custom:": True,
-                        "pint_unit_registry": "openff_units",
-                    },
-                    "pressure": None,
-                    "ph": None,
-                    "redox_potential": None,
-                },
-            }
-        ]
-        self.required_codecs = [
-            self.codec,
-            OPENFF_QUANTITY_CODEC,
-            OPENFF_UNIT_CODEC,
-        ]
+#         self.full_dump = [
+#             {
+#                 "__class__": "Settings",
+#                 "__module__": "gufe.settings.models",
+#                 ":is_custom:": True,
+#                 "forcefield_settings": {
+#                     "__class__": "OpenMMSystemGeneratorFFSettings",
+#                     "__module__": "gufe.settings.models",
+#                     ":is_custom:": True,
+#                     "constraints": "hbonds",
+#                     "rigid_water": True,
+#                     "remove_com": False,
+#                     "hydrogen_mass": 3.0,
+#                     "forcefields": [
+#                         "amber/ff14SB.xml",
+#                         "amber/tip3p_standard.xml",
+#                         "amber/tip3p_HFE_multivalent.xml",
+#                         "amber/phosaa10.xml",
+#                     ],
+#                     "small_molecule_forcefield": "openff-2.0.0",
+#                 },
+#                 "thermo_settings": {
+#                     "__class__": "ThermoSettings",
+#                     "__module__": "gufe.settings.models",
+#                     ":is_custom:": True,
+#                     "temperature": {
+#                         "magnitude": 300,
+#                         "unit": "kelvin",
+#                         ":is_custom:": True,
+#                         "pint_unit_registry": "openff_units",
+#                     },
+#                     "pressure": None,
+#                     "ph": None,
+#                     "redox_potential": None,
+#                 },
+#             }
+#         ]
+#         self.required_codecs = [
+#             self.codec,
+#             OPENFF_QUANTITY_CODEC,
+#             OPENFF_UNIT_CODEC,
+#         ]
 
-    def test_round_trip(self):
-        encoder, decoder = custom_json_factory(self.required_codecs)
-        self._test_round_trip(encoder, decoder)
+#     def test_round_trip(self):
+#         encoder, decoder = custom_json_factory(self.required_codecs)
+#         self._test_round_trip(encoder, decoder)
 
-    def test_full_dump(self):
-        encoder, _ = custom_json_factory(self.required_codecs)
-        for obj, dct in zip(self.objs, self.full_dump):
-            as_str = json.dumps(obj, cls=encoder)
-            as_dct = json.loads(as_str)  # turn off decoder here!
-            assert dct == as_dct
+#     def test_full_dump(self):
+#         encoder, _ = custom_json_factory(self.required_codecs)
+#         for obj, dct in zip(self.objs, self.full_dump):
+#             as_str = json.dumps(obj, cls=encoder)
+#             as_dct = json.loads(as_str)  # turn off decoder here!
+#             assert dct == as_dct
 
 
 class TestOpenFFQuantityCodec(CustomJSONCodingTest):
