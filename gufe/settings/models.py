@@ -28,17 +28,19 @@ except ImportError:
         validator,
     )
 import pydantic
-from pydantic import ConfigDict
 
 
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
-    model_config = ConfigDict(
-        extra=pydantic.Extra.forbid,
-        arbitrary_types_allowed=False,
-    )
+    class Config:
+        """
+        :noindex:
+        """
+        extra = pydantic.Extra.forbid
+        arbitrary_types_allowed = False
+        smart_union = True
 
     def frozen_copy(self):
         """A copy of this Settings object which cannot be modified
@@ -120,6 +122,9 @@ class ThermoSettings(SettingsBaseModel):
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
+    class Config:
+        """:noindex:"""
+        pass
     ...
 
 
@@ -136,6 +141,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
+    class Config:
+        """:noindex:"""
+        pass
+    
     constraints: Optional[str] = 'hbonds'
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
