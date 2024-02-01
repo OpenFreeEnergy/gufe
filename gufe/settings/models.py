@@ -43,7 +43,7 @@ class SettingsBaseModel(DefaultModel):
         arbitrary_types_allowed = False
         smart_union = True
 
-    def _ipython_display_(self, d2d=None):
+    def _ipython_display_(self):
         pprint.pprint(self.dict())
 
     def frozen_copy(self):
