@@ -518,7 +518,7 @@ class NoDepsProtocol(Protocol):
         return {}
 
     @classmethod
-    def _default_settings(cls):
+    def _default_settings(cls, stateA=None, stateB=None):
         return settings.Settings.get_defaults()
 
     def _create(
