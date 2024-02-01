@@ -97,11 +97,24 @@ class DummyProtocol(Protocol):
     result_cls = DummyProtocolResult
 
     @classmethod
-    def _default_settings(cls):
+    def _default_settings(cls, *,
+                          stateA=None,
+                          stateB=None):
+        repeats = 21
+
+        if stateA and stateB:
+            # we got a hint of the chemistry involved
+            # so inspect and do something clever here
+            # for example if solvent is water we do repeats=21,
+            # otherwise repeats=42
+            sc: gufe.SolventComponent = stateA.components.get('solvent', None)
+            if sc is not None:
+                repeats = 21 if sc.smiles == 'O' else 42
+
         return DummySpecificSettings(
             thermo_settings=settings.ThermoSettings(temperature=298 * unit.kelvin),
             forcefield_settings=settings.OpenMMSystemGeneratorFFSettings(),
-            n_repeats=21,
+            n_repeats=repeats,
         )
 
     @classmethod
@@ -738,3 +751,39 @@ def test_settings_readonly():
         p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
 
     assert p.settings.thermo_settings.temperature == before
+
+
+def test_customised_default_settings():
+    # check that default_settings hook is able to inspect the chemistry to
+    # offer different defaults
+    cs1 = ChemicalSystem(
+        components={
+            'solvent': gufe.SolventComponent(smiles='CC')
+        }
+    )
+    cs2 = ChemicalSystem(
+        components={
+            'solvent': gufe.SolventComponent(smiles='CC')
+        }
+    )
+
+    ds = DummyProtocol.default_settings(stateA=cs1, stateB=cs2)
+
+    assert ds.n_repeats == 42
+
+
+def test_customised_default_settings_defaults():
+    cs1 = ChemicalSystem(
+        components={
+            'solvent': gufe.SolventComponent(smiles='O')
+        }
+    )
+    cs2 = ChemicalSystem(
+        components={
+            'solvent': gufe.SolventComponent(smiles='O')
+        }
+    )
+
+    ds = DummyProtocol.default_settings(stateA=cs1, stateB=cs2)
+
+    assert ds.n_repeats == 21
