@@ -23,4 +23,4 @@ dependencies:
   - sphinx <7.1.2
   - pip:
     - autodoc_pydantic<2.0.0
-    - git+https://github.com/openforcefield/openff-models.git@fix-openmm
+    - git+https://github.com/openforcefield/openff-models.git@fix-openmm-boxes
