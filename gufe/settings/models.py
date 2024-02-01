@@ -10,6 +10,7 @@ from typing import Optional, Union
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
+import pprint
 
 try:
     from pydantic.v1 import (
@@ -41,6 +42,9 @@ class SettingsBaseModel(DefaultModel):
         extra = pydantic.Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
+
+    def _ipython_display_(self, d2d=None):
+        pprint.pprint(self.dict())
 
     def frozen_copy(self):
         """A copy of this Settings object which cannot be modified
