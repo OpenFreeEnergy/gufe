@@ -10,7 +10,7 @@ from typing import Optional
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
     import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER,
-    get_all_gufe_objs,
+    get_all_gufe_objs, KeyedChain
 )
 
 
