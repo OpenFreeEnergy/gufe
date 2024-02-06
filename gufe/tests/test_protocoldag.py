@@ -41,7 +41,7 @@ class WriterProtocol(gufe.Protocol):
     result_cls = WriterProtocolResult
 
     @classmethod
-    def _default_settings(cls):
+    def _default_settings(cls, stateA=None, stateB=None):
         return WriterSettings(
             thermo_settings=gufe.settings.ThermoSettings(temperature=298 * unit.kelvin),
             forcefield_settings=gufe.settings.OpenMMSystemGeneratorFFSettings(),

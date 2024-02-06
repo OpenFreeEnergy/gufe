@@ -112,7 +112,10 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def _default_settings(cls) -> Settings:
+    def _default_settings(cls, *,
+                          stateA: Optional[ChemicalSystem] = None,
+                          stateB: Optional[ChemicalSystem] = None,
+                          ) -> Settings:
         """Method to override in custom `Protocol` subclasses.
 
         Gives a usable instance of ``Settings`` that function as
@@ -122,14 +125,23 @@ class Protocol(GufeTokenizable):
         raise NotImplementedError()
 
     @classmethod
-    def default_settings(cls) -> Settings:
+    def default_settings(cls, *,
+                         stateA: Optional[ChemicalSystem] = None,
+                         stateB: Optional[ChemicalSystem] = None,
+                         ) -> Settings:
         """Get the default settings for this `Protocol`.
 
         These can be modified and passed in as the `settings` for a new
         `Protocol` instance.
 
+        Parameters
+        ----------
+        stateA, stateB: ChemicalSystem, optional
+          details of the chemistry that the Protocol will operate on.
+          Depending on implementation, this can be used to fine tune the
+          default settings which are used.
         """
-        return cls._default_settings()
+        return cls._default_settings(stateA=stateA, stateB=stateB)
 
     @abc.abstractmethod
     def _create(
