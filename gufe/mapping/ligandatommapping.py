@@ -45,7 +45,6 @@ class LigandAtomMapping(AtomMapping):
         self._compA_to_compB = componentA_to_componentB
 
         if annotations is None:
-            # TODO: this should be a frozen dict
             annotations = {}
 
         self._annotations = annotations
