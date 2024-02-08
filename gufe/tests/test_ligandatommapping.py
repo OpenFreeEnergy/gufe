@@ -13,11 +13,11 @@ from gufe import LigandAtomMapping, SmallMoleculeComponent
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
-def mol_from_smiles(smiles: str) -> Chem.Mol:
-    m = Chem.MolFromSmiles(smiles)
+def mol_from_smiles(smiles: str) -> gufe.SmallMoleculeComponent:
+    m = Chem.AddHs(Chem.MolFromSmiles(smiles))
     m.Compute2DCoords()
 
-    return m
+    return gufe.SmallMoleculeComponent(m)
 
 
 @pytest.fixture(scope='session')
@@ -28,8 +28,8 @@ def simple_mapping():
 
     C C
     """
-    molA = gufe.SmallMoleculeComponent(mol_from_smiles('CCO'))
-    molB = gufe.SmallMoleculeComponent(mol_from_smiles('CC'))
+    molA = mol_from_smiles('CCO')
+    molB = mol_from_smiles('CC')
 
     m = LigandAtomMapping(molA, molB, componentA_to_componentB={0: 0, 1: 1})
 
@@ -44,8 +44,8 @@ def other_mapping():
 
     C   C
     """
-    molA = SmallMoleculeComponent(mol_from_smiles('CCO'))
-    molB = SmallMoleculeComponent(mol_from_smiles('CC'))
+    molA = mol_from_smiles('CCO')
+    molB = mol_from_smiles('CC')
 
     m = LigandAtomMapping(molA, molB, componentA_to_componentB={0: 0, 2: 1})
 
@@ -239,7 +239,7 @@ def test_with_fancy_annotations(simple_mapping):
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     cls = LigandAtomMapping
     repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
-    key = "LigandAtomMapping-c95a2c15fe21f446cf731338427137ae"
+    key = "LigandAtomMapping-c333723fbbee702c641cb9dca9beae49"
 
     @pytest.fixture
     def instance(self, annotated_simple_mapping):
