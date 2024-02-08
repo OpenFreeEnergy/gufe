@@ -34,7 +34,9 @@ class LigandAtomMapping(AtomMapping):
         componentA_to_componentB : dict[int, int]
           correspondence of indices of atoms between the two ligands; the
           keys are indices in componentA and the values are indices in
-          componentB
+          componentB.
+          These are checked that they are within the possible indices of the
+          respective components.
         annotations : dict[str, Any]
           Mapping of annotation identifier to annotation data. Annotations may
           contain arbitrary JSON-serializable data. Annotation identifiers
@@ -42,6 +44,18 @@ class LigandAtomMapping(AtomMapping):
           OpenFE. ``score`` is a reserved annotation identifier.
         """
         super().__init__(componentA, componentB)
+
+        # validate compA_to_compB
+        nA = self.componentA.to_rdkit().GetNumAtoms()
+        nB = self.componentB.to_rdkit().GetNumAtoms()
+        for i, j in componentA_to_componentB.items():
+            if not (0 <= i < nA):
+                raise ValueError(f"Got invalid index for ComponentA ({i}); "
+                                 f"must be 0 <= n <= {nA}")
+            if not (0 <= j < nB):
+                raise ValueError(f"Got invalid index for ComponentB ({i}); "
+                                 f"must be 0 <= n <= {nB}")
+
         self._compA_to_compB = componentA_to_componentB
 
         if annotations is None:
