@@ -1,5 +1,7 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+from __future__ import annotations
+
 import json
 from typing import Any, Optional
 import numpy as np
@@ -18,6 +20,8 @@ class LigandAtomMapping(AtomMapping):
     """
     componentA: SmallMoleculeComponent
     componentB: SmallMoleculeComponent
+    _annotations: dict[str, Any]
+    _compA_to_compB: dict[int, int]
 
     def __init__(
         self,
@@ -87,6 +91,7 @@ class LigandAtomMapping(AtomMapping):
 
     @property
     def annotations(self):
+        """Any extra metadata, for example the score of a mapping"""
         # return a copy (including copy of nested)
         return json.loads(json.dumps(self._annotations))
 
@@ -165,8 +170,8 @@ class LigandAtomMapping(AtomMapping):
             f.write(draw_mapping(self._compA_to_compB, self.componentA.to_rdkit(),
                                  self.componentB.to_rdkit(), d2d))
 
-    def with_annotations(self, annotations: dict[str, Any]):
-        """Create an new mapping based on this one with extra annotations.
+    def with_annotations(self, annotations: dict[str, Any]) -> LigandAtomMapping:
+        """Create a new mapping based on this one with extra annotations.
 
         Parameters
         ----------
