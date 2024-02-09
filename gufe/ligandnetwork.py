@@ -50,7 +50,11 @@ class LigandNetwork(GufeTokenizable):
 
     @property
     def graph(self) -> nx.MultiDiGraph:
-        """NetworkX graph for this network"""
+        """NetworkX graph for this network
+
+        This graph will have :class:`.ChemicalSystem` objects as nodes and
+        :class:`.Transformation` objects as directed edges
+        """
         if self._graph is None:
             graph = nx.MultiDiGraph()
             # set iterator order depends on PYTHONHASHSEED, sorting ensures
@@ -129,7 +133,7 @@ class LigandNetwork(GufeTokenizable):
         return cls(edges=edges, nodes=label_to_mol.values())
 
     def to_graphml(self) -> str:
-        """Return the GraphML string representing this ``Network``.
+        """Return the GraphML string representing this Network
 
         This is the primary serialization mechanism for this class.
 
@@ -141,9 +145,8 @@ class LigandNetwork(GufeTokenizable):
         return "\n".join(nx.generate_graphml(self._serializable_graph()))
 
     @classmethod
-    def from_graphml(cls, graphml_str: str):
-        """Create ``Network`` from GraphML string.
-        This is the primary deserialization mechanism for this class.
+    def from_graphml(cls, graphml_str: str) -> LigandNetwork:
+        """Create from a GraphML string.
 
         Parameters
         ----------
@@ -152,7 +155,7 @@ class LigandNetwork(GufeTokenizable):
 
         Returns
         -------
-        :class:`.Network`:
+        LigandNetwork
             new network from the GraphML
         """
         return cls._from_serializable_graph(nx.parse_graphml(graphml_str))
@@ -170,7 +173,7 @@ class LigandNetwork(GufeTokenizable):
 
         Returns
         -------
-        :class:`.Network` :
+        LigandNetwork
             a new network adding the given edges and nodes to this network
         """
         if edges is None:
@@ -254,11 +257,13 @@ class LigandNetwork(GufeTokenizable):
         autoname: bool = True,
         autoname_prefix: str = "easy_rbfe",
         **other_components
-    ):
-        """
+    ) -> gufe.AlchemicalNetwork:
+        """Convert the ligand network to an AlchemicalNetwork
+
         Parameters
         ----------
-        protocol: :class:Protocol
+        protocol: Protocol
+            the method to apply to edges
         autoname: bool
             whether to automatically name objects by the ligand name and
             state label
