@@ -8,7 +8,13 @@ from ..tokenization import GufeTokenizable
 
 
 class Component(GufeTokenizable):
-    """Base class for members of a :class:`ChemicalSystem`."""
+    """Base class for an individual item in a larger chemical system
+
+    Individual items could be as small as a single molecule, or as large as an
+    entire biological assembly.
+
+    These items are used as pieces of a :class:`ChemicalSystem`.
+    """
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name})"
