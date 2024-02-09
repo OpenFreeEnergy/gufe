@@ -7,6 +7,10 @@ from gufe.tokenization import GufeTokenizable
 
 
 class ComponentMapping(GufeTokenizable, abc.ABC):
+    """A relationship between two Components stating that they transform in some way
+
+    For components that are atom-based is specialised to :class:`.AtomMapping`
+    """
     _componentA: gufe.Component
     _componentB: gufe.Component
 
