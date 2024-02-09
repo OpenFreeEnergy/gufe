@@ -13,10 +13,6 @@ from ..mapping import ComponentMapping
 
 
 class Transformation(GufeTokenizable):
-    """An edge of an alchemical network.
-
-    Connects two :class:`ChemicalSystem` objects, with directionality.
-    """
     _stateA: ChemicalSystem
     _stateB: ChemicalSystem
     _name: Optional[str]
@@ -31,6 +27,26 @@ class Transformation(GufeTokenizable):
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
         name: Optional[str] = None,
     ):
+        """Two chemical states with a method for estimating free energy difference
+
+        Connects two :class:`.ChemicalSystem` objects, with directionality,
+        and relates this to a :class:`.Protocol` which will provide an estimate of
+        the free energy difference of moving between these systems.
+        Used as an edge of an :class:`.AlchemicalNetwork`.
+
+        Parameters
+        ----------
+        stateA, stateB: ChemicalSystem
+           The start (A) and end (B) states of the transformation
+        protocol: Protocol
+           The method used to estimate the free energy difference between states
+           A and B
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
+           the details of any transformations between :class:`.Component` \s of
+           the two states
+        name : str, optional
+           a human-readable tag for this transformation
+        """
         self._stateA = stateA
         self._stateB = stateB
         self._mapping = mapping
@@ -48,22 +64,22 @@ class Transformation(GufeTokenizable):
 
     @property
     def stateA(self) -> ChemicalSystem:
-        """The starting :class:`ChemicalSystem` for the transformation."""
+        """The starting :class:`.ChemicalSystem` for the transformation."""
         return self._stateA
 
     @property
     def stateB(self) -> ChemicalSystem:
-        """The ending :class:`ChemicalSystem` for the transformation."""
+        """The ending :class:`.ChemicalSystem` for the transformation."""
         return self._stateB
 
     @property
     def protocol(self) -> Protocol:
         """The protocol used to perform the transformation.
 
-        This protocol derives free energy differences between ``stateA`` and
-        ``stateB`` ``ChemicalSystem`` objects. It includes all details needed to
-        perform required simulations/calculations and encodes the alchemical
-        pathway used. May also correspond to an experimental result.
+        This protocol estimates the free energy differences between ``stateA``
+        and ``stateB`` :class:`.ChemicalSystem` objects. It includes all details
+        needed to perform required simulations/calculations and encodes the
+        alchemical pathway used.
         """
         return self._protocol
 
