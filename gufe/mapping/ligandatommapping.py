@@ -55,10 +55,10 @@ class LigandAtomMapping(AtomMapping):
         for i, j in componentA_to_componentB.items():
             if not (0 <= i < nA):
                 raise ValueError(f"Got invalid index for ComponentA ({i}); "
-                                 f"must be 0 <= n <= {nA}")
+                                 f"must be 0 <= n < {nA}")
             if not (0 <= j < nB):
                 raise ValueError(f"Got invalid index for ComponentB ({i}); "
-                                 f"must be 0 <= n <= {nB}")
+                                 f"must be 0 <= n < {nB}")
 
         self._compA_to_compB = componentA_to_componentB
 
