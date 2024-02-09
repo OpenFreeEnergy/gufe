@@ -15,6 +15,14 @@ class AlchemicalNetwork(GufeTokenizable):
 
     Nodes are :class:`.ChemicalSystem` instances and edges are
     :class:`.Transformation` instances.
+
+    Parameters
+    ----------
+    edges : Optional[Iterable[Transformation]]
+      the links between chemical states
+    nodes : Optional[Iterable[ChemicalSystem]]
+      the individual chemical states.  :class:`.ChemicalSystem` objects from
+      Transformation objects in edges will be automatically extracted
     """
     def __init__(
         self,
@@ -56,7 +64,12 @@ class AlchemicalNetwork(GufeTokenizable):
         return nx.freeze(g)
 
     @property
-    def graph(self):
+    def graph(self) -> nx.MultiDiGraph:
+        """A networkx representation of the AlchemicalNetwork
+
+        Nodes are represented as :class:`.ChemicalSystem` objects and directed
+        edges are represented as :class:`.Transformation` objects
+        """
         if self._graph is None:
             self._graph = self._generate_graph(self._edges, self._nodes)
         return self._graph.copy(as_view=True)
@@ -64,7 +77,7 @@ class AlchemicalNetwork(GufeTokenizable):
     @property
     def edges(self) -> frozenset[Transformation]:
         """
-        Network edges as a ``frozenset`` of :class:`.Transformation` instances.
+        Network edges as a `frozenset` of :class:`.Transformation` instances.
         """
         return self._edges
 
@@ -96,10 +109,10 @@ class AlchemicalNetwork(GufeTokenizable):
         return super()._defaults()
 
     def to_graphml(self) -> str:
-        """ """
+        """Currently not implemented"""
         raise NotImplementedError
 
     @classmethod
-    def from_graphml(self, str):
-        """ """
+    def from_graphml(cls, str):
+        """Currently not implemented"""
         raise NotImplementedError
