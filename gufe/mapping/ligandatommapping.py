@@ -15,8 +15,11 @@ from ..tokenization import JSON_HANDLER
 
 class LigandAtomMapping(AtomMapping):
     """
-    Simple container for an atom mapping between two small molecule components.
+    Container for an atom mapping between two small molecule components.
 
+    This is a specialized version of :class:`.AtomMapping` for
+    :class:`.SmallMoleculeComponent` which stores the mapping as a dict of
+    integers.
     """
     componentA: SmallMoleculeComponent
     componentB: SmallMoleculeComponent
@@ -68,7 +71,7 @@ class LigandAtomMapping(AtomMapping):
         self._annotations = annotations
 
     @classmethod
-    def _defaults(self):
+    def _defaults(cls):
         return {}
 
     @property
