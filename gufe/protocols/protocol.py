@@ -65,9 +65,9 @@ class ProtocolResult(GufeTokenizable):
 
 
 class Protocol(GufeTokenizable):
-    """A protocol that implements an alchemical transformation.
+    """A method that via an alchemical transformation estimates free energy difference
 
-    Takes a ``Settings`` object customised for this protocol on init.
+    Takes a :class:`.Settings` object customised for this protocol on creation.
     This configures the protocol for repeated execution on (pairs of)
     :class:`ChemicalSystem` objects.
 
@@ -84,13 +84,17 @@ class Protocol(GufeTokenizable):
     """Corresponding `ProtocolResult` subclass."""
 
     def __init__(self, settings: Settings):
-        """Create a new ``Protocol`` instance.
-
+        """
         Parameters
         ----------
         settings : Settings
-            The full settings for this ``Protocol`` instance.  Must be passed an instance of Settings or a
-            subclass which is specialised for a particular Protocol
+          The parameters for this particular method.  This will be a specialised
+          subclass for this particular Protocol.
+
+        Note
+        ----
+        Once the Protocol object is created, the input Settings are frozen,
+        so should be finalised before creating the Protocol instance.
         """
         self._settings = settings.frozen_copy()
 
@@ -123,11 +127,11 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     def default_settings(cls) -> Settings:
-        """Get the default settings for this `Protocol`.
+        """Get the default settings for this ``Protocol``.
 
-        These can be modified and passed in as the `settings` for a new
-        `Protocol` instance.
-
+        These represent the current best-practices for the use of this
+        particular method. These can be modified and passed in as the only
+        argument for creating a new ``Protocol`` instance.
         """
         return cls._default_settings()
 
@@ -179,9 +183,9 @@ class Protocol(GufeTokenizable):
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
-        A `ProtocolDAG` is composed of `ProtocolUnit`s, with dependencies
-        established between them. These form a directed, acyclic graph,
-        and each `ProtocolUnit` can be executed once its dependencies have
+        A :class:`.ProtocolDAG` is composed of :class:`.ProtocolUnit` \s, with
+        dependencies established between them. These form a directed, acyclic
+        graph, and each `ProtocolUnit` can be executed once its dependencies have
         completed.
 
         A `ProtocolDAG` can be passed to a `Scheduler` for execution on its
@@ -214,7 +218,6 @@ class Protocol(GufeTokenizable):
         -------
         ProtocolDAG
             A directed, acyclic graph that can be executed by a `Scheduler`.
-
         """
         return ProtocolDAG(
             name=name,
@@ -243,7 +246,6 @@ class Protocol(GufeTokenizable):
         -------
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
-
         """
         return self.result_cls(**self._gather(protocol_dag_results))
 
