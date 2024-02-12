@@ -11,6 +11,11 @@ from .transformations import Transformation
 
 
 class AlchemicalNetwork(GufeTokenizable):
+    _edges: frozenset[Transformation]
+    _nodes: frozenset[ChemicalSystem]
+    _name: Optional[str]
+    _graph: Optional[nx.MultiDiGraph]  # lazily created and cached
+
     """A network with all the information needed for a simulation campaign.
 
     Nodes are :class:`.ChemicalSystem` instances and edges are
@@ -30,9 +35,7 @@ class AlchemicalNetwork(GufeTokenizable):
         nodes: Optional[Iterable[ChemicalSystem]] = None,
         name: Optional[str] = None,
     ):
-        self._edges: frozenset[Transformation] = frozenset(edges) if edges else frozenset()
-        self._nodes: frozenset[ChemicalSystem]
-
+        self._edges = frozenset(edges) if edges else frozenset()
         self._name = name
 
         # possible to get more nodes via edges above,
@@ -51,7 +54,7 @@ class AlchemicalNetwork(GufeTokenizable):
         self._graph = None
 
     @staticmethod
-    def _generate_graph(edges, nodes):
+    def _generate_graph(edges, nodes) -> nx.MultiDiGraph:
         g = nx.MultiDiGraph()
 
         for transformation in edges:
