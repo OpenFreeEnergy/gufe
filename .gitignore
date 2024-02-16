@@ -1,3 +1,5 @@
+docs/generated/*
+
 # custom ignores
 .xxrun
 .idea/
