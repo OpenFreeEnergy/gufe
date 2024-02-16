@@ -1,12 +1,13 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
-import pytest
 import io
 import pathlib
 
-from gufe.transformations import Transformation, NonTransformation
+import pytest
+
 from gufe.protocols.protocoldag import execute_DAG
+from gufe.transformations import NonTransformation, Transformation
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -24,8 +25,7 @@ def absolute_transformation(solvated_ligand, solvated_complex):
 
 @pytest.fixture
 def complex_equilibrium(solvated_complex):
-    return NonTransformation(solvated_complex,
-                             protocol=DummyProtocol(settings=DummyProtocol.default_settings()))
+    return NonTransformation(solvated_complex, protocol=DummyProtocol(settings=DummyProtocol.default_settings()))
 
 
 class TestTransformation(GufeTokenizableTestsMixin):
@@ -51,12 +51,12 @@ class TestTransformation(GufeTokenizableTestsMixin):
         protocoldag = tnf.create()
 
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
 
-            scratch = pathlib.Path('scratch')
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
-    
+
             protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
 
         protocolresult = tnf.gather([protocoldagresult])
@@ -64,8 +64,8 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert isinstance(protocolresult, DummyProtocolResult)
 
         assert len(protocolresult.data) == 2
-        assert 'logs' in protocolresult.data
-        assert 'key_results' in protocolresult.data
+        assert "logs" in protocolresult.data
+        assert "key_results" in protocolresult.data
 
     def test_protocol_extend(self, absolute_transformation, tmpdir):
         tnf = absolute_transformation
@@ -73,12 +73,12 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert isinstance(tnf.protocol, DummyProtocol)
 
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
 
-            scratch = pathlib.Path('scratch')
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
-    
+
             protocoldag = tnf.create()
             protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
 
@@ -94,8 +94,9 @@ class TestTransformation(GufeTokenizableTestsMixin):
     def test_equality(self, absolute_transformation, solvated_ligand, solvated_complex):
 
         opposite = Transformation(
-            solvated_complex, solvated_ligand,
-            protocol=DummyProtocol(settings=DummyProtocol.default_settings())
+            solvated_complex,
+            solvated_ligand,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         )
         assert absolute_transformation != opposite
 
@@ -148,10 +149,10 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         protocoldag = ntnf.create()
 
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
 
-            scratch = pathlib.Path('scratch')
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
             protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
@@ -161,8 +162,8 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert isinstance(protocolresult, DummyProtocolResult)
 
         assert len(protocolresult.data) == 2
-        assert 'logs' in protocolresult.data
-        assert 'key_results' in protocolresult.data
+        assert "logs" in protocolresult.data
+        assert "key_results" in protocolresult.data
 
     def test_protocol_extend(self, complex_equilibrium, tmpdir):
         ntnf = complex_equilibrium
@@ -170,10 +171,10 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert isinstance(ntnf.protocol, DummyProtocol)
 
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
 
-            scratch = pathlib.Path('scratch')
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
             protocoldag = ntnf.create()
@@ -191,17 +192,17 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
     def test_equality(self, complex_equilibrium, solvated_ligand, solvated_complex):
         s = DummyProtocol.default_settings()
         s.n_repeats = 4031
-        different_protocol_settings = NonTransformation(
-            solvated_complex, protocol=DummyProtocol(settings=s)
-        )
+        different_protocol_settings = NonTransformation(solvated_complex, protocol=DummyProtocol(settings=s))
         assert complex_equilibrium != different_protocol_settings
 
         identical = NonTransformation(
-            solvated_complex, protocol=DummyProtocol(settings=DummyProtocol.default_settings())
+            solvated_complex,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         )
         assert complex_equilibrium == identical
 
         different_system = NonTransformation(
-            solvated_ligand, protocol=DummyProtocol(settings=DummyProtocol.default_settings())
+            solvated_ligand,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         )
         assert complex_equilibrium != different_system

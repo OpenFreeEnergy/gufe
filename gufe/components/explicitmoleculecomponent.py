@@ -1,13 +1,13 @@
 import json
-import numpy as np
 import warnings
-from rdkit import Chem
 from typing import Optional
 
-from .component import Component
+import numpy as np
+from rdkit import Chem
 
 # typing
 from ..custom_typing import RDKitMol
+from .component import Component
 
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
@@ -26,10 +26,7 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
         pass
 
     if name and rdkit_name and rdkit_name != name:
-        warnings.warn(
-            f"Component being renamed from {rdkit_name}"
-            f"to {name}."
-        )
+        warnings.warn(f"Component being renamed from {rdkit_name}" f"to {name}.")
     elif name == "":
         name = rdkit_name
 
@@ -51,31 +48,30 @@ def _check_partial_charges(mol: RDKitMol) -> None:
       * If partial charges are found.
       * If the partial charges are near 0 for all atoms.
     """
-    if 'atom.dprop.PartialCharge' not in mol.GetPropNames():
+    if "atom.dprop.PartialCharge" not in mol.GetPropNames():
         return
 
-    p_chgs = np.array(
-        mol.GetProp('atom.dprop.PartialCharge').split(), dtype=float
-    )
+    p_chgs = np.array(mol.GetProp("atom.dprop.PartialCharge").split(), dtype=float)
 
     if len(p_chgs) != mol.GetNumAtoms():
-        errmsg = (f"Incorrect number of partial charges: {len(p_chgs)} "
-                  f" were provided for {mol.GetNumAtoms()} atoms")
+        errmsg = f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
         raise ValueError(errmsg)
 
     if (sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
-        errmsg = (f"Sum of partial charges {sum(p_chgs)} differs from "
-                  f"RDKit formal charge {Chem.GetFormalCharge(mol)}")
+        errmsg = (
+            f"Sum of partial charges {sum(p_chgs)} differs from " f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
+        )
         raise ValueError(errmsg)
 
     if np.all(np.isclose(p_chgs, 0.0)):
-        wmsg = (f"Partial charges provided all equal to "
-                "zero. These may be ignored by some Protocols.")
+        wmsg = f"Partial charges provided all equal to " "zero. These may be ignored by some Protocols."
         warnings.warn(wmsg)
     else:
-        wmsg = ("Partial charges have been provided, these will "
-                "preferentially be used instead of generating new "
-                "partial charges")
+        wmsg = (
+            "Partial charges have been provided, these will "
+            "preferentially be used instead of generating new "
+            "partial charges"
+        )
         warnings.warn(wmsg)
 
 
@@ -86,6 +82,7 @@ class ExplicitMoleculeComponent(Component):
     representations. Specific file formats, such as SDF for small molecules
     or PDB for proteins, should be implemented in subclasses.
     """
+
     _rdkit: Chem.Mol
     _name: str
 
@@ -98,14 +95,13 @@ class ExplicitMoleculeComponent(Component):
 
         n_confs = len(conformers)
         if n_confs > 1:
-            warnings.warn(
-                f"Molecule provided with {n_confs} conformers. "
-                f"Only the first will be used."
-            )
+            warnings.warn(f"Molecule provided with {n_confs} conformers. " f"Only the first will be used.")
 
         if not any(atom.GetAtomicNum() == 1 for atom in rdkit.GetAtoms()):
-            warnings.warn("Molecule doesn't have any hydrogen atoms present. "
-                          "If this is unexpected, consider loading the molecule with `removeHs=False`")
+            warnings.warn(
+                "Molecule doesn't have any hydrogen atoms present. "
+                "If this is unexpected, consider loading the molecule with `removeHs=False`",
+            )
 
         self._rdkit = rdkit
         self._smiles: Optional[str] = None

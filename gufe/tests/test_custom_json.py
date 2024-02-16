@@ -8,21 +8,21 @@ import pathlib
 
 import numpy as np
 import openff.units
-from openff.units import unit
 import pytest
 from numpy import testing as npt
+from openff.units import unit
 
+from gufe import tokenization
 from gufe.custom_codecs import (
     BYTES_CODEC,
-    NUMPY_CODEC,
     NPY_DTYPE_CODEC,
+    NUMPY_CODEC,
     OPENFF_QUANTITY_CODEC,
     OPENFF_UNIT_CODEC,
     PATH_CODEC,
     SETTINGS_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
-from gufe import tokenization
 from gufe.settings import models
 
 
@@ -47,14 +47,14 @@ class TestJSONSerializerDeserializer:
         assert len(serialization.codecs) == 1
 
 
-@pytest.mark.parametrize('obj', [
-    np.array([[1.0, 0.0], [2.0, 3.2]]),
-    np.float32(1.1)
-])
-@pytest.mark.parametrize('codecs', [
-    [BYTES_CODEC, NUMPY_CODEC, NPY_DTYPE_CODEC],
-    [NPY_DTYPE_CODEC, BYTES_CODEC, NUMPY_CODEC],
-])
+@pytest.mark.parametrize("obj", [np.array([[1.0, 0.0], [2.0, 3.2]]), np.float32(1.1)])
+@pytest.mark.parametrize(
+    "codecs",
+    [
+        [BYTES_CODEC, NUMPY_CODEC, NPY_DTYPE_CODEC],
+        [NPY_DTYPE_CODEC, BYTES_CODEC, NUMPY_CODEC],
+    ],
+)
 def test_numpy_codec_order_roundtrip(obj, codecs):
     serialization = JSONSerializerDeserializer(codecs)
     serialized = serialization.serializer(obj)
@@ -75,15 +75,15 @@ class CustomJSONCodingTest:
     """
 
     def test_default(self):
-        for (obj, dct) in zip(self.objs, self.dcts):
+        for obj, dct in zip(self.objs, self.dcts):
             assert self.codec.default(obj) == dct
 
     def test_object_hook(self):
-        for (obj, dct) in zip(self.objs, self.dcts):
+        for obj, dct in zip(self.objs, self.dcts):
             assert self.codec.object_hook(dct) == obj
 
     def _test_round_trip(self, encoder, decoder):
-        for (obj, dct) in zip(self.objs, self.dcts):
+        for obj, dct in zip(self.objs, self.dcts):
             json_str = json.dumps(obj, cls=encoder)
             reconstructed = json.loads(json_str, cls=decoder)
             assert reconstructed == obj
@@ -106,9 +106,16 @@ class CustomJSONCodingTest:
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = NUMPY_CODEC
-        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0]),
-                     np.array([1.0, 2.0, 3.0], dtype=np.float32)]
-        shapes = [[2, 2], [2,], [3,]]
+        self.objs = [np.array([[1.0, 0.0], [2.0, 3.2]]), np.array([1, 0]), np.array([1.0, 2.0, 3.0], dtype=np.float32)]
+        shapes = [
+            [2, 2],
+            [
+                2,
+            ],
+            [
+                3,
+            ],
+        ]
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
         self.dcts = [
@@ -125,13 +132,13 @@ class TestNumpyCoding(CustomJSONCodingTest):
 
     def test_object_hook(self):
         # to get custom equality testing for numpy
-        for (obj, dct) in zip(self.objs, self.dcts):
+        for obj, dct in zip(self.objs, self.dcts):
             reconstructed = self.codec.object_hook(dct)
             npt.assert_array_equal(reconstructed, obj)
 
     def test_round_trip(self):
         encoder, decoder = custom_json_factory([self.codec, BYTES_CODEC])
-        for (obj, dct) in zip(self.objs, self.dcts):
+        for obj, dct in zip(self.objs, self.dcts):
             json_str = json.dumps(obj, cls=encoder)
             reconstructed = json.loads(json_str, cls=decoder)
             npt.assert_array_equal(reconstructed, obj)
@@ -146,15 +153,19 @@ class TestNumpyGenericCodec(TestNumpyCoding):
         # Note that np.float64 is treated as a float by the
         # default json encode (and so returns a float not a numpy
         # object).
-        self.objs = [np.bool_(True), np.float16(1.0), np.float32(1.0),
-                     np.complex128(1.0),
-                     np.clongdouble(1.0), np.uint64(1)]
+        self.objs = [
+            np.bool_(True),
+            np.float16(1.0),
+            np.float32(1.0),
+            np.complex128(1.0),
+            np.clongdouble(1.0),
+            np.uint64(1),
+        ]
         dtypes = [str(a.dtype) for a in self.objs]
         byte_reps = [a.tobytes() for a in self.objs]
         # Overly complicated extraction of the class name
         # to deal with the bool_ -> bool dtype class name problem
-        classes = [str(a.__class__).split("'")[1].split('.')[1]
-                   for a in self.objs]
+        classes = [str(a.__class__).split("'")[1].split(".")[1] for a in self.objs]
         self.dcts = [
             {
                 ":is_custom:": True,
@@ -179,7 +190,7 @@ class TestPathCodec(CustomJSONCodingTest):
                 "__class__": "PosixPath",
                 "__module__": "pathlib",
                 "path": "foo/bar",
-            }
+            },
         ]
 
 
@@ -220,24 +231,28 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     ],
                     "small_molecule_forcefield": "openff-2.0.0",
                     "nonbonded_method": "PME",
-                    "nonbonded_cutoff": {':is_custom:': True,
-                                         'magnitude': 1.0,
-                                         'pint_unit_registry': 'openff_units',
-                                         'unit': 'nanometer'},
+                    "nonbonded_cutoff": {
+                        ":is_custom:": True,
+                        "magnitude": 1.0,
+                        "pint_unit_registry": "openff_units",
+                        "unit": "nanometer",
+                    },
                 },
                 "thermo_settings": {
                     "__class__": "ThermoSettings",
                     "__module__": "gufe.settings.models",
                     ":is_custom:": True,
-                    "temperature": {":is_custom:": True,
-                                    "magnitude": 300.0,
-                                    "pint_unit_registry": "openff_units",
-                                    "unit": "kelvin"},
+                    "temperature": {
+                        ":is_custom:": True,
+                        "magnitude": 300.0,
+                        "pint_unit_registry": "openff_units",
+                        "unit": "kelvin",
+                    },
                     "pressure": None,
                     "ph": None,
                     "redox_potential": None,
                 },
-            }
+            },
         ]
         self.required_codecs = [
             self.codec,
@@ -274,9 +289,7 @@ class TestOpenFFQuantityCodec(CustomJSONCodingTest):
 
 
 def test_openff_quantity_array_roundtrip():
-    thing = unit.Quantity.from_list([
-        (i + 1.0)*unit.kelvin for i in range(10)
-    ])
+    thing = unit.Quantity.from_list([(i + 1.0) * unit.kelvin for i in range(10)])
 
     dumped = json.dumps(thing, cls=tokenization.JSON_HANDLER.encoder)
 
@@ -297,5 +310,5 @@ class TestOpenFFUnitCodec(CustomJSONCodingTest):
                 ":is_custom:": True,
                 "pint_unit_registry": "openff_units",
                 "unit_name": "unified_atomic_mass_unit",
-            }
+            },
         ]

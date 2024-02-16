@@ -208,7 +208,7 @@ do this duplication; see :ref:`gufe-memory-deduplication` for details.
 .. Using JSON codecs outside of JSON
 .. ---------------------------------
 
-.. In a custom recursive storage scheme, 
+.. In a custom recursive storage scheme,
 
 .. TODO: DWHS wants to write something here that describes how to use the
    codecs in your own non-JSON storage scheme. But this is complicated

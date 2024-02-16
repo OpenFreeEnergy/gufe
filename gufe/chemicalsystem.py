@@ -4,8 +4,8 @@
 from collections import abc
 from typing import Optional
 
-from .tokenization import GufeTokenizable
 from .components import Component
+from .tokenization import GufeTokenizable
 
 
 class ChemicalSystem(GufeTokenizable, abc.Mapping):
@@ -14,14 +14,14 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         components: dict[str, Component],
         name: Optional[str] = "",
     ):
-        """A combination of Components that form a system
+        r"""A combination of Components that form a system
 
         Containing a combination of :class:`.SmallMoleculeComponent`,
         :class:`.SolventComponent` and :class:`.ProteinComponent`, this object
         typically represents all the molecules in a simulation box.
 
         Used as a node for an :class:`.AlchemicalNetwork`.
-        
+
         Parameters
         ----------
         components
@@ -40,24 +40,18 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         self._name = name
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(name={self.name}, components={self.components})"
-        )
+        return f"{self.__class__.__name__}(name={self.name}, components={self.components})"
 
     def _to_dict(self):
         return {
-            "components": {
-                key: value for key, value in sorted(self.components.items())
-            },
+            "components": {key: value for key, value in sorted(self.components.items())},
             "name": self.name,
         }
 
     @classmethod
     def _from_dict(cls, d):
         return cls(
-            components={
-                key: value for key, value in d["components"].items()
-            },
+            components={key: value for key, value in d["components"].items()},
             name=d["name"],
         )
 
@@ -86,7 +80,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     def total_charge(self):
         """Formal charge for the ChemicalSystem."""
         # This might evaluate the property twice?
-        #return sum(component.total_charge
+        # return sum(component.total_charge
         #           for component in self._components.values()
         #           if component.total_charge is not None)
         total_charge = 0

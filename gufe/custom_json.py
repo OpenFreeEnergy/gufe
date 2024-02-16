@@ -5,10 +5,11 @@
 
 import functools
 import json
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+from collections.abc import Iterable
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 
-class JSONCodec(object):
+class JSONCodec:
     """Custom JSON encoding and decoding for non-default types.
 
     Parameters
@@ -32,13 +33,14 @@ class JSONCodec(object):
         by this decoder. Default behavior assumes usage of the default
         ``is_my_obj``.
     """
+
     def __init__(
         self,
         cls: Union[type, None],
-        to_dict: Callable[[Any], Dict],
-        from_dict: Callable[[Dict], Any],
+        to_dict: Callable[[Any], dict],
+        from_dict: Callable[[dict], Any],
         is_my_obj: Optional[Callable[[Any], bool]] = None,
-        is_my_dict=None
+        is_my_dict=None,
     ):
         if is_my_obj is None:
             is_my_obj = self._is_my_obj
@@ -53,7 +55,7 @@ class JSONCodec(object):
         self.is_my_dict = is_my_dict
 
     def _is_my_dict(self, dct: dict) -> bool:
-        expected = ['__class__', '__module__', ':is_custom:']
+        expected = ["__class__", "__module__", ":is_custom:"]
         is_custom = all(exp in dct for exp in expected)
         return (
             is_custom
@@ -73,23 +75,21 @@ class JSONCodec(object):
                         "__class__": obj.__class__.__qualname__,
                         "__module__": obj.__class__.__module__,
                         ":is_custom:": True,
-                    }
+                    },
                 )
             # we let the object override __class__ and __module__ if needed
             dct.update(self.to_dict(obj))
             return dct
         return obj
 
-    def object_hook(self, dct: Dict) -> Any:
+    def object_hook(self, dct: dict) -> Any:
         if self.is_my_dict(dct):
             obj = self.from_dict(dct)
             return obj
         return dct
 
 
-def custom_json_factory(
-    coding_methods: Iterable[JSONCodec]
-) -> Tuple[Type[json.JSONEncoder], Type[json.JSONDecoder]]:
+def custom_json_factory(coding_methods: Iterable[JSONCodec]) -> tuple[type[json.JSONEncoder], type[json.JSONDecoder]]:
     """Create JSONEncoder/JSONDecoder for special types.
 
     Factory method. Dynamically creates classes that enable all the provided
@@ -107,6 +107,7 @@ def custom_json_factory(
         subclasses of JSONEncoder/JSONDecoder that use support the provided
         codecs
     """
+
     class CustomJSONEncoder(json.JSONEncoder):
         def default(self, obj):
             for coding_method in coding_methods:
@@ -125,9 +126,7 @@ def custom_json_factory(
         def __init__(self, *args, **kwargs):
             # technically, JSONDecoder doesn't come with an object_hook
             # method, which is why we pass it to super here
-            super(CustomJSONDecoder, self).__init__(
-                object_hook=self.object_hook, *args, **kwargs
-            )
+            super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
         def object_hook(self, dct):
             for coding_method in coding_methods:
@@ -144,8 +143,8 @@ def custom_json_factory(
     return (CustomJSONEncoder, CustomJSONDecoder)
 
 
-class JSONSerializerDeserializer(object):
-    """
+class JSONSerializerDeserializer:
+    r"""
     Tools to serialize and deserialize objects as JSON.
 
     This wrapper object is necessary so that we can register new codecs
@@ -164,15 +163,15 @@ class JSONSerializerDeserializer(object):
     codecs : list of :class:`.JSONCodec`\s
         codecs supported
     """
+
     def __init__(self, codecs: Iterable[JSONCodec]):
-        self.codecs: List[JSONCodec] = []
+        self.codecs: list[JSONCodec] = []
         for codec in codecs:
             self.add_codec(codec)
 
         self.encoder, self.decoder = self._set_serialization()
 
-    def _set_serialization(self) -> Tuple[Type[json.JSONEncoder],
-                                          Type[json.JSONDecoder]]:
+    def _set_serialization(self) -> tuple[type[json.JSONEncoder], type[json.JSONDecoder]]:
         encoder, decoder = custom_json_factory(self.codecs)
         self._serializer = functools.partial(json.dumps, cls=encoder)
         self._deserializer = functools.partial(json.loads, cls=decoder)
@@ -193,7 +192,6 @@ class JSONSerializerDeserializer(object):
             self.codecs.append(codec)
 
         self.encoder, self.decoder = self._set_serialization()
-
 
     def serializer(self, obj: Any) -> str:
         """Callable that dumps to JSON"""
