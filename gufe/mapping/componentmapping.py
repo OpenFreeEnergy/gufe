@@ -11,6 +11,7 @@ class ComponentMapping(GufeTokenizable, abc.ABC):
 
     For components that are atom-based is specialised to :class:`.AtomMapping`
     """
+
     _componentA: gufe.Component
     _componentB: gufe.Component
 

@@ -1,18 +1,16 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import abc
+import dataclasses
+import glob
 import hashlib
-import pathlib
-import shutil
 import io
 import os
-import glob
-from typing import Union, Tuple, ContextManager
-import dataclasses
+import pathlib
+import shutil
+from typing import ContextManager, Tuple, Union
 
-from ..errors import (
-    MissingExternalResourceError, ChangedExternalResourceError
-)
+from ..errors import ChangedExternalResourceError, MissingExternalResourceError
 
 
 @dataclasses.dataclass
@@ -31,6 +29,7 @@ class _ForceContext:
     Filelike objects can often be used with explicit open/close. This
     requires the returned byteslike to be consumed as a context manager.
     """
+
     def __init__(self, context):
         self._context = context
 

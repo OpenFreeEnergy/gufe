@@ -1,12 +1,13 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 import networkx as nx
-from .tokenization import GufeTokenizable
 
 from .chemicalsystem import ChemicalSystem
+from .tokenization import GufeTokenizable
 from .transformations import Transformation
 
 
@@ -29,6 +30,7 @@ class AlchemicalNetwork(GufeTokenizable):
       the individual chemical states.  :class:`.ChemicalSystem` objects from
       Transformation objects in edges will be automatically extracted
     """
+
     def __init__(
         self,
         edges: Optional[Iterable[Transformation]] = None,
@@ -45,11 +47,7 @@ class AlchemicalNetwork(GufeTokenizable):
         else:
             self._nodes = frozenset(nodes)
 
-        self._nodes = (
-            self._nodes
-            | frozenset(e.stateA for e in self._edges)
-            | frozenset(e.stateB for e in self._edges)
-        )
+        self._nodes = self._nodes | frozenset(e.stateA for e in self._edges) | frozenset(e.stateB for e in self._edges)
 
         self._graph = None
 
@@ -58,9 +56,7 @@ class AlchemicalNetwork(GufeTokenizable):
         g = nx.MultiDiGraph()
 
         for transformation in edges:
-            g.add_edge(
-                transformation.stateA, transformation.stateB, object=transformation
-            )
+            g.add_edge(transformation.stateA, transformation.stateB, object=transformation)
 
         g.add_nodes_from(nodes)
 
@@ -97,15 +93,11 @@ class AlchemicalNetwork(GufeTokenizable):
         return self._name
 
     def _to_dict(self) -> dict:
-        return {"nodes": sorted(self.nodes),
-                "edges": sorted(self.edges),
-                "name": self.name}
+        return {"nodes": sorted(self.nodes), "edges": sorted(self.edges), "name": self.name}
 
     @classmethod
     def _from_dict(cls, d: dict):
-        return cls(nodes=frozenset(d['nodes']),
-                   edges=frozenset(d['edges']),
-                   name=d.get('name'))
+        return cls(nodes=frozenset(d["nodes"]), edges=frozenset(d["edges"]), name=d.get("name"))
 
     @classmethod
     def _defaults(cls):

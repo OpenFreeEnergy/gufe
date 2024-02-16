@@ -6,14 +6,15 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Union
+from collections.abc import Iterable
+from typing import Any, Optional, Union
+
 from openff.units import Quantity
 
-from ..settings import Settings, SettingsBaseModel
-from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
-
+from ..settings import Settings, SettingsBaseModel
+from ..tokenization import GufeKey, GufeTokenizable
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
 
@@ -39,11 +40,11 @@ class ProtocolResult(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'data': self.data}
+        return {"data": self.data}
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls(**dct['data'])
+        return cls(**dct["data"])
 
     @property
     def data(self) -> dict[str, Any]:
@@ -56,12 +57,10 @@ class ProtocolResult(GufeTokenizable):
         return self._data
 
     @abc.abstractmethod
-    def get_estimate(self) -> Quantity:
-        ...
+    def get_estimate(self) -> Quantity: ...
 
     @abc.abstractmethod
-    def get_uncertainty(self) -> Quantity:
-        ...
+    def get_uncertainty(self) -> Quantity: ...
 
 
 class Protocol(GufeTokenizable):
@@ -79,6 +78,7 @@ class Protocol(GufeTokenizable):
     - `_gather`
     - `_default_settings`
     """
+
     _settings: Settings
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
@@ -108,7 +108,7 @@ class Protocol(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'settings': self.settings}
+        return {"settings": self.settings}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -179,9 +179,9 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
-        transformation_key: Optional[GufeKey] = None
+        transformation_key: Optional[GufeKey] = None,
     ) -> ProtocolDAG:
-        """Prepare a `ProtocolDAG` with all information required for execution.
+        r"""Prepare a `ProtocolDAG` with all information required for execution.
 
         A :class:`.ProtocolDAG` is composed of :class:`.ProtocolUnit` \s, with
         dependencies established between them. These form a directed, acyclic
@@ -228,12 +228,10 @@ class Protocol(GufeTokenizable):
                 extends=extends,
             ),
             transformation_key=transformation_key,
-            extends_key=extends.key if extends is not None else None
+            extends_key=extends.key if extends is not None else None,
         )
 
-    def gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> ProtocolResult:
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
         Parameters
@@ -250,9 +248,7 @@ class Protocol(GufeTokenizable):
         return self.result_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
-    def _gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> dict[str, Any]:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
         """Method to override in custom Protocol subclasses.
 
         This method should take any number of ``ProtocolDAGResult``s produced

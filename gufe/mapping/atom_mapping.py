@@ -2,10 +2,10 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from collections.abc import Mapping, Iterable
-
+from collections.abc import Iterable, Mapping
 
 import gufe
+
 from .componentmapping import ComponentMapping
 
 

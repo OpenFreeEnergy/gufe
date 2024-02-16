@@ -1,15 +1,16 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-from typing import Iterable, NamedTuple
-import pytest
 import importlib.resources
-import gufe
-from gufe.tests.test_protocol import DummyProtocol
-from gufe import SmallMoleculeComponent, LigandNetwork, LigandAtomMapping
+from collections.abc import Iterable
+from typing import NamedTuple
 
+import pytest
+from networkx import NetworkXError
 from rdkit import Chem
 
-from networkx import NetworkXError
+import gufe
+from gufe import LigandAtomMapping, LigandNetwork, SmallMoleculeComponent
+from gufe.tests.test_protocol import DummyProtocol
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -20,8 +21,10 @@ def mol_from_smiles(smi):
 
     return m
 
+
 class _NetworkTestContainer(NamedTuple):
     """Container to facilitate network testing"""
+
     network: LigandNetwork
     nodes: Iterable[SmallMoleculeComponent]
     edges: Iterable[LigandAtomMapping]
@@ -31,8 +34,8 @@ class _NetworkTestContainer(NamedTuple):
 
 @pytest.fixture
 def ligandnetwork_graphml():
-    with importlib.resources.path('gufe.tests.data', 'ligand_network.graphml') as file:
-        with open(file, 'r') as f:
+    with importlib.resources.path("gufe.tests.data", "ligand_network.graphml") as file:
+        with open(file) as f:
             yield f.read()
 
 
@@ -94,24 +97,28 @@ def singleton_node_network(mols, std_edges):
         n_edges=3,
     )
 
+
 @pytest.fixture
 def real_molecules_network(benzene, phenol, toluene):
     """Small network with full mappings"""
     # benzene to phenol
     bp_mapping = {i: i for i in range(10)}
-    bp_mapping.update({10: 12, 11:11})
+    bp_mapping.update({10: 12, 11: 11})
 
     # benzene to toluene
     bt_mapping = {i: i + 4 for i in range(10)}
     bt_mapping.update({10: 2, 11: 14})
 
-    network = gufe.LigandNetwork([
-        gufe.LigandAtomMapping(benzene, toluene, bt_mapping),
-        gufe.LigandAtomMapping(benzene, phenol, bp_mapping),
-    ])
+    network = gufe.LigandNetwork(
+        [
+            gufe.LigandAtomMapping(benzene, toluene, bt_mapping),
+            gufe.LigandAtomMapping(benzene, phenol, bp_mapping),
+        ],
+    )
     return network
 
-@pytest.fixture(params=['simple', 'doubled_edge', 'singleton_node'])
+
+@pytest.fixture(params=["simple", "doubled_edge", "singleton_node"])
 def network_container(
     request,
     simple_network,
@@ -120,9 +127,9 @@ def network_container(
 ):
     """Fixture to allow parameterization of the network test"""
     network_dct = {
-        'simple': simple_network,
-        'doubled_edge': doubled_edge_network,
-        'singleton_node': singleton_node_network,
+        "simple": simple_network,
+        "doubled_edge": doubled_edge_network,
+        "singleton_node": singleton_node_network,
     }
     return network_dct[request.param]
 
@@ -139,7 +146,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
     def test_node_type(self, network_container):
         n = network_container.network
 
-        assert all((isinstance(node, SmallMoleculeComponent) for node in n.nodes))
+        assert all(isinstance(node, SmallMoleculeComponent) for node in n.nodes)
 
     def test_graph(self, network_container):
         # The NetworkX graph that comes from the ``.graph`` property should
@@ -149,21 +156,19 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         assert set(graph.nodes) == set(network_container.nodes)
         assert len(graph.edges) == network_container.n_edges
         # extract the AtomMappings from the nx edges
-        mappings = [
-            atommapping for _, _, atommapping in graph.edges.data('object')
-        ]
+        mappings = [atommapping for _, _, atommapping in graph.edges.data("object")]
         assert set(mappings) == set(network_container.edges)
         # ensure LigandAtomMapping stored in nx edge is consistent with nx edge
-        for mol1, mol2, atommapping in graph.edges.data('object'):
+        for mol1, mol2, atommapping in graph.edges.data("object"):
             assert atommapping.componentA == mol1
             assert atommapping.componentB == mol2
 
     def test_graph_annotations(self, mols, std_edges):
         mol1, mol2, mol3 = mols
         edge12, edge23, edge13 = std_edges
-        annotated = edge12.with_annotations({'foo': 'bar'})
+        annotated = edge12.with_annotations({"foo": "bar"})
         network = LigandNetwork([annotated, edge23, edge13])
-        assert network.graph[mol1][mol2][0]['foo'] == 'bar'
+        assert network.graph[mol1][mol2][0]["foo"] == "bar"
 
     def test_graph_immutability(self, mols, network_container):
         # The NetworkX graph that comes from that ``.graph`` property should
@@ -284,7 +289,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
     def test_is_not_connected(self, singleton_node_network):
         assert not singleton_node_network.network.is_connected()
 
-    @pytest.mark.parametrize('with_cofactor', [True, False])
+    @pytest.mark.parametrize("with_cofactor", [True, False])
     def test_to_rbfe_alchemical_network(
         self,
         real_molecules_network,
@@ -296,7 +301,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         # obviously, this particular set of ligands with this particular
         # protein makes no sense, but we should still be able to set it up
         if with_cofactor:
-            others = {'cofactor': request.getfixturevalue('styrene')}
+            others = {"cofactor": request.getfixturevalue("styrene")}
         else:
             others = {}
 
@@ -305,16 +310,16 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             solvent=solv_comp,
             protein=prot_comp,
             protocol=protocol,
-            **others
+            **others,
         )
 
         expected_names = {
-            'easy_rbfe_benzene_solvent_toluene_solvent',
-            'easy_rbfe_benzene_complex_toluene_complex',
-            'easy_rbfe_benzene_solvent_phenol_solvent',
-            'easy_rbfe_benzene_complex_phenol_complex',
+            "easy_rbfe_benzene_solvent_toluene_solvent",
+            "easy_rbfe_benzene_complex_toluene_complex",
+            "easy_rbfe_benzene_solvent_phenol_solvent",
+            "easy_rbfe_benzene_complex_phenol_complex",
         }
-        names = set(edge.name for edge in rbfe.edges)
+        names = {edge.name for edge in rbfe.edges}
         assert names == expected_names
 
         assert len(rbfe.edges) == 2 * len(real_molecules_network.edges)
@@ -323,35 +328,29 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
             compsA = edge.stateA.components
             compsB = edge.stateB.components
-            if 'solvent' in edge.name:
-                labels = {'solvent', 'ligand'}
-            elif 'complex' in edge.name:
-                labels = {'solvent', 'ligand', 'protein'}
+            if "solvent" in edge.name:
+                labels = {"solvent", "ligand"}
+            elif "complex" in edge.name:
+                labels = {"solvent", "ligand", "protein"}
                 if with_cofactor:
-                    labels.add('cofactor')
+                    labels.add("cofactor")
             else:  # -no-cov-
-                raise RuntimeError("Something went weird in testing. Unable "
-                                   f"to get leg for edge {edge}")
+                raise RuntimeError("Something went weird in testing. Unable " f"to get leg for edge {edge}")
 
             assert set(compsA) == labels
             assert set(compsB) == labels
 
-            assert compsA['ligand'] != compsB['ligand']
-            assert compsA['ligand'].name == 'benzene'
-            assert compsA['solvent'] == compsB['solvent']
+            assert compsA["ligand"] != compsB["ligand"]
+            assert compsA["ligand"].name == "benzene"
+            assert compsA["solvent"] == compsB["solvent"]
             # for things that might not always exist, use .get
-            assert compsA.get('protein') == compsB.get('protein')
-            assert compsA.get('cofactor') == compsB.get('cofactor')
+            assert compsA.get("protein") == compsB.get("protein")
+            assert compsA.get("cofactor") == compsB.get("cofactor")
 
             assert isinstance(edge.mapping, gufe.ComponentMapping)
             assert edge.mapping in real_molecules_network.edges
 
-    def test_to_rbfe_alchemical_network_autoname_false(
-        self,
-        real_molecules_network,
-        prot_comp,
-        solv_comp
-    ):
+    def test_to_rbfe_alchemical_network_autoname_false(self, real_molecules_network, prot_comp, solv_comp):
         rbfe = real_molecules_network.to_rbfe_alchemical_network(
             solvent=solv_comp,
             protein=prot_comp,
@@ -363,12 +362,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             for sys in [edge.stateA, edge.stateB]:
                 assert sys.name == ""
 
-    def test_to_rbfe_alchemical_network_autoname_true(
-        self,
-        real_molecules_network,
-        prot_comp,
-        solv_comp
-    ):
+    def test_to_rbfe_alchemical_network_autoname_true(self, real_molecules_network, prot_comp, solv_comp):
         rbfe = real_molecules_network.to_rbfe_alchemical_network(
             solvent=solv_comp,
             protein=prot_comp,
@@ -377,33 +371,28 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             autoname_prefix="",
         )
         expected_names = {
-            'benzene_complex_toluene_complex',
-            'benzene_solvent_toluene_solvent',
-            'benzene_complex_phenol_complex',
-            'benzene_solvent_phenol_solvent',
+            "benzene_complex_toluene_complex",
+            "benzene_solvent_toluene_solvent",
+            "benzene_complex_phenol_complex",
+            "benzene_solvent_phenol_solvent",
         }
-        names = set(edge.name for edge in rbfe.edges)
+        names = {edge.name for edge in rbfe.edges}
         assert names == expected_names
 
     @pytest.mark.xfail  # method removed and on hold for now
-    def test_to_rhfe_alchemical_network(self, real_molecules_network,
-                                        solv_comp):
+    def test_to_rhfe_alchemical_network(self, real_molecules_network, solv_comp):
 
         others = {}
         protocol = DummyProtocol(DummyProtocol.default_settings())
-        rhfe = real_molecules_network.to_rhfe_alchemical_network(
-            solvent=solv_comp,
-            protocol=protocol,
-            **others
-        )
+        rhfe = real_molecules_network.to_rhfe_alchemical_network(solvent=solv_comp, protocol=protocol, **others)
 
         expected_names = {
-            'easy_rhfe_benzene_vacuum_toluene_vacuum',
-            'easy_rhfe_benzene_solvent_toluene_solvent',
-            'easy_rhfe_benzene_vacuum_phenol_vacuum',
-            'easy_rhfe_benzene_solvent_phenol_solvent',
+            "easy_rhfe_benzene_vacuum_toluene_vacuum",
+            "easy_rhfe_benzene_solvent_toluene_solvent",
+            "easy_rhfe_benzene_vacuum_phenol_vacuum",
+            "easy_rhfe_benzene_solvent_phenol_solvent",
         }
-        names = set(edge.name for edge in rhfe.edges)
+        names = {edge.name for edge in rhfe.edges}
         assert names == expected_names
 
         assert len(rhfe.edges) == 2 * len(real_molecules_network.edges)
@@ -413,25 +402,24 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             compsA = edge.stateA.components
             compsB = edge.stateB.components
 
-            if 'vacuum' in edge.name:
-                labels = {'ligand'}
-            elif 'solvent' in edge.name:
-                labels = {'ligand', 'solvent'}
+            if "vacuum" in edge.name:
+                labels = {"ligand"}
+            elif "solvent" in edge.name:
+                labels = {"ligand", "solvent"}
             else:  # -no-cov-
-                raise RuntimeError("Something went weird in testing. Unable "
-                                   f"to get leg for edge {edge}")
+                raise RuntimeError("Something went weird in testing. Unable " f"to get leg for edge {edge}")
 
             labels |= set(others)
 
             assert set(compsA) == labels
             assert set(compsB) == labels
 
-            assert compsA['ligand'] != compsB['ligand']
-            assert compsA['ligand'].name == 'benzene'
-            assert compsA.get('solvent') == compsB.get('solvent')
+            assert compsA["ligand"] != compsB["ligand"]
+            assert compsA["ligand"].name == "benzene"
+            assert compsA.get("solvent") == compsB.get("solvent")
 
-            assert list(edge.mapping) == ['ligand']
-            assert edge.mapping['ligand'] in real_molecules_network.edges
+            assert list(edge.mapping) == ["ligand"]
+            assert edge.mapping["ligand"] in real_molecules_network.edges
 
 
 def test_empty_ligand_network(mols):

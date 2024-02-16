@@ -1,9 +1,10 @@
-import pytest
-from gufe.molhashing import serialize_numpy, deserialize_numpy
 import numpy as np
+import pytest
+
+from gufe.molhashing import deserialize_numpy, serialize_numpy
 
 
-@pytest.mark.parametrize('dtype', ['float32', 'float64', 'int'])
+@pytest.mark.parametrize("dtype", ["float32", "float64", "int"])
 def test_numpy_serialization_cycle(dtype):
     arr = np.array([1, 2], dtype=dtype)
     ser = serialize_numpy(arr)

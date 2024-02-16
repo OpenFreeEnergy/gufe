@@ -25,7 +25,7 @@ Ligand network setup
 GUFE defines a basic API for the common case of performing alchemical
 transformations between small molecules, either for relative binding free
 energies of relative hydration free energies. This handles how mappings
-between different molecules are defined for alchemical transformations, 
+between different molecules are defined for alchemical transformations,
 by defining both the :class:`.LigandAtomMapping` object that contains the
 details of a specific mapping, and the :class:`.AtomMapper` abstract API for
 an object that creates the mappings.

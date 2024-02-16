@@ -6,14 +6,10 @@ json round trip, and physical unit testing belongs here.
 
 import json
 
-from openff.units import unit
 import pytest
+from openff.units import unit
 
-from gufe.settings.models import (
-    OpenMMSystemGeneratorFFSettings,
-    Settings,
-    ThermoSettings,
-)
+from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
 
 
 def test_model_schema():
@@ -45,11 +41,16 @@ def test_default_settings():
     my_settings.schema_json(indent=2)
 
 
-@pytest.mark.parametrize('value,good', [
-    ('parsnips', False),  # shouldn't be allowed
-    ('hbonds', True), ('hangles', True), ('allbonds', True),  # allowed options
-    ('HBonds', True),  # check case insensitivity
-])
+@pytest.mark.parametrize(
+    "value,good",
+    [
+        ("parsnips", False),  # shouldn't be allowed
+        ("hbonds", True),
+        ("hangles", True),
+        ("allbonds", True),  # allowed options
+        ("HBonds", True),  # check case insensitivity
+    ],
+)
 def test_invalid_constraint(value, good):
     if good:
         s = OpenMMSystemGeneratorFFSettings(constraints=value)

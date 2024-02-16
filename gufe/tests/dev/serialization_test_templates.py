@@ -4,7 +4,8 @@
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from gufe import SmallMoleculeComponent, LigandNetwork, LigandAtomMapping
+
+from gufe import LigandAtomMapping, LigandNetwork, SmallMoleculeComponent
 
 
 def mol_from_smiles(smiles: str) -> Chem.Mol:
