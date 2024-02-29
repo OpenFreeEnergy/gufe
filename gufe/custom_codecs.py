@@ -8,6 +8,7 @@ import pathlib
 
 import numpy as np
 from openff.units import DEFAULT_UNIT_REGISTRY
+from uuid import UUID
 
 import gufe
 from gufe.custom_json import JSONCodec
@@ -72,7 +73,6 @@ DATETIME_CODEC = JSONCodec(
     from_dict=lambda dct: datetime.datetime.fromisoformat(dct['isotime']),
 )
 
-
 # Note that this has inconsistent behaviour for some generic types
 # which end up being handled by the default JSON encoder/decoder.
 # The main example of this is np.float64 which will be turned into
@@ -136,4 +136,11 @@ OPENFF_UNIT_CODEC = JSONCodec(
     from_dict=lambda dct: DEFAULT_UNIT_REGISTRY(dct["unit_name"]).u,
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Unit),
     is_my_dict=is_openff_unit_dict,
+)
+
+
+UUID_CODEC = JSONCodec(
+    cls=UUID,
+    to_dict=lambda p: {"uuid": str(p)},
+    from_dict=lambda dct: UUID(dct["uuid"]),
 )
