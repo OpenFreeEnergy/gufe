@@ -301,6 +301,7 @@ class TestOpenFFUnitCodec(CustomJSONCodingTest):
             }
         ]
 
+
 class TestUUIDCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = UUID_CODEC
