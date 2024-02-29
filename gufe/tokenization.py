@@ -23,6 +23,7 @@ from gufe.custom_codecs import (
     OPENFF_UNIT_CODEC,
     PATH_CODEC,
     SETTINGS_CODEC,
+    UUID_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer
 
@@ -35,6 +36,7 @@ _default_json_codecs = [
     SETTINGS_CODEC,
     OPENFF_UNIT_CODEC,
     OPENFF_QUANTITY_CODEC,
+    UUID_CODEC,
 ]
 JSON_HANDLER = JSONSerializerDeserializer(_default_json_codecs)
 

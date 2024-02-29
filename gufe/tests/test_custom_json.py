@@ -11,7 +11,7 @@ import openff.units
 from openff.units import unit
 import pytest
 from numpy import testing as npt
-
+from uuid import uuid4
 from gufe.custom_codecs import (
     BYTES_CODEC,
     NUMPY_CODEC,
@@ -20,6 +20,7 @@ from gufe.custom_codecs import (
     OPENFF_UNIT_CODEC,
     PATH_CODEC,
     SETTINGS_CODEC,
+    UUID_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
 from gufe import tokenization
@@ -297,5 +298,20 @@ class TestOpenFFUnitCodec(CustomJSONCodingTest):
                 ":is_custom:": True,
                 "pint_unit_registry": "openff_units",
                 "unit_name": "unified_atomic_mass_unit",
+            }
+        ]
+
+class TestUUIDCodec(CustomJSONCodingTest):
+    def setup_method(self):
+        self.codec = UUID_CODEC
+        self.objs = [
+            uuid4()
+        ]
+        self.dcts = [
+            {
+                ":is_custom:": True,
+                "__class__": "UUID",
+                "__module__": "uuid",
+                "uuid": f"{str(self.objs[0])}",
             }
         ]
