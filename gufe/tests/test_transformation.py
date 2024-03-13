@@ -5,6 +5,7 @@ import pytest
 import io
 import pathlib
 
+import gufe
 from gufe.transformations import Transformation, NonTransformation
 from gufe.protocols.protocoldag import execute_DAG
 
@@ -122,6 +123,19 @@ class TestTransformation(GufeTokenizableTestsMixin):
         string.seek(0)
         recreated = Transformation.load(string)
         assert absolute_transformation == recreated
+
+    def test_deprecation_warning_on_dict_mapping(self, solvated_ligand, solvated_complex):
+        lig = solvated_complex.components['ligand']
+        # this mapping makes no sense, but it'll trigger the dep warning we want
+        mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
+
+        with pytest.warns(DeprecationWarning,
+                          match="mapping input as a dict is deprecated"):
+            Transformation(
+                solvated_complex, solvated_ligand,
+                protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+                mapping={'ligand': mapping},
+            )
 
 
 class TestNonTransformation(GufeTokenizableTestsMixin):

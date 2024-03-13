@@ -8,6 +8,7 @@
 import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
+import warnings
 
 from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeTokenizable, GufeKey
@@ -176,7 +177,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
         transformation_key: Optional[GufeKey] = None
@@ -219,6 +220,12 @@ class Protocol(GufeTokenizable):
         ProtocolDAG
             A directed, acyclic graph that can be executed by a `Scheduler`.
         """
+        if isinstance(mapping, dict):
+            warnings.warn(("mapping input as a dict is deprecated, "
+                           "instead use either a single Mapping or list"),
+                          DeprecationWarning)
+            mapping = list(mapping.values())
+
         return ProtocolDAG(
             name=name,
             protocol_units=self._create(
