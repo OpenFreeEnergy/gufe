@@ -3,6 +3,7 @@
 
 from typing import Optional, Iterable, Union
 import json
+import warnings
 
 from ..tokenization import GufeTokenizable, JSON_HANDLER
 from ..utils import ensure_filelike
@@ -24,7 +25,7 @@ class Transformation(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
         name: Optional[str] = None,
     ):
         """Two chemical states with a method for estimating free energy difference
@@ -47,6 +48,12 @@ class Transformation(GufeTokenizable):
         name : str, optional
            a human-readable tag for this transformation
         """
+        if isinstance(mapping, dict):
+            warnings.warn(("mapping input as a dict is deprecated, "
+                           "instead use either a single Mapping or list"),
+                          DeprecationWarning)
+            mapping = list(mapping.values())
+
         self._stateA = stateA
         self._stateB = stateB
         self._mapping = mapping
