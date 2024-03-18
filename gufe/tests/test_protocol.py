@@ -333,6 +333,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         assert protocolresult.get_estimate() == 95500.0
 
+    def test_deprecation_warning_on_dict_mapping(self, instance, vacuum_ligand, solvated_ligand):
+        lig = solvated_ligand.components['ligand']
+        mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
+
+        with pytest.warns(DeprecationWarning,
+                          match="mapping input as a dict is deprecated"):
+            instance.create(stateA=solvated_ligand, stateB=vacuum_ligand,
+                            mapping={'ligand': mapping})
+
     class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
         
         def test_protocol_units(self, instance):

@@ -7,6 +7,7 @@ Welcome to gufe's documentation!
 
    guide
    api
+   CHANGELOG
 
 
 Indices and tables
