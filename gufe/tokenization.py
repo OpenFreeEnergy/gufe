@@ -718,46 +718,6 @@ def gufe_to_digraph(gufe_obj):
 
     return graph
 
-def gufe_objects_from_shallow_dict(
-    obj: Union[List, Dict, GufeTokenizable]
-) -> List[GufeTokenizable]:
-    """Find GufeTokenizables within a shallow dict.
-
-    This function recursively looks through the list/dict structures encoding
-    GufeTokenizables and returns list of all GufeTokenizables found
-    within those structures, which may be potentially nested.
-
-    Parameters
-    ----------
-    obj
-        The input data structure to recursively traverse. For the initial call
-        of this function, this should be the shallow dict of a GufeTokenizable.
-        Input of a GufeTokenizable will immediately return a base case.
-
-    Returns
-    -------
-    List[GufeTokenizable]
-        All GufeTokenizables found in the shallow dict representation of a
-        GufeTokenizable.
-
-    """
-    if is_gufe_obj(obj):
-        return [obj]
-
-    elif isinstance(obj, list):
-        return list(
-            chain.from_iterable([gufe_objects_from_shallow_dict(item) for item in obj])
-        )
-
-    elif isinstance(obj, dict):
-        return list(
-            chain.from_iterable(
-                [gufe_objects_from_shallow_dict(item) for item in obj.values()]
-            )
-        )
-
-    return []
-
 
 class KeyedChain(object):
     """Keyed chain representation of a GufeTokenizable.
