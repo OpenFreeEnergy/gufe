@@ -1,0 +1,358 @@
+import pytest
+from gufe.storage.stagingserialization import StagingPathSerialization
+
+from gufe.storage.stagingregistry import StagingPath
+from gufe.storage.storagemanager import StorageManager
+from gufe.storage.externalresource import MemoryStorage, FileStorage
+
+from gufe.tokenization import GufeTokenizable, from_dict
+from gufe.custom_json import JSONCodec
+
+import json
+import pathlib
+import shutil
+
+
+@pytest.fixture
+def storage_manager(tmp_path):
+    return StorageManager(
+        scratch_root=tmp_path / "working",
+        shared_root=MemoryStorage(),
+        permanent_root=MemoryStorage(),
+    )
+
+
+@pytest.fixture
+def shared_path(storage_manager):
+    label = storage_manager.make_label("dag", "unit", attempt=0)
+    path = storage_manager.shared_staging / label / "file.txt"
+    with open(path, mode='w') as f:
+        f.write("contents here")
+
+    storage_manager.shared_staging.transfer_staging_to_external()
+    return path
+
+
+@pytest.fixture
+def permanent_path(storage_manager):
+    label = storage_manager.make_label("dag", "unit", attempt=0)
+    path = storage_manager.permanent_staging / label / "file.txt"
+    with open(path, mode='w') as f:
+        f.write("contents here")
+
+    storage_manager.permanent_staging.transfer_staging_to_external()
+    return path
+
+
+@pytest.fixture
+def scratch_path(storage_manager):
+    scratch_dir = storage_manager._scratch_loc("dag", "unit", attempt=0)
+    path = scratch_dir / "file.txt"
+    return path
+
+
+@pytest.fixture
+def serialization_handler(storage_manager):
+    return StagingPathSerialization(storage_manager)
+
+
+class NewType:
+    # used in new codec test (putting as a nested class required fancier
+    # serialization approaches, easier to put it at module level)
+    # class where any instance is equivalent (carries no data)
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+
+
+
+class TestStagingPathSerialization:
+    @pytest.mark.parametrize('pathtype', ['scratch', 'shared', 'permanent'])
+    def test_round_trip(self, serialization_handler, pathtype, request):
+        # NB: scratch is a pathlib.Path, not a StagingPath. It is tested
+        # here to ensure round-trips as part of the overall user story for
+        # this, but it doesn't invoke the machinery of the
+        # StagingPathSerialization object
+        path = request.getfixturevalue(f"{pathtype}_path")
+        as_json = json.dumps(
+            path,
+            cls=serialization_handler.json_handler.encoder
+        )
+        reloaded = json.loads(
+            as_json,
+            cls=serialization_handler.json_handler.decoder
+        )
+
+        assert path == reloaded
+
+    @pytest.mark.parametrize('pathtype', ['shared', 'permanent'])
+    def test_to_dict(self, serialization_handler, pathtype, request):
+        path = request.getfixturevalue(f"{pathtype}_path")
+        dct = serialization_handler.to_dict(path)
+        assert dct == {
+            ':container:': pathtype,
+            ':label:': "dag/unit_attempt_0/file.txt",
+        }
+
+    # tests for specific user stories
+    @pytest.mark.parametrize('pathtype', ['shared', 'permanent'])
+    def test_reload_file_contents(self, pathtype, request):
+        # USER STORY: I am loading my results object, and I will want to use
+        # the associated files. This should be transparent, regardless of
+        # where the storage is located (e.g., not local storage). (This is
+        # actually a test of the staging tools, but we include it here for
+        # completeness of the user stories.)
+        path = request.getfixturevalue(f"{pathtype}_path")
+
+        # remove the file (remains in the MemoryStorage)
+        p = path.as_path()
+        assert p.exists()
+        p.unlink()
+        assert not p.exists()
+
+        # reload the file (NB: nothing special done here; download is
+        # transparent to user)
+        with open(path, mode='r') as f:
+            contents = f.read()
+
+        assert p.exists()
+        assert contents == "contents here"
+
+    @pytest.mark.parametrize('pathtype', ['shared', 'permanent'])
+    def test_load_results_object_file_not_downloaded(self,
+                                                     serialization_handler,
+                                                     pathtype, request):
+        # USER STORY: I am loading my results object, but I do not need the
+        # large stored files. I do not want to download them when they
+        # aren't needed.
+        path = request.getfixturevalue(f"{pathtype}_path")
+        # serialize the path object
+        json_str = json.dumps(path, cls=serialization_handler.encoder)
+
+        # delete the path from the directory
+        p = pathlib.Path(path)
+        assert p.exists()
+        p.unlink()
+        assert not p.exists()
+
+        # reload the serialized form of the object
+        reloaded = json.loads(json_str, cls=serialization_handler.decoder)
+
+        # check that the deserialized version has the path, but that the
+        # path does not exist on the filesystem
+        assert isinstance(reloaded, StagingPath)
+        assert reloaded.label == path.label
+        assert reloaded.path == path.path
+        assert not p.exists()
+        # NOTE: as soon as you call `__fspath__`, the file will download
+
+    @pytest.mark.parametrize('move', ['relative', 'absolute'])
+    def test_permanent_storage_moved(self, move, tmp_path, monkeypatch):
+        # USER STORY: My permanent storage was a directory on my file
+        # system, but I have moved that directory (with use cases of (a) I
+        # moved the absolute path; (b) it is at a different relative path
+        # with respect to my pwd).
+        monkeypatch.chdir(tmp_path)
+        old_manager = StorageManager(
+            scratch_root="old/scratch",
+            shared_root=FileStorage("old/shared"),
+            permanent_root=FileStorage("old/permanent")
+        )
+        old_path = old_manager.permanent_staging / "dag/unit/result.txt"
+        with open(old_path, mode='w') as f:
+            f.write("contents here")
+
+        old_manager.permanent_staging.transfer_staging_to_external()
+        perm_p = pathlib.Path(tmp_path / "old/permanent/dag/unit/result.txt")
+        assert perm_p.exists()
+
+        # serialize the path object
+        json_str = json.dumps(old_path, cls=old_manager.json_encoder)
+
+        # move the storage subdirectory; create a new, associated storage
+        # manager/serialization handler
+        if move == "relative":
+            # change to within t
+            monkeypatch.chdir(tmp_path / "old")
+            new_manager = StorageManager(
+                scratch_root="scratch",
+                shared_root=FileStorage("shared"),
+                permanent_root=FileStorage("permanent")
+            )
+            expected_path = tmp_path / "old/permanent/dag/unit/result.txt"
+        elif move == "absolute":
+            shutil.move(tmp_path / "old", tmp_path / "new")
+            new_manager = StorageManager(
+                scratch_root="new/scratch",
+                shared_root=FileStorage("new/shared"),
+                permanent_root=FileStorage("new/permanent")
+            )
+            expected_path = tmp_path / "new/permanent/dag/unit/result.txt"
+        else:  # -no-cov-
+            raise RuntimeWarning(f"Bad test parameter '{move}': should be "
+                                 "'relative' or 'absolute'")
+
+        # deserialize the path using the new serialization handler
+        reloaded = json.loads(json_str, cls=new_manager.json_decoder)
+
+        # ensure that the path exists and that the data can be reloaded
+        assert isinstance(reloaded, StagingPath)
+        assert reloaded.label == old_path.label
+        assert pathlib.Path(expected_path).exists()
+
+        with open(reloaded, mode='r') as f:
+            contents = f.read()
+
+        assert contents == "contents here"
+
+    def test_two_different_permanent_storages(self, tmp_path):
+        # USER STORY: I'm working with files from two different permanent
+        # storages. I need to be able to load from both in the same Python
+        # process.  (NOTE: this user story is primarily to prevent us from
+        # changing to a solution based on global/class vars to set context.)
+        manager1 = StorageManager(
+            scratch_root=tmp_path / "working1",
+            shared_root=MemoryStorage(),
+            permanent_root=MemoryStorage(),
+        )
+        manager2 = StorageManager(
+            scratch_root=tmp_path / "working2",
+            shared_root=MemoryStorage(),
+            permanent_root=MemoryStorage(),
+        )
+
+        path1 = manager1.permanent_staging / "file1.txt"
+        with open(path1, mode='w') as f:
+            f.write("contents 1")
+        manager1.permanent_staging.transfer_staging_to_external()
+
+        path2 = manager2.permanent_staging / "file2.txt"
+        with open(path2, mode='w') as f:
+            f.write("contents 2")
+        manager2.permanent_staging.transfer_staging_to_external()
+
+        # serialize the paths
+        json_str1 = json.dumps(path1, cls=manager1.json_encoder)
+        json_str2 = json.dumps(path2, cls=manager2.json_encoder)
+
+        # delete all staged files
+        assert path1.as_path().exists()
+        manager1.permanent_staging.cleanup()
+        assert not path1.as_path().exists()
+
+        assert path2.as_path().exists()
+        manager2.permanent_staging.cleanup()
+        assert not path2.as_path().exists()
+
+        # reload and check contents of both permanent files
+        reloaded1 = json.loads(json_str1, cls=manager1.json_decoder)
+        reloaded2 = json.loads(json_str2, cls=manager2.json_decoder)
+
+        assert isinstance(reloaded1, StagingPath)
+        assert reloaded1.label == path1.label
+        assert not reloaded1.as_path().exists()
+        with open(reloaded1, mode='r') as f:
+            assert f.read() == "contents 1"
+
+        assert isinstance(reloaded2, StagingPath)
+        assert reloaded2.label == path2.label
+        assert not reloaded2.as_path().exists()
+        with open(reloaded2, mode='r') as f:
+            assert f.read() == "contents 2"
+
+    def test_change_storage_backend(self, tmp_path):
+        # USER STORY: I have generated data in one backend, and I tranferred
+        # it to another backend. It needs to be readable from the other
+        # backend. (Use case: data is in long-term cloud storage that
+        # requires credentials, but I want to share some part of that data
+        # with someone else by transferring it to a disk.)
+        cloud_manager = StorageManager(
+            scratch_root=tmp_path / "cloud",
+            shared_root=MemoryStorage(),
+            permanent_root=MemoryStorage(),
+        )
+
+        local_manager = StorageManager(
+            scratch_root=tmp_path / "local_scratch",
+            shared_root=MemoryStorage(),
+            permanent_root=FileStorage(tmp_path / "local_perm"),
+        )
+
+        # TODO: maybe add some more safety asserts in here? that each step
+        # goes as expected, to better diagnose potential failures?
+        # load data into the cloud storage
+        with cloud_manager.running_dag("dag") as dag_ctx:
+            with dag_ctx.running_unit("dag", "unit", attempt=0) as ctx:
+                cloud_path = ctx.permanent / "data.txt"
+                with open(cloud_path, mode='w') as f:
+                    f.write("will store on cloud")
+
+        # serialize the cloud_path (assume it is saved somewhere)
+        serialized = json.dumps(cloud_path, cls=cloud_manager.json_encoder)
+
+        # transfer from cloud storage to the local_manager
+        for label in cloud_manager.permanent_root.iter_contents("dag/unit"):
+            with cloud_manager.permanent_root.load_stream(label) as f:
+                local_manager.permanent_root.store_bytes(label, f.read())
+
+        # ensure that we can reload objects from the local manager
+        local_path = json.loads(serialized, cls=local_manager.json_decoder)
+
+        assert local_path != cloud_path
+
+        with open(local_path, mode='r') as f:
+            contents = f.read()
+
+        assert contents == "will store on cloud"
+
+    def test_requires_new_codec(self, tmp_path):
+        # USER STORY: I am interfacing with a package that adds
+        # serialization types to the gufe JSON_HANDLER via an external
+        # JSONCodec. Maybe, in the worst case, the external codec gets added
+        # *after* I've created my serialization object. I need to be able to
+        # serialize those custom types. (NOTE: A better solution here is to
+        # have JSONCodecs also include some codec identifier in their
+        # `:is_custom:` field. That would allow us to dynamically add any
+        # missing codec, and only to do so when deserialization is needed.
+        # This is a change to the custom JSON stuff which hasn't been made
+        # yet. This might also allow faster deserialization by having
+        # :is_custom: map to something that can be used in a dispatch table.)
+        manager = StorageManager(
+            scratch_root=tmp_path / "working",
+            shared_root=MemoryStorage(),
+            permanent_root=MemoryStorage(),
+        )
+
+        # add a new custom codec for serialization
+        new_type_codec = JSONCodec(
+            cls=NewType,
+            to_dict=lambda obj: {},
+            from_dict=lambda dct: NewType(),
+        )
+
+        # Create a dict to serialize; this represents the output dict that
+        # might come from a unit_result object. NB: including the file stuff
+        # here is actually extraneous (unless implementation changes
+        # significantly).
+        with manager.running_dag("dag") as dag_ctx:
+            with manager.running_unit("dag", "unit", attempt=0) as context:
+                file = context.permanent / "dag/unit/file.txt"
+                with open(file, mode='w') as f:
+                    f.write("contents")
+
+        output_dict = {
+            'new_type_result': NewType(),
+            'file_result': file,
+        }
+
+        # before codec registration, error as not JSON serializable
+        with pytest.raises(TypeError, match="not JSON serializable"):
+            _ = json.dumps(output_dict, cls=manager.json_encoder)
+
+        # register codec and it works
+        from gufe.tokenization import JSON_HANDLER
+        JSON_HANDLER.add_codec(new_type_codec)
+        dumped = json.dumps(output_dict, cls=manager.json_encoder)
+
+        reloaded = json.loads(dumped, cls=manager.json_decoder)
+
+        assert reloaded == output_dict
