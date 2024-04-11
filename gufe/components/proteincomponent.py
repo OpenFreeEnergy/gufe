@@ -36,6 +36,14 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
 _BONDORDERS_RDKIT_TO_OPENMM = {
     v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
 }
+_BONDORDER_TO_ORDER = {
+    BondType.UNSPECIFIED: 1,  # assumption
+    BondType.SINGLE: 1,
+    BondType.DOUBLE: 2,
+    BondType.TRIPLE: 3,
+    BondType.AROMATIC: 1.5,
+}
+
 
 # builtin dict of strings to enum members, boy I hope this is stable
 _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
@@ -204,7 +212,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atom_name = a.GetMonomerInfo().GetName()
 
             connectivity = sum(
-                int(bond.GetBondType()) for bond in a.GetBonds()
+                _BONDORDER_TO_ORDER[bond.GetBondType()]
+                for bond in a.GetBonds()
             )
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
