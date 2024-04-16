@@ -41,7 +41,6 @@ _BONDORDER_TO_ORDER = {
     BondType.SINGLE: 1,
     BondType.DOUBLE: 2,
     BondType.TRIPLE: 3,
-    BondType.AROMATIC: 1.5,
 }
 
 
