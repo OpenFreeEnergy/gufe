@@ -5,6 +5,7 @@ import json
 import io
 import numpy as np
 from os import PathLike
+import string
 from typing import Union, Optional
 from collections import defaultdict
 
@@ -222,10 +223,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions:
-                if atom_name in positive_ions:
+                if atom_name.upper() in positive_ions:
                     fc = default_valence  # e.g. Sodium ions
-                elif atom_name in negative_ions:
+                elif atom_name.upper() in negative_ions:
                     fc = - default_valence  # e.g. Chlorine ions
+                elif atom_name.strip(string.digits).upper() in positive_ions:
+                    # catches cases like 'CL1' as name
+                    fc = default_valence
+                elif atom_name.strip(string.digits).upper() in negative_ions:
+                    fc = - default_valence
                 else:  # -no-cov-
                     resn = a.GetMonomerInfo().GetResidueName()
                     resind = int(a.GetMonomerInfo().GetResidueNumber())
