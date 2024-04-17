@@ -223,15 +223,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions:
-                if atom_name.upper() in positive_ions:
-                    fc = default_valence  # e.g. Sodium ions
-                elif atom_name.upper() in negative_ions:
-                    fc = - default_valence  # e.g. Chlorine ions
-                elif atom_name.strip(string.digits).upper() in positive_ions:
-                    # catches cases like 'CL1' as name
-                    fc = default_valence
+                # strip catches cases like 'CL1' as name
+                if atom_name.strip(string.digits).upper() in positive_ions:
+                    fc = default_valence   # e.g. Sodium ions
                 elif atom_name.strip(string.digits).upper() in negative_ions:
-                    fc = - default_valence
+                    fc = - default_valence  # e.g. Chlorine ions
                 else:  # -no-cov-
                     resn = a.GetMonomerInfo().GetResidueName()
                     resind = int(a.GetMonomerInfo().GetResidueNumber())
