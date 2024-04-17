@@ -59,7 +59,12 @@ _CHIRALITY_STR_TO_RDKIT = {
 
 
 negative_ions = ["F", "CL", "BR", "I"]
-positive_ions = ["NA", "MG", "CA", "ZN"]
+positive_ions = [
+    # +1
+    "LI", "NA", "K", "RB", "CS",
+    # +2
+    "BE", "MG", "CA", "SR", "BA", "RA", "ZN",
+]
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
