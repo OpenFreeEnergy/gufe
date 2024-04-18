@@ -29,7 +29,7 @@ class LigandNetworkPlanner(abc.ABC):
         self.scorer =  scorer
 
 
-    def __call__(self, *args, **kwargs)-> LigandNetwork:
+    def __call__(self, ligands: Iterable[SmallMoleculeComponent])-> LigandNetwork:
         return self.generate_ligand_network(*args, **kwargs)
 
     @abc.abstractmethod
