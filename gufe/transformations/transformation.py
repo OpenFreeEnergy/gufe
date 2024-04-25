@@ -18,6 +18,13 @@ class TransformationBase(GufeTokenizable):
     """Transformation base class.
 
     """
+    def __init__(
+        self,
+        protocol: Protocol,
+        name: Optional[str] = None,
+    ):
+        self._protocol = protocol
+        self._name = name
 
     @classmethod
     def _defaults(cls):
@@ -231,10 +238,6 @@ class NonTransformation(TransformationBase):
         self._system = system
         self._protocol = protocol
         self._name = name
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(system={self.system}, "\
-               f"protocol={self.protocol})"
 
     def __repr__(self):
         attrs = ['name', 'system', 'protocol']
