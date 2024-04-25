@@ -1,6 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+import abc
 from typing import Optional, Iterable, Union
 import json
 import warnings
@@ -13,87 +14,14 @@ from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import ComponentMapping
 
 
-class Transformation(GufeTokenizable):
-    _stateA: ChemicalSystem
-    _stateB: ChemicalSystem
-    _name: Optional[str]
-    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
-    _protocol: Protocol
+class TransformationBase(GufeTokenizable):
+    """Transformation base class.
 
-    def __init__(
-        self,
-        stateA: ChemicalSystem,
-        stateB: ChemicalSystem,
-        protocol: Protocol,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
-        name: Optional[str] = None,
-    ):
-        """Two chemical states with a method for estimating free energy difference
-
-        Connects two :class:`.ChemicalSystem` objects, with directionality,
-        and relates this to a :class:`.Protocol` which will provide an estimate of
-        the free energy difference of moving between these systems.
-        Used as an edge of an :class:`.AlchemicalNetwork`.
-
-        Parameters
-        ----------
-        stateA, stateB: ChemicalSystem
-           The start (A) and end (B) states of the transformation
-        protocol: Protocol
-           The method used to estimate the free energy difference between states
-           A and B
-        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
-           the details of any transformations between :class:`.Component` \s of
-           the two states
-        name : str, optional
-           a human-readable tag for this transformation
-        """
-        if isinstance(mapping, dict):
-            warnings.warn(("mapping input as a dict is deprecated, "
-                           "instead use either a single Mapping or list"),
-                          DeprecationWarning)
-            mapping = list(mapping.values())
-
-        self._stateA = stateA
-        self._stateB = stateB
-        self._mapping = mapping
-        self._name = name
-
-        self._protocol = protocol
+    """
 
     @classmethod
     def _defaults(cls):
         return super()._defaults()
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(stateA={self.stateA}, "\
-               f"stateB={self.stateB}, protocol={self.protocol})"
-
-    @property
-    def stateA(self) -> ChemicalSystem:
-        """The starting :class:`.ChemicalSystem` for the transformation."""
-        return self._stateA
-
-    @property
-    def stateB(self) -> ChemicalSystem:
-        """The ending :class:`.ChemicalSystem` for the transformation."""
-        return self._stateB
-
-    @property
-    def protocol(self) -> Protocol:
-        """The protocol used to perform the transformation.
-
-        This protocol estimates the free energy differences between ``stateA``
-        and ``stateB`` :class:`.ChemicalSystem` objects. It includes all details
-        needed to perform required simulations/calculations and encodes the
-        alchemical pathway used.
-        """
-        return self._protocol
-
-    @property
-    def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
-        """The mappings relevant for this Transformation"""
-        return self._mapping
 
     @property
     def name(self) -> Optional[str]:
@@ -106,19 +34,11 @@ class Transformation(GufeTokenizable):
         """
         return self._name
 
-    def _to_dict(self) -> dict:
-        return {
-            "stateA": self.stateA,
-            "stateB": self.stateB,
-            "protocol": self.protocol,
-            "mapping": self.mapping,
-            "name": self.name,
-        }
-
     @classmethod
     def _from_dict(cls, d: dict):
         return cls(**d)
 
+    @abc.abstractmethod
     def create(
         self,
         *,
@@ -128,14 +48,7 @@ class Transformation(GufeTokenizable):
         """
         Returns a ``ProtocolDAG`` executing this ``Transformation.protocol``.
         """
-        return self.protocol.create(
-            stateA=self.stateA,
-            stateB=self.stateB,
-            mapping=self.mapping,
-            extends=extends,
-            name=name,
-            transformation_key=self.key,
-        )
+        raise NotImplementedError
 
     def gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
@@ -189,8 +102,113 @@ class Transformation(GufeTokenizable):
         return cls.from_dict(dct)
 
 
-# we subclass `Transformation` here for typing simplicity
-class NonTransformation(Transformation):
+class Transformation(TransformationBase):
+    _stateA: ChemicalSystem
+    _stateB: ChemicalSystem
+    _name: Optional[str]
+    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
+    _protocol: Protocol
+
+    def __init__(
+        self,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        protocol: Protocol,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
+        name: Optional[str] = None,
+    ):
+        """Two chemical states with a method for estimating free energy difference
+
+        Connects two :class:`.ChemicalSystem` objects, with directionality,
+        and relates this to a :class:`.Protocol` which will provide an estimate of
+        the free energy difference of moving between these systems.
+        Used as an edge of an :class:`.AlchemicalNetwork`.
+
+        Parameters
+        ----------
+        stateA, stateB: ChemicalSystem
+           The start (A) and end (B) states of the transformation
+        protocol: Protocol
+           The method used to estimate the free energy difference between states
+           A and B
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
+           the details of any transformations between :class:`.Component` \s of
+           the two states
+        name : str, optional
+           a human-readable tag for this transformation
+        """
+        if isinstance(mapping, dict):
+            warnings.warn(("mapping input as a dict is deprecated, "
+                           "instead use either a single Mapping or list"),
+                          DeprecationWarning)
+            mapping = list(mapping.values())
+
+        self._stateA = stateA
+        self._stateB = stateB
+        self._protocol = protocol
+        self._mapping = mapping
+        self._name = name
+
+    def __repr__(self):
+        attrs = ['name', 'stateA', 'stateB', 'protocol', 'mapping']
+        content = ", ".join([f"{i}={getattr(self, i)}" for i in attrs])
+        return f"{self.__class__.__name__}({content})"
+
+    @property
+    def stateA(self) -> ChemicalSystem:
+        """The starting :class:`.ChemicalSystem` for the transformation."""
+        return self._stateA
+
+    @property
+    def stateB(self) -> ChemicalSystem:
+        """The ending :class:`.ChemicalSystem` for the transformation."""
+        return self._stateB
+
+    @property
+    def protocol(self) -> Protocol:
+        """The protocol used to perform the transformation.
+
+        This protocol estimates the free energy differences between ``stateA``
+        and ``stateB`` :class:`.ChemicalSystem` objects. It includes all details
+        needed to perform required simulations/calculations and encodes the
+        alchemical pathway used.
+        """
+        return self._protocol
+
+    @property
+    def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
+        """The mappings relevant for this Transformation"""
+        return self._mapping
+
+    def _to_dict(self) -> dict:
+        return {
+            "stateA": self.stateA,
+            "stateB": self.stateB,
+            "protocol": self.protocol,
+            "mapping": self.mapping,
+            "name": self.name,
+        }
+
+    def create(
+        self,
+        *,
+        extends: Optional[ProtocolDAGResult] = None,
+        name: Optional[str] = None,
+    ) -> ProtocolDAG:
+        """
+        Returns a ``ProtocolDAG`` executing this ``Transformation.protocol``.
+        """
+        return self.protocol.create(
+            stateA=self.stateA,
+            stateB=self.stateB,
+            mapping=self.mapping,
+            extends=extends,
+            name=name,
+            transformation_key=self.key,
+        )
+
+
+class NonTransformation(TransformationBase):
     """A non-alchemical edge of an alchemical network.
 
     A "transformation" that performs no transformation at all.
@@ -211,8 +229,17 @@ class NonTransformation(Transformation):
     ):
 
         self._system = system
-        self._name = name
         self._protocol = protocol
+        self._name = name
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(system={self.system}, "\
+               f"protocol={self.protocol})"
+
+    def __repr__(self):
+        attrs = ['name', 'system', 'protocol']
+        content = ", ".join([f"{i}={getattr(self, i)}" for i in attrs])
+        return f"{self.__class__.__name__}({content})"
 
     @property
     def stateA(self):
@@ -243,10 +270,6 @@ class NonTransformation(Transformation):
             "name": self.name,
         }
 
-    @classmethod
-    def _from_dict(cls, d: dict):
-        return cls(**d)
-
     def create(
         self,
         *,
@@ -254,7 +277,7 @@ class NonTransformation(Transformation):
         name: Optional[str] = None,
     ) -> ProtocolDAG:
         """
-        Returns a ``ProtocolDAG`` executing this ``Transformation.protocol``.
+        Returns a ``ProtocolDAG`` executing this ``NonTransformation.protocol``.
         """
         return self.protocol.create(
             stateA=self.system,
