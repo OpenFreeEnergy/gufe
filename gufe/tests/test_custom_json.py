@@ -219,7 +219,7 @@ class TestSettingsCodec(CustomJSONCodingTest):
                         "amber/tip3p_HFE_multivalent.xml",
                         "amber/phosaa10.xml",
                     ],
-                    "small_molecule_forcefield": "openff-2.0.0",
+                    "small_molecule_forcefield": "openff-2.1.1",
                     "nonbonded_method": "PME",
                     "nonbonded_cutoff": {':is_custom:': True,
                                          'magnitude': 1.0,
