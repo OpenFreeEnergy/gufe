@@ -14,12 +14,12 @@ defaults:
 
 jobs:
   condacheck:
-    runs-on: ${{ matrix.OS }}-latest
+    runs-on: ${{ matrix.OS }}
     name: "daily conda check"
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu', 'macos']
+        os: ['ubuntu-latest', 'macos-12']
         python-version:
           - "3.9"
           - "3.10"
