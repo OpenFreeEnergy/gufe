@@ -46,7 +46,9 @@ class DAGMixin:
 
     @staticmethod
     def _iterate_dag_order(graph):
-        return reversed(list(nx.lexicographical_topological_sort(graph, key=lambda pu: pu.key)))
+        return reversed(
+            list(nx.lexicographical_topological_sort(graph, key=lambda pu: pu.key))
+        )
 
     @property
     def name(self) -> Optional[str]:
