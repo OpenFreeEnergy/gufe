@@ -1,5 +1,7 @@
 name: "CI"
 on:
+  # Allow for workflows to be manuallly triggered
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -20,22 +22,24 @@ defaults:
 
 jobs:
   tests:
-    runs-on: ${{ matrix.OS }}-latest
+    runs-on: ${{ matrix.OS }}
     name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }}"
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu']
+        os: ['ubuntu-latest']
         pydantic-version: [">1"]
         python-version:
           - "3.9"
           - "3.10"
           - "3.11"  
         include:
-          - os: "macos"
+            # Note: pinned to macos-12
+            # see https://github.com/OpenFreeEnergy/openfe/issues/842
+          - os: "macos-12"
             python-version: "3.11"
             pydantic-version: ">1"
-          - os: "ubuntu"
+          - os: "ubuntu-latest"
             python-version: "3.11"
             pydantic-version: "<2"
 
