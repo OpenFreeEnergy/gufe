@@ -5,7 +5,7 @@ from __future__ import annotations
 from itertools import chain
 import json
 import networkx as nx
-from typing import FrozenSet, Iterable, Optional
+from typing import FrozenSet, Iterable, Optional, Union
 import gufe
 
 from gufe import SmallMoleculeComponent
@@ -183,6 +183,36 @@ class LigandNetwork(GufeTokenizable):
             nodes = set([])
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
+
+    def remove_edges(self, edges: Union[LigandAtomMapping, list[LigandAtomMapping]]) -> LigandNetwork:
+        """Create a new copy of this network with some edges removed
+
+        Note that this will not remove any nodes, potentially resulting in
+        disconnected networks
+
+        Parameters
+        ----------
+        edges : list[LigandAtomMapping] or LigandAtomMapping
+          the edges to remove, these *must* be present in the network
+
+        Returns
+        -------
+        network : LigandNetwork
+        """
+        if isinstance(edges, LigandAtomMapping):
+            edges = [edges]
+
+        to_remove = set(edges)
+        current = set(self.edges)
+
+        # check that all edges to remove are present
+        if extras := to_remove - current:
+            raise ValueError("Some edges weren't already present: "
+                             f"{extras}")
+
+        new_edges = current - to_remove
+
+        return LigandNetwork(new_edges, self.nodes)
 
     def _to_rfe_alchemical_network(
         self,

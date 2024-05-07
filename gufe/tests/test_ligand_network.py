@@ -440,3 +440,41 @@ def test_empty_ligand_network(mols):
 
     assert len(n.edges) == 0
     assert len(n.nodes) == 1
+
+
+class TestLigandNetworkRemoveEdges:
+    def test_remove_edges_single(self, std_edges):
+        e1, e2, e3 = std_edges
+
+        n = LigandNetwork(edges=[e1, e2, e3])
+
+        n2 = n.remove_edges(e1)
+
+        assert len(n2.edges) == 2
+        assert len(n2.nodes) == 3
+        assert e1 not in n2.edges
+        assert e2 in n2.edges
+        assert e3 in n2.edges
+        assert n.nodes == n2.nodes
+
+    def test_remove_edges_pair(self, std_edges):
+        e1, e2, e3 = std_edges
+
+        n = LigandNetwork(edges=[e1, e2, e3])
+
+        n2 = n.remove_edges([e1, e2])
+
+        assert len(n2.edges) == 1
+        assert len(n2.nodes) == 3
+        assert e1 not in n2.edges
+        assert e2 not in n2.edges
+        assert e3 in n2.edges
+        assert n.nodes == n2.nodes
+
+    def test_remove_edges_fail(self, std_edges):
+        e1, e2, e3 = std_edges
+
+        n = LigandNetwork([e1, e2])
+
+        with pytest.raises(ValueError):
+            n.remove_edges(e3)
