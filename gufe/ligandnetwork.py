@@ -211,7 +211,10 @@ class LigandNetwork(GufeTokenizable):
                              f"{extras}")
 
         new_edges = current - to_remove
-
+new_net = LigandNetwork(new_edges, self.nodes)
+if not new_net.graph().is_connected():
+    raise ValueError("The result is a disconnected Network!")
+return new_net 
         return LigandNetwork(new_edges, self.nodes)
 
     def _to_rfe_alchemical_network(
