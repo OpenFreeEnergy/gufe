@@ -5,6 +5,7 @@ import json
 import io
 import numpy as np
 from os import PathLike
+import string
 from typing import Union, Optional
 from collections import defaultdict
 
@@ -36,6 +37,13 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
 _BONDORDERS_RDKIT_TO_OPENMM = {
     v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
 }
+_BONDORDER_TO_ORDER = {
+    BondType.UNSPECIFIED: 1,  # assumption
+    BondType.SINGLE: 1,
+    BondType.DOUBLE: 2,
+    BondType.TRIPLE: 3,
+}
+
 
 # builtin dict of strings to enum members, boy I hope this is stable
 _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
@@ -51,8 +59,13 @@ _CHIRALITY_STR_TO_RDKIT = {
 }
 
 
-negative_ions = ["F", "CL", "Br", "I"]
-positive_ions = ["NA", "MG", "ZN"]
+negative_ions = ["F", "CL", "BR", "I"]
+positive_ions = [
+    # +1
+    "LI", "NA", "K", "RB", "CS",
+    # +2
+    "BE", "MG", "CA", "SR", "BA", "RA", "ZN",
+]
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
@@ -204,14 +217,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atom_name = a.GetMonomerInfo().GetName()
 
             connectivity = sum(
-                int(bond.GetBondType()) for bond in a.GetBonds()
+                _BONDORDER_TO_ORDER[bond.GetBondType()]
+                for bond in a.GetBonds()
             )
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions:
-                if atom_name in positive_ions:
-                    fc = default_valence  # e.g. Sodium ions
-                elif atom_name in negative_ions:
+                # strip catches cases like 'CL1' as name
+                if atom_name.strip(string.digits).upper() in positive_ions:
+                    fc = default_valence   # e.g. Sodium ions
+                elif atom_name.strip(string.digits).upper() in negative_ions:
                     fc = - default_valence  # e.g. Chlorine ions
                 else:  # -no-cov-
                     resn = a.GetMonomerInfo().GetResidueName()
