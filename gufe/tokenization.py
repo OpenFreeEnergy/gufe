@@ -14,7 +14,7 @@ import re
 import warnings
 import weakref
 from itertools import chain
-from typing import Any, Union, List, Tuple, Dict, Generator
+from typing import Any, Union, List, Tuple, Dict, Generator, Self
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
@@ -663,7 +663,7 @@ def gufe_objects_from_shallow_dict(
         GufeTokenizable.
 
     """
-    if is_gufe_obj(obj):
+    if isinstance(obj, GufeTokenizable):
         return [obj]
 
     elif isinstance(obj, list):
@@ -736,13 +736,13 @@ class KeyedChain(object):
         self._keyed_chain = keyed_chain
 
     @classmethod
-    def from_gufe(cls, gufe_object: GufeTokenizable) -> super:
+    def from_gufe(cls, gufe_object: GufeTokenizable) -> Self:
         """Initialize a KeyedChain from a GufeTokenizable."""
         return cls(cls.gufe_to_keyed_chain_rep(gufe_object))
 
     def to_gufe(self) -> GufeTokenizable:
         """Initialize a GufeTokenizable."""
-        gts = {}
+        gts: Dict[str, GufeTokenizable] = {}
         for gufe_key, keyed_dict in self:
             gt = key_decode_dependencies(keyed_dict, registry=gts)
             gts[gufe_key] = gt
