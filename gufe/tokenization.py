@@ -752,7 +752,7 @@ class KeyedChain(object):
     def gufe_to_keyed_chain_rep(
         gufe_object: GufeTokenizable,
     ) -> List[Tuple[str, Dict]]:
-        """Create the keyed chain represenation of a GufeTokenizable.
+        """Create the keyed chain representation of a GufeTokenizable.
 
         This represents the GufeTokenizable as a list of two-element tuples
         containing, as their first and second elements, the gufe key and keyed
@@ -767,7 +767,7 @@ class KeyedChain(object):
         Returns
         -------
         key_and_keyed_dicts
-            The keyed chain represenation of a GufeTokenizable.
+            The keyed chain representation of a GufeTokenizable.
 
         """
         key_and_keyed_dicts = [
