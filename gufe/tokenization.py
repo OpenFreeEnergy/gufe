@@ -14,7 +14,8 @@ import re
 import warnings
 import weakref
 from itertools import chain
-from typing import Any, Union, List, Tuple, Dict, Generator, Self
+from typing import Any, Union, List, Tuple, Dict, Generator
+from typing_extensions import Self
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
