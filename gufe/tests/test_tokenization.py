@@ -432,6 +432,13 @@ class TestKeyedChain:
         kc = KeyedChain.from_gufe(benzene_variants_star_map)
         assert hash(kc.to_gufe()) == hash(benzene_variants_star_map)
 
+    def test_get_item(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        assert kc[0] == kc._keyed_chain[0]
+        assert kc[-1] == kc._keyed_chain[-1]
+        assert kc[:] == kc._keyed_chain[:]
+
 
 def test_datetime_to_json():
     d = datetime.datetime.fromisoformat('2023-05-05T09:06:43.699068')
