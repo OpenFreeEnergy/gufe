@@ -42,7 +42,8 @@ def _check_partial_charges(mol: RDKitMol) -> None:
     Checks for the presence of partial charges.
 
     Note:
-        We ensure the charges are set as atom properties as well to make sure they are detected by OpenFF
+        We ensure the charges are set as atom properties
+        to ensure they are detected by OpenFF
 
     Raises
     ------

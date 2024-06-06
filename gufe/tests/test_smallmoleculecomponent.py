@@ -265,7 +265,10 @@ class TestSmallMoleculeComponentPartialCharges:
             SmallMoleculeComponent.from_rdkit(mol)
 
     def test_partial_charges_applied_to_atoms(self):
-        """Make sure that charges set at the molecule level are transferred to atoms and picked up by openFF."""
+        """
+        Make sure that charges set at the molecule level
+        are transferred to atoms and picked up by openFF.
+        """
         mol = Chem.AddHs(Chem.MolFromSmiles("C"))
         Chem.AllChem.Compute2DCoords(mol)
         # add some fake charges at the molecule level
@@ -273,13 +276,14 @@ class TestSmallMoleculeComponentPartialCharges:
         matchmsg = "Partial charges have been provided"
         with pytest.warns(UserWarning, match=matchmsg):
             ofe = SmallMoleculeComponent.from_rdkit(mol)
-            # convert to openff and make sure the charges are set
-            off_mol = ofe.to_openff()
-            assert off_mol.partial_charges is not None
-            # check ordering is the same
-            rdkit_mol_with_charges = ofe.to_rdkit()
-            for i, charge in enumerate(off_mol.partial_charges.m):
-                assert rdkit_mol_with_charges.GetAtomWithIdx(i).GetDoubleProp("PartialCharge") == charge
+        # convert to openff and make sure the charges are set
+        off_mol = ofe.to_openff()
+        assert off_mol.partial_charges is not None
+        # check ordering is the same
+        rdkit_mol_with_charges = ofe.to_rdkit()
+        for i, charge in enumerate(off_mol.partial_charges.m):
+            rdkit_atom = rdkit_mol_with_charges.GetAtomWithIdx(i)
+            assert rdkit_atom.GetDoubleProp("PartialCharge") == charge
 
 
 @pytest.mark.parametrize('mol, charge', [
