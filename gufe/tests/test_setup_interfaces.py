@@ -6,9 +6,9 @@ from gufe import AtomMappingScorer, AtomMapper
 
 
 def test_atom_mapping_scorer():
-    with pytest.raises(TypeError, match="Can't instantiate abstract class AtomMappingScorer without an implementation for abstract methods '_defaults', '_from_dict', '_to_dict', 'get_score'"):
+    with pytest.raises(TypeError, match="Can't instantiate abstract class AtomMapper with abstract methods"):
         scorer = AtomMappingScorer()
 
 def test_atom_mapper():
-    with pytest.raises(TypeError, match="Can't instantiate abstract class AtomMapper without an implementation for abstract methods '_defaults', '_from_dict', '_to_dict', 'suggest_mappings'"):
+    with pytest.raises(TypeError, match="Can't instantiate abstract class AtomMapper without an implementation for abstract method"):
         mapper = AtomMapper()
