@@ -2,11 +2,12 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+from ..tokenization import GufeTokenizable
 
 from . import AtomMapping
 
 
-class AtomMappingScorer(abc.ABC):
+class AtomMappingScorer(GufeTokenizable):
     """A generic class for scoring Atom mappings.
     this class can be used for example to build graph algorithm based networks.
 
