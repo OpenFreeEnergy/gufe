@@ -36,7 +36,7 @@ class AtomMappingScorer(abc.ABC):
         Returns
         -------
         float
-            a value between [0,1] where one is a very bad score and 0 a very good one.
+            a value between [0,1] where zero is a very bad score and one a very good one.
 
         """
         pass
