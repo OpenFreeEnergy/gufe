@@ -285,6 +285,23 @@ class TestSmallMoleculeComponentPartialCharges:
             rdkit_atom = rdkit_mol_with_charges.GetAtomWithIdx(i)
             assert rdkit_atom.GetDoubleProp("PartialCharge") == charge
 
+    def test_inconsistent_charges(self, charged_off_ethane):
+        """
+        An error should be raised if the atom and molecule level
+        charges do not match.
+        """
+        mol = Chem.AddHs(Chem.MolFromSmiles("C"))
+        Chem.AllChem.Compute2DCoords(mol)
+        # add some fake charges at the molecule level
+        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        # set different charges to the atoms
+        for atom in mol.GetAtoms():
+            atom.SetDoubleProp("PartialCharge", 0)
+
+        with pytest.raises(ValueError, match="non-equivalent partial charges between atom and molecule properties"):
+            SmallMoleculeComponent.from_rdkit(mol)
+
+
 
 @pytest.mark.parametrize('mol, charge', [
     ('CC', 0), ('CC[O-]', -1),
