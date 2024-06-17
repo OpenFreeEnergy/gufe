@@ -298,7 +298,10 @@ class TestSmallMoleculeComponentPartialCharges:
         for atom in mol.GetAtoms():
             atom.SetDoubleProp("PartialCharge", 0)
 
-        with pytest.raises(ValueError, match="non-equivalent partial charges between atom and molecule properties"):
+        # make sure the correct error is raised
+        msg = ("non-equivalent partial charges between "
+               "atom and molecule properties")
+        with pytest.raises(ValueError, match=msg):
             SmallMoleculeComponent.from_rdkit(mol)
 
 

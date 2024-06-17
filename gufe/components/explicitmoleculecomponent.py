@@ -81,7 +81,8 @@ def _check_partial_charges(mol: RDKitMol) -> None:
         else:
             atom_charge = atom.GetDoubleProp("PartialCharge")
             if not np.isclose(atom_charge, charge):
-                errmsg = f"non-equivalent partial charges between atom and molecule properties: {atom_charge} {charge}"
+                errmsg = (f"non-equivalent partial charges between atom and "
+                          f"molecule properties: {atom_charge} {charge}")
                 raise ValueError(errmsg)
 
     if np.all(np.isclose(p_chgs, 0.0)):
