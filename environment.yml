@@ -10,7 +10,7 @@ dependencies:
   - openff-units ==0.2.0  # https://github.com/openforcefield/openff-units/issues/69
   - pint <0.22  # https://github.com/openforcefield/openff-units/issues/69
   - pip
-  - pydantic >1
+  - pydantic ==2.7.3
   - pytest
   - pytest-cov
   - pytest-xdist
