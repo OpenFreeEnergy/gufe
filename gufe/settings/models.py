@@ -8,7 +8,11 @@ import abc
 from typing import Optional, Union
 
 from openff.models.models import DefaultModel
-from openff.models.types import FloatQuantity
+from openff.models.types.dimension_types import (
+    TemperatureQuantity,
+    LengthQuantity,
+    build_dimension_type,
+)
 from openff.units import unit
 import pprint
 
@@ -29,6 +33,9 @@ except ImportError:
         validator,
     )
 import pydantic
+
+
+PressureQuantity = build_dimension_type("standard_atmosphere")
 
 
 class SettingsBaseModel(DefaultModel):
@@ -112,10 +119,10 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: FloatQuantity["kelvin"] = Field(
+    temperature: TemperatureQuantity["kelvin"] = Field(
         None, description="Simulation temperature, default units kelvin"
     )
-    pressure: FloatQuantity["standard_atmosphere"] = Field(
+    pressure: PressureQuantity = Field(
         None, description="Simulation pressure, default units standard atmosphere (atm)"
     )
     ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH")
@@ -174,7 +181,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff: FloatQuantity['nanometer'] = 1.0 * unit.nanometer
+    nonbonded_cutoff: LengthQuantity['nanometer'] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
