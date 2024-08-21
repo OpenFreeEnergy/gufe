@@ -22,3 +22,4 @@ dependencies:
   - sphinx <7.1.2
   - pip:
     - git+https://github.com/openforcefield/openff-models@pydantic-2-redo
+    - git+https://github.com/openforcefield/openff-units@9755af2978374938f489385c784b2dd2a056e2bc
