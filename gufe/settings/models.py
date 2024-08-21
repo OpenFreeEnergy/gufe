@@ -16,22 +16,13 @@ from openff.models.types.dimension_types import (
 from openff.units import unit
 import pprint
 
-try:
-    from pydantic.v1 import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
-except ImportError:
-    from pydantic import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
+from pydantic import (
+    Extra,
+    Field,
+    PositiveFloat,
+    PrivateAttr,
+    validator,
+)
 import pydantic
 
 
