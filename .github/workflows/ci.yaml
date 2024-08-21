@@ -30,17 +30,17 @@ jobs:
         os: ['ubuntu-latest']
         pydantic-version: [">1"]
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"  
+          - "3.12"
         include:
             # Note: pinned to macos-12
             # see https://github.com/OpenFreeEnergy/openfe/issues/842
           - os: "macos-12"
-            python-version: "3.11"
+            python-version: "3.12"
             pydantic-version: ">1"
           - os: "ubuntu-latest"
-            python-version: "3.11"
+            python-version: "3.12"
             pydantic-version: "<2"
 
     env:
