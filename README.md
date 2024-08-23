@@ -14,7 +14,7 @@ Looking to run a free energy calculation? You're probably looking for [openfe](h
 
 This library is made available under the [MIT](LICENSE) open source license.
 
-## Important note
+## API stability
 
 Our 1.0 releases follow semantic versioning and we will make an effort to keep the 1.0 API stable.
 
