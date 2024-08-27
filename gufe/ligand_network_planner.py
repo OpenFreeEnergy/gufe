@@ -5,7 +5,7 @@ from . import SmallMoleculeComponent, LigandNetwork
 from . import AtomMapper
 from .mapping.atom_mapping_scorer import AtomMappingScorer
 
-class LigandNetworkPlanner(abc.ABC):
+class NetworkPlanner(abc.ABC):
     """A generic class for calculating :class:`.LigandNetworks`.
 
     Implementations of this class can require an arbitrary and non-standardised
