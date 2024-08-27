@@ -2,11 +2,12 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+from ..tokenization import GufeTokenizable
 
 from . import AtomMapping
 
 
-class AtomMappingScorer(abc.ABC):
+class AtomMappingScorer(GufeTokenizable):
     """A generic class for scoring Atom mappings.
     this class can be used for example to build graph algorithm based networks.
 
@@ -17,14 +18,14 @@ class AtomMappingScorer(abc.ABC):
 
     """
 
-    def __call__(self, mapping: AtomMapping, *args, **kwargs) -> float:
+    def __call__(self, mapping: AtomMapping) -> float:
         return self.get_score(mapping)
 
     @abc.abstractmethod
-    def get_score(self, mapping: AtomMapping, *args, **kwargs) -> float:
+    def get_score(self, mapping: AtomMapping) -> float:
         """ calculate the score for an  :class:`.AtomMapping`
             the scoring function returns a value between 0 and 1.
-            a value close to 1.0 indicates a small distance, a score close to zero indicates a large cost/error.
+            a value close to 1.0 indicates a small change, a score close to zero indicates a large cost/change.
 
         Parameters
         ----------
@@ -36,7 +37,7 @@ class AtomMappingScorer(abc.ABC):
         Returns
         -------
         float
-            a value between [0,1] where one is a very bad score and 0 a very good one.
+            a value between [0,1] where zero is a very bad score and one a very good one.
 
         """
         pass
