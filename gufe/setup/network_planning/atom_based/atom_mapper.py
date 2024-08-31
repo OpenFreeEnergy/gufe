@@ -4,7 +4,7 @@ import abc
 from collections.abc import Iterator
 import gufe
 
-from ..tokenization import GufeTokenizable
+from gufe.tokenization import GufeTokenizable
 from .atom_mapping import AtomMapping
 
 

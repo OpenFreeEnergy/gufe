@@ -10,10 +10,10 @@ from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
 import warnings
 
-from ..settings import Settings, SettingsBaseModel
+from ..settings import Settings
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
-from ..mapping import ComponentMapping
+from gufe.mapping import ComponentMapping
 
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit

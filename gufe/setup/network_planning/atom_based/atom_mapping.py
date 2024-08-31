@@ -6,7 +6,7 @@ from collections.abc import Mapping, Iterable
 
 
 import gufe
-from .componentmapping import ComponentMapping
+from gufe.setup.network_planning.component_mapping import ComponentMapping
 
 
 class AtomMapping(ComponentMapping, abc.ABC):

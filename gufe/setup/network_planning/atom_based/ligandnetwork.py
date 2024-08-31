@@ -9,8 +9,8 @@ from typing import FrozenSet, Iterable, Optional
 import gufe
 
 from gufe import SmallMoleculeComponent
-from .mapping import LigandAtomMapping
-from .tokenization import GufeTokenizable
+from gufe.mapping import LigandAtomMapping
+from gufe.tokenization import GufeTokenizable
 
 
 class LigandNetwork(GufeTokenizable):
