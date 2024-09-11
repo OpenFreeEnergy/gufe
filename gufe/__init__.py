@@ -31,6 +31,6 @@ from .protocols import (
 from .transformations import Transformation, NonTransformation
 
 from .alchemical_network import AlchemicalNetwork
-from gufe.setup.network_planning.atom_based.ligandnetwork import LigandNetwork
+from gufe.setup.network_planning.atom_mapping_based.ligandnetwork import LigandNetwork
 
 __version__ = version("gufe")

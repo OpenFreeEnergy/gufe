@@ -9,11 +9,13 @@ from typing import FrozenSet, Iterable, Optional
 import gufe
 
 from gufe import SmallMoleculeComponent
-from gufe.mapping import LigandAtomMapping
 from gufe.tokenization import GufeTokenizable
 
+from gufe.setup.network_planning.network_plan import NetworkPlan
+from gufe.setup.network_planning.atom_mapping_based.ligand_atom_mapping import LigandAtomMapping
 
-class LigandNetwork(GufeTokenizable):
+
+class LigandNetwork(NetworkPlan):
     """A directed graph connecting many ligands according to their atom mapping
 
     Parameters
