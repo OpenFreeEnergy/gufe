@@ -33,4 +33,4 @@ class ComponentMappingScorer(GufeTokenizable):
         float
             a value between [0,1] where zero is a very bad score and one a very good one.
         """
-        pass
+        raise NotImplementedError("This function was not implemented.")

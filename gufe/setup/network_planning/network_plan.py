@@ -8,25 +8,25 @@ import networkx as nx
 from typing import FrozenSet, Iterable, Optional
 import gufe
 
-from gufe import SmallMoleculeComponent
-from gufe.mapping import LigandAtomMapping
+from gufe import Component
 from gufe.tokenization import GufeTokenizable
 
+from .component_mapping import ComponentMapping
 
 class NetworkPlan(GufeTokenizable):
     """A directed graph connecting many ligands according to their atom mapping
 
     Parameters
     ----------
-    edges : Iterable[LigandAtomMapping]
+    edges : Iterable[ComponentMapping]
         edges for this network
     nodes : Iterable[SmallMoleculeComponent]
         nodes for this network
     """
     def __init__(
         self,
-        edges: Iterable[LigandAtomMapping],
-        nodes: Optional[Iterable[SmallMoleculeComponent]] = None
+        edges: Iterable[ComponentMapping],
+        nodes: Optional[Iterable[Component]] = None
     ):
         if nodes is None:
             nodes = []
@@ -70,12 +70,12 @@ class NetworkPlan(GufeTokenizable):
         return self._graph
 
     @property
-    def edges(self) -> FrozenSet[LigandAtomMapping]:
+    def edges(self) -> FrozenSet[ComponentMapping]:
         """A read-only view of the edges of the Network"""
         return self._edges
 
     @property
-    def nodes(self) -> FrozenSet[SmallMoleculeComponent]:
+    def nodes(self) -> FrozenSet[Component]:
         """A read-only view of the nodes of the Network"""
         return self._nodes
 
@@ -97,7 +97,6 @@ class NetworkPlan(GufeTokenizable):
             (
                 mol_to_label[edge.componentA],
                 mol_to_label[edge.componentB],
-                json.dumps(list(edge.componentA_to_componentB.items()))
             )
             for edge in self.edges
         ])
@@ -109,8 +108,8 @@ class NetworkPlan(GufeTokenizable):
                                         moldict=json.dumps(mol.to_dict(),
                                                            sort_keys=True))
 
-        for molA, molB, mapping in edge_data:
-            serializable_graph.add_edge(molA, molB, mapping=mapping)
+        for molA, molB in edge_data:
+            serializable_graph.add_edge(molA, molB)
 
         return serializable_graph
 
@@ -120,14 +119,13 @@ class NetworkPlan(GufeTokenizable):
 
         This is the inverse of ``_serializable_graph``.
         """
-        label_to_mol = {node: SmallMoleculeComponent.from_dict(json.loads(d))
+        label_to_mol = {node: Component.from_dict(json.loads(d))
                         for node, d in graph.nodes(data='moldict')}
 
         edges = [
-            LigandAtomMapping(componentA=label_to_mol[node1],
-                              componentB=label_to_mol[node2],
-                              componentA_to_componentB=dict(json.loads(mapping)))
-            for node1, node2, mapping in graph.edges(data='mapping')
+            ComponentMapping(componentA=label_to_mol[node1],
+                              componentB=label_to_mol[node2])
+            for node1, node2 in graph.edges(data='mapping')
         ]
 
         return cls(edges=edges, nodes=label_to_mol.values())
@@ -145,7 +143,7 @@ class NetworkPlan(GufeTokenizable):
         return "\n".join(nx.generate_graphml(self._serializable_graph()))
 
     @classmethod
-    def from_graphml(cls, graphml_str: str) -> LigandNetwork:
+    def from_graphml(cls, graphml_str: str) -> ComponentMapping:
         """Create from a GraphML string.
 
         Parameters
@@ -160,7 +158,7 @@ class NetworkPlan(GufeTokenizable):
         """
         return cls._from_serializable_graph(nx.parse_graphml(graphml_str))
 
-    def enlarge_graph(self, *, edges=None, nodes=None) -> LigandNetwork:
+    def enlarge_graph(self, *, edges=None, nodes=None) -> ComponentMapping:
         """
         Create a new network with the given edges and nodes added
 
@@ -182,132 +180,7 @@ class NetworkPlan(GufeTokenizable):
         if nodes is None:
             nodes = set([])
 
-        return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
-
-    def _to_rfe_alchemical_network(
-        self,
-        components: dict[str, gufe.Component],
-        leg_labels: dict[str, list[str]],
-        protocol: gufe.Protocol,
-        *,
-        alchemical_label: str = "ligand",
-        autoname=True,
-        autoname_prefix=""
-    ) -> gufe.AlchemicalNetwork:
-        """
-        Parameters
-        ----------
-        components: dict[str, :class:`.Component`]
-            non-alchemical components (components that will be on both sides
-            of a transformation)
-        leg_labels: dict[str, list[str]]
-            mapping of the names for legs (the keys of this dict) to a list
-            of the component names. The component names must be the same as
-            used in the ``components`` dict.
-        protocol: :class:`.Protocol`
-            the protocol to apply
-        alchemical_label: str
-            the label for the component undergoing an alchemical
-            transformation (default ``'ligand'``)
-        """
-        transformations = []
-        for edge in self.edges:
-            for leg_name, labels in leg_labels.items():
-
-                # define a helper func to avoid repeated code
-                def sys_from_dict(component):
-                    """
-                    Input component alchemically changing. Other info taken
-                    from the outer scope.
-                    """
-                    syscomps = {alchemical_label: component}
-                    other_labels = set(labels) - {alchemical_label}
-                    syscomps.update({label: components[label]
-                                     for label in other_labels})
-
-                    if autoname:
-                        name = f"{component.name}_{leg_name}"
-                    else:
-                        name = ""
-
-                    return gufe.ChemicalSystem(syscomps, name=name)
-
-                sysA = sys_from_dict(edge.componentA)
-                sysB = sys_from_dict(edge.componentB)
-                if autoname:
-                    prefix = f"{autoname_prefix}_" if autoname_prefix else ""
-                    name = f"{prefix}{sysA.name}_{sysB.name}"
-                else:
-                    name = ""
-
-                transformation = gufe.Transformation(sysA, sysB, protocol,
-                                                     mapping=edge,
-                                                     name=name)
-
-                transformations.append(transformation)
-
-        return gufe.AlchemicalNetwork(transformations)
-
-    def to_rbfe_alchemical_network(
-        self,
-        solvent: gufe.SolventComponent,
-        protein: gufe.ProteinComponent,
-        protocol: gufe.Protocol,
-        *,
-        autoname: bool = True,
-        autoname_prefix: str = "easy_rbfe",
-        **other_components
-    ) -> gufe.AlchemicalNetwork:
-        """Convert the ligand network to an AlchemicalNetwork
-
-        Parameters
-        ----------
-        protocol: Protocol
-            the method to apply to edges
-        autoname: bool
-            whether to automatically name objects by the ligand name and
-            state label
-        autoname_prefix: str
-            prefix for the autonaming; only used if autonaming is True
-        other_components:
-            additional non-alchemical components, keyword will be the string
-            label for the component
-        """
-        components = {
-            'protein': protein,
-            'solvent': solvent,
-            **other_components
-        }
-        leg_labels = {
-            "solvent": ["ligand", "solvent"],
-            "complex": (["ligand", "solvent", "protein"]
-                        + list(other_components)),
-        }
-        return self._to_rfe_alchemical_network(
-            components=components,
-            leg_labels=leg_labels,
-            protocol=protocol,
-            autoname=autoname,
-            autoname_prefix=autoname_prefix
-        )
-
-    # on hold until we figure out how to best hack in the PME/NoCutoff
-    # switch
-    # def to_rhfe_alchemical_network(self, *, solvent, protocol,
-    #                                autoname=True,
-    #                                autoname_prefix="easy_rhfe",
-    #                                **other_components):
-    #     leg_labels = {
-    #         "solvent": ["ligand", "solvent"] + list(other_components),
-    #         "vacuum": ["ligand"] + list(other_components),
-    #     }
-    #     return self._to_rfe_alchemical_network(
-    #         components={"solvent": solvent, **other_components},
-    #         leg_labels=leg_labels,
-    #         protocol=protocol,
-    #         autoname=autoname,
-    #         autoname_prefix=autoname_prefix
-    #     )
+        return NetworkPlan(self.edges | set(edges), self.nodes | set(nodes))
 
     def is_connected(self) -> bool:
         """Are all ligands in the network (indirectly) connected to each other

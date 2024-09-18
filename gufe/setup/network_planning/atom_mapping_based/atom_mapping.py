@@ -37,22 +37,23 @@ class AtomMapping(ComponentMapping, abc.ABC):
         entity in the other component (e.g. the atom disappears), therefore
         resulting in a KeyError on query
         """
-        ...
+        raise NotImplementedError("This function was not implemented.")
 
     @property
     @abc.abstractmethod
     def componentB_to_componentA(self) -> Mapping[int, int]:
         """Similar to A to B, but reversed."""
-        ...
+        raise NotImplementedError("This function was not implemented.")
 
     @property
     @abc.abstractmethod
     def componentA_unique(self) -> Iterable[int]:
         """Indices of atoms in component A that aren't mappable to B"""
-        ...
+        raise NotImplementedError("This function was not implemented.")
 
     @property
     @abc.abstractmethod
     def componentB_unique(self) -> Iterable[int]:
         """Indices of atoms in component B that aren't mappable to A"""
-        ...
+        raise NotImplementedError("This function was not implemented.")
+

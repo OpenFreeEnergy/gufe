@@ -3,11 +3,13 @@ from typing import Iterable
 
 from ... import SmallMoleculeComponent
 
+from gufe.tokenization import GufeTokenizable
+
 from .network_plan import NetworkPlan
 from .component_mapper import ComponentMapper
 from .component_mapping_scorer import ComponentMappingScorer
 
-class NetworkPlanner(abc.ABC):
+class NetworkPlanner(GufeTokenizable):
     """A generic class for calculating :class:`.LigandNetworks`.
     Implementations of this class can require an arbitrary and non-standardised
     number of input arguments to create.
@@ -27,11 +29,11 @@ class NetworkPlanner(abc.ABC):
         self.scorer =  scorer
 
 
-    def __call__(self, ligands: Iterable[SmallMoleculeComponent])-> NetworkPlan:
+    def __call__(self, *args, **kwargs)-> NetworkPlan:
         return self.generate_ligand_network(*args, **kwargs)
 
     @abc.abstractmethod
-    def generate_ligand_network(self, ligands: Iterable[SmallMoleculeComponent])->LigandNetwork:
+    def generate_ligand_network(self, ligands: Iterable[SmallMoleculeComponent])->NetworkPlan:
         """Plan a Network which connects all ligands with minimal cost
         Parameters
         ----------
@@ -39,6 +41,7 @@ class NetworkPlanner(abc.ABC):
         the ligands to include in the Network
         Returns
         -------
-        LigandNetwork
+        NetworkPlan
             A Network, that connects all ligands with each other.
         """
+        raise NotImplementedError("This function was not implemented.")

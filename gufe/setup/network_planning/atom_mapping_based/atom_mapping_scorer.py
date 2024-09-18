@@ -25,7 +25,7 @@ class AtomMappingScorer(GufeTokenizable):
     def get_score(self, mapping: AtomMapping) -> float:
         """ calculate the score for an  :class:`.AtomMapping`
             the scoring function returns a value between 0 and 1.
-            a value close to 1.0 indicates a small change, a score close to zero indicates a large cost/change.
+            a value close to 1.0 indicates a small change - good score, a score close to zero indicates a large cost/change - bad score.
 
         Parameters
         ----------
@@ -40,4 +40,4 @@ class AtomMappingScorer(GufeTokenizable):
             a value between [0,1] where zero is a very bad score and one a very good one.
 
         """
-        pass
+        raise NotImplementedError("This function was not implemented.")

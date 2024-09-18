@@ -27,4 +27,4 @@ class ComponentMapper(GufeTokenizable):
         Suggests zero or more :class:`.AtomMapping` objects, which are possible
         atom mappings between two :class:`.Component` objects.
         """
-        ...
+        raise NotImplementedError("This function was not implemented.")

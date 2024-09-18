@@ -50,37 +50,6 @@ class LigandNetwork(NetworkPlan):
     def _from_dict(cls, dct: dict):
         return cls.from_graphml(dct['graphml'])
 
-    @property
-    def graph(self) -> nx.MultiDiGraph:
-        """NetworkX graph for this network
-
-        This graph will have :class:`.ChemicalSystem` objects as nodes and
-        :class:`.Transformation` objects as directed edges
-        """
-        if self._graph is None:
-            graph = nx.MultiDiGraph()
-            # set iterator order depends on PYTHONHASHSEED, sorting ensures
-            # reproducibility
-            for node in sorted(self._nodes):
-                graph.add_node(node)
-            for edge in sorted(self._edges):
-                graph.add_edge(edge.componentA, edge.componentB, object=edge,
-                               **edge.annotations)
-
-            self._graph = nx.freeze(graph)
-
-        return self._graph
-
-    @property
-    def edges(self) -> FrozenSet[LigandAtomMapping]:
-        """A read-only view of the edges of the Network"""
-        return self._edges
-
-    @property
-    def nodes(self) -> FrozenSet[SmallMoleculeComponent]:
-        """A read-only view of the nodes of the Network"""
-        return self._nodes
-
     def _serializable_graph(self) -> nx.Graph:
         """
         Create NetworkX graph with serializable attribute representations.
@@ -310,11 +279,3 @@ class LigandNetwork(NetworkPlan):
     #         autoname=autoname,
     #         autoname_prefix=autoname_prefix
     #     )
-
-    def is_connected(self) -> bool:
-        """Are all ligands in the network (indirectly) connected to each other
-
-        A "False" value indicates that either some ligands have no edges or that
-        there are separate networks that do not link to each other.
-        """
-        return nx.is_weakly_connected(self.graph)
