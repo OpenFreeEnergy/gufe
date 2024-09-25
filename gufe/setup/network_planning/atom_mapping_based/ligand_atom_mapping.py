@@ -9,8 +9,8 @@ from numpy.typing import NDArray
 
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
-from . import AtomMapping
-from ..tokenization import JSON_HANDLER
+from gufe.mapping import AtomMapping
+from gufe.tokenization import JSON_HANDLER
 
 
 class LigandAtomMapping(AtomMapping):

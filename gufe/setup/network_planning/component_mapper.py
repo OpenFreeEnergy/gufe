@@ -4,11 +4,11 @@ import abc
 from collections.abc import Iterator
 import gufe
 
-from ..tokenization import GufeTokenizable
-from .atom_mapping import AtomMapping
+from gufe.tokenization import GufeTokenizable
+from .component_mapping import ComponentMapping
 
 
-class AtomMapper(GufeTokenizable):
+class ComponentMapper(GufeTokenizable):
     """A class for manufacturing mappings
 
     Implementations of this class can require an arbitrary and non-standardised
@@ -21,10 +21,10 @@ class AtomMapper(GufeTokenizable):
     def suggest_mappings(self,
                          A: gufe.Component,
                          B: gufe.Component
-                         ) -> Iterator[AtomMapping]:
+                         ) -> Iterator[ComponentMapping]:
         """Suggests possible mappings between two Components
 
         Suggests zero or more :class:`.AtomMapping` objects, which are possible
         atom mappings between two :class:`.Component` objects.
         """
-        ...
+        raise NotImplementedError("This function was not implemented.")
