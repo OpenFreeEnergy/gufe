@@ -17,6 +17,13 @@ from .protocolunit import (
     ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure, Context
 )
 
+from ..storage.storagemanager import StorageManager
+from ..storage.externalresource.filestorage import FileStorage
+from ..storage.externalresource.base import ExternalStorage
+
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class DAGMixin:
     _protocol_units: list[ProtocolUnit]
@@ -344,9 +351,67 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
+class ReproduceOldBehaviorStorageManager(StorageManager):
+    # Default behavior has scratch at {dag_label}/scratch/{unit_label} and
+    # shared at {dag_label}/{unit_label}. This little class makes changes
+    # that get us back to the original behavior of this class: scratch at
+    # {dag_label}/scratch_{unit_label} and shared at
+    # {dag_label}/shared_{unit_label}.
+    def _scratch_loc(self, dag_label, unit_label, attempt):
+        return (
+            self.scratch_root
+            / f"{dag_label}/scratch_{unit_label}_attempt_{attempt}"
+        )
+
+    def make_label(self, dag_label, unit_label, attempt):
+        return f"{dag_label}/shared_{unit_label}_attempt_{attempt}"
+
+    @classmethod
+    def from_old_args(
+        cls,
+        shared_basedir: PathLike,
+        scratch_basedir: PathLike, *,
+        keep_shared: bool = False,
+        keep_scratch: bool = False,
+    ):
+        """
+        Create an new storage manager based on the old execute_DAG args.
+
+        Parameters
+        ----------
+        shared_basedir : Path
+            Filesystem path to use for shared space that persists across whole DAG
+            execution. Used by a `ProtocolUnit` to pass file contents to dependent
+            class:``ProtocolUnit`` instances.
+        scratch_basedir : Path
+            Filesystem path to use for `ProtocolUnit` `scratch` space.
+        keep_shared : bool
+            If True, don't remove shared directories for `ProtocolUnit`s after
+            the `ProtocolDAG` is executed.
+        keep_scratch : bool
+            If True, don't remove scratch directories for a `ProtocolUnit` after
+            it is executed.
+        """
+        # doing this here makes it easier to test than putting in
+        # execute_DAG
+        shared_basedir = Path(shared_basedir)
+        shared = FileStorage(shared_basedir.parent)
+        storage_manager = cls(
+            scratch_root=scratch_basedir,
+            shared_root=shared,
+            permanent_root=shared,
+            keep_scratch=keep_scratch,
+            keep_shared=keep_shared,
+            keep_staging=True,
+            keep_empty_dirs=True,
+            staging=Path(""),  # use the actual directories as the staging
+        )
+        return storage_manager
+
+
 def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared_basedir: Path,
-                scratch_basedir: Path,
+                shared_basedir: PathLike,
+                scratch_basedir: PathLike,
                 keep_shared: bool = False,
                 keep_scratch: bool = False,
                 raise_error: bool = True,
@@ -384,52 +449,92 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
         The result of executing the `ProtocolDAG`.
 
     """
+    # the directory given as shared_root is actually the directory for this
+    # DAG; the "shared_root" for the storage manager is the parent. We'll
+    # force permanent to be the same.
+    storage_manager = ReproduceOldBehaviorStorageManager.from_old_args(
+        shared_basedir=shared_basedir,
+        scratch_basedir=scratch_basedir,
+        keep_shared=keep_shared,
+        keep_scratch=keep_scratch
+    )
+    dag_label = shared_basedir.name
+    return new_execute_DAG(protocoldag, dag_label, storage_manager,
+                           raise_error, n_retries)
+
+
+def new_execute_DAG(  # TODO: this is a terrible name
+    protocoldag: ProtocolDAG,
+    dag_label: str,
+    storage_manager: StorageManager,
+    raise_error: bool = False,
+    n_retries: int = 0
+) -> ProtocolDAGResult:
+    """
+    Locally execute a full :class:`ProtocolDAG` in serial and in-process.
+
+    Alternate input signature to generalize execute_DAG
+
+    Parameters
+    ----------
+    protocoldag : ProtocolDAG
+        The :class:``ProtocolDAG`` to execute.
+    dag_label : str
+        Label to use for the DAG
+    storage_manager : StorageManager
+        The :class:`.StorageManager` to handle storing files.
+    raise_error : bool
+        If True, raise an exception if a ProtocolUnit fails, default True
+        if False, any exceptions will be stored as `ProtocolUnitFailure`
+        objects inside the returned `ProtocolDAGResult`
+    n_retries : int
+        the number of times to attempt, default 0, i.e. try once and only once
+
+    Returns
+    -------
+    ProtocolDAGResult
+        The result of executing the `ProtocolDAG`.
+    """
+    # this simplifies setup of execute_DAG by allowing you to directly
+    # provide the storage_manager; the extra options in the old one just
+    # configure the storage_manager
     if n_retries < 0:
         raise ValueError("Must give positive number of retries")
 
     # iterate in DAG order
     results: dict[GufeKey, ProtocolUnitResult] = {}
     all_results = []  # successes AND failures
-    shared_paths = []
-    for unit in protocoldag.protocol_units:
-        # translate each `ProtocolUnit` in input into corresponding
-        # `ProtocolUnitResult`
-        inputs = _pu_to_pur(unit.inputs, results)
 
-        attempt = 0
-        while attempt <= n_retries:
-            shared = shared_basedir / f'shared_{str(unit.key)}_attempt_{attempt}'
-            shared_paths.append(shared)
-            shared.mkdir()
+    with storage_manager.running_dag(dag_label) as dag_ctx:
+        for unit in protocoldag.protocol_units:
+            # import pdb; pdb.set_trace()
+            attempt = 0
+            while attempt <= n_retries:
+                # translate each `ProtocolUnit` in input into corresponding
+                # `ProtocolUnitResult`
+                inputs = _pu_to_pur(unit.inputs, results)
 
-            scratch = scratch_basedir / f'scratch_{str(unit.key)}_attempt_{attempt}'
-            scratch.mkdir()
+                label = storage_manager.make_label(dag_label, unit.key,
+                                                   attempt=attempt)
+                with dag_ctx.running_unit(
+                    dag_label, unit.key, attempt=attempt
+                ) as context:
+                    _logger.info(f"Starting unit {label}")
+                    _logger.info(context)
+                    result = unit.execute(
+                            context=context,
+                            raise_error=raise_error,
+                            **inputs)
+                    all_results.append(result)
 
-            context = Context(shared=shared,
-                              scratch=scratch)
+                if result.ok():
+                    # attach result to this `ProtocolUnit`
+                    results[unit.key] = result
+                    break
+                attempt += 1
 
-            # execute
-            result = unit.execute(
-                    context=context,
-                    raise_error=raise_error,
-                    **inputs)
-            all_results.append(result)
-
-            if not keep_scratch:
-                shutil.rmtree(scratch)
-
-            if result.ok():
-                # attach result to this `ProtocolUnit`
-                results[unit.key] = result
+            if not result.ok():
                 break
-            attempt += 1
-
-        if not result.ok():
-            break
-
-    if not keep_shared:
-        for shared_path in shared_paths:
-            shutil.rmtree(shared_path)
 
     return ProtocolDAGResult(
             name=protocoldag.name, 
