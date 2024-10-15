@@ -401,9 +401,7 @@ def test_gufe_objects_from_shallow_dict(solvated_complex):
     gufe_objects = set(gufe_objects_from_shallow_dict(shallow_dict))
 
     assert len(gufe_objects) == 3
-
-    for gufe_object in gufe_objects:
-        assert gufe_object in solvated_complex.components.values()
+    assert set(gufe_objects) == set(solvated_complex.components.values())
 
 
 class TestKeyedChain:
@@ -422,11 +420,10 @@ class TestKeyedChain:
         ]
 
         kc_gufe_keys = set(kc.gufe_keys())
-        kc_shallow_dicts = list(kc.keyed_dicts())
+        kc_keyed_dicts = set(kc.keyed_dicts())
 
-        for key, keyed_dict in zip(original_keys, original_keyed_dicts):
-            assert key in kc_gufe_keys
-            assert keyed_dict in kc_shallow_dicts
+        assert kc_gufe_keys == set(original_keys)
+        assert kc_keyed_dicts == set(original_keyed_dicts)
 
     def test_to_gufe(self, benzene_variants_star_map):
         kc = KeyedChain.from_gufe(benzene_variants_star_map)

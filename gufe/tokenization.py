@@ -721,7 +721,7 @@ def gufe_to_digraph(gufe_obj):
 
 
 class KeyedChain(object):
-    """Keyed chain representation of a GufeTokenizable.
+    """Keyed chain representation encoder of a GufeTokenizable.
 
     The keyed chain representation of a GufeTokenizable provides a
     topologically sorted list of gufe keys and GufeTokenizable keyed dicts
@@ -730,6 +730,31 @@ class KeyedChain(object):
 
     The class wraps around a list of tuples containing the gufe key and the
     keyed dict form of the GufeTokenizable.
+
+    Examples
+    --------
+    We can create a keyed chain representation from any GufeTokenizable, such
+    as:
+
+    >>> from gufe.tokenization import KeyedChain
+    >>> s = SolventComponent()
+    >>> keyed_chain = KeyedChain.gufe_to_keyed_chain_rep(s)
+    >>> keyed_chain
+    [('SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f',
+      {'smiles': 'O',
+       'positive_ion': 'Na+',
+       'negative_ion': 'Cl-',
+       'ion_concentration': '0.15 molar',
+       'neutralize': True,
+       '__qualname__': 'SolventComponent',
+       '__module__': 'gufe.components.solventcomponent',
+       ':version:': 1})]
+
+    And we can do the reverse operation as well to go from a keyed chain
+    representation back to a GufeTokenizable:
+
+    >>> KeyedChain(keyed_chain).to_gufe()
+    SolventComponent(name=O, Na+, Cl-)
 
     """
 
@@ -748,6 +773,14 @@ class KeyedChain(object):
             gt = key_decode_dependencies(keyed_dict, registry=gts)
             gts[gufe_key] = gt
         return gt
+
+    def from_keyed_chain_rep(self, keyed_chain: List[Tuple[str, Dict]]):
+        """Initialize a KeyedChain from a keyed chain representation."""
+        return self(keyed_chain)
+
+    def to_keyed_chain_rep(self) -> List[Tuple[str, Dict]]:
+        """Return the keyed chain representation of this object."""
+        return list(self)
 
     @staticmethod
     def gufe_to_keyed_chain_rep(
