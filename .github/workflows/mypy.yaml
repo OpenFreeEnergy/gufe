@@ -29,7 +29,8 @@ jobs:
           cache-environment: true
           cache-downloads: true
           create-args: >-
-            python=3.9
+            python=3.10
+            rdkit=2023.09.5
           init-shell: bash
 
       - name: "Install steps"
