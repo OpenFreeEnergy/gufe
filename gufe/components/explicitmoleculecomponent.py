@@ -45,6 +45,11 @@ def _check_partial_charges(mol: RDKitMol) -> None:
     """
     Checks for the presence of partial charges.
 
+    Note
+    ----
+    We ensure the charges are set as atom properties
+    to ensure they are detected by OpenFF
+
     Raises
     ------
     ValueError
@@ -71,6 +76,18 @@ def _check_partial_charges(mol: RDKitMol) -> None:
         errmsg = (f"Sum of partial charges {sum(p_chgs)} differs from "
                   f"RDKit formal charge {Chem.GetFormalCharge(mol)}")
         raise ValueError(errmsg)
+
+    # set the charges on the atoms if not already set
+    for i, charge in enumerate(p_chgs):
+        atom = mol.GetAtomWithIdx(i)
+        if not atom.HasProp("PartialCharge"):
+            atom.SetDoubleProp("PartialCharge", charge)
+        else:
+            atom_charge = atom.GetDoubleProp("PartialCharge")
+            if not np.isclose(atom_charge, charge):
+                errmsg = (f"non-equivalent partial charges between atom and "
+                          f"molecule properties: {atom_charge} {charge}")
+                raise ValueError(errmsg)
 
     if np.all(np.isclose(p_chgs, 0.0)):
         wmsg = (f"Partial charges provided all equal to "
