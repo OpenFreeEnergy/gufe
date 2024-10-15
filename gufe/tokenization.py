@@ -775,7 +775,7 @@ class KeyedChain(object):
         return gt
 
     @classmethod
-    def from_keyed_chain_rep(cls, keyed_chain: List[Tuple[str, Dict]]) -> KeyedChain:
+    def from_keyed_chain_rep(cls, keyed_chain: List[Tuple[str, Dict]]) -> Self:
         """Initialize a KeyedChain from a keyed chain representation."""
         return cls(keyed_chain)
 
