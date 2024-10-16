@@ -7,6 +7,7 @@ from openff.units import unit
 
 import gufe
 from gufe.protocols import execute_DAG
+from gufe.protocols.protocoldag import ReproduceOldBehaviorStorageManager
 
 
 class WriterUnit(gufe.ProtocolUnit):
@@ -14,9 +15,9 @@ class WriterUnit(gufe.ProtocolUnit):
     def _execute(ctx, **inputs):
         my_id = inputs['identity']
 
-        with open(os.path.join(ctx.shared, f'unit_{my_id}_shared.txt'), 'w') as out:
+        with open(ctx.shared / f'unit_{my_id}_shared.txt', 'w') as out:
             out.write(f'unit {my_id} existed!\n')
-        with open(os.path.join(ctx.scratch, f'unit_{my_id}_scratch.txt'), 'w') as out:
+        with open(ctx.scratch / f'unit_{my_id}_scratch.txt', 'w') as out:
             out.write(f'unit {my_id} was here\n')
 
         return {
@@ -72,6 +73,40 @@ def writefile_dag():
     return p.create(stateA=s1, stateB=s2, mapping=[])
 
 
+class TestReproduceOldBehaviorStorageManager:
+    def test_context(self, tmp_path):
+        # check that the paths are the ones we expect
+        base = tmp_path / "working"
+        manager = ReproduceOldBehaviorStorageManager.from_old_args(
+            scratch_basedir=base,
+            shared_basedir=base
+        )
+        dag_label = "dag"
+        unit_label = "unit"
+        expected_scratch = "working/dag/scratch_unit_attempt_0/scratch.txt"
+        expected_shared = "working/dag/shared_unit_attempt_0/shared.txt"
+        expected_perm = "working/dag/shared_unit_attempt_0/perm.txt"
+        with manager.running_dag(dag_label) as dag_ctx:
+            with dag_ctx.running_unit(
+                dag_label, unit_label, attempt=0
+            ) as ctx:
+                scratch_f = ctx.scratch / "scratch.txt"
+                shared_f = ctx.shared / "shared.txt"
+                perm_f = ctx.permanent / "perm.txt"
+
+        found_scratch = pathlib.Path(scratch_f).relative_to(tmp_path)
+        found_shared = pathlib.Path(shared_f.fspath).relative_to(tmp_path)
+        found_perm = pathlib.Path(perm_f.fspath).relative_to(tmp_path)
+
+        assert str(found_scratch) == expected_scratch
+        assert str(found_shared) == expected_shared
+        assert str(found_perm) == expected_perm
+        # the label is the relative path to the base directory for a
+        # FileStorage
+        assert "working/" + shared_f.label == expected_shared
+        assert "working/" + perm_f.label == expected_perm
+
+
 @pytest.mark.parametrize('keep_shared', [False, True])
 @pytest.mark.parametrize('keep_scratch', [False, True])
 def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
@@ -94,12 +129,12 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
         # will have produced 4 files in scratch and shared directory
         for pu in writefile_dag.protocol_units:
             identity = pu.inputs['identity']
-            shared_file = os.path.join(shared,
-                                       f'shared_{str(pu.key)}_attempt_0',
-                                       f'unit_{identity}_shared.txt')
-            scratch_file = os.path.join(scratch,
-                                        f'scratch_{str(pu.key)}_attempt_0',
-                                        f'unit_{identity}_scratch.txt')
+            shared_file = (shared
+                           / f'shared_{str(pu.key)}_attempt_0'
+                           / f'unit_{identity}_shared.txt')
+            scratch_file = (scratch
+                            / f'scratch_{str(pu.key)}_attempt_0'
+                            / f'unit_{identity}_scratch.txt')
             if keep_shared:
                 assert os.path.exists(shared_file)
             else:

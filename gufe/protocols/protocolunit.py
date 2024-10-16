@@ -23,6 +23,8 @@ from ..tokenization import (
     GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
 )
 
+from ..storage.stagingregistry import StagingPath
+
 
 @dataclass
 class Context:
@@ -31,7 +33,8 @@ class Context:
 
     """
     scratch: PathLike
-    shared: PathLike
+    shared: StagingPath
+    permanent: StagingPath
 
 
 def _list_dependencies(inputs, cls):

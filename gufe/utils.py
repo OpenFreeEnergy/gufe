@@ -4,6 +4,12 @@
 import io
 import warnings
 
+from os import PathLike, rmdir
+import pathlib
+
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class ensure_filelike:
     """Context manager to convert pathlike or filelike to filelike.
@@ -52,3 +58,24 @@ class ensure_filelike:
         if self.do_close:
             self.context.close()
 
+
+def delete_empty_dirs(root: PathLike, delete_root: bool = True):
+    """Delete all empty directories.
+
+    Repeats so that directories that only contained empty directories also
+    get deleted.
+    """
+    root = pathlib.Path(root)
+
+    def find_empty_dirs(directory):
+        if not (paths := list(directory.iterdir())):
+            return [directory]
+        directories = [p for p in paths if p.is_dir()]
+        return sum([find_empty_dirs(d) for d in directories], [])
+
+    while root.exists() and (empties := find_empty_dirs(root)):
+        if empties == [root] and not delete_root:
+            return
+        for directory in empties:
+            _logger.debug(f"Removing '{directory}'")
+            rmdir(directory)
