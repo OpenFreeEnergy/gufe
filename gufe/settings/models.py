@@ -8,27 +8,25 @@ import abc
 from typing import Optional, Union
 
 from openff.models.models import DefaultModel
-from openff.models.types import FloatQuantity
+from openff.models.types.dimension_types import (
+    TemperatureQuantity,
+    LengthQuantity,
+    build_dimension_type,
+)
 from openff.units import unit
 import pprint
 
-try:
-    from pydantic.v1 import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
-except ImportError:
-    from pydantic import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
+from pydantic import (
+    Extra,
+    Field,
+    PositiveFloat,
+    PrivateAttr,
+    validator,
+)
 import pydantic
+
+
+PressureQuantity = build_dimension_type("standard_atmosphere")
 
 
 class SettingsBaseModel(DefaultModel):
@@ -40,7 +38,7 @@ class SettingsBaseModel(DefaultModel):
         :noindex:
         """
         extra = pydantic.Extra.forbid
-        arbitrary_types_allowed = False
+        arbitrary_types_allowed = True
         smart_union = True
 
     def _ipython_display_(self):
@@ -112,14 +110,14 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: FloatQuantity["kelvin"] = Field(
+    temperature: TemperatureQuantity = Field(
         None, description="Simulation temperature, default units kelvin"
     )
-    pressure: FloatQuantity["standard_atmosphere"] = Field(
+    pressure: Union[PressureQuantity, None] = Field(
         None, description="Simulation pressure, default units standard atmosphere (atm)"
     )
     ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH")
-    redox_potential: Optional[float] = Field(
+    redox_potential: Union[float, None] = Field(
         None, description="Simulation redox potential"
     )
 
@@ -169,12 +167,12 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method = 'PME'
+    nonbonded_method: str = 'PME'
     """
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff: FloatQuantity['nanometer'] = 1.0 * unit.nanometer
+    nonbonded_cutoff: LengthQuantity = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.

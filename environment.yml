@@ -9,17 +9,18 @@ dependencies:
   - openff-toolkit >=0.15.1
   - openff-units ==0.2.0  # https://github.com/openforcefield/openff-units/issues/69
   - pint <0.22  # https://github.com/openforcefield/openff-units/issues/69
-  - openff-models >=0.0.5
   - pip
-  - pydantic >1
+  - pydantic ==2.7.3
   - pytest
   - pytest-cov
   - pytest-xdist
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?
   # docs
+  - autodoc-pydantic
   - pydata-sphinx-theme
   - sphinx-jsonschema==1.15
   - sphinx <7.1.2
   - pip:
-    - autodoc_pydantic<2.0.0
+    - git+https://github.com/openforcefield/openff-models@pydantic-2-redo
+    - git+https://github.com/openforcefield/openff-units@main
