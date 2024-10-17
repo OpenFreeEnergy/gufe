@@ -2,7 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from ....tokenization import GufeTokenizable
 
 from ..component_mapping_scorer import ComponentMappingScorer
 from .atom_mapping import AtomMapping

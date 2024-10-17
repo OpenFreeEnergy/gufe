@@ -4,11 +4,11 @@ import abc
 from collections.abc import Iterator
 import gufe
 
-from gufe.tokenization import GufeTokenizable
+from ..component_mapper import ComponentMapper
 from .atom_mapping import AtomMapping
 
 
-class AtomMapper(GufeTokenizable):
+class AtomMapper(ComponentMapper):
     """A class for manufacturing mappings
 
     Implementations of this class can require an arbitrary and non-standardised

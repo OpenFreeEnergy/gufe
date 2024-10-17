@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
-from gufe.mapping import AtomMapping
+from gufe.setup.network_planning import AtomMapping
 from gufe.tokenization import JSON_HANDLER
 
 

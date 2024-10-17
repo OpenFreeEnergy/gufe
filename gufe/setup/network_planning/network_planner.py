@@ -16,7 +16,7 @@ class NetworkPlanner(GufeTokenizable):
     Implementations of this class provide the :meth:`.get_score` method
     """
 
-    def __init__(self, mapper: ComponentMapper, scorer:ComponentMappingScorer, *args, *kwargs):
+    def __init__(self, mapper: ComponentMapper, scorer:ComponentMappingScorer, *args, **kwargs):
         """ Generate a Ligand Network Planner. This class in general needs a mapper and a scorer.
         Parameters
         ----------

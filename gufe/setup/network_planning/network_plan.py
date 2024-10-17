@@ -6,7 +6,6 @@ from itertools import chain
 import json
 import networkx as nx
 from typing import FrozenSet, Iterable, Optional
-import gufe
 
 from gufe import Component
 from gufe.tokenization import GufeTokenizable
