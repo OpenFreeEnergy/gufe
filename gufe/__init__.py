@@ -21,7 +21,7 @@ from setup.network_planning import (AtomMapping, AtomMapper,
                                    LigandAtomMapping,
                                    LigandNetwork)
 
-from .network import AlchemicalNetwork
+from .alchemical_network import AlchemicalNetwork
 
 from .settings import Settings
 

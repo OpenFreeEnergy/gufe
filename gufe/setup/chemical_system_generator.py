@@ -5,9 +5,10 @@ from enum import Enum
 
 from typing import Iterable
 from gufe import ChemicalSystem
+from ..tokenization import GufeTokenizable
+
 
 # Todo: connect to protocols - use this for labels?
-
 class RFEComponentLabels(str, Enum):
     PROTEIN = "protein"
     LIGAND = "ligand"
@@ -15,7 +16,7 @@ class RFEComponentLabels(str, Enum):
     COFACTOR = "cofactor"
 
 
-class AbstractChemicalSystemGenerator(abc.ABC):
+class AbstractChemicalSystemGenerator(GufeTokenizable, abc.ABC):
     """
     this abstract class defines the interface for the chemical system generators.
     """

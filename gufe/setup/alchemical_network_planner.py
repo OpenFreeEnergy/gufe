@@ -2,11 +2,12 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import abc
-from typing import Iterable
+
+from ..tokenization import GufeTokenizable
 from .. import AlchemicalNetwork
 
 
-class AlchemicalNetworkPlanner(abc.ABC):
+class AlchemicalNetworkPlanner(GufeTokenizable, abc.ABC):
     """
     this abstract class defines the interface for the alchemical Network Planners.
     """
