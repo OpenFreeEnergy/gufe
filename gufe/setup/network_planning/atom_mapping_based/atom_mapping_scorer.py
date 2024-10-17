@@ -4,10 +4,11 @@
 import abc
 from ....tokenization import GufeTokenizable
 
+from ..component_mapping_scorer import ComponentMappingScorer
 from .atom_mapping import AtomMapping
 
 
-class AtomMappingScorer(GufeTokenizable):
+class AtomMappingScorer(ComponentMappingScorer):
     """A generic class for scoring Atom mappings.
     this class can be used for example to build graph algorithm based networks.
 
