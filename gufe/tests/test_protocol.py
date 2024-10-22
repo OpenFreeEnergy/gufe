@@ -13,7 +13,7 @@ import numpy as np
 
 import gufe
 from gufe.chemicalsystem import ChemicalSystem
-from gufe.mapping import ComponentMapping
+from gufe.setup.network_planning import ComponentMapping
 from gufe import settings
 from gufe.protocols import (
     Protocol,
