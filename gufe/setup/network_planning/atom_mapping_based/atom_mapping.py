@@ -16,16 +16,6 @@ class AtomMapping(ComponentMapping, abc.ABC):
     """A mapping between two different atom-based Components"""
 
     @property
-    def componentA(self) -> gufe.Component:
-        """A copy of the first Component in the mapping"""
-        return self._componentA
-
-    @property
-    def componentB(self) -> gufe.Component:
-        """A copy of the second Component in the mapping"""
-        return self._componentB
-
-    @property
     @abc.abstractmethod
     def componentA_to_componentB(self) -> Mapping[int, int]:
         """Maps the index of an item from Component A onto Component B
