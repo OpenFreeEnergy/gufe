@@ -16,7 +16,7 @@ from .components import (
 
 from .chemicalsystem import ChemicalSystem
 
-from setup.network_planning import (AtomMapping, AtomMapper,
+from .setup.network_planning import (AtomMapping, AtomMapper,
                                    AtomMappingScorer,
                                    LigandAtomMapping,
                                    LigandNetwork)
