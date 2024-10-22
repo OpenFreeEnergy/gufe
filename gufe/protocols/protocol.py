@@ -13,7 +13,7 @@ import warnings
 from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
-from ..mapping import ComponentMapping
+from gufe.setup.network_planning import ComponentMapping
 
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
