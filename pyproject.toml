@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
 urls = {Homepage = "https://github.com/OpenFreeEnergy/gufe"}
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 dependencies = [
     "numpy",
     "networkx",
