@@ -8,8 +8,9 @@
 import abc
 from typing import Optional, Iterable, Any, Union
 from openff.units import Quantity
+import warnings
 
-from ..settings import Settings
+from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
@@ -65,9 +66,9 @@ class ProtocolResult(GufeTokenizable):
 
 
 class Protocol(GufeTokenizable):
-    """A protocol that implements an alchemical transformation.
+    """A method that via an alchemical transformation estimates free energy difference
 
-    Takes a ``Settings`` object customised for this protocol on init.
+    Takes a :class:`.Settings` object customised for this protocol on creation.
     This configures the protocol for repeated execution on (pairs of)
     :class:`ChemicalSystem` objects.
 
@@ -84,18 +85,23 @@ class Protocol(GufeTokenizable):
     """Corresponding `ProtocolResult` subclass."""
 
     def __init__(self, settings: Settings):
-        """Create a new ``Protocol`` instance.
-
+        """
         Parameters
         ----------
         settings : Settings
-            The full settings for this ``Protocol`` instance.
+          The parameters for this particular method.  This will be a specialised
+          subclass for this particular Protocol.
+
+        Note
+        ----
+        Once the Protocol object is created, the input Settings are frozen,
+        so should be finalised before creating the Protocol instance.
         """
-        self._settings = settings
+        self._settings = settings.frozen_copy()
 
     @property
     def settings(self) -> Settings:
-        """The full settings for this ``Protocol`` instance."""
+        """A read-only view of the settings for this ``Protocol`` instance."""
         return self._settings
 
     @classmethod
@@ -122,11 +128,11 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     def default_settings(cls) -> Settings:
-        """Get the default settings for this `Protocol`.
+        """Get the default settings for this ``Protocol``.
 
-        These can be modified and passed in as the `settings` for a new
-        `Protocol` instance.
-
+        These represent the current best-practices for the use of this
+        particular method. These can be modified and passed in as the only
+        argument for creating a new ``Protocol`` instance.
         """
         return cls._default_settings()
 
@@ -135,15 +141,16 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
-        This method should take two `ChemicalSystem`s, and optionally a
-        dict mapping string to ``ComponentMapping``, and prepare a collection of ``ProtocolUnit`` instances
-        that when executed in order give sufficient information to estimate the
-        free energy difference between those two `ChemicalSystem`s.
+        This method should take two `ChemicalSystem`s, and optionally one or
+         more ``ComponentMapping`` objects, and prepare a collection of
+        ``ProtocolUnit`` instances that when executed in order give sufficient
+        information to estimate the free energy difference between those two
+        `ChemicalSystem`s.
 
         This method should return a list of `ProtocolUnit` instances.
         For an instance in which another `ProtocolUnit` is given as a parameter
@@ -170,16 +177,16 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Union[dict[str, ComponentMapping], None],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
         transformation_key: Optional[GufeKey] = None
     ) -> ProtocolDAG:
         """Prepare a `ProtocolDAG` with all information required for execution.
 
-        A `ProtocolDAG` is composed of `ProtocolUnit`s, with dependencies
-        established between them. These form a directed, acyclic graph,
-        and each `ProtocolUnit` can be executed once its dependencies have
+        A :class:`.ProtocolDAG` is composed of :class:`.ProtocolUnit` \s, with
+        dependencies established between them. These form a directed, acyclic
+        graph, and each `ProtocolUnit` can be executed once its dependencies have
         completed.
 
         A `ProtocolDAG` can be passed to a `Scheduler` for execution on its
@@ -192,9 +199,9 @@ class Protocol(GufeTokenizable):
             The starting `ChemicalSystem` for the transformation.
         stateB : ChemicalSystem
             The ending `ChemicalSystem` for the transformation.
-        mapping : Optional[dict[str, ComponentMapping]]
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
             Mappings of e.g. atoms between a labelled component in the
-             stateA and stateB `ChemicalSystem` .
+            stateA and stateB `ChemicalSystem` .
         extends : Optional[ProtocolDAGResult]
             If provided, then the `ProtocolDAG` produced will start from the
             end state of the given `ProtocolDAGResult`. This allows for
@@ -212,8 +219,13 @@ class Protocol(GufeTokenizable):
         -------
         ProtocolDAG
             A directed, acyclic graph that can be executed by a `Scheduler`.
-
         """
+        if isinstance(mapping, dict):
+            warnings.warn(("mapping input as a dict is deprecated, "
+                           "instead use either a single Mapping or list"),
+                          DeprecationWarning)
+            mapping = list(mapping.values())
+
         return ProtocolDAG(
             name=name,
             protocol_units=self._create(
@@ -241,7 +253,6 @@ class Protocol(GufeTokenizable):
         -------
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
-
         """
         return self.result_cls(**self._gather(protocol_dag_results))
 

@@ -112,7 +112,7 @@ class DummyProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]=None,
         extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
 
@@ -172,7 +172,7 @@ class BrokenProtocol(DummyProtocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]=None,
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
 
@@ -203,9 +203,8 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-9244bc1d3ec3161ac48867f0c1029bf1"
-    repr = "<DummyProtocol-9244bc1d3ec3161ac48867f0c1029bf1>"
-
+    key = "DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa"
+    repr = "<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>"
     @pytest.fixture
     def instance(self):
         return DummyProtocol(settings=DummyProtocol.default_settings())
@@ -306,7 +305,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(succeeded_units) > 0
 
     def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand, tmpdir):
-        protocol = BrokenProtocol(settings=None)
+        protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
             mapping=None,
@@ -333,6 +332,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(protocolresult.data['logs'][0]) == 21 + 1
 
         assert protocolresult.get_estimate() == 95500.0
+
+    def test_deprecation_warning_on_dict_mapping(self, instance, vacuum_ligand, solvated_ligand):
+        lig = solvated_ligand.components['ligand']
+        mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
+
+        with pytest.warns(DeprecationWarning,
+                          match="mapping input as a dict is deprecated"):
+            instance.create(stateA=solvated_ligand, stateB=vacuum_ligand,
+                            mapping={'ligand': mapping})
 
     class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
         
@@ -507,13 +515,13 @@ class NoDepsProtocol(Protocol):
 
     @classmethod
     def _default_settings(cls):
-        return {}
+        return settings.Settings.get_defaults()
 
     def _create(
             self,
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
-            mapping: Optional[dict[str, ComponentMapping]] = None,
+            mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
             extends: Optional[ProtocolDAGResult] = None,
     ) -> List[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings,
@@ -719,3 +727,23 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
                             keep_scratch=True,
                             raise_error=False,
                             n_retries=-1)
+
+
+def test_settings_readonly():
+    # checks that settings aren't editable once inside a Protocol
+    p = DummyProtocol(DummyProtocol.default_settings())
+
+    before = p.settings.n_repeats
+
+    with pytest.raises(AttributeError, match="immutable"):
+        p.settings.n_repeats = before + 1
+
+    assert p.settings.n_repeats == before
+
+    # also check child settings
+    before = p.settings.thermo_settings.temperature
+
+    with pytest.raises(AttributeError, match="immutable"):
+        p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
+
+    assert p.settings.thermo_settings.temperature == before

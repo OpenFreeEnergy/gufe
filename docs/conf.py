@@ -29,6 +29,7 @@ author = 'The OpenFE Development Team'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'sphinxcontrib.autodoc_pydantic',
     'sphinx.ext.intersphinx',
@@ -42,6 +43,8 @@ autodoc_default_options = {
     "inherited-members": "GufeTokenizable",
     "undoc-members": True,
 }
+
+autosummary_generate = True
 
 intersphinx_mapping = {
     'rdkit': ('https://www.rdkit.org/docs/', None),
@@ -66,7 +69,10 @@ autodoc_mock_imports = ["openff.models",
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'pydata_sphinx_theme'
+html_theme = "ofe_sphinx_theme"
+html_theme_options = {
+    "accent_color": "FeelingFabulous",
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -81,21 +81,16 @@ def _setprops(obj, d: dict) -> None:
 
 class SmallMoleculeComponent(ExplicitMoleculeComponent):
     """
-    :class:`Component` representing a small molecule.
+    :class:`Component` representing a small molecule, used for ligands and cofactors.
 
-    .. note::
-       This class is a read-only representation of a molecule, if you want to
-       edit the molecule do this in an appropriate toolkit **before** creating
-       an instance from this class.
+    This class supports reading/writing to the ``.sdf`` format, which is suited to
+    smaller molecules. Ligands in a free energy calculation are represented with this class,
+    along with cofactors.
 
-    This class supports reading/writing to the `.sdf` format, which is suited to
-    smaller molecules. Ligands alchemically mutated in a free energy calculation
-    are typically represented with this class.
-
-    The name can be explicitly set by the ``name`` attribute, or implicitly set
-    based on the tags in the input molecular representation (if supported, as
-    with RDKit). If not explicitly set on creation, the molecule will first
-    look for an OpenFE-specific tag ``ofe-name``, and if that doesn't exist,
+    The name can be explicitly set by the ``name`` keyword argument on create,
+    or implicitly set based on the tags in the input molecular representation
+    (if supported, as with RDKit). If not explicitly set on creation, the molecule
+    will first look for an OpenFE-specific tag ``ofe-name``, and if that doesn't exist,
     for a commonly-used naming tag (e.g., the ``_Name`` property for RDKit
     molecules). If no name is found, the empty string is used.
 
@@ -105,6 +100,12 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         rdkit representation of the molecule
     name : str, optional
         A human readable tag for this molecule.  This name will be used in the hash.
+
+    Note
+    ----
+    This class is a read-only representation of a molecule, if you want to
+    edit the molecule do this in an appropriate toolkit **before** creating
+    an instance from this class.
     """
 
     def to_sdf(self) -> str:
@@ -125,7 +126,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
     @classmethod
     def from_sdf_string(cls, sdf_str: str):
-        """Create ``SmallMoleculeComponent`` from SDF-formatted string.
+        """Create `:class:SmallMoleculeComponent` from SDF-formatted string.
 
         Parameters
         ----------
@@ -180,7 +181,13 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         return cls(rdkit=mol)  # name is obtained automatically
 
     def to_openff(self):
-        """OpenFF Toolkit representation of this molecule"""
+        """OpenFF Toolkit Molecule representation of this molecule
+
+        Note
+        ----
+        This is a copy of this object, and modifying the OpenFF copy does not
+        alter the original object.
+        """
         from openff.toolkit.topology import Molecule as OFFMolecule
 
         m = OFFMolecule(self._rdkit, allow_undefined_stereo=True)
@@ -264,3 +271,16 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m.UpdatePropertyCache()
 
         return cls(rdkit=m)
+
+    def copy_with_replacements(self, **replacements):
+        # this implementation first makes a copy with the name replaced
+        # only, then does any other replacements that are necessary
+        if 'name' in replacements:
+            name = replacements.pop('name')
+            dct = self._to_dict()
+            dct['molprops']['ofe-name'] = name
+            obj = self._from_dict(dct)
+        else:
+            obj = self
+
+        return super(SmallMoleculeComponent, obj).copy_with_replacements(**replacements)

@@ -1,3 +1,5 @@
+docs/generated/*
+
 # custom ignores
 .xxrun
 .idea/
@@ -158,3 +160,6 @@ cython_debug/
 
 # vim
 *.swp
+
+# Rever
+rever/

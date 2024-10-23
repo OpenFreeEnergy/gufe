@@ -129,8 +129,8 @@ def network_container(
 
 class TestLigandNetwork(GufeTokenizableTestsMixin):
     cls = LigandNetwork
-    key = "LigandNetwork-8d9c3198d7fbfc29e73cb09911bccc7f"
-    repr = "<LigandNetwork-8d9c3198d7fbfc29e73cb09911bccc7f>"
+    key = "LigandNetwork-c597016564f85a3c42445bd1dabd91b3"
+    repr = "<LigandNetwork-c597016564f85a3c42445bd1dabd91b3>"
 
     @pytest.fixture
     def instance(self, simple_network):
@@ -343,8 +343,8 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert compsA.get('protein') == compsB.get('protein')
             assert compsA.get('cofactor') == compsB.get('cofactor')
 
-            assert list(edge.mapping) == ['ligand']
-            assert edge.mapping['ligand'] in real_molecules_network.edges
+            assert isinstance(edge.mapping, gufe.ComponentMapping)
+            assert edge.mapping in real_molecules_network.edges
 
     def test_to_rbfe_alchemical_network_autoname_false(
         self,

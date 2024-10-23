@@ -5,6 +5,7 @@ import json
 import io
 import numpy as np
 from os import PathLike
+import string
 from typing import Union, Optional
 from collections import defaultdict
 
@@ -36,6 +37,13 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
 _BONDORDERS_RDKIT_TO_OPENMM = {
     v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
 }
+_BONDORDER_TO_ORDER = {
+    BondType.UNSPECIFIED: 1,  # assumption
+    BondType.SINGLE: 1,
+    BondType.DOUBLE: 2,
+    BondType.TRIPLE: 3,
+}
+
 
 # builtin dict of strings to enum members, boy I hope this is stable
 _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
@@ -51,32 +59,37 @@ _CHIRALITY_STR_TO_RDKIT = {
 }
 
 
-negative_ions = ["F", "CL", "Br", "I"]
-positive_ions = ["NA", "MG", "ZN"]
+negative_ions = ["F", "CL", "BR", "I"]
+positive_ions = [
+    # +1
+    "LI", "NA", "K", "RB", "CS",
+    # +2
+    "BE", "MG", "CA", "SR", "BA", "RA", "ZN",
+]
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
     """
-    ``Component`` representing the contents of a PDB file, such as a protein.
+    :class:`Component` representing the contents of a PDB file, such as a protein.
 
     In comparison to a SmallMoleculeComponent, this representation additionally
-    contains information relating to the residue and chain information.  This
-    is achievable by having the ``MonomerInfo`` attributes present on each atom
+    contains information relating to the residue and chain information.  Technically,
+    this is done by having the ``MonomerInfo`` attributes present on each atom
     of the input RDKit molecule, which is done when reading from either PDB or
     ``.mae`` file inputs.
+
+    Parameters
+    ----------
+    rdkit : rdkit.Mol
+       rdkit representation of the protein
+    name : str, optional
+       of the protein, by default ""
 
     Note
     ----
     This class is a read-only representation of a protein, if you want to
     edit the molecule do this in an appropriate toolkit **before** creating
     an instance from this class.
-
-    Parameters
-    ----------
-    rdkit : rdkit.Mol
-        rdkit representation of the protein
-    name : str, optional
-       of the protein, by default ""
     """
     def __init__(self, rdkit: RDKitMol, name=""):
         if not all(a.GetMonomerInfo() is not None for a in rdkit.GetAtoms()):
@@ -204,14 +217,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atom_name = a.GetMonomerInfo().GetName()
 
             connectivity = sum(
-                int(bond.GetBondType()) for bond in a.GetBonds()
+                _BONDORDER_TO_ORDER[bond.GetBondType()]
+                for bond in a.GetBonds()
             )
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions:
-                if atom_name in positive_ions:
-                    fc = default_valence  # e.g. Sodium ions
-                elif atom_name in negative_ions:
+                # strip catches cases like 'CL1' as name
+                if atom_name.strip(string.digits).upper() in positive_ions:
+                    fc = default_valence   # e.g. Sodium ions
+                elif atom_name.strip(string.digits).upper() in negative_ions:
                     fc = - default_valence  # e.g. Chlorine ions
                 else:  # -no-cov-
                     resn = a.GetMonomerInfo().GetResidueName()
@@ -296,7 +311,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return cls(rdkit=rd_mol, name=name)
 
-    # TO
     def to_openmm_topology(self) -> app.Topology:
         """Convert to an openmm Topology object
 
@@ -375,7 +389,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
     def to_openmm_positions(self) -> omm_unit.Quantity:
         """
         serialize the positions to openmm.unit.Quantity
-        ! only one frame at the moment!
+
+        Note
+        ----
+        Currently only one frame/model is given
 
         Returns
         -------

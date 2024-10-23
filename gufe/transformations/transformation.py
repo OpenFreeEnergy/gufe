@@ -1,8 +1,9 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Union
 import json
+import warnings
 
 from ..tokenization import GufeTokenizable, JSON_HANDLER
 from ..utils import ensure_filelike
@@ -13,19 +14,45 @@ from ..mapping import ComponentMapping
 
 
 class Transformation(GufeTokenizable):
-    """An edge of an alchemical network.
-
-    Connects two :class:`ChemicalSystem` objects, with directionality.
-    """
+    _stateA: ChemicalSystem
+    _stateB: ChemicalSystem
+    _name: Optional[str]
+    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
+    _protocol: Protocol
 
     def __init__(
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[dict[str, ComponentMapping]] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
         name: Optional[str] = None,
     ):
+        """Two chemical states with a method for estimating free energy difference
+
+        Connects two :class:`.ChemicalSystem` objects, with directionality,
+        and relates this to a :class:`.Protocol` which will provide an estimate of
+        the free energy difference of moving between these systems.
+        Used as an edge of an :class:`.AlchemicalNetwork`.
+
+        Parameters
+        ----------
+        stateA, stateB: ChemicalSystem
+           The start (A) and end (B) states of the transformation
+        protocol: Protocol
+           The method used to estimate the free energy difference between states
+           A and B
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
+           the details of any transformations between :class:`.Component` \s of
+           the two states
+        name : str, optional
+           a human-readable tag for this transformation
+        """
+        if isinstance(mapping, dict):
+            warnings.warn(("mapping input as a dict is deprecated, "
+                           "instead use either a single Mapping or list"),
+                          DeprecationWarning)
+            mapping = list(mapping.values())
 
         self._stateA = stateA
         self._stateB = stateB
@@ -44,30 +71,28 @@ class Transformation(GufeTokenizable):
 
     @property
     def stateA(self) -> ChemicalSystem:
-        """The starting :class:`ChemicalSystem` for the transformation."""
+        """The starting :class:`.ChemicalSystem` for the transformation."""
         return self._stateA
 
     @property
     def stateB(self) -> ChemicalSystem:
-        """The ending :class:`ChemicalSystem` for the transformation."""
+        """The ending :class:`.ChemicalSystem` for the transformation."""
         return self._stateB
 
     @property
     def protocol(self) -> Protocol:
         """The protocol used to perform the transformation.
 
-        This protocol derives free energy differences between ``stateA`` and
-        ``stateB`` ``ChemicalSystem`` objects. It includes all details needed to
-        perform required simulations/calculations and encodes the alchemical
-        pathway used. May also correspond to an experimental result.
+        This protocol estimates the free energy differences between ``stateA``
+        and ``stateB`` :class:`.ChemicalSystem` objects. It includes all details
+        needed to perform required simulations/calculations and encodes the
+        alchemical pathway used.
         """
         return self._protocol
 
     @property
-    def mapping(self) -> Optional[dict[str, ComponentMapping]]:
-        """
-        Mapping of e.g. atoms between ``stateA`` and ``stateB``.
-        """
+    def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
+        """The mappings relevant for this Transformation"""
         return self._mapping
 
     @property

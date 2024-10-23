@@ -13,11 +13,11 @@ from gufe import LigandAtomMapping, SmallMoleculeComponent
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
-def mol_from_smiles(smiles: str) -> Chem.Mol:
-    m = Chem.MolFromSmiles(smiles)
+def mol_from_smiles(smiles: str) -> gufe.SmallMoleculeComponent:
+    m = Chem.AddHs(Chem.MolFromSmiles(smiles))
     m.Compute2DCoords()
 
-    return m
+    return gufe.SmallMoleculeComponent(m)
 
 
 @pytest.fixture(scope='session')
@@ -28,8 +28,8 @@ def simple_mapping():
 
     C C
     """
-    molA = gufe.SmallMoleculeComponent(mol_from_smiles('CCO'))
-    molB = gufe.SmallMoleculeComponent(mol_from_smiles('CC'))
+    molA = mol_from_smiles('CCO')
+    molB = mol_from_smiles('CC')
 
     m = LigandAtomMapping(molA, molB, componentA_to_componentB={0: 0, 1: 1})
 
@@ -44,8 +44,8 @@ def other_mapping():
 
     C   C
     """
-    molA = SmallMoleculeComponent(mol_from_smiles('CCO'))
-    molB = SmallMoleculeComponent(mol_from_smiles('CC'))
+    molA = mol_from_smiles('CCO')
+    molB = mol_from_smiles('CC')
 
     m = LigandAtomMapping(molA, molB, componentA_to_componentB={0: 0, 2: 1})
 
@@ -236,10 +236,46 @@ def test_with_fancy_annotations(simple_mapping):
     assert m == m2
 
 
+class TestLigandAtomMappingBoundsChecks:
+    @pytest.fixture
+    def molA(self):
+        # 9 atoms
+        return mol_from_smiles('CCO')
+
+    @pytest.fixture
+    def molB(self):
+        # 11 atoms
+        return mol_from_smiles('CCC')
+
+    def test_too_large_A(self, molA, molB):
+        with pytest.raises(ValueError, match="invalid index for ComponentA"):
+            LigandAtomMapping(componentA=molA,
+                              componentB=molB,
+                              componentA_to_componentB={9: 5})
+
+    def test_too_small_A(self, molA, molB):
+        with pytest.raises(ValueError, match="invalid index for ComponentA"):
+            LigandAtomMapping(componentA=molA,
+                              componentB=molB,
+                              componentA_to_componentB={-2: 5})
+
+    def test_too_large_B(self, molA, molB):
+        with pytest.raises(ValueError, match="invalid index for ComponentB"):
+            LigandAtomMapping(componentA=molA,
+                              componentB=molB,
+                              componentA_to_componentB={5: 11})
+
+    def test_too_small_B(self, molA, molB):
+        with pytest.raises(ValueError, match="invalid index for ComponentB"):
+            LigandAtomMapping(componentA=molA,
+                              componentB=molB,
+                              componentA_to_componentB={5: -1})
+
+
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     cls = LigandAtomMapping
     repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
-    key = "LigandAtomMapping-c95a2c15fe21f446cf731338427137ae"
+    key = "LigandAtomMapping-2c0aae226e3f69d2d1cf429abaefdb5b"
 
     @pytest.fixture
     def instance(self, annotated_simple_mapping):

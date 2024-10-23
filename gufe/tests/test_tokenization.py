@@ -10,7 +10,8 @@ from typing import Optional
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
     import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER,
-    get_all_gufe_objs,
+    get_all_gufe_objs, gufe_to_digraph, gufe_objects_from_shallow_dict,
+    KeyedChain,
 )
 
 
@@ -171,14 +172,15 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         def leaf_dict(a):
             return {'__module__': __name__, '__qualname__': "Leaf", "a": a,
-                    "b": 2}
+                    "b": 2, ':version:': 1}
 
         self.expected_deep = {
             '__qualname__': "Container",
             '__module__': __name__,
             'obj': leaf_dict(leaf_dict("foo")),
             'lst': [leaf_dict("foo"), 0],
-            'dct': {"leaf": leaf_dict("foo"), "a": "b"}
+            'dct': {"leaf": leaf_dict("foo"), "a": "b"},
+            ':version:': 1,
         }
 
         self.expected_shallow = {
@@ -187,6 +189,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             'obj': bar,
             'lst': [leaf, 0],
             'dct': {'leaf': leaf, 'a': 'b'},
+            ':version:': 1,
         }
 
         self.expected_keyed = {
@@ -194,7 +197,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             '__module__': __name__,
             'obj': {":gufe-key:": bar.key},
             'lst': [{":gufe-key:": leaf.key}, 0],
-            'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'}
+            'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'},
+            ':version:': 1,
         }
 
     def test_set_key(self):
@@ -375,6 +379,65 @@ class TestGufeKey:
         k = GufeKey('foo-bar')
 
         assert k.token == 'bar'
+
+
+def test_gufe_to_digraph(solvated_complex):
+    graph = gufe_to_digraph(solvated_complex)
+
+    connected_objects = gufe_objects_from_shallow_dict(
+        solvated_complex.to_shallow_dict()
+    )
+
+    assert len(graph.nodes) == 4
+    assert len(graph.edges) == 3
+
+    for node_a, node_b in graph.edges:
+        assert node_b in connected_objects
+        assert node_a is solvated_complex
+
+
+def test_gufe_objects_from_shallow_dict(solvated_complex):
+    shallow_dict = solvated_complex.to_shallow_dict()
+    gufe_objects = set(gufe_objects_from_shallow_dict(shallow_dict))
+
+    assert len(gufe_objects) == 3
+    assert set(gufe_objects) == set(solvated_complex.components.values())
+
+
+class TestKeyedChain:
+
+    def test_from_gufe(self, benzene_variants_star_map):
+        contained_objects = list(get_all_gufe_objs(benzene_variants_star_map))
+        expected_len = len(contained_objects)
+
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        assert len(kc) == expected_len
+
+        original_keys = [obj.key for obj in contained_objects]
+        original_keyed_dicts = [
+            obj.to_keyed_dict() for obj in contained_objects
+        ]
+
+        kc_gufe_keys = set(kc.gufe_keys())
+        kc_keyed_dicts = list(kc.keyed_dicts())
+
+        assert kc_gufe_keys == set(original_keys)
+
+        for key, keyed_dict in zip(original_keys, original_keyed_dicts):
+            assert key in kc_gufe_keys
+            assert keyed_dict in kc_keyed_dicts
+
+    def test_to_gufe(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+        assert hash(kc.to_gufe()) == hash(benzene_variants_star_map)
+
+    def test_get_item(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        assert kc[0] == kc._keyed_chain[0]
+        assert kc[-1] == kc._keyed_chain[-1]
+        assert kc[:] == kc._keyed_chain[:]
 
 
 def test_datetime_to_json():

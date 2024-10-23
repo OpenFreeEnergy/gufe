@@ -2,26 +2,26 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from collections import abc
-from typing import Dict, Optional
-
-import numpy as np
+from typing import Optional
 
 from .tokenization import GufeTokenizable
 from .components import Component
 
 
 class ChemicalSystem(GufeTokenizable, abc.Mapping):
-    """
-    A node of an alchemical network; represents a system of chemicals.
-    """
-
     def __init__(
         self,
-        components: Dict[str, Component],
+        components: dict[str, Component],
         name: Optional[str] = "",
     ):
-        """Create a node for an alchemical network.
+        """A combination of Components that form a system
 
+        Containing a combination of :class:`.SmallMoleculeComponent`,
+        :class:`.SolventComponent` and :class:`.ProteinComponent`, this object
+        typically represents all the molecules in a simulation box.
+
+        Used as a node for an :class:`.AlchemicalNetwork`.
+        
         Parameters
         ----------
         components
@@ -64,10 +64,10 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     @property
     def components(self) -> dict[str, Component]:
         """
-        The molecular representation of the chemical system.
+        The individual components of the chemical system.
 
         Components include atomic connectivity and coordinates. This is a
-        frozendict with user-defined labels as keys and :class:`.Component`
+        dict with user-defined labels as keys and :class:`.Component`
         instances as values.
         """
         return dict(self._components)
@@ -104,18 +104,6 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
 
     def __len__(self):
         return len(self.components)
-
-    @classmethod
-    def as_protein_smallmolecule_solvent(cls):
-        """ """
-        # alternate initializer for typical protein+ligand+solvent system
-        ...
-
-    @classmethod
-    def as_smallmolecule_solvent(cls):
-        """ """
-        # alternate initializer for typical ligand+solvent system
-        ...
 
     @classmethod
     def _defaults(cls):

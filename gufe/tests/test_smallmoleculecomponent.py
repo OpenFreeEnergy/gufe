@@ -72,7 +72,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
-    key = "SmallMoleculeComponent-51068a89f4793e688ee26135a9b7fbb6"
+    key = "SmallMoleculeComponent-82d90fcdcbe76a4155b0ea42b9080ff2"
     repr = "SmallMoleculeComponent(name=ethane)"
 
     @pytest.fixture
@@ -185,6 +185,39 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane is not copy
         assert named_ethane.smiles == copy.smiles
 
+    @pytest.mark.parametrize('replace', (
+        ['name'],
+        ['mol'],
+        ['name', 'mol'],
+    ))
+    def test_copy_with_replacements(self, named_ethane, replace):
+        replacements = {}
+        if 'name' in replace:
+            replacements['name'] = "foo"
+
+        if 'mol' in replace:
+            # it is a little weird to use copy_with_replacements to replace
+            # the whole molecule (possibly keeping the same name), but it
+            # should work if someone does! (could more easily imagine only
+            # using a new conformer)
+            rdmol = Chem.AddHs(Chem.MolFromSmiles("CO"))
+            Chem.AllChem.Compute2DCoords(rdmol)
+            mol = SmallMoleculeComponent.from_rdkit(rdmol)
+            dct = mol._to_dict()
+            for item in ['atoms', 'bonds', 'conformer']:
+                replacements[item] = dct[item]
+
+        new = named_ethane.copy_with_replacements(**replacements)
+        if 'name' in replace:
+            assert new.name == "foo"
+        else:
+            assert new.name == "ethane"
+
+        if 'mol' in replace:
+            assert new.smiles == "CO"
+        else:
+            assert new.smiles == "CC"
+
 
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
@@ -230,6 +263,47 @@ class TestSmallMoleculeComponentPartialCharges:
 
         with pytest.raises(ValueError, match="Incorrect number of"):
             SmallMoleculeComponent.from_rdkit(mol)
+
+    def test_partial_charges_applied_to_atoms(self):
+        """
+        Make sure that charges set at the molecule level
+        are transferred to atoms and picked up by openFF.
+        """
+        mol = Chem.AddHs(Chem.MolFromSmiles("C"))
+        Chem.AllChem.Compute2DCoords(mol)
+        # add some fake charges at the molecule level
+        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        matchmsg = "Partial charges have been provided"
+        with pytest.warns(UserWarning, match=matchmsg):
+            ofe = SmallMoleculeComponent.from_rdkit(mol)
+        # convert to openff and make sure the charges are set
+        off_mol = ofe.to_openff()
+        assert off_mol.partial_charges is not None
+        # check ordering is the same
+        rdkit_mol_with_charges = ofe.to_rdkit()
+        for i, charge in enumerate(off_mol.partial_charges.m):
+            rdkit_atom = rdkit_mol_with_charges.GetAtomWithIdx(i)
+            assert rdkit_atom.GetDoubleProp("PartialCharge") == charge
+
+    def test_inconsistent_charges(self, charged_off_ethane):
+        """
+        An error should be raised if the atom and molecule level
+        charges do not match.
+        """
+        mol = Chem.AddHs(Chem.MolFromSmiles("C"))
+        Chem.AllChem.Compute2DCoords(mol)
+        # add some fake charges at the molecule level
+        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        # set different charges to the atoms
+        for atom in mol.GetAtoms():
+            atom.SetDoubleProp("PartialCharge", 0)
+
+        # make sure the correct error is raised
+        msg = ("non-equivalent partial charges between "
+               "atom and molecule properties")
+        with pytest.raises(ValueError, match=msg):
+            SmallMoleculeComponent.from_rdkit(mol)
+
 
 
 @pytest.mark.parametrize('mol, charge', [

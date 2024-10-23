@@ -9,37 +9,49 @@ import importlib
 import inspect
 import json
 import logging
+import networkx as nx
+import re
+import warnings
 import weakref
-from typing import Any, Dict, List, Tuple, Union
+from itertools import chain
+from typing import Any, Union, List, Tuple, Dict, Generator
+from typing_extensions import Self
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
     DATETIME_CODEC,
+    NPY_DTYPE_CODEC,
     NUMPY_CODEC,
     OPENFF_QUANTITY_CODEC,
     OPENFF_UNIT_CODEC,
     PATH_CODEC,
     SETTINGS_CODEC,
+    UUID_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer
 
 _default_json_codecs = [
     PATH_CODEC,
     NUMPY_CODEC,
+    NPY_DTYPE_CODEC,
     BYTES_CODEC,
     DATETIME_CODEC,
     SETTINGS_CODEC,
     OPENFF_UNIT_CODEC,
     OPENFF_QUANTITY_CODEC,
+    UUID_CODEC,
 ]
 JSON_HANDLER = JSONSerializerDeserializer(_default_json_codecs)
 
 # maps qualified name strings to the class
-TOKENIZABLE_CLASS_REGISTRY: Dict[Tuple[str, str], "GufeTokenizable"] = {}
+TOKENIZABLE_CLASS_REGISTRY: dict[tuple[str, str], "GufeTokenizable"] = {}
+""":noindex:"""
+
 # maps fully qualified names to a new location
 # e.g. if we did a rename:
 # ('gufe', 'ProteinComponent') -> ('gufe', 'BiopolymerComponent')
-REMAPPED_CLASSES: Dict[Tuple[str, str], Tuple[str, str]] = {}
+REMAPPED_CLASSES: dict[tuple[str, str], tuple[str, str]] = {}
+""":noindex:"""
 
 
 def register_tokenizable_class(cls):
@@ -126,6 +138,184 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 
+def new_key_added(dct, new_key, default):
+    """Serialization migration: Add a new key to the dictionary.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration` ) where a new key has
+    been added to the object's representation (e.g., a new parameter has
+    been added). In order to be migratable, the new key must have an
+    associated default value.
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    new_key: str
+        name of the new key
+    default: Any
+        default value for the new key
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to add the new key
+    """
+    dct[new_key] = default
+    return dct
+
+
+def old_key_removed(dct, old_key, should_warn):
+    """Serialization migration: Remove an old key from the dictionary.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration` ) where a key has been
+    removed from the object's serialized representation (e.g., an old
+    parameter is no longer allowed). If a parameter has been removed, it is
+    likely that you will want to warn the user that the parameter is no
+    longer used: the ``should_warn`` option allows that.
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    old_key : str
+        name of the key that has been removed
+    should_warn : bool
+        whether to issue a warning for this (generally recommended)
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to remove the old key
+    """
+    if should_warn:
+        # TODO: this should be put elsewhere so that the warning can be more
+        # meaningful (somewhere that knows what class we're recreating)
+        warnings.warn(f"Outdated serialization: '{old_key}', with value "
+                      f"'{dct[old_key]}' is no longer used in this object")
+
+    del dct[old_key]
+    return dct
+
+
+def key_renamed(dct, old_name, new_name):
+    """Serialization migration: Rename a key in the dictionary.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration` ) where a key has been
+    renamed (e.g., a parameter name has changed).
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    old_name : str
+        name of the key in the old serialization representation
+    new_name : str
+        name of the key in the new serialization representation
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to rename the key from the old name to the
+        new one
+    """
+    dct[new_name] = dct.pop(old_name)
+    return dct
+
+
+def _label_to_parts(label):
+    """Helper to split labels used for nested objects into parts.
+
+    See :func:`.nested_key_moved` for a description of the label.
+    """
+    def _intify_if_possible(part):
+        try:
+            part = int(part)
+        except ValueError:
+            pass
+
+        return part
+    parts = [
+        _intify_if_possible(p) for p in re.split('\.|\[|\]', label)
+        if p != ""
+    ]
+    return parts
+
+
+def _pop_nested(container, label):
+    """Pop a nested object with the given label from a container.
+
+    See :func:`.nested_key_moved` for a description of the label.
+    """
+    parts = _label_to_parts(label)
+    current = container
+    for part in parts[:-1]:
+        current = current[part]
+
+    return current.pop(parts[-1])
+
+
+def _set_nested(container, label, value):
+    """Set a nested object with the given label to the given value.
+
+    See :func:`.nested_key_moved` for a description of the label.
+    """
+    parts = _label_to_parts(label)
+    current = container
+    for part in parts[:-1]:
+        current = current[part]
+
+    current[parts[-1]] = value
+
+
+def nested_key_moved(dct, old_name, new_name):
+    """Serialization migration: Move nested key to a new location.
+
+    This can be used in when writing a serialization migration (see
+    :meth:`GufeTokenizable.serialization_migration`) where a key that is
+    nested in a structure of dicts/lists has been moved elsewhere. It uses
+    labels that match Python namespace/list notations. That is, if ``dct``
+    is the following dict::
+
+        {'first': {'inner': ['list', 'of', 'words']}}
+
+    then the label ``'first.inner[1]'`` would refer to the word ``'of'``.
+
+    In that case, the following call::
+
+        nested_key_moved(dct, 'first.inner[1]', 'second')
+
+    would result in the dictionary::
+
+        {'first': {'inner': ['list', 'words']}, 'second': 'of'}
+
+    This is particular useful for things like protocol settings, which
+    present as nested objects like this.
+
+    Parameters
+    ----------
+    dct : dict
+        dictionary based on the old serialization version
+    old_name : str
+        label for the old location (see above for description of label
+        format)
+    new_name : str
+        label for the new location (see above for description of label
+        format)
+
+    Returns
+    -------
+    dict:
+        input dictionary modified to move the value at the old location to
+        the new location
+    """
+    val = _pop_nested(dct, old_name)
+    _set_nested(dct, new_name, val)
+    return dct
+
+
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizeable gufe objects.
 
@@ -135,6 +325,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.
     """
+    @classmethod
+    def _schema_version(cls) -> int:
+        return 1
+
     def __repr__(self):
         return f"<{self.key}>"
 
@@ -156,6 +350,56 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return tokenize(self)
         # return normalize(self.to_keyed_dict(include_defaults=False))
+
+    @classmethod
+    def serialization_migration(cls, old_dict: dict, version: int) -> dict:
+        """Migrate old serialization dicts to the current form.
+
+        The input dict ``old_dict`` comes from some previous serialization
+        version, given by ``version``. The output dict should be in the
+        format of the current serialization dict.
+
+        The recommended pattern to use looks like this:
+
+        .. code::
+
+            def serialization_migration(cls, old_dict, version):
+                if version == 1:
+                    ...  # do things for migrating version 1->2
+                if version <= 2:
+                    ...  # do things for migrating version 2->3
+                if version <= 3:
+                    ...  # do things for migrating version 3->4
+                # etc
+
+        This approach steps through each old serialization model on its way
+        to the current version. It keeps code relatively minimal and
+        readable.
+
+        As a convenience, the following functions are available to simplify
+        the various kinds of changes that are likely to occur in as
+        serializtion versions change:
+
+        * :func:`.new_key_added`
+        * :func:`.old_key_removed`
+        * :func:`.key_renamed`
+        * :func:`.nested_key_moved`
+
+        Parameters
+        ----------
+        old_dict : dict
+            dict as received from a serialized form
+        version: int
+            the serialization version of ``old_dict``
+
+        Returns
+        -------
+        dict :
+            serialization dict suitable for the current implementation of
+            ``from_dict``.
+
+        """
+        return old_dict
 
     @property
     def logger(self):
@@ -202,7 +446,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         with ``to_dict(include_defaults=False)`` where default values are present.
 
         """
-        return cls._defaults()
+        defaults = cls._defaults()
+        defaults[':version:'] = cls._schema_version()
+        return defaults
 
     @classmethod
     @abc.abstractmethod
@@ -221,7 +467,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return defaults
 
     @abc.abstractmethod
-    def _to_dict(self) -> Dict:
+    def _to_dict(self) -> dict:
         """This method should be overridden to provide the dict form of the
         `GufeTokenizable` subclass.
 
@@ -234,7 +480,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @classmethod
     @abc.abstractmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         """This method should be overridden to receive the dict form of the
         `GufeTokenizable` subclass and generate an instance from it.
 
@@ -267,7 +513,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return dct
 
     @classmethod
-    def from_dict(cls, dct: Dict):
+    def from_dict(cls, dct: dict):
         """Generate an instance from full dict representation.
 
         Parameters
@@ -280,7 +526,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return dict_decode_dependencies(dct)
 
-    def to_keyed_dict(self, include_defaults=True) -> Dict:
+    def to_keyed_dict(self, include_defaults=True) -> dict:
         """Generate keyed dict representation, with all referenced
         `GufeTokenizable` objects given in keyed representations.
 
@@ -309,7 +555,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return dct
 
     @classmethod
-    def from_keyed_dict(cls, dct: Dict):
+    def from_keyed_dict(cls, dct: dict):
         """Generate an instance from keyed dict representation.
 
         Parameters
@@ -322,7 +568,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return key_decode_dependencies(dct)
 
-    def to_shallow_dict(self) -> Dict:
+    def to_shallow_dict(self) -> dict:
         """Generate shallow dict representation, with all referenced
         `GufeTokenizable` objects left intact.
 
@@ -335,7 +581,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return to_dict(self)
 
     @classmethod
-    def from_shallow_dict(cls, dct: Dict):
+    def from_shallow_dict(cls, dct: dict):
         """Generate an instance from shallow dict representation.
 
         Parameters
@@ -395,6 +641,195 @@ class GufeKey(str):
         return self.split('-')[1]
 
 
+def gufe_objects_from_shallow_dict(
+    obj: Union[List, Dict, GufeTokenizable]
+) -> List[GufeTokenizable]:
+    """Find GufeTokenizables within a shallow dict.
+
+    This function recursively looks through the list/dict structures encoding
+    GufeTokenizables and returns list of all GufeTokenizables found
+    within those structures, which may be potentially nested.
+
+    Parameters
+    ----------
+    obj
+        The input data structure to recursively traverse. For the initial call
+        of this function, this should be the shallow dict of a GufeTokenizable.
+        Input of a GufeTokenizable will immediately return a base case.
+
+    Returns
+    -------
+    List[GufeTokenizable]
+        All GufeTokenizables found in the shallow dict representation of a
+        GufeTokenizable.
+
+    """
+    if isinstance(obj, GufeTokenizable):
+        return [obj]
+
+    elif isinstance(obj, list):
+        return list(
+            chain.from_iterable([gufe_objects_from_shallow_dict(item) for item in obj])
+        )
+
+    elif isinstance(obj, dict):
+        return list(
+            chain.from_iterable(
+                [gufe_objects_from_shallow_dict(item) for item in obj.values()]
+            )
+        )
+
+    return []
+
+
+def gufe_to_digraph(gufe_obj):
+    """Recursively construct a DiGraph from a GufeTokenizable.
+
+    The DiGraph encodes the dependency structure of the GufeTokenizable on
+    other GufeTokenizables.
+    """
+    graph = nx.DiGraph()
+    shallow_dicts = {}
+
+    def add_edges(o):
+        # if we've made a shallow dict before, we've already added this one
+        # and all its dependencies; return `None` to avoid going down the tree
+        # again
+        sd = shallow_dicts.get(o.key)
+        if sd is not None:
+            return None
+
+        # if not, then we make the shallow dict only once, add it to our index,
+        # add edges to dependencies, and return it so we continue down the tree
+        sd = o.to_shallow_dict()
+
+        shallow_dicts[o.key] = sd
+
+        # add the object node in case there aren't any connections
+        graph.add_node(o)
+        connections = gufe_objects_from_shallow_dict(sd)
+
+        for c in connections:
+            graph.add_edge(o, c)
+
+        return sd
+
+    sd = add_edges(gufe_obj)
+    _ = modify_dependencies(sd, add_edges, is_gufe_obj, mode="encode")
+
+    return graph
+
+
+class KeyedChain(object):
+    """Keyed chain representation encoder of a GufeTokenizable.
+
+    The keyed chain representation of a GufeTokenizable provides a
+    topologically sorted list of gufe keys and GufeTokenizable keyed dicts
+    that can be used to fully recreate a GufeTokenizable without the need for a
+    populated TOKENIZATION_REGISTRY.
+
+    The class wraps around a list of tuples containing the gufe key and the
+    keyed dict form of the GufeTokenizable.
+
+    Examples
+    --------
+    We can create a keyed chain representation from any GufeTokenizable, such
+    as:
+
+    >>> from gufe.tokenization import KeyedChain
+    >>> s = SolventComponent()
+    >>> keyed_chain = KeyedChain.gufe_to_keyed_chain_rep(s)
+    >>> keyed_chain
+    [('SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f',
+      {'smiles': 'O',
+       'positive_ion': 'Na+',
+       'negative_ion': 'Cl-',
+       'ion_concentration': '0.15 molar',
+       'neutralize': True,
+       '__qualname__': 'SolventComponent',
+       '__module__': 'gufe.components.solventcomponent',
+       ':version:': 1})]
+
+    And we can do the reverse operation as well to go from a keyed chain
+    representation back to a GufeTokenizable:
+
+    >>> KeyedChain(keyed_chain).to_gufe()
+    SolventComponent(name=O, Na+, Cl-)
+
+    """
+
+    def __init__(self, keyed_chain):
+        self._keyed_chain = keyed_chain
+
+    @classmethod
+    def from_gufe(cls, gufe_object: GufeTokenizable) -> Self:
+        """Initialize a KeyedChain from a GufeTokenizable."""
+        return cls(cls.gufe_to_keyed_chain_rep(gufe_object))
+
+    def to_gufe(self) -> GufeTokenizable:
+        """Initialize a GufeTokenizable."""
+        gts: Dict[str, GufeTokenizable] = {}
+        for gufe_key, keyed_dict in self:
+            gt = key_decode_dependencies(keyed_dict, registry=gts)
+            gts[gufe_key] = gt
+        return gt
+
+    @classmethod
+    def from_keyed_chain_rep(cls, keyed_chain: List[Tuple[str, Dict]]) -> Self:
+        """Initialize a KeyedChain from a keyed chain representation."""
+        return cls(keyed_chain)
+
+    def to_keyed_chain_rep(self) -> List[Tuple[str, Dict]]:
+        """Return the keyed chain representation of this object."""
+        return list(self)
+
+    @staticmethod
+    def gufe_to_keyed_chain_rep(
+        gufe_object: GufeTokenizable,
+    ) -> List[Tuple[str, Dict]]:
+        """Create the keyed chain representation of a GufeTokenizable.
+
+        This represents the GufeTokenizable as a list of two-element tuples
+        containing, as their first and second elements, the gufe key and keyed
+        dict form of the GufeTokenizable, respectively, and provides the
+        underlying structure used in the KeyedChain class.
+
+        Parameters
+        ----------
+        gufe_object
+            The GufeTokenizable for which the KeyedChain is generated.
+
+        Returns
+        -------
+        key_and_keyed_dicts
+            The keyed chain representation of a GufeTokenizable.
+
+        """
+        key_and_keyed_dicts = [
+            (str(gt.key), gt.to_keyed_dict())
+            for gt in nx.topological_sort(gufe_to_digraph(gufe_object))
+        ][::-1]
+        return key_and_keyed_dicts
+
+    def gufe_keys(self) -> Generator[str, None, None]:
+        """Create a generator that iterates over the gufe keys in the KeyedChain."""
+        for key, _ in self:
+            yield key
+
+    def keyed_dicts(self) -> Generator[Dict, None, None]:
+        """Create a generator that iterates over the keyed dicts in the KeyedChain."""
+        for _, _dict in self:
+            yield _dict
+
+    def __len__(self):
+        return len(self._keyed_chain)
+
+    def __iter__(self):
+        return self._keyed_chain.__iter__()
+
+    def __getitem__(self, index):
+        return self._keyed_chain[index]
+
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
 TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary()
@@ -453,7 +888,7 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=True):
+def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=True):
     """
     Parameters
     ----------
@@ -468,7 +903,7 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=Tru
         subjected to the modifier
     mode : {'encode', 'decode'}
         Whether this function is being used to encode a set of
-        `GufeTokenizable`s or decode them from dict or key-encoded forms.
+        `GufeTokenizable` s or decode them from dict or key-encoded forms.
         Required to determine when to modify objects found in nested dict/list.
     top : bool
         If `True`, skip modifying `obj` itself; needed for recursive use to
@@ -492,13 +927,14 @@ def modify_dependencies(obj: Union[Dict, List], modifier, is_mine, mode, top=Tru
 
 
 # encode options
-def to_dict(obj: GufeTokenizable) -> Dict:
+def to_dict(obj: GufeTokenizable) -> dict:
     dct = obj._to_dict()
     dct.update(module_qualname(obj))
+    dct[':version:'] = obj._schema_version()
     return dct
 
 
-def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
+def dict_encode_dependencies(obj: GufeTokenizable) -> dict:
     return modify_dependencies(
         obj.to_shallow_dict(),
         to_dict,
@@ -508,7 +944,7 @@ def dict_encode_dependencies(obj: GufeTokenizable) -> Dict:
     )
 
 
-def key_encode_dependencies(obj: GufeTokenizable) -> Dict:
+def key_encode_dependencies(obj: GufeTokenizable) -> dict:
     return modify_dependencies(
         obj.to_shallow_dict(),
         lambda obj: obj.key.to_dict(),
@@ -536,22 +972,24 @@ def from_dict(dct) -> GufeTokenizable:
         return thing
 
 
-def _from_dict(dct: Dict) -> GufeTokenizable:
+def _from_dict(dct: dict) -> GufeTokenizable:
     module = dct.pop('__module__')
     qualname = dct.pop('__qualname__')
+    version = dct.pop(':version:', 1)
 
     cls = get_class(module, qualname)
+    dct = cls.serialization_migration(dct, version)
     return cls._from_dict(dct)
 
 
-def dict_decode_dependencies(dct: Dict) -> GufeTokenizable:
+def dict_decode_dependencies(dct: dict) -> GufeTokenizable:
     return from_dict(
         modify_dependencies(dct, from_dict, is_gufe_dict, mode='decode', top=True)
     )
 
 
 def key_decode_dependencies(
-    dct: Dict,
+    dct: dict,
     registry=TOKENIZABLE_REGISTRY
 ) -> GufeTokenizable:
     # this version requires that all dependent objects are already registered
@@ -578,7 +1016,7 @@ def get_all_gufe_objs(obj):
 
     Returns
     -------
-    Set[:class:`.GufeTokenizable`]
+    Set[GufeTokenizable]
         all contained GufeTokenizables
     """
     results = {obj}

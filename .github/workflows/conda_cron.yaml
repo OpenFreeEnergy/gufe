@@ -1,8 +1,7 @@
 name: "conda_cron"
 on:
-  pull_request:
-    branches:
-      - main
+  # Allow for manual trigger of workflow
+  workflow_dispatch:
   schedule:
     # At 07:00 UTC every day
     - cron: "0 7 * * *"
@@ -17,12 +16,14 @@ defaults:
 
 jobs:
   condacheck:
-    runs-on: ${{ matrix.OS }}-latest
+    runs-on: ${{ matrix.OS }}
     name: "daily conda check"
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu', 'macos']
+        # Note: pinned to macos-12
+        # see https://github.com/OpenFreeEnergy/openfe/issues/842
+        os: ['ubuntu-latest', 'macos-12']
         python-version:
           - "3.9"
           - "3.10"

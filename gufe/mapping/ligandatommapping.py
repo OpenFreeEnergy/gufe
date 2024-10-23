@@ -1,5 +1,7 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+from __future__ import annotations
+
 import json
 from typing import Any, Optional
 import numpy as np
@@ -13,11 +15,16 @@ from ..tokenization import JSON_HANDLER
 
 class LigandAtomMapping(AtomMapping):
     """
-    Simple container for an atom mapping between two small molecule components.
+    Container for an atom mapping between two small molecule components.
 
+    This is a specialized version of :class:`.AtomMapping` for
+    :class:`.SmallMoleculeComponent` which stores the mapping as a dict of
+    integers.
     """
     componentA: SmallMoleculeComponent
     componentB: SmallMoleculeComponent
+    _annotations: dict[str, Any]
+    _compA_to_compB: dict[int, int]
 
     def __init__(
         self,
@@ -34,7 +41,9 @@ class LigandAtomMapping(AtomMapping):
         componentA_to_componentB : dict[int, int]
           correspondence of indices of atoms between the two ligands; the
           keys are indices in componentA and the values are indices in
-          componentB
+          componentB.
+          These are checked that they are within the possible indices of the
+          respective components.
         annotations : dict[str, Any]
           Mapping of annotation identifier to annotation data. Annotations may
           contain arbitrary JSON-serializable data. Annotation identifiers
@@ -42,16 +51,27 @@ class LigandAtomMapping(AtomMapping):
           OpenFE. ``score`` is a reserved annotation identifier.
         """
         super().__init__(componentA, componentB)
+
+        # validate compA_to_compB
+        nA = self.componentA.to_rdkit().GetNumAtoms()
+        nB = self.componentB.to_rdkit().GetNumAtoms()
+        for i, j in componentA_to_componentB.items():
+            if not (0 <= i < nA):
+                raise ValueError(f"Got invalid index for ComponentA ({i}); "
+                                 f"must be 0 <= n < {nA}")
+            if not (0 <= j < nB):
+                raise ValueError(f"Got invalid index for ComponentB ({i}); "
+                                 f"must be 0 <= n < {nB}")
+
         self._compA_to_compB = componentA_to_componentB
 
         if annotations is None:
-            # TODO: this should be a frozen dict
             annotations = {}
 
         self._annotations = annotations
 
     @classmethod
-    def _defaults(self):
+    def _defaults(cls):
         return {}
 
     @property
@@ -74,6 +94,7 @@ class LigandAtomMapping(AtomMapping):
 
     @property
     def annotations(self):
+        """Any extra metadata, for example the score of a mapping"""
         # return a copy (including copy of nested)
         return json.loads(json.dumps(self._annotations))
 
@@ -152,8 +173,8 @@ class LigandAtomMapping(AtomMapping):
             f.write(draw_mapping(self._compA_to_compB, self.componentA.to_rdkit(),
                                  self.componentB.to_rdkit(), d2d))
 
-    def with_annotations(self, annotations: dict[str, Any]):
-        """Create an new mapping based on this one with extra annotations.
+    def with_annotations(self, annotations: dict[str, Any]) -> LigandAtomMapping:
+        """Create a new mapping based on this one with extra annotations.
 
         Parameters
         ----------

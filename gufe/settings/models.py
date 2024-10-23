@@ -10,12 +10,14 @@ from typing import Optional, Union
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
+import pprint
 
 try:
     from pydantic.v1 import (
         Extra,
         Field,
         PositiveFloat,
+        PrivateAttr,
         validator,
     )
 except ImportError:
@@ -23,17 +25,83 @@ except ImportError:
         Extra,
         Field,
         PositiveFloat,
+        PrivateAttr,
         validator,
     )
+import pydantic
 
 
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
+    _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
     class Config:
-        extra = Extra.forbid
+        """
+        :noindex:
+        """
+        extra = pydantic.Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
+
+    def _ipython_display_(self):
+        pprint.pprint(self.dict())
+
+    def frozen_copy(self):
+        """A copy of this Settings object which cannot be modified
+
+        This is intended to be used by Protocols to make their stored Settings
+        read-only
+        """
+        copied = self.copy(deep=True)
+
+        def freeze_model(model):
+            submodels = (
+                mod for field in model.__fields__
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+            )
+            for mod in submodels:
+                freeze_model(mod)
+
+            if not model._is_frozen:
+                model._is_frozen = True
+
+        freeze_model(copied)
+        return copied
+
+    def unfrozen_copy(self):
+        """A copy of this Settings object, which can be modified
+
+        Settings objects become frozen when within a Protocol.  If you *really*
+        need to reverse this, this method is how.
+        """
+        copied = self.copy(deep=True)
+
+        def unfreeze_model(model):
+            submodels = (
+                mod for field in model.__fields__
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+            )
+            for mod in submodels:
+                unfreeze_model(mod)
+
+            model._is_frozen = False
+
+        unfreeze_model(copied)
+
+        return copied
+
+    @property
+    def is_frozen(self):
+        """If this Settings object is frozen and cannot be modified"""
+        return self._is_frozen
+
+    def __setattr__(self, name, value):
+        if name != "_is_frozen" and self._is_frozen:
+            raise AttributeError(
+                f"Cannot set '{name}': Settings are immutable once attached"
+                " to a Protocol and cannot be modified. Modify Settings "
+                "*before* creating the Protocol.")
+        return super().__setattr__(name, value)
 
 
 class ThermoSettings(SettingsBaseModel):
@@ -58,6 +126,9 @@ class ThermoSettings(SettingsBaseModel):
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
+    class Config:
+        """:noindex:"""
+        pass
     ...
 
 
@@ -74,12 +145,15 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
+    class Config:
+        """:noindex:"""
+        pass
+    
     constraints: Optional[str] = 'hbonds'
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
-
     rigid_water: bool = True
-    remove_com: bool = False
+    """Whether to use a rigid water model. Default True"""
     hydrogen_mass: float = 3.0
     """Mass to be repartitioned to hydrogens from neighbouring
        heavy atoms (in amu), default 3.0"""
@@ -92,8 +166,38 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     ]
     """List of force field paths for all components except :class:`SmallMoleculeComponent` """
 
-    small_molecule_forcefield: str = "openff-2.0.0"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
+    small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
+
+    nonbonded_method = 'PME'
+    """
+    Method for treating nonbonded interactions, currently only PME and
+    NoCutoff are allowed. Default PME.
+    """
+    nonbonded_cutoff: FloatQuantity['nanometer'] = 1.0 * unit.nanometer
+    """
+    Cutoff value for short range nonbonded interactions.
+    Default 1.0 * unit.nanometer.
+    """
+
+    @validator('nonbonded_method')
+    def allowed_nonbonded(cls, v):
+        if v.lower() not in ['pme', 'nocutoff']:
+            errmsg = (
+                "Only PME and NoCutoff are allowed nonbonded_methods")
+            raise ValueError(errmsg)
+        return v
+
+    @validator('nonbonded_cutoff')
+    def is_positive_distance(cls, v):
+        # these are time units, not simulation steps
+        if not v.is_compatible_with(unit.nanometer):
+            raise ValueError("nonbonded_cutoff must be in distance units "
+                             "(i.e. nanometers)")
+        if v < 0:
+            errmsg = "nonbonded_cutoff must be a positive value"
+            raise ValueError(errmsg)
+        return v
 
     @validator('constraints')
     def constraint_check(cls, v):
