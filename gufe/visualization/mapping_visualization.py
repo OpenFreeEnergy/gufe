@@ -1,7 +1,9 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-from typing import Any, Collection, Optional
+from typing import Any, Collection, Optional, List
 from itertools import chain
+from PIL import Image, ImageOps
+from io import BytesIO
 
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -305,3 +307,57 @@ def draw_unhighlighted_molecule(mol, d2d=None):
         bond_colors=[{}],
         highlight_color=red,
     )
+
+
+def _concat_images(imgs, buffer_spacing=4, ncols=3)-> Image:
+    """
+        This helper function is constructing a Grid Image of given imgs.
+    """
+    height = 0
+    width = 0
+
+    #Calculate number of rows
+    nrows= (len(imgs)+1)//ncols if(len(imgs)%3>0) else len(imgs)//ncols
+    
+    #Get total widht and height of img
+    for img in imgs:
+        height = max(height, img.height)
+        width = max(width, img.width)
+        
+    height = height * nrows
+    width = width * ncols
+    
+    width += buffer_spacing*ncols
+    height += buffer_spacing*nrows
+    
+    #Construct Concatentated Image
+    res = Image.new("RGBA",(width,height))
+    
+    x = 0
+    y = 0
+    for i, img in enumerate(imgs):
+        img = ImageOps.expand(img, border=3, fill="grey")
+        res.paste(img,(x,y))
+        x += img.width + buffer_spacing
+        
+        if(i%ncols == 0 and i!=0):
+            y+= img.height + buffer_spacing
+            x=0
+            
+    return res
+
+def draw_multiple_mappings(mappings:List, out_file_path:str=None)->Image:
+    """
+        This function generates an image, consisting of multiple mapping visualization.
+    """
+    views = []
+    for m in mappings:
+        view = draw_mapping(m._compA_to_compB, m.componentA.to_rdkit(),
+                                            m.componentB.to_rdkit(),)
+        bio = BytesIO(view)
+        view = Image.open(bio)
+        views.append(view)
+    res = show_images(views)
+
+    if(out_file_path is not None):
+        res.save(out_name)
