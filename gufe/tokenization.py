@@ -657,6 +657,51 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return KeyedChain.from_keyed_chain_rep(keyed_chain=keyed_chain).to_gufe()
 
+    def to_json(self, file=None) -> None | str:
+        """
+        Create a minimal JSON representation of a GufeTokenizable using the keyed chain pattern.
+
+        This will be writen to the file like object if passed.
+
+        Parameters
+        ----------
+        file: Optional
+            A file or file like object to write the JSON to.
+
+        Returns
+        -------
+        A minimal JSON representation of the object if no file is supped else None.
+
+        See Also
+        --------
+        from_json
+        """
+        json_data = json.dumps(self.to_keyed_chain(), cls=JSON_HANDLER.encoder)
+        if file is None:
+            return json_data
+
+        from gufe.utils import ensure_filelike
+        with ensure_filelike(file, mode="w") as out:
+            out.write(json_data)
+
+    @classmethod
+    def from_json(cls, file):
+        """
+        Create a GufeTokenizable from the minimal JSON representation created using the keyed chain pattern.
+
+        Parameters
+        ----------
+        file:
+            The file like object the JSON is stored in.
+
+        See Also
+        --------
+        to_json
+        """
+        from gufe.utils import ensure_filelike
+        with ensure_filelike(file, mode="r") as f:
+            keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
+        return cls.from_keyed_chain(keyed_chain=keyed_chain)
 
 class GufeKey(str):
     def __repr__(self):   # pragma: no cover
