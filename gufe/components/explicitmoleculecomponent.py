@@ -9,6 +9,10 @@ from .component import Component
 # typing
 from ..custom_typing import RDKitMol
 
+# globally set RDKit to include all properties when pickling an RDKit Mol
+# see issue #322: https://github.com/OpenFreeEnergy/gufe/issues/322
+Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
+
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     """
