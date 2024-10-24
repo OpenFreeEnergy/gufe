@@ -97,7 +97,8 @@ class LigandNetwork(GufeTokenizable):
             (
                 mol_to_label[edge.componentA],
                 mol_to_label[edge.componentB],
-                json.dumps(list(edge.componentA_to_componentB.items()))
+                json.dumps(list(edge.componentA_to_componentB.items())),
+                json.dumps(edge.annotations),
             )
             for edge in self.edges
         ])
@@ -109,8 +110,8 @@ class LigandNetwork(GufeTokenizable):
                                         moldict=json.dumps(mol.to_dict(),
                                                            sort_keys=True))
 
-        for molA, molB, mapping in edge_data:
-            serializable_graph.add_edge(molA, molB, mapping=mapping)
+        for molA, molB, mapping, annotation in edge_data:
+            serializable_graph.add_edge(molA, molB, mapping=mapping, annotations=annotation)
 
         return serializable_graph
 
@@ -126,8 +127,10 @@ class LigandNetwork(GufeTokenizable):
         edges = [
             LigandAtomMapping(componentA=label_to_mol[node1],
                               componentB=label_to_mol[node2],
-                              componentA_to_componentB=dict(json.loads(mapping)))
-            for node1, node2, mapping in graph.edges(data='mapping')
+                              componentA_to_componentB=dict(json.loads(edge_data["mapping"])),
+                              annotations=json.loads(edge_data.get("annotations", 'null')) # work around old graphml files with missing edge annotations
+                              )
+            for node1, node2, edge_data in graph.edges(data=True)
         ]
 
         return cls(edges=edges, nodes=label_to_mol.values())
