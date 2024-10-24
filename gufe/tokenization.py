@@ -622,6 +622,41 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         dct.update(replacements)
         return self._from_dict(dct)
 
+    def to_keyed_chain(self) -> List[Tuple[str, Dict]]:
+        """
+        Create a minimal representation of the object using the key chain pattern.
+
+        Returns
+        -------
+        keyed_chain: List[Tuple[str, Dict]]
+            The keyed chain representation of a GufeTokenizable.
+
+        See Also
+        --------
+        KeyedChain
+        """
+        return KeyedChain.gufe_to_keyed_chain_rep(gufe_object=self)
+
+    @classmethod
+    def from_keyed_chain(cls, keyed_chain: List[Tuple[str, Dict]]):
+        """
+        Create an instance of the object from the keyed chain representation of the object.
+
+        Parameters
+        ----------
+        keyed_chain: List[Tuple[str, Dict]]
+            The keyed_chain representation of the GufeTokenizable.
+
+        Returns
+        -------
+            An instance of the serialised GufeTokenizable.
+
+        See Also
+        --------
+        KeyedChain
+        """
+        return KeyedChain.from_keyed_chain_rep(keyed_chain=keyed_chain).to_gufe()
+
 
 class GufeKey(str):
     def __repr__(self):   # pragma: no cover
