@@ -10,7 +10,7 @@ from ..utils import ensure_filelike
 
 from ..chemicalsystem import ChemicalSystem
 from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
-from ..mapping import ComponentMapping
+from gufe.setup.network_planning import ComponentMapping
 
 
 class Transformation(GufeTokenizable):
