@@ -15,7 +15,7 @@ import warnings
 import weakref
 from itertools import chain
 from os import PathLike
-from typing import Any, Union, List, Tuple, Dict, Generator, TextIO
+from typing import Any, Union, List, Tuple, Dict, Generator, TextIO, Optional
 from typing_extensions import Self
 
 from gufe.custom_codecs import (
@@ -649,7 +649,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return KeyedChain(keyed_chain=keyed_chain).to_gufe()
 
-    def to_json(self, file: PathLike | TextIO = None) -> None | str:
+    def to_json(self, file: Optional[PathLike | TextIO] = None) -> None | str:
         """
         Generate a JSON keyed chain representation.
 
@@ -677,8 +677,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         with ensure_filelike(file, mode="w") as out:
             json.dump(self.to_keyed_chain(), out, cls=JSON_HANDLER.encoder)
 
+        return
+
     @classmethod
-    def from_json(cls, file: PathLike | TextIO = None, content: str = None):
+    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
         """
         Generate an instance from JSON keyed chain representation.
 
