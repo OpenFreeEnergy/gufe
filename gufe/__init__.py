@@ -16,11 +16,12 @@ from .components import (
 
 from .chemicalsystem import ChemicalSystem
 
-from .mapping import (
-    ComponentMapping,  # how individual Components relate
-    AtomMapping, AtomMapper,  # more specific to atom based components
-    LigandAtomMapping,
-)
+from setup.network_planning import (AtomMapping, AtomMapper,
+                                   AtomMappingScorer,
+                                   LigandAtomMapping,
+                                   LigandNetwork)
+
+from .alchemical_network import AlchemicalNetwork
 
 from .settings import Settings
 
@@ -36,7 +37,5 @@ from .protocols import (
 
 from .transformations import Transformation, NonTransformation
 
-from .network import AlchemicalNetwork
-from .ligandnetwork import LigandNetwork
 
 __version__ = version("gufe")
