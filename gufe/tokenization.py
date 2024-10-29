@@ -677,7 +677,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         with ensure_filelike(file, mode="w") as out:
             json.dump(self.to_keyed_chain(), out, cls=JSON_HANDLER.encoder)
 
-        return
+        return None
 
     @classmethod
     def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
