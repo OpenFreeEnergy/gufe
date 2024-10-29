@@ -697,11 +697,16 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmpdir):
                         n_retries=3)
 
         assert not r.ok()
-        # we did 3 retries, so 4 total failures
-        assert len(r.protocol_unit_results) == 5
-        assert len(r.protocol_unit_failures) == 4
-        assert len(list(shared.iterdir())) == 5
 
+        number_unit_failures = len(r.protocol_unit_failures)
+        number_unit_results = len(r.protocol_unit_results)
+        number_dirs = len(list(shared.iterdir()))
+
+        # failed first attempt of BrokenSimulationUnit, failed 3 retries
+        assert number_unit_failures == 4
+        # InitializeUnit and 21 SimulationUnits run before guaranteed
+        # final failure
+        assert number_unit_results == number_dirs == 26
 
 def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
     protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
