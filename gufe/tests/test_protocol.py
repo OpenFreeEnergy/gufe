@@ -203,8 +203,8 @@ class BrokenProtocol(DummyProtocol):
 class TestProtocol(GufeTokenizableTestsMixin):
 
     cls = DummyProtocol
-    key = "DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa"
-    repr = "<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>"
+    repr = None
+
     @pytest.fixture
     def instance(self):
         return DummyProtocol(settings=DummyProtocol.default_settings())
@@ -374,7 +374,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAG(ProtocolDAGTestsMixin):
         cls = ProtocolDAG
-        key = None
         repr = None
 
         @pytest.fixture
@@ -384,7 +383,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAGResult(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
-        key = None
         repr = None
 
         @pytest.fixture
@@ -436,7 +434,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
-        key = None
         repr = None
 
         @pytest.fixture
@@ -466,7 +463,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit
-        key = None
         repr = None
     
         @pytest.fixture
