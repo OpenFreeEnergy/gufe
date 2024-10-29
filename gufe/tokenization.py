@@ -624,84 +624,88 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def to_keyed_chain(self) -> List[Tuple[str, Dict]]:
         """
-        Create a minimal representation of the object using the key chain pattern.
-
-        Returns
-        -------
-        keyed_chain: List[Tuple[str, Dict]]
-            The keyed chain representation of a GufeTokenizable.
+        Generate a keyed chain representation of the object.
 
         See Also
         --------
         KeyedChain
         """
-        return KeyedChain.gufe_to_keyed_chain_rep(gufe_object=self)
+        return KeyedChain.gufe_to_keyed_chain_rep(self)
 
     @classmethod
     def from_keyed_chain(cls, keyed_chain: List[Tuple[str, Dict]]):
         """
-        Create an instance of the object from the keyed chain representation of the object.
+        Generate an instance from keyed chain representation.
 
         Parameters
         ----------
-        keyed_chain: List[Tuple[str, Dict]]
+        keyed_chain : List[Tuple[str, Dict]]
             The keyed_chain representation of the GufeTokenizable.
-
-        Returns
-        -------
-            An instance of the serialised GufeTokenizable.
 
         See Also
         --------
         KeyedChain
         """
-        return KeyedChain.from_keyed_chain_rep(keyed_chain=keyed_chain).to_gufe()
+        return KeyedChain(keyed_chain=keyed_chain).to_gufe()
 
     def to_json(self, file=None) -> None | str:
         """
-        Create a minimal JSON representation of a GufeTokenizable using the keyed chain pattern.
+        Generate a JSON keyed chain representation.
 
-        This will be writen to the file like object if passed.
+        This will be writen to the filepath or filelike object if passed.
 
         Parameters
         ----------
-        file: Optional
-            A file or file like object to write the JSON to.
+        file
+            A filepath or filelike object to write the JSON to.
 
         Returns
         -------
-        A minimal JSON representation of the object if no file is supped else None.
+        str
+            A minimal JSON representation of the object if `file` is `None`; else None.
 
         See Also
         --------
         from_json
         """
-        json_data = json.dumps(self.to_keyed_chain(), cls=JSON_HANDLER.encoder)
+
         if file is None:
-            return json_data
+            return json.dumps(self.to_keyed_chain(), cls=JSON_HANDLER.encoder)
 
         from gufe.utils import ensure_filelike
         with ensure_filelike(file, mode="w") as out:
-            out.write(json_data)
+            json.dump(self.to_keyed_chain(), out, cls=JSON_HANDLER.encoder)
 
     @classmethod
-    def from_json(cls, file):
+    def from_json(cls, content=None, file=None):
         """
-        Create a GufeTokenizable from the minimal JSON representation created using the keyed chain pattern.
+        Generate an instance from JSON keyed chain representation.
 
         Parameters
         ----------
-        file:
-            The file like object the JSON is stored in.
+        file
+            A filepath or filelike object to read JSON data from.
 
         See Also
         --------
         to_json
         """
+
+        if content is not None and file is not None:
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+        elif content is None and file is None:
+            raise ValueError("Must specify either `content` and `file` for JSON input")
+
+        if content is not None:
+            keyed_chain = json.loads(content, cls=JSON_HANDLER.decoder)
+            return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
         from gufe.utils import ensure_filelike
         with ensure_filelike(file, mode="r") as f:
             keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
+
         return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
 
 class GufeKey(str):
     def __repr__(self):   # pragma: no cover
