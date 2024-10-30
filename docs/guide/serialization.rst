@@ -205,6 +205,33 @@ save multiple copies of its JSON representation.
 On reloading, tools that use the recommended ``from_dict`` method will undo
 do this duplication; see :ref:`gufe-memory-deduplication` for details.
 
+Built in serialisation
+~~~~~~~~~~~~~~~~~~~~~~
+
+We also provide convince methods to convert any :class:`.GufeTokenizable` to and from JSON using a space-efficient
+serialisation strategy based on our :class:`.KeyedChain` representation. This is intended for developers that want to serialise
+these objects using the current best practice and are not concerned with the details of the process.
+The :func:`to_json <gufe.tokenization.GufeTokenizable.to_json>` API offers the flexibility to
+convert to JSON directly or to write to a filelike object:
+
+.. code::
+
+    # get the json to save manually
+    json = obj.to_json()
+    # save to file directly
+    obj.to_json(file=filename)
+
+Similarly, you can recreate the object using the :func:`from_json <gufe.tokenization.GufeTokenizable.from_json>`
+classmethod:
+
+.. code::
+
+    # load the object from a file
+    obj = cls.from_json(file=filename)
+    # load from some json string
+    obj = cls.from_json(content=json)
+
+
 .. Using JSON codecs outside of JSON
 .. ---------------------------------
 
