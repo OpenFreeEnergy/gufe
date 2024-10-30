@@ -265,7 +265,7 @@ class Protocol(GufeTokenizable):
         # protocol_dag_results is finite, checking both in method signature
         # doesn't appear possible, explicitly check for __len__ through the
         # Sized type
-        if not isinstance(protcol_dag_results, Sized):
+        if not isinstance(protocol_dag_results, Sized):
             raise ValueError("`protocol_dag_results` must implement `__len__`")
         return self.result_cls(n_protocol_dag_results=len(protocol_dag_results),
                                **self._gather(protocol_dag_results))

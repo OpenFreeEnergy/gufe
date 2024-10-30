@@ -328,6 +328,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # gather aggregated results of interest
         protocolresult = protocol.gather([dagresult])
 
+        assert protocolresult.n_protocol_dag_results == 1
         assert len(protocolresult.data['logs']) == 1
         assert len(protocolresult.data['logs'][0]) == 21 + 1
 
