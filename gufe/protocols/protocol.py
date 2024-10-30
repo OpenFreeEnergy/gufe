@@ -6,7 +6,7 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Union
+from typing import Optional, Iterable, Any, Union, Sized
 from openff.units import Quantity
 import warnings
 
@@ -32,8 +32,11 @@ class ProtocolResult(GufeTokenizable):
     - `get_uncertainty`
     """
 
-    def __init__(self, **data):
+    def __init__(self, n_protocol_dag_results: Optional[int] = None, **data):
         self._data = data
+        self._n_protocol_dag_results = (
+            n_protocol_dag_results if n_protocol_dag_results is not None else 0
+        )
 
     @classmethod
     def _defaults(cls):
@@ -46,6 +49,10 @@ class ProtocolResult(GufeTokenizable):
     def _from_dict(cls, dct: dict):
         return cls(**dct['data'])
 
+    @property
+    def n_protocol_dag_results(self) -> int:
+        return self._n_protocol_dag_results
+    
     @property
     def data(self) -> dict[str, Any]:
         """
@@ -254,7 +261,14 @@ class Protocol(GufeTokenizable):
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
         """
-        return self.result_cls(**self._gather(protocol_dag_results))
+        # Iterable does not implement __len__ and makes no guarantees that
+        # protocol_dag_results is finite, checking both in method signature
+        # doesn't appear possible, explicitly check for __len__ through the
+        # Sized type
+        if not isinstance(protcol_dag_results, Sized):
+            raise ValueError("`protocol_dag_results` must implement `__len__`")
+        return self.result_cls(n_protocol_dag_results=len(protocol_dag_results),
+                               **self._gather(protocol_dag_results))
 
     @abc.abstractmethod
     def _gather(
