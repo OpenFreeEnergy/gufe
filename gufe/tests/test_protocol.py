@@ -3,7 +3,7 @@
 import datetime
 import itertools
 from openff.units import unit
-from typing import Optional, Iterable, List, Dict, Any, Union
+from typing import Optional, Iterable, List, Dict, Any, Union, Sized
 from collections import defaultdict
 import pathlib
 
@@ -333,6 +333,25 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(protocolresult.data['logs'][0]) == 21 + 1
 
         assert protocolresult.get_estimate() == 95500.0
+
+    def test_gather_infinite_iterable_guardrail(self, protocol_dag):
+        protocol, dag, dagresult = protocol_dag
+        
+        assert dagresult.ok()
+
+        # we want an infinite generator, but one that would actually stop early in case
+        # the guardrail doesn't work, but the type system doesn't know that
+        def infinite_generator():
+            while True:
+                yield dag
+                break
+
+        gen = infinite_generator()
+        assert isinstance(gen, Iterable)
+        assert not isinstance(gen, Sized)
+
+        with pytest.raises(ValueError, match="`protocol_dag_results` must implement `__len__`"):
+            protocol.gather(infinite_generator())
 
     def test_deprecation_warning_on_dict_mapping(self, instance, vacuum_ligand, solvated_ligand):
         lig = solvated_ligand.components['ligand']
