@@ -193,9 +193,9 @@ Similarly, you can reload the object with:
 .. code::
 
     import json
-    from gufe.tokenization import JSON_HANDLER
+    from gufe.tokenization import JSON_HANDLER, GufeTokenizable
     with open(filename, mode='r') as f:
-        obj = json.load(f, cls=JSON_HANDLER.decoder)
+        obj = GufeTokenizable.from_dict(json.load(f, cls=JSON_HANDLER.decoder))
 
 Note that these objects are not space-efficient: that is, if you have
 the same object in memory referenced by multiple objects (e.g., an identical
@@ -203,7 +203,44 @@ the same object in memory referenced by multiple objects (e.g., an identical
 save multiple copies of its JSON representation.
 
 On reloading, tools that use the recommended ``from_dict`` method will undo
-do this duplication; see :ref:`gufe-memory-deduplication` for details.
+this duplication; see :ref:`gufe-memory-deduplication` for details.
+
+As a more space-efficient alternative to ``to_dict``/``from_dict``, consider
+using ``to_keyed_chain``/``from_keyed_chain`` instead.
+This deals in a representation using the :class:`.KeyedChain` approach, which
+avoids duplication of dependent :class:`.GufeTokenizables` in the serialized
+JSON representation.
+
+Convenient serialization
+~~~~~~~~~~~~------------
+
+We also provide convenience methods to convert any :class:`.GufeTokenizable` to
+and from JSON using a space-efficient serialization strategy based on our
+:class:`.KeyedChain` representation. This is intended for developers that want
+to serialise these objects using the current best practice and are not
+concerned with the details of the process. The :func:`to_json
+<gufe.tokenization.GufeTokenizable.to_json>` API offers the flexibility to
+convert to JSON directly or to write to a filelike object:
+
+.. code::
+
+    # get a json representation in-memory
+    json = obj.to_json()
+
+    # save to a file directly
+    obj.to_json(file=filename)
+
+Similarly, you can recreate the object using the :func:`from_json <gufe.tokenization.GufeTokenizable.from_json>`
+classmethod:
+
+.. code::
+
+    # load the object from a json file produced with `to_json`
+    obj = cls.from_json(file=filename)
+
+    # load from a string produced with `to_json`
+    obj = cls.from_json(content=json)
+
 
 .. Using JSON codecs outside of JSON
 .. ---------------------------------
