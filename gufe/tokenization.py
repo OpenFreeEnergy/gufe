@@ -14,7 +14,8 @@ import re
 import warnings
 import weakref
 from itertools import chain
-from typing import Any, Union, List, Tuple, Dict, Generator
+from os import PathLike
+from typing import Any, Union, List, Tuple, Dict, Generator, TextIO, Optional
 from typing_extensions import Self
 
 from gufe.custom_codecs import (
@@ -621,6 +622,96 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         dct.update(replacements)
         return self._from_dict(dct)
+
+    def to_keyed_chain(self) -> List[Tuple[str, Dict]]:
+        """
+        Generate a keyed chain representation of the object.
+
+        See Also
+        --------
+        KeyedChain
+        """
+        return KeyedChain.gufe_to_keyed_chain_rep(self)
+
+    @classmethod
+    def from_keyed_chain(cls, keyed_chain: List[Tuple[str, Dict]]):
+        """
+        Generate an instance from keyed chain representation.
+
+        Parameters
+        ----------
+        keyed_chain : List[Tuple[str, Dict]]
+            The keyed_chain representation of the GufeTokenizable.
+
+        See Also
+        --------
+        KeyedChain
+        """
+        return KeyedChain(keyed_chain=keyed_chain).to_gufe()
+
+    def to_json(self, file: Optional[PathLike | TextIO] = None) -> None | str:
+        """
+        Generate a JSON keyed chain representation.
+
+        This will be writen to the filepath or filelike object if passed.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to write the JSON to.
+
+        Returns
+        -------
+        str
+            A minimal JSON representation of the object if `file` is `None`; else None.
+
+        See Also
+        --------
+        from_json
+        """
+
+        if file is None:
+            return json.dumps(self.to_keyed_chain(), cls=JSON_HANDLER.encoder)
+
+        from gufe.utils import ensure_filelike
+        with ensure_filelike(file, mode="w") as out:
+            json.dump(self.to_keyed_chain(), out, cls=JSON_HANDLER.encoder)
+
+        return None
+
+    @classmethod
+    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
+        """
+        Generate an instance from JSON keyed chain representation.
+
+        Can provide either a filepath/filelike as `file`, or JSON content via `content`.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to read JSON data from.
+        content
+            A string to read JSON data from.
+
+        See Also
+        --------
+        to_json
+        """
+
+        if content is not None and file is not None:
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+        elif content is None and file is None:
+            raise ValueError("Must specify either `content` and `file` for JSON input")
+
+        if content is not None:
+            keyed_chain = json.loads(content, cls=JSON_HANDLER.decoder)
+            return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
+        from gufe.utils import ensure_filelike
+        with ensure_filelike(file, mode="r") as f:
+            keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
+
+        return cls.from_keyed_chain(keyed_chain=keyed_chain)
 
 
 class GufeKey(str):
