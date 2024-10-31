@@ -51,7 +51,7 @@ def std_edges(mols):
     mol1, mol2, mol3 = mols
     edge12 = LigandAtomMapping(mol1, mol2, {0: 0, 1: 1}, {"score": 0.0, "length": 1.0 * unit.angstrom})
     edge23 = LigandAtomMapping(mol2, mol3, {0: 0}, {"score": 1.0})
-    edge13 = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5})
+    edge13 = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second})
     return edge12, edge23, edge13
 
 
@@ -131,8 +131,8 @@ def network_container(
 
 class TestLigandNetwork(GufeTokenizableTestsMixin):
     cls = LigandNetwork
-    key = "LigandNetwork-c597016564f85a3c42445bd1dabd91b3"
-    repr = "<LigandNetwork-c597016564f85a3c42445bd1dabd91b3>"
+    key = "LigandNetwork-c858dd17c715a588c7bcd2a19ca8dcbd"
+    repr = "<LigandNetwork-c858dd17c715a588c7bcd2a19ca8dcbd>"
 
     @pytest.fixture
     def instance(self, simple_network):
@@ -253,7 +253,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         # Adding a duplicate of an existing edge should create a new network
         # with the same edges and nodes as the previous one.
         mol1, _, mol3 = mols
-        duplicate = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1})
+        duplicate = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second})
         network = simple_network.network
 
         existing = network.edges
