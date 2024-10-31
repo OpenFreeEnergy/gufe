@@ -139,6 +139,16 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # include `np.nan`s
         #assert ser == reser
 
+    def test_key_stable(self, instance):
+        """Check that generating the instance from a dict representation yields
+        the same key (and the same instance).
+
+        """
+        instance_ = GufeTokenizable.from_dict(instance.to_dict())
+
+        assert instance_.key == instance.key
+        assert instance_ is instance
+
     def test_repr(self, instance):
         if self.repr is None:
             # nondeterministic reprs
