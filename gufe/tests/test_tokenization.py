@@ -257,18 +257,21 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     def test_to_json_string(self):
         raw_json = self.cont.to_json()
+
         # tuples are converted to lists in JSON so fix the expected result to use lists
         expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
         assert json.loads(raw_json, cls=JSON_HANDLER.decoder) == expected_key_chain
 
     def test_from_json_string(self):
         recreated = self.cls.from_json(content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder))
+
         assert recreated == self.cont
         assert recreated is self.cont
 
     def test_to_json_file(self, tmpdir):
         file_path = tmpdir / "container.json"
         self.cont.to_json(file=file_path)
+
         # tuples are converted to lists in JSON so fix the expected result to use lists
         expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
         assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
@@ -277,6 +280,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         file_path = tmpdir / "container.json"
         json.dump(self.expected_keyed_chain, file_path.open(mode="w"), cls=JSON_HANDLER.encoder)
         recreated = self.cls.from_json(file=file_path)
+
         assert recreated == self.cont
         assert recreated is self.cont
 
