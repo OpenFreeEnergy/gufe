@@ -7,6 +7,8 @@ import gufe
 from gufe.tests.test_protocol import DummyProtocol
 from gufe import SmallMoleculeComponent, LigandNetwork, LigandAtomMapping
 
+from openff.units import unit
+
 from rdkit import Chem
 
 from networkx import NetworkXError
@@ -47,7 +49,7 @@ def mols():
 @pytest.fixture
 def std_edges(mols):
     mol1, mol2, mol3 = mols
-    edge12 = LigandAtomMapping(mol1, mol2, {0: 0, 1: 1}, {"score": 0.0})
+    edge12 = LigandAtomMapping(mol1, mol2, {0: 0, 1: 1}, {"score": 0.0, "length": 1.0 * unit.angstrom})
     edge23 = LigandAtomMapping(mol2, mol3, {0: 0}, {"score": 1.0})
     edge13 = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5})
     return edge12, edge23, edge13

@@ -10,7 +10,7 @@ import gufe
 
 from gufe import SmallMoleculeComponent
 from .mapping import LigandAtomMapping
-from .tokenization import GufeTokenizable
+from .tokenization import GufeTokenizable, JSON_HANDLER
 
 
 class LigandNetwork(GufeTokenizable):
@@ -98,7 +98,7 @@ class LigandNetwork(GufeTokenizable):
                 mol_to_label[edge.componentA],
                 mol_to_label[edge.componentB],
                 json.dumps(list(edge.componentA_to_componentB.items())),
-                json.dumps(edge.annotations),
+                json.dumps(edge.annotations, cls=JSON_HANDLER.encoder),
             )
             for edge in self.edges
         ])
@@ -128,7 +128,7 @@ class LigandNetwork(GufeTokenizable):
             LigandAtomMapping(componentA=label_to_mol[node1],
                               componentB=label_to_mol[node2],
                               componentA_to_componentB=dict(json.loads(edge_data["mapping"])),
-                              annotations=json.loads(edge_data.get("annotations", 'null')) # work around old graphml files with missing edge annotations
+                              annotations=json.loads(edge_data.get("annotations", 'null'), cls=JSON_HANDLER.decoder) # work around old graphml files with missing edge annotations
                               )
             for node1, node2, edge_data in graph.edges(data=True)
         ]
