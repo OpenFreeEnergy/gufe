@@ -10,14 +10,13 @@ from typing import Optional, Iterable, Any, Union, Sized
 from openff.units import Quantity
 import warnings
 
-from ..settings import Settings, SettingsBaseModel
+from ..settings import Settings
 from ..tokenization import GufeTokenizable, GufeKey
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
-
 
 class ProtocolResult(GufeTokenizable):
     """
@@ -32,27 +31,29 @@ class ProtocolResult(GufeTokenizable):
     - `get_uncertainty`
     """
 
-    def __init__(self, n_protocol_dag_results: Optional[int] = None, **data):
+    def __init__(self, n_protocol_dag_results: int = 0, **data):
         self._data = data
-        self._n_protocol_dag_results = (
-            n_protocol_dag_results if n_protocol_dag_results is not None else 0
-        )
+
+        if not n_protocol_dag_results >= 0:
+            raise ValueError("`n_protocol_dag_results` must be an integer greater than or equal to zero")
+
+        self._n_protocol_dag_results = n_protocol_dag_results
 
     @classmethod
     def _defaults(cls):
         return {}
 
     def _to_dict(self):
-        return {'data': self.data}
+        return {'n_protocol_dag_results': self.n_protocol_dag_results, 'data': self.data}
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls(**dct['data'])
+        return cls(n_protocol_dag_results=dct['n_protocol_dag_results'], **dct['data'])
 
     @property
     def n_protocol_dag_results(self) -> int:
         return self._n_protocol_dag_results
-    
+
     @property
     def data(self) -> dict[str, Any]:
         """
