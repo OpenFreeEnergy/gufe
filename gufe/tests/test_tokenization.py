@@ -201,6 +201,21 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             ':version:': 1,
         }
 
+        self.expected_keyed_chain = [
+            (str(leaf.key),
+             leaf_dict("foo")),
+            (str(bar.key),
+             leaf_dict({':gufe-key:': str(leaf.key)})),
+            (str(self.cont.key),
+             {':version:': 1,
+              '__module__': __name__,
+              '__qualname__': 'Container',
+              'dct': {'a': 'b',
+                      'leaf': {':gufe-key:': str(leaf.key)}},
+              'lst': [{':gufe-key:': str(leaf.key)}, 0],
+              'obj': {':gufe-key:': str(bar.key)}})
+        ]
+
     def test_set_key(self):
         leaf = Leaf("test-set-key")
         key = leaf.key
@@ -229,6 +244,43 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     def test_from_keyed_dict(self):
         recreated = self.cls.from_keyed_dict(self.expected_keyed)
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_keyed_chain(self):
+        assert self.cont.to_keyed_chain() == self.expected_keyed_chain
+
+    def test_from_keyed_chain(self):
+        recreated = self.cls.from_keyed_chain(self.expected_keyed_chain)
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_json_string(self):
+        raw_json = self.cont.to_json()
+
+        # tuples are converted to lists in JSON so fix the expected result to use lists
+        expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
+        assert json.loads(raw_json, cls=JSON_HANDLER.decoder) == expected_key_chain
+
+    def test_from_json_string(self):
+        recreated = self.cls.from_json(content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder))
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_json_file(self, tmpdir):
+        file_path = tmpdir / "container.json"
+        self.cont.to_json(file=file_path)
+
+        # tuples are converted to lists in JSON so fix the expected result to use lists
+        expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
+        assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
+
+    def test_from_json_file(self, tmpdir):
+        file_path = tmpdir / "container.json"
+        json.dump(self.expected_keyed_chain, file_path.open(mode="w"), cls=JSON_HANDLER.encoder)
+        recreated = self.cls.from_json(file=file_path)
+
         assert recreated == self.cont
         assert recreated is self.cont
 
