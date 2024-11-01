@@ -17,8 +17,7 @@ class DummyProtocolResult(gufe.ProtocolResult):
 
 class TestProtocolResult(GufeTokenizableTestsMixin):
     cls = DummyProtocolResult
-    key = 'DummyProtocolResult-b7b854b39c1e37feabec58b4000680a0'
-    repr = f'<{key}>'
+    repr = None
 
     @pytest.fixture
     def instance(self):

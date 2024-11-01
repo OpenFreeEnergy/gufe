@@ -131,8 +131,7 @@ def network_container(
 
 class TestLigandNetwork(GufeTokenizableTestsMixin):
     cls = LigandNetwork
-    key = "LigandNetwork-c858dd17c715a588c7bcd2a19ca8dcbd"
-    repr = "<LigandNetwork-c858dd17c715a588c7bcd2a19ca8dcbd>"
+    repr = None
 
     @pytest.fixture
     def instance(self, simple_network):

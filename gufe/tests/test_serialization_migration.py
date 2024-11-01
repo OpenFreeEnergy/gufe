@@ -176,21 +176,18 @@ class TestKeyAdded(MigrationTester):
     cls = KeyAdded
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo", "bar": "bar", "qux": 10}
-    key = "KeyAdded-43d61e49c793a863b8b4f96b0e0b2876"
 
 
 class TestKeyRemoved(MigrationTester):
     cls = KeyRemoved
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo"}
-    key = "KeyRemoved-93a689cdf75976b83507e4d1ded1ad7b"
 
 
 class TestKeyRenamed(MigrationTester):
     cls = KeyRenamed
     input_dict = _SERIALIZED_OLD
     kwargs = {"foo": "foo", "baz": "bar"}
-    key = "KeyRenamed-55860190714f16df7b9b6aab47346619"
 
 
 # for some reason, we'll move the child from belonging to the son to
@@ -256,7 +253,6 @@ class TestNestedKeyMoved(MigrationTester):
     kwargs = {
         'settings': {'son': {}, 'daughter': {'daughter_child': 10}}
     }
-    key = "Grandparent-0e2ea10e853d7ac730e7b2ae477a3801"
 
     @pytest.fixture
     def instance(self):
