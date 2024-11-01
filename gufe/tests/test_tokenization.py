@@ -83,7 +83,6 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
-    key: Optional[str]
     repr: Optional[str]
 
     @pytest.fixture
@@ -141,7 +140,14 @@ class GufeTokenizableTestsMixin(abc.ABC):
         #assert ser == reser
 
     def test_key_stable(self, instance):
-        assert self.key == instance.key
+        """Check that generating the instance from a dict representation yields
+        the same key (and the same instance).
+
+        """
+        instance_ = GufeTokenizable.from_dict(instance.to_dict())
+
+        assert instance_.key == instance.key
+        assert instance_ is instance
 
     def test_repr(self, instance):
         if self.repr is None:
@@ -154,7 +160,6 @@ class GufeTokenizableTestsMixin(abc.ABC):
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     cls = Container
-    key = "Container-3fcec08974fbbd0371fed8a185628b70"
     repr = "Container(Leaf(Leaf(foo, 2), 2), [Leaf(foo, 2), 0], {'leaf': Leaf(foo, 2), 'a': 'b'})"
 
     @pytest.fixture

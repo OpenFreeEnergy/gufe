@@ -87,7 +87,6 @@ def assert_topology_equal(ref_top, top):
 class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
-    key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
     repr = "ProteinComponent(name=Steve)"
 
     @pytest.fixture
