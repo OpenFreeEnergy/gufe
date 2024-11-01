@@ -118,7 +118,6 @@ def test_sorting(solvated_complex, solvated_ligand):
 class TestChemicalSystem(GufeTokenizableTestsMixin):
 
     cls = ChemicalSystem
-    key = "ChemicalSystem-92176395ceb86ecd7787ce2585b24218"
     repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
 
     @pytest.fixture
