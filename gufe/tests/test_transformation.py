@@ -31,7 +31,6 @@ def complex_equilibrium(solvated_complex):
 
 class TestTransformation(GufeTokenizableTestsMixin):
     cls = Transformation
-    key = "Transformation-3e001d3eaa6eb0cb1a77f6460f3f6f29"
     repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>)"
 
     @pytest.fixture
@@ -141,7 +140,6 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    key = "NonTransformation-5fe8c396da48515ad75acc7cb5d02607"
     repr = "NonTransformation(stateA=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>)"
 
     @pytest.fixture

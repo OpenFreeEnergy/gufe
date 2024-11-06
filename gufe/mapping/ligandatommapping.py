@@ -96,7 +96,7 @@ class LigandAtomMapping(AtomMapping):
     def annotations(self):
         """Any extra metadata, for example the score of a mapping"""
         # return a copy (including copy of nested)
-        return json.loads(json.dumps(self._annotations))
+        return json.loads(json.dumps(self._annotations, cls=JSON_HANDLER.encoder), cls=JSON_HANDLER.decoder)
 
     def _to_dict(self):
         """Serialize to dict"""

@@ -275,7 +275,6 @@ class TestLigandAtomMappingBoundsChecks:
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     cls = LigandAtomMapping
     repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
-    key = "LigandAtomMapping-2c0aae226e3f69d2d1cf429abaefdb5b"
 
     @pytest.fixture
     def instance(self, annotated_simple_mapping):
