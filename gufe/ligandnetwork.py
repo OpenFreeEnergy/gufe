@@ -14,14 +14,17 @@ from .tokenization import GufeTokenizable, JSON_HANDLER
 
 
 class LigandNetwork(GufeTokenizable):
-    """A directed graph connecting many ligands according to their atom mapping
+    """A directed graph connecting ligands according to their atom mapping.
+       A network can be defined by specifying only edges, in which case the nodes are implicitly added.
+      
 
     Parameters
     ----------
     edges : Iterable[LigandAtomMapping]
-        edges for this network
+        Edges for this network, each specified as a LigandAtomMapping between two nodes.
     nodes : Iterable[SmallMoleculeComponent]
-        nodes for this network
+        Nodes for this network. Any nodes already included as a part of the 'edges' will be ignored.
+        Nodes not already included in 'edges' will be added as isolated, unconnected nodes.
     """
     def __init__(
         self,
