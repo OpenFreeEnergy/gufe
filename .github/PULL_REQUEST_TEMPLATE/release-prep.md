@@ -10,7 +10,7 @@ assignees: ''
 To create a new release, please do the following:
 - [ ] make any changes to the repo needed to accommodate the release
     - [ ] check `environment.yml` for any updates needed; create any issues needed to update versions in next release cycle
-- [ ] run [`rever`](https://regro.github.io/rever-docs/index.html#rever-releaser-of-versions) to generate the `CHANGELOG` entry from `news` items
+- [ ] run [`rever`](https://regro.github.io/rever-docs/index.html#rever-releaser-of-versions) to generate the `CHANGELOG` entry from `news` items: `rever <version_number>`
 - [ ] merge this PR into `main`
 
 
