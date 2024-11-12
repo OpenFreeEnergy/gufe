@@ -60,6 +60,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: raise-or-close-issue
+        if: steps.run-tests.outcome == 'failure'
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"
