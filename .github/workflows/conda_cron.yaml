@@ -54,13 +54,12 @@ jobs:
 
       - id: run-tests
         name: run tests
-        continue-on-error: true
         run: pytest -n auto --pyargs gufe
 
       - uses: actions/checkout@v4
 
       - name: raise-or-close-issue
-        if: steps.run-tests.outcome == 'failure'
+        if: ${{ always() }}
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"
