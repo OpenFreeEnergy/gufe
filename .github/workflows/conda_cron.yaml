@@ -57,6 +57,7 @@ jobs:
         run: pytest -n auto --pyargs gufe
 
       - uses: actions/checkout@v4
+        if: ${{ always() }}
 
       - name: raise-or-close-issue
         if: ${{ always() }}
