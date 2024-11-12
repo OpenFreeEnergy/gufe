@@ -5,6 +5,9 @@ on:
   schedule:
     # At 07:00 UTC every day
     - cron: "0 7 * * *"
+  pull_request:
+    branches:
+      - main
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
@@ -21,13 +24,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Note: pinned to macos-12
-        # see https://github.com/OpenFreeEnergy/openfe/issues/842
-        os: ['ubuntu-latest', 'macos-12']
+        os: ['ubuntu-latest', 'macos-13', 'macos-14']
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
 
     steps:
       - name: setup micromamba
@@ -57,9 +58,9 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: raise-or-close-issue
-        env:
-          CI_OUTCOME: ${{ steps.run-tests.outcome }}
-          TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python devtools/raise-or-close-issue.py
+        #      - name: raise-or-close-issue
+        #        env:
+        #          CI_OUTCOME: ${{ steps.run-tests.outcome }}
+        #          TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"
+        #          GITHUB_TOKEN: ${{ github.token }}
+        #        run: python devtools/raise-or-close-issue.py
