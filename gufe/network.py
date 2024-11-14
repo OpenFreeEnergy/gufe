@@ -1,7 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Iterable, Optional
+from typing import Generator, Iterable, Optional, Self
 
 import networkx as nx
 from .tokenization import GufeTokenizable
@@ -102,7 +102,7 @@ class AlchemicalNetwork(GufeTokenizable):
                 "name": self.name}
 
     @classmethod
-    def _from_dict(cls, d: dict):
+    def _from_dict(cls, d: dict) -> Self:
         return cls(nodes=frozenset(d['nodes']),
                    edges=frozenset(d['edges']),
                    name=d.get('name'))
@@ -114,6 +114,21 @@ class AlchemicalNetwork(GufeTokenizable):
     def to_graphml(self) -> str:
         """Currently not implemented"""
         raise NotImplementedError
+
+    @classmethod
+    def _from_nx_graph(cls, nx_graph) -> Self:
+        chemical_systems = [n for n in nx_graph.nodes()]
+        tranformations = [e[2]['object'] for e in nx_graph.edges(data=True)]  # list of transformations
+        return cls(nodes=chemical_systems, edges=tranformations)
+
+    def connected_subgraphs(self) -> Generator[Self, None, None]:
+        """Return all connected subgraphs of the alchemical network in order of size
+        """
+        node_groups = nx.weakly_connected_components(self.graph)
+        for node_group in node_groups:
+            nx_subgraph = self.graph.subgraph(node_group)
+            alc_subgraph = self._from_nx_graph(nx_subgraph)
+            yield(alc_subgraph)
 
     @classmethod
     def from_graphml(cls, str):
