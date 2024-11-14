@@ -122,7 +122,7 @@ class AlchemicalNetwork(GufeTokenizable):
         return cls(nodes=chemical_systems, edges=tranformations)
 
     def connected_subgraphs(self) -> Generator[Self, None, None]:
-        """Return all connected subgraphs of the alchemical network in order of size
+        """Return all connected subgraphs of the alchemical network in order of size (largest first).
         """
         node_groups = nx.weakly_connected_components(self.graph)
         for node_group in node_groups:

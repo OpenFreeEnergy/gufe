@@ -51,14 +51,18 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
     def test_weakly_connected_subgraphs(self, benzene_variants_star_map):
         # remove two edges to create a network w/ two floating nodes
         edge_list = [e for e in benzene_variants_star_map.edges]
-        alnet = benzene_variants_star_map.copy_with_replacements(edges=edge_list[:-2])
+        alnet = benzene_variants_star_map.copy_with_replacements(edges=edge_list[:-1])
 
         subgraphs = [subgraph for subgraph in alnet.connected_subgraphs()]
 
-        # check that one graph is all protein components
-        # and the other is all solvent components
+        assert set([len(subgraph.nodes) for subgraph in subgraphs]) == {6,7,1}
 
-        assert len(subgraphs) == 4
+        # which graph has the removed node is not deterministic, so we just
+        # check that one graph is all-solvent and the other is all-protein
+        for subgraph in subgraphs:
+            components = [frozenset(n.components.keys()) for n in subgraph.nodes]
+            if {'solvent','protein','ligand'} in components:
+                assert set(components) == {frozenset({'solvent','protein','ligand'})}
 
-        assert 0
-    
+            else:
+                assert set(components) == {frozenset({'solvent','ligand'})}
