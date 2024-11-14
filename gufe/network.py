@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from typing import Generator, Iterable, Optional
+from typing_extensions import Self # Self is included in typing as of python 3.11
 
 import networkx as nx
 from .tokenization import GufeTokenizable
@@ -9,11 +10,7 @@ from .tokenization import GufeTokenizable
 from .chemicalsystem import ChemicalSystem
 from .transformations import Transformation
 
-# Self typing is supported in python 3.11+
-try:
-    from typing import Self
-except ImportError:
-    from __future__ import annotations
+
 
 class AlchemicalNetwork(GufeTokenizable):
     _edges: frozenset[Transformation]
