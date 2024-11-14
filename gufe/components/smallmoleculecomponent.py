@@ -64,6 +64,20 @@ _INT_TO_BONDSTEREO = {
     5: Chem.rdchem.BondStereo.STEREOTRANS}
 _BONDSTEREO_TO_INT = {v: k for k, v in _INT_TO_BONDSTEREO.items()}
 
+# following the numbering in rdkit
+_INT_TO_HYBRIDIZATION = {
+    0: Chem.rdchem.HybridizationType.UNSPECIFIED,
+    1: Chem.rdchem.HybridizationType.S,
+    2: Chem.rdchem.HybridizationType.SP,
+    3: Chem.rdchem.HybridizationType.SP2,
+    4: Chem.rdchem.HybridizationType.SP3,
+    5: Chem.rdchem.HybridizationType.SP2D,
+    6: Chem.rdchem.HybridizationType.SP3D,
+    7: Chem.rdchem.HybridizationType.SP3D2,
+    8: Chem.rdchem.HybridizationType.OTHER
+}
+_HYBRIDIZATION_TO_INT = {v: k for k, v in _INT_TO_HYBRIDIZATION.items()}
+
 
 def _setprops(obj, d: dict) -> None:
     # add props onto rdkit "obj" (atom/bond/mol/conformer)
@@ -213,7 +227,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             atoms.append((
                 atom.GetAtomicNum(), atom.GetIsotope(), atom.GetFormalCharge(), atom.GetIsAromatic(),
                 _ATOMCHIRAL_TO_INT[atom.GetChiralTag()], atom.GetAtomMapNum(),
-                atom.GetPropsAsDict(includePrivate=False),
+                atom.GetPropsAsDict(includePrivate=False), _HYBRIDIZATION_TO_INT[atom.GetHybridization()]
             ))
         output['atoms'] = atoms
 
@@ -247,6 +261,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             a.SetChiralTag(_INT_TO_ATOMCHIRAL[atom[4]])
             a.SetAtomMapNum(atom[5])
             _setprops(a, atom[6])
+            a.SetHybridization(_INT_TO_HYBRIDIZATION[atom[7]])
             em.AddAtom(a)
 
         for bond in d['bonds']:

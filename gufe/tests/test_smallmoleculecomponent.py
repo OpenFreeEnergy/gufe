@@ -330,6 +330,18 @@ class TestSmallMoleculeSerialization:
 
         assert isinstance(d, dict)
 
+    def test_to_dict_hybridization(self, phenol):
+        """
+        Make sure dict round trip saves the hybridization
+        <https://github.com/OpenFreeEnergy/gufe/issues/407>
+        """
+        phenol_dict = phenol.to_dict()
+        TOKENIZABLE_REGISTRY.clear()
+        new_phenol = SmallMoleculeComponent.from_dict(phenol_dict)
+        for atom in new_phenol.to_rdkit().GetAtoms():
+            if atom.GetAtomicNum() == 6:
+                assert atom.GetHybridization() == Chem.rdchem.HybridizationType.SP2
+
     @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_deserialize_roundtrip(self, toluene, phenol):
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
