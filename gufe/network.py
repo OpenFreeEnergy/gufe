@@ -121,21 +121,21 @@ class AlchemicalNetwork(GufeTokenizable):
         raise NotImplementedError
 
     @classmethod
+    def from_graphml(cls, str):
+        """Currently not implemented"""
+        raise NotImplementedError
+
+    @classmethod
     def _from_nx_graph(cls, nx_graph) -> Self:
+        """Create an alchemical network from a networkx representation."""
         chemical_systems = [n for n in nx_graph.nodes()]
-        tranformations = [e[2]['object'] for e in nx_graph.edges(data=True)]  # list of transformations
-        return cls(nodes=chemical_systems, edges=tranformations)
+        transformations = [e[2]['object'] for e in nx_graph.edges(data=True)]
+        return cls(nodes=chemical_systems, edges=transformations)
 
     def connected_subgraphs(self) -> Generator[Self, None, None]:
-        """Return all connected subgraphs of the alchemical network in order of size (largest first).
-        """
+        """Return a generator of all connected subgraphs of the alchemical network."""
         node_groups = nx.weakly_connected_components(self.graph)
         for node_group in node_groups:
             nx_subgraph = self.graph.subgraph(node_group)
             alc_subgraph = self._from_nx_graph(nx_subgraph)
             yield(alc_subgraph)
-
-    @classmethod
-    def from_graphml(cls, str):
-        """Currently not implemented"""
-        raise NotImplementedError
