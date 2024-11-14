@@ -48,7 +48,7 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
                 edges = alnet.graph.edges(node)
                 assert len(edges) == 0
 
-    def test_weakly_connected_subgraphs(self, benzene_variants_star_map):
+    def test_connected_subgraphs(self, benzene_variants_star_map):
         # remove two edges to create a network w/ two floating nodes
         edge_list = [e for e in benzene_variants_star_map.edges]
         alnet = benzene_variants_star_map.copy_with_replacements(edges=edge_list[:-1])
