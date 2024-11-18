@@ -9,10 +9,14 @@ import importlib
 import inspect
 import json
 import logging
+import networkx as nx
 import re
-import weakref
 import warnings
-from typing import Any, Union
+import weakref
+from itertools import chain
+from os import PathLike
+from typing import Any, Union, List, Tuple, Dict, Generator, TextIO, Optional
+from typing_extensions import Self
 
 from gufe.custom_codecs import (
     BYTES_CODEC,
@@ -619,6 +623,96 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         dct.update(replacements)
         return self._from_dict(dct)
 
+    def to_keyed_chain(self) -> List[Tuple[str, Dict]]:
+        """
+        Generate a keyed chain representation of the object.
+
+        See Also
+        --------
+        KeyedChain
+        """
+        return KeyedChain.gufe_to_keyed_chain_rep(self)
+
+    @classmethod
+    def from_keyed_chain(cls, keyed_chain: List[Tuple[str, Dict]]):
+        """
+        Generate an instance from keyed chain representation.
+
+        Parameters
+        ----------
+        keyed_chain : List[Tuple[str, Dict]]
+            The keyed_chain representation of the GufeTokenizable.
+
+        See Also
+        --------
+        KeyedChain
+        """
+        return KeyedChain(keyed_chain=keyed_chain).to_gufe()
+
+    def to_json(self, file: Optional[PathLike | TextIO] = None) -> None | str:
+        """
+        Generate a JSON keyed chain representation.
+
+        This will be writen to the filepath or filelike object if passed.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to write the JSON to.
+
+        Returns
+        -------
+        str
+            A minimal JSON representation of the object if `file` is `None`; else None.
+
+        See Also
+        --------
+        from_json
+        """
+
+        if file is None:
+            return json.dumps(self.to_keyed_chain(), cls=JSON_HANDLER.encoder)
+
+        from gufe.utils import ensure_filelike
+        with ensure_filelike(file, mode="w") as out:
+            json.dump(self.to_keyed_chain(), out, cls=JSON_HANDLER.encoder)
+
+        return None
+
+    @classmethod
+    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
+        """
+        Generate an instance from JSON keyed chain representation.
+
+        Can provide either a filepath/filelike as `file`, or JSON content via `content`.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to read JSON data from.
+        content
+            A string to read JSON data from.
+
+        See Also
+        --------
+        to_json
+        """
+
+        if content is not None and file is not None:
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+        elif content is None and file is None:
+            raise ValueError("Must specify either `content` and `file` for JSON input")
+
+        if content is not None:
+            keyed_chain = json.loads(content, cls=JSON_HANDLER.decoder)
+            return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
+        from gufe.utils import ensure_filelike
+        with ensure_filelike(file, mode="r") as f:
+            keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
+
+        return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
 
 class GufeKey(str):
     def __repr__(self):   # pragma: no cover
@@ -637,6 +731,195 @@ class GufeKey(str):
         """Unique hash of this key, typically a md5 value"""
         return self.split('-')[1]
 
+
+def gufe_objects_from_shallow_dict(
+    obj: Union[List, Dict, GufeTokenizable]
+) -> List[GufeTokenizable]:
+    """Find GufeTokenizables within a shallow dict.
+
+    This function recursively looks through the list/dict structures encoding
+    GufeTokenizables and returns list of all GufeTokenizables found
+    within those structures, which may be potentially nested.
+
+    Parameters
+    ----------
+    obj
+        The input data structure to recursively traverse. For the initial call
+        of this function, this should be the shallow dict of a GufeTokenizable.
+        Input of a GufeTokenizable will immediately return a base case.
+
+    Returns
+    -------
+    List[GufeTokenizable]
+        All GufeTokenizables found in the shallow dict representation of a
+        GufeTokenizable.
+
+    """
+    if isinstance(obj, GufeTokenizable):
+        return [obj]
+
+    elif isinstance(obj, list):
+        return list(
+            chain.from_iterable([gufe_objects_from_shallow_dict(item) for item in obj])
+        )
+
+    elif isinstance(obj, dict):
+        return list(
+            chain.from_iterable(
+                [gufe_objects_from_shallow_dict(item) for item in obj.values()]
+            )
+        )
+
+    return []
+
+
+def gufe_to_digraph(gufe_obj):
+    """Recursively construct a DiGraph from a GufeTokenizable.
+
+    The DiGraph encodes the dependency structure of the GufeTokenizable on
+    other GufeTokenizables.
+    """
+    graph = nx.DiGraph()
+    shallow_dicts = {}
+
+    def add_edges(o):
+        # if we've made a shallow dict before, we've already added this one
+        # and all its dependencies; return `None` to avoid going down the tree
+        # again
+        sd = shallow_dicts.get(o.key)
+        if sd is not None:
+            return None
+
+        # if not, then we make the shallow dict only once, add it to our index,
+        # add edges to dependencies, and return it so we continue down the tree
+        sd = o.to_shallow_dict()
+
+        shallow_dicts[o.key] = sd
+
+        # add the object node in case there aren't any connections
+        graph.add_node(o)
+        connections = gufe_objects_from_shallow_dict(sd)
+
+        for c in connections:
+            graph.add_edge(o, c)
+
+        return sd
+
+    sd = add_edges(gufe_obj)
+    _ = modify_dependencies(sd, add_edges, is_gufe_obj, mode="encode")
+
+    return graph
+
+
+class KeyedChain(object):
+    """Keyed chain representation encoder of a GufeTokenizable.
+
+    The keyed chain representation of a GufeTokenizable provides a
+    topologically sorted list of gufe keys and GufeTokenizable keyed dicts
+    that can be used to fully recreate a GufeTokenizable without the need for a
+    populated TOKENIZATION_REGISTRY.
+
+    The class wraps around a list of tuples containing the gufe key and the
+    keyed dict form of the GufeTokenizable.
+
+    Examples
+    --------
+    We can create a keyed chain representation from any GufeTokenizable, such
+    as:
+
+    >>> from gufe.tokenization import KeyedChain
+    >>> s = SolventComponent()
+    >>> keyed_chain = KeyedChain.gufe_to_keyed_chain_rep(s)
+    >>> keyed_chain
+    [('SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f',
+      {'smiles': 'O',
+       'positive_ion': 'Na+',
+       'negative_ion': 'Cl-',
+       'ion_concentration': '0.15 molar',
+       'neutralize': True,
+       '__qualname__': 'SolventComponent',
+       '__module__': 'gufe.components.solventcomponent',
+       ':version:': 1})]
+
+    And we can do the reverse operation as well to go from a keyed chain
+    representation back to a GufeTokenizable:
+
+    >>> KeyedChain(keyed_chain).to_gufe()
+    SolventComponent(name=O, Na+, Cl-)
+
+    """
+
+    def __init__(self, keyed_chain):
+        self._keyed_chain = keyed_chain
+
+    @classmethod
+    def from_gufe(cls, gufe_object: GufeTokenizable) -> Self:
+        """Initialize a KeyedChain from a GufeTokenizable."""
+        return cls(cls.gufe_to_keyed_chain_rep(gufe_object))
+
+    def to_gufe(self) -> GufeTokenizable:
+        """Initialize a GufeTokenizable."""
+        gts: Dict[str, GufeTokenizable] = {}
+        for gufe_key, keyed_dict in self:
+            gt = key_decode_dependencies(keyed_dict, registry=gts)
+            gts[gufe_key] = gt
+        return gt
+
+    @classmethod
+    def from_keyed_chain_rep(cls, keyed_chain: List[Tuple[str, Dict]]) -> Self:
+        """Initialize a KeyedChain from a keyed chain representation."""
+        return cls(keyed_chain)
+
+    def to_keyed_chain_rep(self) -> List[Tuple[str, Dict]]:
+        """Return the keyed chain representation of this object."""
+        return list(self)
+
+    @staticmethod
+    def gufe_to_keyed_chain_rep(
+        gufe_object: GufeTokenizable,
+    ) -> List[Tuple[str, Dict]]:
+        """Create the keyed chain representation of a GufeTokenizable.
+
+        This represents the GufeTokenizable as a list of two-element tuples
+        containing, as their first and second elements, the gufe key and keyed
+        dict form of the GufeTokenizable, respectively, and provides the
+        underlying structure used in the KeyedChain class.
+
+        Parameters
+        ----------
+        gufe_object
+            The GufeTokenizable for which the KeyedChain is generated.
+
+        Returns
+        -------
+        key_and_keyed_dicts
+            The keyed chain representation of a GufeTokenizable.
+
+        """
+        key_and_keyed_dicts = [
+            (str(gt.key), gt.to_keyed_dict())
+            for gt in nx.topological_sort(gufe_to_digraph(gufe_object))
+        ][::-1]
+        return key_and_keyed_dicts
+
+    def gufe_keys(self) -> Generator[str, None, None]:
+        """Create a generator that iterates over the gufe keys in the KeyedChain."""
+        for key, _ in self:
+            yield key
+
+    def keyed_dicts(self) -> Generator[Dict, None, None]:
+        """Create a generator that iterates over the keyed dicts in the KeyedChain."""
+        for _, _dict in self:
+            yield _dict
+
+    def __len__(self):
+        return len(self._keyed_chain)
+
+    def __iter__(self):
+        return self._keyed_chain.__iter__()
+
+    def __getitem__(self, index):
+        return self._keyed_chain[index]
 
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}

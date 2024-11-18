@@ -1,8 +1,13 @@
 name: "conda_cron"
 on:
+  # Allow for manual trigger of workflow
+  workflow_dispatch:
   schedule:
     # At 07:00 UTC every day
     - cron: "0 7 * * *"
+  pull_request:
+    branches:
+      - main
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
@@ -14,16 +19,16 @@ defaults:
 
 jobs:
   condacheck:
-    runs-on: ${{ matrix.OS }}-latest
+    runs-on: ${{ matrix.OS }}
     name: "daily conda check"
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu', 'macos']
+        os: ['ubuntu-latest', 'macos-14']
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
 
     steps:
       - name: setup micromamba
@@ -48,12 +53,13 @@ jobs:
 
       - id: run-tests
         name: run tests
-        continue-on-error: true
         run: pytest -n auto --pyargs gufe
 
       - uses: actions/checkout@v4
+        if: ${{ always() }}
 
       - name: raise-or-close-issue
+        if: ${{ always() }}
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"

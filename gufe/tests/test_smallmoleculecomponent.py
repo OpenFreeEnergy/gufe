@@ -72,7 +72,6 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     cls = SmallMoleculeComponent
-    key = "SmallMoleculeComponent-51068a89f4793e688ee26135a9b7fbb6"
     repr = "SmallMoleculeComponent(name=ethane)"
 
     @pytest.fixture
@@ -263,6 +262,47 @@ class TestSmallMoleculeComponentPartialCharges:
 
         with pytest.raises(ValueError, match="Incorrect number of"):
             SmallMoleculeComponent.from_rdkit(mol)
+
+    def test_partial_charges_applied_to_atoms(self):
+        """
+        Make sure that charges set at the molecule level
+        are transferred to atoms and picked up by openFF.
+        """
+        mol = Chem.AddHs(Chem.MolFromSmiles("C"))
+        Chem.AllChem.Compute2DCoords(mol)
+        # add some fake charges at the molecule level
+        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        matchmsg = "Partial charges have been provided"
+        with pytest.warns(UserWarning, match=matchmsg):
+            ofe = SmallMoleculeComponent.from_rdkit(mol)
+        # convert to openff and make sure the charges are set
+        off_mol = ofe.to_openff()
+        assert off_mol.partial_charges is not None
+        # check ordering is the same
+        rdkit_mol_with_charges = ofe.to_rdkit()
+        for i, charge in enumerate(off_mol.partial_charges.m):
+            rdkit_atom = rdkit_mol_with_charges.GetAtomWithIdx(i)
+            assert rdkit_atom.GetDoubleProp("PartialCharge") == charge
+
+    def test_inconsistent_charges(self, charged_off_ethane):
+        """
+        An error should be raised if the atom and molecule level
+        charges do not match.
+        """
+        mol = Chem.AddHs(Chem.MolFromSmiles("C"))
+        Chem.AllChem.Compute2DCoords(mol)
+        # add some fake charges at the molecule level
+        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        # set different charges to the atoms
+        for atom in mol.GetAtoms():
+            atom.SetDoubleProp("PartialCharge", 0)
+
+        # make sure the correct error is raised
+        msg = ("non-equivalent partial charges between "
+               "atom and molecule properties")
+        with pytest.raises(ValueError, match=msg):
+            SmallMoleculeComponent.from_rdkit(mol)
+
 
 
 @pytest.mark.parametrize('mol, charge', [

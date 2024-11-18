@@ -12,17 +12,16 @@ readme = "README.md"
 authors = [{name = "The OpenFE developers", email = "openfe@omsf.io"}]
 license = {text = "MIT"}
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
-    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
 urls = {Homepage = "https://github.com/OpenFreeEnergy/gufe"}
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 dependencies = [
     "numpy",
     "networkx",

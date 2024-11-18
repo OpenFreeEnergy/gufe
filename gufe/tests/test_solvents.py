@@ -81,7 +81,6 @@ def test_bad_inputs(pos, neg):
 class TestSolventComponent(GufeTokenizableTestsMixin):
 
     cls = SolventComponent
-    key = "SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f"
     repr = "SolventComponent(name=O, Na+, Cl-)"
 
     @pytest.fixture

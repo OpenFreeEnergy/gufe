@@ -10,7 +10,8 @@ from typing import Optional
 from gufe.tokenization import (
     GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
     import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER,
-    get_all_gufe_objs,
+    get_all_gufe_objs, gufe_to_digraph, gufe_objects_from_shallow_dict,
+    KeyedChain,
 )
 
 
@@ -82,7 +83,6 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
-    key: Optional[str]
     repr: Optional[str]
 
     @pytest.fixture
@@ -140,7 +140,14 @@ class GufeTokenizableTestsMixin(abc.ABC):
         #assert ser == reser
 
     def test_key_stable(self, instance):
-        assert self.key == instance.key
+        """Check that generating the instance from a dict representation yields
+        the same key (and the same instance).
+
+        """
+        instance_ = GufeTokenizable.from_dict(instance.to_dict())
+
+        assert instance_.key == instance.key
+        assert instance_ is instance
 
     def test_repr(self, instance):
         if self.repr is None:
@@ -153,7 +160,6 @@ class GufeTokenizableTestsMixin(abc.ABC):
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     cls = Container
-    key = "Container-3fcec08974fbbd0371fed8a185628b70"
     repr = "Container(Leaf(Leaf(foo, 2), 2), [Leaf(foo, 2), 0], {'leaf': Leaf(foo, 2), 'a': 'b'})"
 
     @pytest.fixture
@@ -200,6 +206,21 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             ':version:': 1,
         }
 
+        self.expected_keyed_chain = [
+            (str(leaf.key),
+             leaf_dict("foo")),
+            (str(bar.key),
+             leaf_dict({':gufe-key:': str(leaf.key)})),
+            (str(self.cont.key),
+             {':version:': 1,
+              '__module__': __name__,
+              '__qualname__': 'Container',
+              'dct': {'a': 'b',
+                      'leaf': {':gufe-key:': str(leaf.key)}},
+              'lst': [{':gufe-key:': str(leaf.key)}, 0],
+              'obj': {':gufe-key:': str(bar.key)}})
+        ]
+
     def test_set_key(self):
         leaf = Leaf("test-set-key")
         key = leaf.key
@@ -228,6 +249,43 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     def test_from_keyed_dict(self):
         recreated = self.cls.from_keyed_dict(self.expected_keyed)
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_keyed_chain(self):
+        assert self.cont.to_keyed_chain() == self.expected_keyed_chain
+
+    def test_from_keyed_chain(self):
+        recreated = self.cls.from_keyed_chain(self.expected_keyed_chain)
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_json_string(self):
+        raw_json = self.cont.to_json()
+
+        # tuples are converted to lists in JSON so fix the expected result to use lists
+        expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
+        assert json.loads(raw_json, cls=JSON_HANDLER.decoder) == expected_key_chain
+
+    def test_from_json_string(self):
+        recreated = self.cls.from_json(content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder))
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_json_file(self, tmpdir):
+        file_path = tmpdir / "container.json"
+        self.cont.to_json(file=file_path)
+
+        # tuples are converted to lists in JSON so fix the expected result to use lists
+        expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
+        assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
+
+    def test_from_json_file(self, tmpdir):
+        file_path = tmpdir / "container.json"
+        json.dump(self.expected_keyed_chain, file_path.open(mode="w"), cls=JSON_HANDLER.encoder)
+        recreated = self.cls.from_json(file=file_path)
+
         assert recreated == self.cont
         assert recreated is self.cont
 
@@ -378,6 +436,65 @@ class TestGufeKey:
         k = GufeKey('foo-bar')
 
         assert k.token == 'bar'
+
+
+def test_gufe_to_digraph(solvated_complex):
+    graph = gufe_to_digraph(solvated_complex)
+
+    connected_objects = gufe_objects_from_shallow_dict(
+        solvated_complex.to_shallow_dict()
+    )
+
+    assert len(graph.nodes) == 4
+    assert len(graph.edges) == 3
+
+    for node_a, node_b in graph.edges:
+        assert node_b in connected_objects
+        assert node_a is solvated_complex
+
+
+def test_gufe_objects_from_shallow_dict(solvated_complex):
+    shallow_dict = solvated_complex.to_shallow_dict()
+    gufe_objects = set(gufe_objects_from_shallow_dict(shallow_dict))
+
+    assert len(gufe_objects) == 3
+    assert set(gufe_objects) == set(solvated_complex.components.values())
+
+
+class TestKeyedChain:
+
+    def test_from_gufe(self, benzene_variants_star_map):
+        contained_objects = list(get_all_gufe_objs(benzene_variants_star_map))
+        expected_len = len(contained_objects)
+
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        assert len(kc) == expected_len
+
+        original_keys = [obj.key for obj in contained_objects]
+        original_keyed_dicts = [
+            obj.to_keyed_dict() for obj in contained_objects
+        ]
+
+        kc_gufe_keys = set(kc.gufe_keys())
+        kc_keyed_dicts = list(kc.keyed_dicts())
+
+        assert kc_gufe_keys == set(original_keys)
+
+        for key, keyed_dict in zip(original_keys, original_keyed_dicts):
+            assert key in kc_gufe_keys
+            assert keyed_dict in kc_keyed_dicts
+
+    def test_to_gufe(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+        assert hash(kc.to_gufe()) == hash(benzene_variants_star_map)
+
+    def test_get_item(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        assert kc[0] == kc._keyed_chain[0]
+        assert kc[-1] == kc._keyed_chain[-1]
+        assert kc[:] == kc._keyed_chain[:]
 
 
 def test_datetime_to_json():
