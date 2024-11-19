@@ -118,7 +118,7 @@ class AlchemicalNetwork(GufeTokenizable):
         raise NotImplementedError
 
     @classmethod
-    def from_graphml(cls, str):
+    def from_graphml(cls, str) -> Self:
         """Currently not implemented"""
         raise NotImplementedError
 
