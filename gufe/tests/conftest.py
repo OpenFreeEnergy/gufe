@@ -256,9 +256,8 @@ def complex_equilibrium(solvated_complex):
         protocol=DummyProtocol(settings=DummyProtocol.default_settings())
     )
 
-
 @pytest.fixture
-def benzene_variants_star_map(
+def benzene_variants_star_map_transformations(
     benzene,
     toluene,
     phenol,
@@ -320,7 +319,15 @@ def benzene_variants_star_map(
             mapping=None,
         )
 
-    return gufe.AlchemicalNetwork(
-        list(solvated_ligand_transformations.values())
-        + list(solvated_complex_transformations.values())
-    )
+    return list(solvated_ligand_transformations.values()), list(solvated_complex_transformations.values())
+
+
+@pytest.fixture
+def benzene_variants_star_map(benzene_variants_star_map_transformations):
+    solvated_ligand_transformations, solvated_complex_transformations = benzene_variants_star_map_transformations
+    return gufe.AlchemicalNetwork(solvated_ligand_transformations+solvated_complex_transformations)
+
+@pytest.fixture
+def benzene_variants_ligand_star_map(benzene_variants_star_map_transformations):
+    solvated_ligand_transformations, _ = benzene_variants_star_map_transformations
+    return gufe.AlchemicalNetwork(solvated_ligand_transformations)
