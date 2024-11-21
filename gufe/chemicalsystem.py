@@ -72,6 +72,44 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         """
         return dict(self._components)
 
+    def component_diff(self, other) -> dict[str, tuple[Component | None, Component | None]]:
+        """Compare the Components of this ChemicalSystem with the Components of another ChemicalSystem.
+
+        Parameters
+        ----------
+        other : ChemicalSystem
+            The ChemicalSystem to compare to.
+
+        Returns
+        -------
+        dict[str, tuple[Component | None, Component | None]]
+            A dictionary whose keys are the component labels present in either of the two ChemicalSystem objects.
+            The values are tuples containing the different Component objects from this and the other ChemicalSystem, respectively.
+            Only components that differ between the two ChemicalSystem objects will appear in the dictionary.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not an instance of the same class as `self`.
+        """
+
+        # TODO: is this too restrictive?
+        if self.__class__ is not other.__class__:
+            raise TypeError(f"Cannot compare instances of {self.__qualname__} with instances of {other.__qualname__}.")
+
+        expanded_keys = self._components.keys() | other._components.keys()
+
+        difference : dict[str, tuple[Component | None, Component | None]] = {}
+
+        for key in expanded_keys:
+            value_self = self._components.get(key)
+            value_other = other._components.get(key)
+
+            if value_self != value_other:
+                difference[key] = (value_self, value_other)
+
+        return difference
+
     @property
     def name(self):
         """
