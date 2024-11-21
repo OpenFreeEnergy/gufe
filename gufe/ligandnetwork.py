@@ -10,18 +10,21 @@ import gufe
 
 from gufe import SmallMoleculeComponent
 from .mapping import LigandAtomMapping
-from .tokenization import GufeTokenizable
+from .tokenization import GufeTokenizable, JSON_HANDLER
 
 
 class LigandNetwork(GufeTokenizable):
-    """A directed graph connecting many ligands according to their atom mapping
+    """A directed graph connecting ligands according to their atom mapping.
+       A network can be defined by specifying only edges, in which case the nodes are implicitly added.
+      
 
     Parameters
     ----------
     edges : Iterable[LigandAtomMapping]
-        edges for this network
+        Edges for this network, each specified as a LigandAtomMapping between two nodes.
     nodes : Iterable[SmallMoleculeComponent]
-        nodes for this network
+        Nodes for this network. Any nodes already included as a part of the 'edges' will be ignored.
+        Nodes not already included in 'edges' will be added as isolated, unconnected nodes.
     """
     def __init__(
         self,
@@ -97,7 +100,8 @@ class LigandNetwork(GufeTokenizable):
             (
                 mol_to_label[edge.componentA],
                 mol_to_label[edge.componentB],
-                json.dumps(list(edge.componentA_to_componentB.items()))
+                json.dumps(list(edge.componentA_to_componentB.items())),
+                json.dumps(edge.annotations, cls=JSON_HANDLER.encoder),
             )
             for edge in self.edges
         ])
@@ -109,8 +113,8 @@ class LigandNetwork(GufeTokenizable):
                                         moldict=json.dumps(mol.to_dict(),
                                                            sort_keys=True))
 
-        for molA, molB, mapping in edge_data:
-            serializable_graph.add_edge(molA, molB, mapping=mapping)
+        for molA, molB, mapping, annotation in edge_data:
+            serializable_graph.add_edge(molA, molB, mapping=mapping, annotations=annotation)
 
         return serializable_graph
 
@@ -126,8 +130,10 @@ class LigandNetwork(GufeTokenizable):
         edges = [
             LigandAtomMapping(componentA=label_to_mol[node1],
                               componentB=label_to_mol[node2],
-                              componentA_to_componentB=dict(json.loads(mapping)))
-            for node1, node2, mapping in graph.edges(data='mapping')
+                              componentA_to_componentB=dict(json.loads(edge_data["mapping"])),
+                              annotations=json.loads(edge_data.get("annotations", 'null'), cls=JSON_HANDLER.decoder) # work around old graphml files with missing edge annotations
+                              )
+            for node1, node2, edge_data in graph.edges(data=True)
         ]
 
         return cls(edges=edges, nodes=label_to_mol.values())

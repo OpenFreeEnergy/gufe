@@ -7,6 +7,8 @@ import gufe
 from gufe.tests.test_protocol import DummyProtocol
 from gufe import SmallMoleculeComponent, LigandNetwork, LigandAtomMapping
 
+from openff.units import unit
+
 from rdkit import Chem
 
 from networkx import NetworkXError
@@ -47,9 +49,9 @@ def mols():
 @pytest.fixture
 def std_edges(mols):
     mol1, mol2, mol3 = mols
-    edge12 = LigandAtomMapping(mol1, mol2, {0: 0, 1: 1})
-    edge23 = LigandAtomMapping(mol2, mol3, {0: 0})
-    edge13 = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1})
+    edge12 = LigandAtomMapping(mol1, mol2, {0: 0, 1: 1}, {"score": 0.0, "length": 1.0 * unit.angstrom})
+    edge23 = LigandAtomMapping(mol2, mol3, {0: 0}, {"score": 1.0})
+    edge13 = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second})
     return edge12, edge23, edge13
 
 
@@ -250,7 +252,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         # Adding a duplicate of an existing edge should create a new network
         # with the same edges and nodes as the previous one.
         mol1, _, mol3 = mols
-        duplicate = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1})
+        duplicate = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second})
         network = simple_network.network
 
         existing = network.edges
