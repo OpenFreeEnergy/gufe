@@ -95,7 +95,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
 
         # TODO: is this too restrictive?
         if self.__class__ is not other.__class__:
-            raise TypeError(f"Cannot compare instances of {self.__qualname__} with instances of {other.__qualname__}.")
+            raise TypeError(f"Cannot compare instances of `{self.__class__.__qualname__}` with instances of `{other.__class__.__qualname__}`.")
 
         expanded_keys = self._components.keys() | other._components.keys()
 

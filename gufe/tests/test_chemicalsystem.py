@@ -61,6 +61,17 @@ def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
     assert c1 == c2
     assert hash(c1) == hash(c2)
 
+def test_chemical_system_component_diff(solvated_complex, solvated_ligand):
+    diff = solvated_complex.component_diff(solvated_ligand)
+    assert len(diff) == 1
+    assert diff['protein'] == (solvated_complex.components.get('protein'), solvated_ligand.get('protein'))
+
+
+def test_chemical_system_component_diff_incompatible_comparison(solvated_complex, phenol_ligand_comp):
+
+    with pytest.raises(TypeError, match=r"Cannot compare instances of `ChemicalSystem` with instances of `SmallMoleculeComponent`."):
+        solvated_complex.component_diff(phenol_ligand_comp)
+
 
 def test_chemical_system_neq_1(solvated_complex, prot_comp):
     # wrong class
