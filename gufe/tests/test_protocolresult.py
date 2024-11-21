@@ -35,6 +35,12 @@ class TestProtocolResult(GufeTokenizableTestsMixin):
     def test_protocolresult_default_n_protocol_dag_results(self, instance):
         assert instance.n_protocol_dag_results == 0
 
+    def test_protocol_result_from_dict_missing_n_protocol_dag_results(self, instance):
+        protocol_result_dict_form = instance.to_dict()
+        assert DummyProtocolResult.from_dict(protocol_result_dict_form) == instance
+        del protocol_result_dict_form['n_protocol_dag_results']
+        assert DummyProtocolResult.from_dict(protocol_result_dict_form) == instance
+
     @pytest.mark.parametrize(
         "arg, expected", [(0, 0), (1, 1), (-1, ValueError)]
     )
