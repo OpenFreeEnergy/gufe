@@ -48,7 +48,12 @@ class ProtocolResult(GufeTokenizable):
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls(n_protocol_dag_results=dct['n_protocol_dag_results'], **dct['data'])
+        # TODO: remove in gufe 2.0
+        try:
+            n_protocol_dag_results = dct['n_protocol_dag_results']
+        except KeyError:
+            n_protocol_dag_results = 0
+        return cls(n_protocol_dag_results=n_protocol_dag_results, **dct['data'])
 
     @property
     def n_protocol_dag_results(self) -> int:
