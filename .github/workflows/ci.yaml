@@ -34,9 +34,9 @@ jobs:
           - "3.11"
           - "3.12"
         include:
-            # Note: pinned to macos-12
+            # Note: we still need to add support for macos-13
             # see https://github.com/OpenFreeEnergy/openfe/issues/842
-          - os: "macos-12"
+          - os: "macos-latest"
             python-version: "3.11"
             pydantic-version: ">1"
           - os: "ubuntu-latest"
