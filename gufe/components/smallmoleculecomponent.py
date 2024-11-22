@@ -2,16 +2,16 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import logging
+
 # openff complains about oechem being missing, shhh
-logger = logging.getLogger('openff.toolkit')
+logger = logging.getLogger("openff.toolkit")
 logger.setLevel(logging.ERROR)
 from typing import Any
 
 from rdkit import Chem
 
-from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from ..molhashing import deserialize_numpy, serialize_numpy
-
+from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
 _INT_TO_ATOMCHIRAL = {
     0: Chem.rdchem.ChiralType.CHI_UNSPECIFIED,
@@ -20,14 +20,16 @@ _INT_TO_ATOMCHIRAL = {
     3: Chem.rdchem.ChiralType.CHI_OTHER,
 }
 # support for non-tetrahedral stereo requires rdkit 2022.09.1+
-if hasattr(Chem.rdchem.ChiralType, 'CHI_TETRAHEDRAL'):
-    _INT_TO_ATOMCHIRAL.update({
-        4: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL,
-        5: Chem.rdchem.ChiralType.CHI_ALLENE,
-        6: Chem.rdchem.ChiralType.CHI_SQUAREPLANAR,
-        7: Chem.rdchem.ChiralType.CHI_TRIGONALBIPYRAMIDAL,
-        8: Chem.rdchem.ChiralType.CHI_OCTAHEDRAL,
-    })
+if hasattr(Chem.rdchem.ChiralType, "CHI_TETRAHEDRAL"):
+    _INT_TO_ATOMCHIRAL.update(
+        {
+            4: Chem.rdchem.ChiralType.CHI_TETRAHEDRAL,
+            5: Chem.rdchem.ChiralType.CHI_ALLENE,
+            6: Chem.rdchem.ChiralType.CHI_SQUAREPLANAR,
+            7: Chem.rdchem.ChiralType.CHI_TRIGONALBIPYRAMIDAL,
+            8: Chem.rdchem.ChiralType.CHI_OCTAHEDRAL,
+        }
+    )
 _ATOMCHIRAL_TO_INT = {v: k for k, v in _INT_TO_ATOMCHIRAL.items()}
 
 
@@ -53,7 +55,8 @@ _INT_TO_BONDTYPE = {
     18: Chem.rdchem.BondType.DATIVEL,
     19: Chem.rdchem.BondType.DATIVER,
     20: Chem.rdchem.BondType.OTHER,
-    21: Chem.rdchem.BondType.ZERO}
+    21: Chem.rdchem.BondType.ZERO,
+}
 _BONDTYPE_TO_INT = {v: k for k, v in _INT_TO_BONDTYPE.items()}
 _INT_TO_BONDSTEREO = {
     0: Chem.rdchem.BondStereo.STEREONONE,
@@ -61,7 +64,8 @@ _INT_TO_BONDSTEREO = {
     2: Chem.rdchem.BondStereo.STEREOZ,
     3: Chem.rdchem.BondStereo.STEREOE,
     4: Chem.rdchem.BondStereo.STEREOCIS,
-    5: Chem.rdchem.BondStereo.STEREOTRANS}
+    5: Chem.rdchem.BondStereo.STEREOTRANS,
+}
 _BONDSTEREO_TO_INT = {v: k for k, v in _INT_TO_BONDSTEREO.items()}
 
 
@@ -120,8 +124,8 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         sdf = [Chem.MolToMolBlock(mol)]
         for prop in mol.GetPropNames():
             val = mol.GetProp(prop)
-            sdf.append('>  <%s>\n%s\n' % (prop, val))
-        sdf.append('$$$$\n')
+            sdf.append(f">  <{prop}>\n{val}\n")
+        sdf.append("$$$$\n")
         return "\n".join(sdf)
 
     @classmethod
@@ -210,26 +214,39 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         atoms = []
         for atom in self._rdkit.GetAtoms():
-            atoms.append((
-                atom.GetAtomicNum(), atom.GetIsotope(), atom.GetFormalCharge(), atom.GetIsAromatic(),
-                _ATOMCHIRAL_TO_INT[atom.GetChiralTag()], atom.GetAtomMapNum(),
-                atom.GetPropsAsDict(includePrivate=False),
-            ))
-        output['atoms'] = atoms
+            atoms.append(
+                (
+                    atom.GetAtomicNum(),
+                    atom.GetIsotope(),
+                    atom.GetFormalCharge(),
+                    atom.GetIsAromatic(),
+                    _ATOMCHIRAL_TO_INT[atom.GetChiralTag()],
+                    atom.GetAtomMapNum(),
+                    atom.GetPropsAsDict(includePrivate=False),
+                )
+            )
+        output["atoms"] = atoms
 
         bonds = []
         for bond in self._rdkit.GetBonds():
-            bonds.append((
-                bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), _BONDTYPE_TO_INT[bond.GetBondType()],
-                _BONDSTEREO_TO_INT[bond.GetStereo()],
-                bond.GetPropsAsDict(includePrivate=False)
-            ))
-        output['bonds'] = bonds
+            bonds.append(
+                (
+                    bond.GetBeginAtomIdx(),
+                    bond.GetEndAtomIdx(),
+                    _BONDTYPE_TO_INT[bond.GetBondType()],
+                    _BONDSTEREO_TO_INT[bond.GetStereo()],
+                    bond.GetPropsAsDict(includePrivate=False),
+                )
+            )
+        output["bonds"] = bonds
 
         conf = self._rdkit.GetConformer()
-        output['conformer'] = (serialize_numpy(conf.GetPositions()), conf.GetPropsAsDict(includePrivate=False))
+        output["conformer"] = (
+            serialize_numpy(conf.GetPositions()),
+            conf.GetPropsAsDict(includePrivate=False),
+        )
 
-        output['molprops'] = self._rdkit.GetPropsAsDict(includePrivate=False)
+        output["molprops"] = self._rdkit.GetPropsAsDict(includePrivate=False)
 
         return output
 
@@ -239,7 +256,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         m = Chem.Mol()
         em = Chem.EditableMol(m)
 
-        for atom in d['atoms']:
+        for atom in d["atoms"]:
             a = Chem.Atom(atom[0])
             a.SetIsotope(atom[1])
             a.SetFormalCharge(atom[2])
@@ -249,24 +266,24 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             _setprops(a, atom[6])
             em.AddAtom(a)
 
-        for bond in d['bonds']:
+        for bond in d["bonds"]:
             em.AddBond(bond[0], bond[1], _INT_TO_BONDTYPE[bond[2]])
             # other fields are applied onto the ROMol
 
         m = em.GetMol()
 
-        for bond, b in zip(d['bonds'], m.GetBonds()):
+        for bond, b in zip(d["bonds"], m.GetBonds()):
             b.SetStereo(_INT_TO_BONDSTEREO[bond[3]])
             _setprops(b, bond[4])
 
-        pos = deserialize_numpy(d['conformer'][0])
+        pos = deserialize_numpy(d["conformer"][0])
         c = Chem.Conformer(m.GetNumAtoms())
         for i, p in enumerate(pos):
             c.SetAtomPosition(i, p)
-        _setprops(c, d['conformer'][1])
+        _setprops(c, d["conformer"][1])
         m.AddConformer(c)
 
-        _setprops(m, d['molprops'])
+        _setprops(m, d["molprops"])
 
         m.UpdatePropertyCache()
 
@@ -275,10 +292,10 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
     def copy_with_replacements(self, **replacements):
         # this implementation first makes a copy with the name replaced
         # only, then does any other replacements that are necessary
-        if 'name' in replacements:
-            name = replacements.pop('name')
+        if "name" in replacements:
+            name = replacements.pop("name")
             dct = self._to_dict()
-            dct['molprops']['ofe-name'] = name
+            dct["molprops"]["ofe-name"] = name
             obj = self._from_dict(dct)
         else:
             obj = self

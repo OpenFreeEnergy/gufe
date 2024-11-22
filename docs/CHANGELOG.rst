@@ -28,5 +28,3 @@ v1.1.0
 * Fixed an issue where ProtocolDAG DAG order & keys were unstable /
   non-deterministic between processes under some circumstances (PR #315).
 * Fixed a bug where edge annotations were lost when converting a ``LigandNetwork`` to graphml, all JSON codec types are now supported.
-
-
