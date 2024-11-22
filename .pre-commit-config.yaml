@@ -27,6 +27,7 @@ repos:
   rev: 5.13.2
   hooks:
   - id: isort
+    args: ["--profile", "black", "--filter-files"]
 - repo: https://github.com/econchick/interrogate
   rev: 1.5.0
   hooks:
