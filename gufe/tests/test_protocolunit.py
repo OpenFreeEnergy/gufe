@@ -1,8 +1,14 @@
 import string
-import pytest
 from pathlib import Path
 
-from gufe.protocols.protocolunit import ProtocolUnit, Context, ProtocolUnitFailure, ProtocolUnitResult
+import pytest
+
+from gufe.protocols.protocolunit import (
+    Context,
+    ProtocolUnit,
+    ProtocolUnitFailure,
+    ProtocolUnitResult,
+)
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 
 
@@ -51,27 +57,27 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
             unit = DummyUnit()
 
-            shared = Path('shared') / str(unit.key)
+            shared = Path("shared") / str(unit.key)
             shared.mkdir(parents=True)
 
-            scratch = Path('scratch') / str(unit.key)
+            scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
             ctx = Context(shared=shared, scratch=scratch)
-            
+
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
 
             unit = DummyUnit()
 
-            shared = Path('shared') / str(unit.key)
+            shared = Path("shared") / str(unit.key)
             shared.mkdir(parents=True)
 
-            scratch = Path('scratch') / str(unit.key)
+            scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
             ctx = Context(shared=shared, scratch=scratch)
-            
+
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
                 unit.execute(context=ctx, raise_error=True, an_input=3)
@@ -81,23 +87,23 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
             unit = DummyKeyboardInterruptUnit()
 
-            shared = Path('shared') / str(unit.key)
+            shared = Path("shared") / str(unit.key)
             shared.mkdir(parents=True)
 
-            scratch = Path('scratch') / str(unit.key)
+            scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
             ctx = Context(shared=shared, scratch=scratch)
-            
+
             with pytest.raises(KeyboardInterrupt):
                 unit.execute(context=ctx, an_input=3)
-                
+
             u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
 
-            assert u.outputs == {'foo': 'bar'}
+            assert u.outputs == {"foo": "bar"}
 
     def test_normalize(self, dummy_unit):
         thingy = dummy_unit.key
 
-        assert thingy.startswith('DummyUnit-')
-        assert all(t in string.hexdigits for t in thingy.partition('-')[-1])
+        assert thingy.startswith("DummyUnit-")
+        assert all(t in string.hexdigits for t in thingy.partition("-")[-1])

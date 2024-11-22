@@ -1,18 +1,19 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-from openff.units import unit
 import pytest
+from openff.units import unit
 
 import gufe
+
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
 class DummyProtocolResult(gufe.ProtocolResult):
     def get_estimate(self):
-        return self.data['estimate']
+        return self.data["estimate"]
 
     def get_uncertainty(self):
-        return self.data['uncertainty']
+        return self.data["uncertainty"]
 
 
 class TestProtocolResult(GufeTokenizableTestsMixin):

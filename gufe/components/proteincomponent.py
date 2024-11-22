@@ -1,28 +1,24 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import ast
-import json
 import io
-import numpy as np
-from os import PathLike
+import json
 import string
-from typing import Union, Optional
 from collections import defaultdict
+from os import PathLike
+from typing import Optional, Union
 
+import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
-
 from rdkit import Chem
-from rdkit.Chem.rdchem import Mol, Atom, Conformer, EditableMol, BondType
+from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
 from ..custom_typing import RDKitMol
-from .explicitmoleculecomponent import ExplicitMoleculeComponent
+from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
-
-
-from ..molhashing import deserialize_numpy, serialize_numpy
-
+from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
     1: BondType.SINGLE,
@@ -34,9 +30,7 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
     app.Aromatic: BondType.AROMATIC,
     None: BondType.UNSPECIFIED,
 }
-_BONDORDERS_RDKIT_TO_OPENMM = {
-    v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()
-}
+_BONDORDERS_RDKIT_TO_OPENMM = {v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()}
 _BONDORDER_TO_ORDER = {
     BondType.UNSPECIFIED: 1,  # assumption
     BondType.SINGLE: 1,
@@ -50,21 +44,29 @@ _BONDORDER_STR_TO_RDKIT = Chem.BondType.names
 _BONDORDER_RDKIT_TO_STR = {v: k for k, v in _BONDORDER_STR_TO_RDKIT.items()}
 
 _CHIRALITY_RDKIT_TO_STR = {
-    Chem.CHI_TETRAHEDRAL_CW: 'CW',
-    Chem.CHI_TETRAHEDRAL_CCW: 'CCW',
-    Chem.CHI_UNSPECIFIED: 'U',
+    Chem.CHI_TETRAHEDRAL_CW: "CW",
+    Chem.CHI_TETRAHEDRAL_CCW: "CCW",
+    Chem.CHI_UNSPECIFIED: "U",
 }
-_CHIRALITY_STR_TO_RDKIT = {
-    v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()
-}
+_CHIRALITY_STR_TO_RDKIT = {v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()}
 
 
 negative_ions = ["F", "CL", "BR", "I"]
 positive_ions = [
     # +1
-    "LI", "NA", "K", "RB", "CS",
+    "LI",
+    "NA",
+    "K",
+    "RB",
+    "CS",
     # +2
-    "BE", "MG", "CA", "SR", "BA", "RA", "ZN",
+    "BE",
+    "MG",
+    "CA",
+    "SR",
+    "BA",
+    "RA",
+    "ZN",
 ]
 
 
@@ -91,10 +93,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
     edit the molecule do this in an appropriate toolkit **before** creating
     an instance from this class.
     """
+
     def __init__(self, rdkit: RDKitMol, name=""):
         if not all(a.GetMonomerInfo() is not None for a in rdkit.GetAtoms()):
-            raise TypeError("Not all atoms in input have MonomerInfo defined.  "
-                            "Consider loading via rdkit.Chem.MolFromPDBFile or similar.")
+            raise TypeError(
+                "Not all atoms in input have MonomerInfo defined.  "
+                "Consider loading via rdkit.Chem.MolFromPDBFile or similar."
+            )
         super().__init__(rdkit=rdkit, name=name)
 
     # FROM
@@ -116,9 +121,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             the deserialized molecule
         """
         openmm_PDBFile = PDBFile(pdb_file)
-        return cls._from_openmmPDBFile(
-            openmm_PDBFile=openmm_PDBFile, name=name
-        )
+        return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
 
     @classmethod
     def from_pdbx_file(cls, pdbx_file: str, name=""):
@@ -138,13 +141,12 @@ class ProteinComponent(ExplicitMoleculeComponent):
             the deserialized molecule
         """
         openmm_PDBxFile = PDBxFile(pdbx_file)
-        return cls._from_openmmPDBFile(
-            openmm_PDBFile=openmm_PDBxFile, name=name
-        )
+        return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile],
-                            name: str = ""):
+    def _from_openmmPDBFile(
+        cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""
+    ):
         """Converts to our internal representation (rdkit Mol)
 
         Parameters
@@ -217,17 +219,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atom_name = a.GetMonomerInfo().GetName()
 
             connectivity = sum(
-                _BONDORDER_TO_ORDER[bond.GetBondType()]
-                for bond in a.GetBonds()
+                _BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds()
             )
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions:
                 # strip catches cases like 'CL1' as name
                 if atom_name.strip(string.digits).upper() in positive_ions:
-                    fc = default_valence   # e.g. Sodium ions
+                    fc = default_valence  # e.g. Sodium ions
                 elif atom_name.strip(string.digits).upper() in negative_ions:
-                    fc = - default_valence  # e.g. Chlorine ions
+                    fc = -default_valence  # e.g. Chlorine ions
                 else:  # -no-cov-
                     resn = a.GetMonomerInfo().GetResidueName()
                     resind = int(a.GetMonomerInfo().GetResidueNumber())
@@ -237,9 +238,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
                         f"connectivity{connectivity}"
                     )
             elif default_valence > connectivity:
-                fc = - (default_valence - connectivity)  # negative charge
+                fc = -(default_valence - connectivity)  # negative charge
             elif default_valence < connectivity:
-                fc = + (connectivity - default_valence)  # positive charge
+                fc = +(connectivity - default_valence)  # positive charge
             else:
                 fc = 0  # neutral
 
@@ -272,7 +273,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             mi.SetName(atom[5])
             mi.SetResidueName(atom[6])
             mi.SetResidueNumber(int(atom[7]))
-            mi.SetIsHeteroAtom(atom[8] == 'Y')
+            mi.SetIsHeteroAtom(atom[8] == "Y")
             a.SetFormalCharge(atom[9])
 
             a.SetMonomerInfo(mi)
@@ -304,7 +305,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond_id, bond in enumerate(rd_mol.GetBonds()):
             # Can't set these on an editable mol, go round a second time
             _, _, _, arom = ser_dict["bonds"][bond_id]
-            bond.SetIsAromatic(arom == 'Y')
+            bond.SetIsAromatic(arom == "Y")
 
         if "name" in ser_dict:
             name = ser_dict["name"]
@@ -319,6 +320,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         openmm.app.Topology
             resulting topology obj.
         """
+
         def reskey(m):
             """key for defining when a residue has changed from previous
 
@@ -329,7 +331,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 m.GetChainId(),
                 m.GetResidueName(),
                 m.GetResidueNumber(),
-                m.GetInsertionCode()
+                m.GetInsertionCode(),
             )
 
         def chainkey(m):
@@ -362,10 +364,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             if (new_resid := reskey(mi)) != current_resid:
                 _, resname, resnum, icode = new_resid
-                r = top.addResidue(name=resname,
-                                   chain=c,
-                                   id=str(resnum),
-                                   insertionCode=icode)
+                r = top.addResidue(
+                    name=resname, chain=c, id=str(resnum), insertionCode=icode
+                )
                 current_resid = new_resid
 
             a = top.addAtom(
@@ -380,9 +381,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond in self._rdkit.GetBonds():
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
-            top.addBond(a1, a2,
-                        order=_BONDORDERS_RDKIT_TO_OPENMM.get(
-                            bond.GetBondType(), None))
+            top.addBond(
+                a1, a2, order=_BONDORDERS_RDKIT_TO_OPENMM.get(bond.GetBondType(), None)
+            )
 
         return top
 
@@ -400,13 +401,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
             Quantity containing protein atom positions
         """
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = (
-            list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
-        )
+        openmm_pos = list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
+    def to_pdb_file(
+        self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
+    ) -> str:
         """
         serialize protein to pdb file.
 
@@ -429,20 +430,18 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # write file
         if not isinstance(out_path, io.TextIOBase):
             # allows pathlike/str; we close on completion
-            out_file = open(out_path, mode='w')  # type: ignore
+            out_file = open(out_path, mode="w")  # type: ignore
             must_close = True
         else:
             out_file = out_path  # type: ignore
             must_close = False
-            
+
         try:
             out_path = out_file.name
         except AttributeError:
             out_path = "<unknown>"
 
-        PDBFile.writeFile(
-            topology=openmm_top, positions=openmm_pos, file=out_file
-        )
+        PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
 
         if must_close:
             # we only close the file if we had to open it
@@ -471,26 +470,23 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # get pos:
         np_pos = deserialize_numpy(self.to_dict()["conformers"][0])
-        openmm_pos = (
-            list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
-        )
+        openmm_pos = list(map(lambda x: np.array(x), np_pos)) * omm_unit.angstrom
 
         # write file
         if not isinstance(out_path, io.TextIOBase):
             # allows pathlike/str; we close on completion
-            out_file = open(out_path, mode='w')  # type: ignore
+            out_file = open(out_path, mode="w")  # type: ignore
             must_close = True
         else:
             out_file = out_path  # type: ignore
             must_close = False
-            
+
         try:
             out_path = out_file.name
         except AttributeError:
             out_path = "<unknown>"
 
         PDBxFile.writeFile(topology=top, positions=openmm_pos, file=out_file)
-
 
         if must_close:
             # we only close the file if we had to open it
@@ -516,7 +512,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     mi.GetName(),
                     mi.GetResidueName(),
                     mi.GetResidueNumber(),
-                    'Y' if mi.GetIsHeteroAtom() else 'N',
+                    "Y" if mi.GetIsHeteroAtom() else "N",
                     atom.GetFormalCharge(),
                 )
             )
@@ -526,7 +522,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 bond.GetBeginAtomIdx(),
                 bond.GetEndAtomIdx(),
                 _BONDORDER_RDKIT_TO_STR[bond.GetBondType()],
-                'Y' if bond.GetIsAromatic() else 'N',
+                "Y" if bond.GetIsAromatic() else "N",
                 # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
             )
             for bond in self._rdkit.GetBonds()

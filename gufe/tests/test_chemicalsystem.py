@@ -1,62 +1,60 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
-import pytest
 import numpy as np
+import pytest
 
 from gufe import ChemicalSystem
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
+
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
     state = ChemicalSystem(
-        {'solvent': solv_comp,
-         'ligand': toluene_ligand_comp},
+        {"solvent": solv_comp, "ligand": toluene_ligand_comp},
     )
 
     assert len(state.components) == 2
     assert len(state) == 2
 
-    assert list(state) == ['solvent', 'ligand']
+    assert list(state) == ["solvent", "ligand"]
 
-    assert state.components['solvent'] == solv_comp
-    assert state.components['ligand'] == toluene_ligand_comp
-    assert state['solvent'] == solv_comp
-    assert state['ligand'] == toluene_ligand_comp
+    assert state.components["solvent"] == solv_comp
+    assert state.components["ligand"] == toluene_ligand_comp
+    assert state["solvent"] == solv_comp
+    assert state["ligand"] == toluene_ligand_comp
 
 
 def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
     # sanity checks on construction
 
     state = ChemicalSystem(
-        {'protein': prot_comp,
-         'solvent': solv_comp,
-         'ligand': toluene_ligand_comp},
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp},
     )
 
     assert len(state.components) == 3
     assert len(state) == 3
 
-    assert list(state) == ['protein', 'solvent', 'ligand']
+    assert list(state) == ["protein", "solvent", "ligand"]
 
-    assert state.components['protein'] == prot_comp
-    assert state.components['solvent'] == solv_comp
-    assert state.components['ligand'] == toluene_ligand_comp
-    assert state['protein'] == prot_comp
-    assert state['solvent'] == solv_comp
-    assert state['ligand'] == toluene_ligand_comp
+    assert state.components["protein"] == prot_comp
+    assert state.components["solvent"] == solv_comp
+    assert state.components["ligand"] == toluene_ligand_comp
+    assert state["protein"] == prot_comp
+    assert state["solvent"] == solv_comp
+    assert state["ligand"] == toluene_ligand_comp
 
 
 def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
-    c1 = ChemicalSystem({'protein': prot_comp,
-                              'solvent': solv_comp,
-                              'ligand': toluene_ligand_comp})
+    c1 = ChemicalSystem(
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp}
+    )
 
-    c2 = ChemicalSystem({'solvent': solv_comp,
-                              'ligand': toluene_ligand_comp,
-                              'protein': prot_comp})
+    c2 = ChemicalSystem(
+        {"solvent": solv_comp, "ligand": toluene_ligand_comp, "protein": prot_comp}
+    )
 
     assert c1 == c2
     assert hash(c1) == hash(c2)
@@ -68,8 +66,9 @@ def test_chemical_system_neq_1(solvated_complex, prot_comp):
     assert hash(solvated_complex) != hash(prot_comp)
 
 
-def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp,
-                               toluene_ligand_comp):
+def test_chemical_system_neq_2(
+    solvated_complex, prot_comp, solv_comp, toluene_ligand_comp
+):
     # names are different
     complex2 = ChemicalSystem(
         {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp},
@@ -86,13 +85,12 @@ def test_chemical_system_neq_4(solvated_complex, solvated_ligand):
     assert hash(solvated_complex) != hash(solvated_ligand)
 
 
-def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp,
-                               phenol_ligand_comp):
+def test_chemical_system_neq_5(
+    solvated_complex, prot_comp, solv_comp, phenol_ligand_comp
+):
     # same component keys, but different components
     complex2 = ChemicalSystem(
-        {'protein': prot_comp,
-         'solvent': solv_comp,
-         'ligand': phenol_ligand_comp},
+        {"protein": prot_comp, "solvent": solv_comp, "ligand": phenol_ligand_comp},
     )
     assert solvated_complex != complex2
     assert hash(solvated_complex) != hash(complex2)
@@ -123,6 +121,5 @@ class TestChemicalSystem(GufeTokenizableTestsMixin):
     @pytest.fixture
     def instance(self, solv_comp, toluene_ligand_comp):
         return ChemicalSystem(
-            {'solvent': solv_comp,
-             'ligand': toluene_ligand_comp},
-            )
+            {"solvent": solv_comp, "ligand": toluene_ligand_comp},
+        )
