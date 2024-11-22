@@ -177,9 +177,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[
-            Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]
-        ],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
         transformation_key: Optional[GufeKey] = None,
@@ -224,10 +222,7 @@ class Protocol(GufeTokenizable):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                (
-                    "mapping input as a dict is deprecated, "
-                    "instead use either a single Mapping or list"
-                ),
+                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
@@ -244,9 +239,7 @@ class Protocol(GufeTokenizable):
             extends_key=extends.key if extends is not None else None,
         )
 
-    def gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> ProtocolResult:
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
         Parameters
@@ -263,9 +256,7 @@ class Protocol(GufeTokenizable):
         return self.result_cls(**self._gather(protocol_dag_results))
 
     @abc.abstractmethod
-    def _gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> dict[str, Any]:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
         """Method to override in custom Protocol subclasses.
 
         This method should take any number of ``ProtocolDAGResult``s produced

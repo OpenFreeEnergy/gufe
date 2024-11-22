@@ -132,9 +132,7 @@ def benzene_phenol_mapping(benzene_transforms, maps):
         ],
     ],
 )
-def test_benzene_to_phenol_uniques(
-    molname, atoms, elems, bond_changes, bond_deletions, benzene_transforms, maps
-):
+def test_benzene_to_phenol_uniques(molname, atoms, elems, bond_changes, bond_deletions, benzene_transforms, maps):
     mol1 = benzene_transforms["benzene"]
     mol2 = benzene_transforms[molname]
 

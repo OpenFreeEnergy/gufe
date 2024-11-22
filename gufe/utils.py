@@ -28,8 +28,7 @@ class ensure_filelike:
         if isinstance(fn, filelikes):
             if mode is not None:
                 warnings.warn(
-                    f"mode='{mode}' specified with {fn.__class__.__name__}."
-                    " User-specified mode will be ignored."
+                    f"mode='{mode}' specified with {fn.__class__.__name__}." " User-specified mode will be ignored."
                 )
             self.to_open = None
             self.do_close = force_close

@@ -48,11 +48,7 @@ class AlchemicalNetwork(GufeTokenizable):
         else:
             self._nodes = frozenset(nodes)
 
-        self._nodes = (
-            self._nodes
-            | frozenset(e.stateA for e in self._edges)
-            | frozenset(e.stateB for e in self._edges)
-        )
+        self._nodes = self._nodes | frozenset(e.stateA for e in self._edges) | frozenset(e.stateB for e in self._edges)
 
         self._graph = None
 
@@ -61,9 +57,7 @@ class AlchemicalNetwork(GufeTokenizable):
         g = nx.MultiDiGraph()
 
         for transformation in edges:
-            g.add_edge(
-                transformation.stateA, transformation.stateB, object=transformation
-            )
+            g.add_edge(transformation.stateA, transformation.stateB, object=transformation)
 
         g.add_nodes_from(nodes)
 
@@ -108,9 +102,7 @@ class AlchemicalNetwork(GufeTokenizable):
 
     @classmethod
     def _from_dict(cls, d: dict) -> Self:
-        return cls(
-            nodes=frozenset(d["nodes"]), edges=frozenset(d["edges"]), name=d.get("name")
-        )
+        return cls(nodes=frozenset(d["nodes"]), edges=frozenset(d["edges"]), name=d.get("name"))
 
     @classmethod
     def _defaults(cls):
