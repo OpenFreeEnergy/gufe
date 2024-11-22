@@ -261,7 +261,11 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             a.SetChiralTag(_INT_TO_ATOMCHIRAL[atom[4]])
             a.SetAtomMapNum(atom[5])
             _setprops(a, atom[6])
-            a.SetHybridization(_INT_TO_HYBRIDIZATION[atom[7]])
+            try:
+                a.SetHybridization(_INT_TO_HYBRIDIZATION[atom[7]])
+            except IndexError:
+                pass
+
             em.AddAtom(a)
 
         for bond in d['bonds']:
