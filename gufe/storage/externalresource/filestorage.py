@@ -1,15 +1,12 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+import os
 import pathlib
 import shutil
-import os
-from typing import Union, Tuple, ContextManager
+from typing import ContextManager, Tuple, Union
 
+from ..errors import ChangedExternalResourceError, MissingExternalResourceError
 from .base import ExternalStorage
-
-from ..errors import (
-    MissingExternalResourceError, ChangedExternalResourceError
-)
 
 
 # TODO: this should use pydantic to check init inputs
@@ -21,10 +18,7 @@ class FileStorage(ExternalStorage):
         return self._as_path(location).exists()
 
     def __eq__(self, other):
-        return (
-            isinstance(other, FileStorage)
-            and self.root_dir == other.root_dir
-        )
+        return isinstance(other, FileStorage) and self.root_dir == other.root_dir
 
     def _store_bytes(self, location, byte_data):
         path = self._as_path(location)
@@ -32,7 +26,7 @@ class FileStorage(ExternalStorage):
         filename = path.name
         # TODO: add some stuff here to catch permissions-based errors
         directory.mkdir(parents=True, exist_ok=True)
-        with open(path, mode='wb') as f:
+        with open(path, mode="wb") as f:
             f.write(byte_data)
 
     def _store_path(self, location, path):
@@ -73,6 +67,6 @@ class FileStorage(ExternalStorage):
 
     def _load_stream(self, location):
         try:
-            return open(self._as_path(location), 'rb')
+            return open(self._as_path(location), "rb")
         except OSError as e:
             raise MissingExternalResourceError(str(e))
