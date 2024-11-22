@@ -342,6 +342,24 @@ class TestSmallMoleculeSerialization:
             if atom.GetAtomicNum() == 6:
                 assert atom.GetHybridization() == Chem.rdchem.HybridizationType.SP2
 
+    def test_from_dict_missing_hybridization(self, phenol):
+        """
+        For backwards compatibility make sure we can create an SMC with missing hybridization info.
+        """
+        phenol_dict = phenol.to_dict()
+        new_atoms = []
+        for atom in phenol_dict["atoms"]:
+            # remove the hybridization atomic info which should be at index 7
+            new_atoms.append(tuple([atom_info for i, atom_info in enumerate(atom) if i != 7]))
+        phenol_dict["atoms"] = new_atoms
+        new_phenol = SmallMoleculeComponent.from_dict(phenol_dict)
+        # they should be different objects due to the missing hybridization info
+        assert new_phenol != phenol
+        # make sure the rdkit objects are different
+        for atom_hybrid, atom_no_hybrid in zip(phenol.to_rdkit().GetAtoms(), new_phenol.to_rdkit().GetAtoms()):
+            assert atom_hybrid.GetHybridization() != atom_no_hybrid.GetHybridization()
+
+
     @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_deserialize_roundtrip(self, toluene, phenol):
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())
