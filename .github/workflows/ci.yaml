@@ -33,7 +33,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          - "3.13"
         include:
             # Note: we still need to add support for macos-13
             # see https://github.com/OpenFreeEnergy/openfe/issues/842
