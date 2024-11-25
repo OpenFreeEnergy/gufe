@@ -3,6 +3,7 @@
 
 import importlib
 import importlib.resources
+
 try:
     import openff.toolkit.topology
     from openff.units import unit
@@ -10,21 +11,21 @@ except ImportError:
     HAS_OFFTK = False
 else:
     HAS_OFFTK = True
+import json
 import os
 from unittest import mock
-import pytest
 
-from gufe import SmallMoleculeComponent
-from gufe.components.explicitmoleculecomponent import (
-    _ensure_ofe_name,
-)
-import gufe
-import json
+import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
+
+import gufe
+from gufe import SmallMoleculeComponent
+from gufe.components.explicitmoleculecomponent import _ensure_ofe_name
 from gufe.tokenization import TOKENIZABLE_REGISTRY
 
 from .test_tokenization import GufeTokenizableTestsMixin
+
 
 @pytest.fixture
 def alt_ethane():
@@ -32,32 +33,36 @@ def alt_ethane():
     Chem.AllChem.Compute2DCoords(mol)
     return SmallMoleculeComponent(mol)
 
+
 @pytest.fixture
 def named_ethane():
     mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
     Chem.AllChem.Compute2DCoords(mol)
-    return SmallMoleculeComponent(mol, name='ethane')
+    return SmallMoleculeComponent(mol, name="ethane")
 
 
-@pytest.mark.parametrize('internal,rdkit_name,name,expected', [
-    ('', 'foo', '', 'foo'),
-    ('', '', 'foo', 'foo'),
-    ('', 'bar', 'foo', 'foo'),
-    ('bar', '', 'foo', 'foo'),
-    ('baz', 'bar', 'foo', 'foo'),
-    ('foo', '', '', 'foo'),
-])
+@pytest.mark.parametrize(
+    "internal,rdkit_name,name,expected",
+    [
+        ("", "foo", "", "foo"),
+        ("", "", "foo", "foo"),
+        ("", "bar", "foo", "foo"),
+        ("bar", "", "foo", "foo"),
+        ("baz", "bar", "foo", "foo"),
+        ("foo", "", "", "foo"),
+    ],
+)
 def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
     rdkit = Chem.AddHs(Chem.MolFromSmiles("CC"))
     if internal:
-        rdkit.SetProp('_Name', internal)
+        rdkit.SetProp("_Name", internal)
 
     if rdkit_name:
-        rdkit.SetProp('ofe-name', rdkit_name)
+        rdkit.SetProp("ofe-name", rdkit_name)
 
     out_name = _ensure_ofe_name(rdkit, name)
 
-    if {rdkit_name, internal} - {'foo', ''}:
+    if {rdkit_name, internal} - {"foo", ""}:
         # we should warn if rdkit properties are anything other than 'foo'
         # (expected) or the empty string (not set)
         assert len(recwarn) == 1
@@ -91,22 +96,22 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
 
     def test_rdkit_independence(self):
         # once we've constructed a Molecule, it is independent from the source
-        mol = Chem.MolFromSmiles('CC')
+        mol = Chem.MolFromSmiles("CC")
         AllChem.Compute2DCoords(mol)
         our_mol = SmallMoleculeComponent.from_rdkit(mol)
 
-        mol.SetProp('foo', 'bar')  # this is the source molecule, not ours
+        mol.SetProp("foo", "bar")  # this is the source molecule, not ours
         with pytest.raises(KeyError):
-            our_mol.to_rdkit().GetProp('foo')
+            our_mol.to_rdkit().GetProp("foo")
 
     def test_rdkit_copy_source_copy(self):
         # we should copy in any properties that were in the source molecule
-        mol = Chem.MolFromSmiles('CC')
+        mol = Chem.MolFromSmiles("CC")
         AllChem.Compute2DCoords(mol)
-        mol.SetProp('foo', 'bar')
+        mol.SetProp("foo", "bar")
         our_mol = SmallMoleculeComponent.from_rdkit(mol)
 
-        assert our_mol.to_rdkit().GetProp('foo') == 'bar'
+        assert our_mol.to_rdkit().GetProp("foo") == "bar"
 
     def test_equality_and_hash(self, ethane, alt_ethane):
         assert hash(ethane) == hash(alt_ethane)
@@ -118,13 +123,13 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert ethane != named_ethane
 
     def test_smiles(self, named_ethane):
-        assert named_ethane.smiles == 'CC'
+        assert named_ethane.smiles == "CC"
 
     def test_name(self, named_ethane):
-        assert named_ethane.name == 'ethane'
+        assert named_ethane.name == "ethane"
 
     def test_empty_name(self, alt_ethane):
-        assert alt_ethane.name == ''
+        assert alt_ethane.name == ""
 
     @pytest.mark.xfail
     def test_serialization_cycle(self, named_ethane):
@@ -136,24 +141,23 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert serialized == reserialized
 
     def test_to_sdf_string(self, named_ethane, ethane_sdf):
-        with open(ethane_sdf, "r") as f:
+        with open(ethane_sdf) as f:
             expected = f.read()
 
         assert named_ethane.to_sdf() == expected
 
     @pytest.mark.xfail
     def test_from_sdf_string(self, named_ethane, ethane_sdf):
-        with open(ethane_sdf, "r") as f:
+        with open(ethane_sdf) as f:
             sdf_str = f.read()
 
         assert SmallMoleculeComponent.from_sdf_string(sdf_str) == named_ethane
 
     @pytest.mark.xfail
-    def test_from_sdf_file(self, named_ethane, ethane_sdf,
-                           tmpdir):
-        with open(ethane_sdf, 'r') as f:
+    def test_from_sdf_file(self, named_ethane, ethane_sdf, tmpdir):
+        with open(ethane_sdf) as f:
             sdf_str = f.read()
-        with open(tmpdir / "temp.sdf", mode='w') as tmpf:
+        with open(tmpdir / "temp.sdf", mode="w") as tmpf:
             tmpf.write(sdf_str)
 
         assert SmallMoleculeComponent.from_sdf_file(tmpdir / "temp.sdf") == named_ethane
@@ -163,7 +167,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
             SmallMoleculeComponent.from_sdf_file(toluene_mol2_path)
 
     def test_from_sdf_string_multiple_molecules(self, multi_molecule_sdf):
-        data = open(multi_molecule_sdf, 'r').read()
+        data = open(multi_molecule_sdf).read()
 
         with pytest.raises(RuntimeError, match="contains more than 1"):
             SmallMoleculeComponent.from_sdf_string(data)
@@ -184,17 +188,20 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
         assert named_ethane is not copy
         assert named_ethane.smiles == copy.smiles
 
-    @pytest.mark.parametrize('replace', (
-        ['name'],
-        ['mol'],
-        ['name', 'mol'],
-    ))
+    @pytest.mark.parametrize(
+        "replace",
+        (
+            ["name"],
+            ["mol"],
+            ["name", "mol"],
+        ),
+    )
     def test_copy_with_replacements(self, named_ethane, replace):
         replacements = {}
-        if 'name' in replace:
-            replacements['name'] = "foo"
+        if "name" in replace:
+            replacements["name"] = "foo"
 
-        if 'mol' in replace:
+        if "mol" in replace:
             # it is a little weird to use copy_with_replacements to replace
             # the whole molecule (possibly keeping the same name), but it
             # should work if someone does! (could more easily imagine only
@@ -203,16 +210,16 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
             Chem.AllChem.Compute2DCoords(rdmol)
             mol = SmallMoleculeComponent.from_rdkit(rdmol)
             dct = mol._to_dict()
-            for item in ['atoms', 'bonds', 'conformer']:
+            for item in ["atoms", "bonds", "conformer"]:
                 replacements[item] = dct[item]
 
         new = named_ethane.copy_with_replacements(**replacements)
-        if 'name' in replace:
+        if "name" in replace:
             assert new.name == "foo"
         else:
             assert new.name == "ethane"
 
-        if 'mol' in replace:
+        if "mol" in replace:
             assert new.smiles == "CO"
         else:
             assert new.smiles == "CC"
@@ -228,15 +235,15 @@ class TestSmallMoleculeComponentConversion:
     def test_to_off_name(self, named_ethane):
         off_ethane = named_ethane.to_openff()
 
-        assert off_ethane.name == 'ethane'
+        assert off_ethane.name == "ethane"
 
 
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff tookit available")
 class TestSmallMoleculeComponentPartialCharges:
-    @pytest.fixture(scope='function')
+    @pytest.fixture(scope="function")
     def charged_off_ethane(self, ethane):
         off_ethane = ethane.to_openff()
-        off_ethane.assign_partial_charges(partial_charge_method='am1bcc')
+        off_ethane.assign_partial_charges(partial_charge_method="am1bcc")
         return off_ethane
 
     def test_partial_charges_warning(self, charged_off_ethane):
@@ -258,7 +265,7 @@ class TestSmallMoleculeComponentPartialCharges:
     def test_partial_charges_too_few_atoms(self):
         mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
         Chem.AllChem.Compute2DCoords(mol)
-        mol.SetProp('atom.dprop.PartialCharge', '1')
+        mol.SetProp("atom.dprop.PartialCharge", "1")
 
         with pytest.raises(ValueError, match="Incorrect number of"):
             SmallMoleculeComponent.from_rdkit(mol)
@@ -271,7 +278,7 @@ class TestSmallMoleculeComponentPartialCharges:
         mol = Chem.AddHs(Chem.MolFromSmiles("C"))
         Chem.AllChem.Compute2DCoords(mol)
         # add some fake charges at the molecule level
-        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        mol.SetProp("atom.dprop.PartialCharge", "-1 0.25 0.25 0.25 0.25")
         matchmsg = "Partial charges have been provided"
         with pytest.warns(UserWarning, match=matchmsg):
             ofe = SmallMoleculeComponent.from_rdkit(mol)
@@ -292,22 +299,24 @@ class TestSmallMoleculeComponentPartialCharges:
         mol = Chem.AddHs(Chem.MolFromSmiles("C"))
         Chem.AllChem.Compute2DCoords(mol)
         # add some fake charges at the molecule level
-        mol.SetProp('atom.dprop.PartialCharge', '-1 0.25 0.25 0.25 0.25')
+        mol.SetProp("atom.dprop.PartialCharge", "-1 0.25 0.25 0.25 0.25")
         # set different charges to the atoms
         for atom in mol.GetAtoms():
             atom.SetDoubleProp("PartialCharge", 0)
 
         # make sure the correct error is raised
-        msg = ("non-equivalent partial charges between "
-               "atom and molecule properties")
+        msg = "non-equivalent partial charges between " "atom and molecule properties"
         with pytest.raises(ValueError, match=msg):
             SmallMoleculeComponent.from_rdkit(mol)
 
 
-
-@pytest.mark.parametrize('mol, charge', [
-    ('CC', 0), ('CC[O-]', -1),
-])
+@pytest.mark.parametrize(
+    "mol, charge",
+    [
+        ("CC", 0),
+        ("CC[O-]", -1),
+    ],
+)
 def test_total_charge_neutral(mol, charge):
     mol = Chem.MolFromSmiles(mol)
     AllChem.Compute2DCoords(mol)
@@ -377,11 +386,11 @@ class TestSmallMoleculeSerialization:
 
     @pytest.mark.xfail
     def test_bounce_off_file(self, toluene, tmpdir):
-        fname = str(tmpdir / 'mol.json')
+        fname = str(tmpdir / "mol.json")
 
-        with open(fname, 'w') as f:
+        with open(fname, "w") as f:
             f.write(toluene.to_json())
-        with open(fname, 'r') as f:
+        with open(fname) as f:
             d = json.load(f)
 
         assert isinstance(d, dict)
@@ -403,29 +412,29 @@ class TestSmallMoleculeSerialization:
         assert off1 == off2
 
 
-@pytest.mark.parametrize('target', ['atom', 'bond', 'conformer', 'mol'])
-@pytest.mark.parametrize('dtype', ['int', 'bool', 'str', 'float'])
+@pytest.mark.parametrize("target", ["atom", "bond", "conformer", "mol"])
+@pytest.mark.parametrize("dtype", ["int", "bool", "str", "float"])
 def test_prop_preservation(ethane, target, dtype):
     # issue 145 make sure props are propagated
     mol = Chem.MolFromSmiles("CC")
     Chem.AllChem.Compute2DCoords(mol)
 
-    if target == 'atom':
+    if target == "atom":
         obj = mol.GetAtomWithIdx(0)
-    elif target == 'bond':
+    elif target == "bond":
         obj = mol.GetBondWithIdx(0)
-    elif target == 'conformer':
+    elif target == "conformer":
         obj = mol.GetConformer()
     else:
         obj = mol
-    if dtype == 'int':
-        obj.SetIntProp('foo', 1234)
-    elif dtype == 'bool':
-        obj.SetBoolProp('foo', False)
-    elif dtype == 'str':
-        obj.SetProp('foo', 'bar')
-    elif dtype == 'float':
-        obj.SetDoubleProp('foo', 1.234)
+    if dtype == "int":
+        obj.SetIntProp("foo", 1234)
+    elif dtype == "bool":
+        obj.SetBoolProp("foo", False)
+    elif dtype == "str":
+        obj.SetProp("foo", "bar")
+    elif dtype == "float":
+        obj.SetDoubleProp("foo", 1.234)
     else:
         pytest.fail()
 
@@ -433,29 +442,29 @@ def test_prop_preservation(ethane, target, dtype):
     d = SmallMoleculeComponent(rdkit=mol).to_dict()
     e2 = SmallMoleculeComponent.from_dict(d).to_rdkit()
 
-    if target == 'atom':
+    if target == "atom":
         obj = e2.GetAtomWithIdx(0)
-    elif target == 'bond':
+    elif target == "bond":
         obj = e2.GetBondWithIdx(0)
-    elif target == 'conformer':
+    elif target == "conformer":
         obj = e2.GetConformer()
     else:
         obj = e2
-    if dtype == 'int':
-        assert obj.GetIntProp('foo') == 1234
-    elif dtype == 'bool':
-        assert obj.GetBoolProp('foo') is False
-    elif dtype == 'str':
-        assert obj.GetProp('foo') == 'bar'
+    if dtype == "int":
+        assert obj.GetIntProp("foo") == 1234
+    elif dtype == "bool":
+        assert obj.GetBoolProp("foo") is False
+    elif dtype == "str":
+        assert obj.GetProp("foo") == "bar"
     else:
-        assert obj.GetDoubleProp('foo') == pytest.approx(1.234)
+        assert obj.GetDoubleProp("foo") == pytest.approx(1.234)
 
 
 def test_missing_H_warning():
-    m = Chem.MolFromSmiles('CC')
+    m = Chem.MolFromSmiles("CC")
     Chem.AllChem.Compute2DCoords(m)
 
-    with pytest.warns(UserWarning, match='removeHs=False'):
+    with pytest.warns(UserWarning, match="removeHs=False"):
         _ = SmallMoleculeComponent(rdkit=m)
 
 

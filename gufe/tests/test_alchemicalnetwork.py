@@ -1,8 +1,8 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
-import pytest
 import networkx as nx
+import pytest
 
 from gufe import AlchemicalNetwork, ChemicalSystem, Transformation
 
@@ -56,16 +56,16 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
 
         subgraphs = [subgraph for subgraph in alnet.connected_subgraphs()]
 
-        assert set([len(subgraph.nodes) for subgraph in subgraphs]) == {6,7,1}
+        assert {len(subgraph.nodes) for subgraph in subgraphs} == {6, 7, 1}
 
         # which graph has the removed node is not deterministic, so we just
         # check that one graph is all-solvent and the other is all-protein
         for subgraph in subgraphs:
             components = [frozenset(n.components.keys()) for n in subgraph.nodes]
-            if {'solvent','protein','ligand'} in components:
-                assert set(components) == {frozenset({'solvent','protein','ligand'})}
+            if {"solvent", "protein", "ligand"} in components:
+                assert set(components) == {frozenset({"solvent", "protein", "ligand"})}
             else:
-                assert set(components) == {frozenset({'solvent','ligand'})}
+                assert set(components) == {frozenset({"solvent", "ligand"})}
 
     def test_connected_subgraphs_one_subgraph(self, benzene_variants_ligand_star_map):
         """Return the same network if it only contains one connected component."""
