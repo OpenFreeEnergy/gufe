@@ -78,7 +78,7 @@ _INT_TO_HYBRIDIZATION = {
     5: Chem.rdchem.HybridizationType.SP2D,
     6: Chem.rdchem.HybridizationType.SP3D,
     7: Chem.rdchem.HybridizationType.SP3D2,
-    8: Chem.rdchem.HybridizationType.OTHER
+    8: Chem.rdchem.HybridizationType.OTHER,
 }
 _HYBRIDIZATION_TO_INT = {v: k for k, v in _INT_TO_HYBRIDIZATION.items()}
 

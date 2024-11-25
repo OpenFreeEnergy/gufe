@@ -25,9 +25,7 @@ class Transformation(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[
-            Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]
-        ] = None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
         name: Optional[str] = None,
     ):
         r"""Two chemical states with a method for estimating free energy difference
@@ -52,10 +50,7 @@ class Transformation(GufeTokenizable):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                (
-                    "mapping input as a dict is deprecated, "
-                    "instead use either a single Mapping or list"
-                ),
+                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
@@ -72,10 +67,7 @@ class Transformation(GufeTokenizable):
         return super()._defaults()
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(stateA={self.stateA}, "
-            f"stateB={self.stateB}, protocol={self.protocol})"
-        )
+        return f"{self.__class__.__name__}(stateA={self.stateA}, " f"stateB={self.stateB}, protocol={self.protocol})"
 
     @property
     def stateA(self) -> ChemicalSystem:
@@ -145,9 +137,7 @@ class Transformation(GufeTokenizable):
             transformation_key=self.key,
         )
 
-    def gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> ProtocolResult:
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """
         Gather multiple ``ProtocolDAGResult`` into a single ``ProtocolResult``.
 

@@ -60,9 +60,7 @@ class FinishUnit(ProtocolUnit):
         output = [s.outputs["log"] for s in simulations]
         output.append("assembling_results")
 
-        key_results = {
-            str(s.inputs["window"]): s.outputs["key_result"] for s in simulations
-        }
+        key_results = {str(s.inputs["window"]): s.outputs["key_result"] for s in simulations}
 
         return dict(log=output, key_results=key_results)
 
@@ -136,23 +134,17 @@ class DummyProtocol(Protocol):
 
         # create several units that would each run an independent simulation
         simulations: list[ProtocolUnit] = [
-            SimulationUnit(
-                settings=self.settings, name=f"sim {i}", window=i, initialization=alpha
-            )
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha)
             for i in range(self.settings.n_repeats)  # type: ignore
         ]
 
         # gather results from simulations, finalize outputs
-        omega = FinishUnit(
-            settings=self.settings, name="the end", simulations=simulations
-        )
+        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
 
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
 
-    def _gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> dict[str, Any]:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
 
         outputs = defaultdict(list)
         for pdr in protocol_dag_results:
@@ -190,10 +182,7 @@ class BrokenProtocol(DummyProtocol):
 
         # create several units that would each run an independent simulation
         simulations: list[ProtocolUnit] = [
-            SimulationUnit(
-                settings=self.settings, name=f"sim {i}", window=i, initialization=alpha
-            )
-            for i in range(21)
+            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
         ]
 
         # introduce a broken ProtocolUnit
@@ -207,9 +196,7 @@ class BrokenProtocol(DummyProtocol):
         )
 
         # gather results from simulations, finalize outputs
-        omega = FinishUnit(
-            settings=self.settings, name="the end", simulations=simulations
-        )
+        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
 
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
@@ -240,9 +227,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            dagresult: ProtocolDAGResult = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch
-            )
+            dagresult: ProtocolDAGResult = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         return protocol, dag, dagresult
 
@@ -279,9 +264,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         # gather SimulationUnits
         simulationresults = [
-            dagresult.unit_to_result(pu)
-            for pu in dagresult.protocol_units
-            if isinstance(pu, SimulationUnit)
+            dagresult.unit_to_result(pu) for pu in dagresult.protocol_units if isinstance(pu, SimulationUnit)
         ]
 
         # check that we have dependency information in results
@@ -291,19 +274,13 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert len(dagresult.graph) == 23
 
         # check that each simulation has its own shared directory
-        assert len({i.outputs["shared"] for i in simulationresults}) == len(
-            simulationresults
-        )
+        assert len({i.outputs["shared"] for i in simulationresults}) == len(simulationresults)
 
         # check that each simulation has its own scratch directory
-        assert len({i.outputs["scratch"] for i in simulationresults}) == len(
-            simulationresults
-        )
+        assert len({i.outputs["scratch"] for i in simulationresults}) == len(simulationresults)
 
         # check that shared and scratch not the same for each simulation
-        assert all(
-            [i.outputs["scratch"] != i.outputs["shared"] for i in simulationresults]
-        )
+        assert all([i.outputs["scratch"] != i.outputs["shared"] for i in simulationresults])
 
     def test_terminal_units(self, protocol_dag):
         prot, dag, res = protocol_dag
@@ -333,9 +310,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         assert len(succeeded_units) > 0
 
-    def test_dag_execute_failure_raise_error(
-        self, solvated_ligand, vacuum_ligand, tmpdir
-    ):
+    def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand, tmpdir):
         protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand,
@@ -371,15 +346,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         assert protocolresult.get_estimate() == 95500.0
 
-    def test_deprecation_warning_on_dict_mapping(
-        self, instance, vacuum_ligand, solvated_ligand
-    ):
+    def test_deprecation_warning_on_dict_mapping(self, instance, vacuum_ligand, solvated_ligand):
         lig = solvated_ligand.components["ligand"]
         mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
 
-        with pytest.warns(
-            DeprecationWarning, match="mapping input as a dict is deprecated"
-        ):
+        with pytest.warns(DeprecationWarning, match="mapping input as a dict is deprecated"):
             instance.create(
                 stateA=solvated_ligand,
                 stateB=vacuum_ligand,
@@ -474,10 +445,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_protocol_unit_successes(self, instance: ProtocolDAGResult):
             assert len(instance.protocol_unit_successes) == 23
-            assert all(
-                isinstance(i, ProtocolUnitResult)
-                for i in instance.protocol_unit_successes
-            )
+            assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
 
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
@@ -493,12 +461,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             # protocolunitfailures should have no dependents
             for puf in instance.protocol_unit_failures:
 
-                assert all(
-                    [
-                        puf not in pu.dependencies
-                        for pu in instance.protocol_unit_results
-                    ]
-                )
+                assert all([puf not in pu.dependencies for pu in instance.protocol_unit_results])
 
             for node in instance.result_graph.nodes:
                 with pytest.raises(KeyError):
@@ -578,8 +541,7 @@ class NoDepsProtocol(Protocol):
         return {
             "vals": list(
                 itertools.chain.from_iterable(
-                    (d.outputs["local"] for d in dag.protocol_unit_results)
-                    for dag in dag_results
+                    (d.outputs["local"] for d in dag.protocol_unit_results) for dag in dag_results
                 )
             ),
         }
@@ -593,12 +555,8 @@ class TestNoDepProtocol:
     @pytest.fixture()
     def dag(self, protocol):
         return protocol.create(
-            stateA=ChemicalSystem(
-                components={"solvent": gufe.SolventComponent(positive_ion="Na")}
-            ),
-            stateB=ChemicalSystem(
-                components={"solvent": gufe.SolventComponent(positive_ion="Li")}
-            ),
+            stateA=ChemicalSystem(components={"solvent": gufe.SolventComponent(positive_ion="Na")}),
+            stateB=ChemicalSystem(components={"solvent": gufe.SolventComponent(positive_ion="Li")}),
             mapping=None,
         )
 
@@ -613,9 +571,7 @@ class TestNoDepProtocol:
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            dag_result = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch
-            )
+            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         assert dag_result.ok()
 
@@ -633,9 +589,7 @@ class TestNoDepProtocol:
             scratch.mkdir(parents=True)
 
             # we have no dependencies, so this should be all three Unit results
-            dag_result = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch
-            )
+            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         terminal_results = dag_result.terminal_protocol_unit_results
 

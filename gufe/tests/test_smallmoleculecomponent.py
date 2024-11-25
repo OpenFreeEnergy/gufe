@@ -368,7 +368,6 @@ class TestSmallMoleculeSerialization:
         for atom_hybrid, atom_no_hybrid in zip(phenol.to_rdkit().GetAtoms(), new_phenol.to_rdkit().GetAtoms()):
             assert atom_hybrid.GetHybridization() != atom_no_hybrid.GetHybridization()
 
-
     @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
     def test_deserialize_roundtrip(self, toluene, phenol):
         roundtrip = SmallMoleculeComponent.from_dict(phenol.to_dict())

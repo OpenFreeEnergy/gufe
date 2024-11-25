@@ -48,12 +48,8 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     if must_close:
         out_file.close()
 
-    in_lines = [
-        l for l in in_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))
-    ]
-    out_lines = [
-        l for l in out_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))
-    ]
+    in_lines = [l for l in in_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
+    out_lines = [l for l in out_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
 
     assert in_lines == out_lines
 
@@ -147,9 +143,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         assert_same_pdb_lines(in_file_path=str(input_path), out_file_path=output_path)
 
-    @pytest.mark.parametrize(
-        "input_type", ["filename", "Path", "StringIO", "TextIOWrapper"]
-    )
+    @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
     def test_to_pdbx_file(self, PDBx_181L_openMMClean_path, tmp_path, input_type):
         p = self.cls.from_pdbx_file(str(PDBx_181L_openMMClean_path), name="Bob")
         out_file_name = "tmp_181L_pdbx.cif"
@@ -162,9 +156,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             output_func=p.to_pdbx_file,
         )
 
-    @pytest.mark.parametrize(
-        "input_type", ["filename", "Path", "StringIO", "TextIOWrapper"]
-    )
+    @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
     def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path, input_type):
         p = self.cls.from_pdb_file(str(PDB_181L_OpenMMClean_path), name="Bob")
 
@@ -192,9 +184,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         out_ref_file_name = "tmp_" + in_pdb_path + "_openmm_ref.pdb"
         out_ref_file = tmp_path / out_ref_file_name
 
-        pdbfile.PDBFile.writeFile(
-            openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w")
-        )
+        pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
         assert_same_pdb_lines(in_file_path=str(out_ref_file), out_file_path=out_file)
 
     def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):

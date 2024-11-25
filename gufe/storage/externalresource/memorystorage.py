@@ -20,9 +20,7 @@ class MemoryStorage(ExternalStorage):
         try:
             del self._data[location]
         except KeyError:
-            raise MissingExternalResourceError(
-                f"Unable to delete '{location}': key does not exist"
-            )
+            raise MissingExternalResourceError(f"Unable to delete '{location}': key does not exist")
 
     def __eq__(self, other):
         return self is other

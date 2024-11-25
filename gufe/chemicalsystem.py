@@ -40,15 +40,11 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         self._name = name
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(name={self.name}, components={self.components})"
-        )
+        return f"{self.__class__.__name__}(name={self.name}, components={self.components})"
 
     def _to_dict(self):
         return {
-            "components": {
-                key: value for key, value in sorted(self.components.items())
-            },
+            "components": {key: value for key, value in sorted(self.components.items())},
             "name": self.name,
         }
 
