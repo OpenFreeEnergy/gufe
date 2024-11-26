@@ -1,17 +1,15 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import io
-from typing import Union, Tuple, ContextManager
+from typing import ContextManager, Tuple, Union
 
+from ..errors import ChangedExternalResourceError, MissingExternalResourceError
 from .base import ExternalStorage
-
-from ..errors import (
-    MissingExternalResourceError, ChangedExternalResourceError
-)
 
 
 class MemoryStorage(ExternalStorage):
     """Not for production use, but potentially useful in testing"""
+
     def __init__(self):
         self._data = {}
 
@@ -34,7 +32,7 @@ class MemoryStorage(ExternalStorage):
         return location, self.get_metadata(location)
 
     def _store_path(self, location, path):
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             byte_data = f.read()
 
         return self._store_bytes(location, byte_data)

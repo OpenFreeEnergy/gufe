@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 from typing import Any, Optional
+
 import numpy as np
 from numpy.typing import NDArray
 
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
-from . import AtomMapping
+
 from ..tokenization import JSON_HANDLER
+from . import AtomMapping
 
 
 class LigandAtomMapping(AtomMapping):
@@ -21,6 +23,7 @@ class LigandAtomMapping(AtomMapping):
     :class:`.SmallMoleculeComponent` which stores the mapping as a dict of
     integers.
     """
+
     componentA: SmallMoleculeComponent
     componentB: SmallMoleculeComponent
     _annotations: dict[str, Any]
@@ -31,7 +34,7 @@ class LigandAtomMapping(AtomMapping):
         componentA: SmallMoleculeComponent,
         componentB: SmallMoleculeComponent,
         componentA_to_componentB: dict[int, int],
-        annotations: Optional[dict[str, Any]] = None,
+        annotations: dict[str, Any] | None = None,
     ):
         """
         Parameters
@@ -57,11 +60,13 @@ class LigandAtomMapping(AtomMapping):
         nB = self.componentB.to_rdkit().GetNumAtoms()
         for i, j in componentA_to_componentB.items():
             if not (0 <= i < nA):
-                raise ValueError(f"Got invalid index for ComponentA ({i}); "
-                                 f"must be 0 <= n < {nA}")
+                raise ValueError(
+                    f"Got invalid index for ComponentA ({i}); " f"must be 0 <= n < {nA}"
+                )
             if not (0 <= j < nB):
-                raise ValueError(f"Got invalid index for ComponentB ({i}); "
-                                 f"must be 0 <= n < {nB}")
+                raise ValueError(
+                    f"Got invalid index for ComponentB ({i}); " f"must be 0 <= n < {nB}"
+                )
 
         self._compA_to_compB = componentA_to_componentB
 
@@ -84,48 +89,61 @@ class LigandAtomMapping(AtomMapping):
 
     @property
     def componentA_unique(self):
-        return (i for i in range(self.componentA.to_rdkit().GetNumAtoms())
-                if i not in self._compA_to_compB)
+        return (
+            i
+            for i in range(self.componentA.to_rdkit().GetNumAtoms())
+            if i not in self._compA_to_compB
+        )
 
     @property
     def componentB_unique(self):
-        return (i for i in range(self.componentB.to_rdkit().GetNumAtoms())
-                if i not in self._compA_to_compB.values())
+        return (
+            i
+            for i in range(self.componentB.to_rdkit().GetNumAtoms())
+            if i not in self._compA_to_compB.values()
+        )
 
     @property
     def annotations(self):
         """Any extra metadata, for example the score of a mapping"""
         # return a copy (including copy of nested)
-        return json.loads(json.dumps(self._annotations, cls=JSON_HANDLER.encoder), cls=JSON_HANDLER.decoder)
+        return json.loads(
+            json.dumps(self._annotations, cls=JSON_HANDLER.encoder),
+            cls=JSON_HANDLER.decoder,
+        )
 
     def _to_dict(self):
         """Serialize to dict"""
         return {
-            'componentA': self.componentA,
-            'componentB': self.componentB,
-            'componentA_to_componentB': self._compA_to_compB,
-            'annotations': json.dumps(self._annotations, sort_keys=True, cls=JSON_HANDLER.encoder),
+            "componentA": self.componentA,
+            "componentB": self.componentB,
+            "componentA_to_componentB": self._compA_to_compB,
+            "annotations": json.dumps(
+                self._annotations, sort_keys=True, cls=JSON_HANDLER.encoder
+            ),
         }
 
     @classmethod
     def _from_dict(cls, d: dict):
         """Deserialize from dict"""
         # the mapping dict gets mangled sometimes
-        mapping = d['componentA_to_componentB']
+        mapping = d["componentA_to_componentB"]
         fixed = {int(k): int(v) for k, v in mapping.items()}
 
         return cls(
-            componentA=d['componentA'],
-            componentB=d['componentB'],
+            componentA=d["componentA"],
+            componentB=d["componentB"],
             componentA_to_componentB=fixed,
-            annotations=json.loads(d['annotations'], cls=JSON_HANDLER.decoder)
+            annotations=json.loads(d["annotations"], cls=JSON_HANDLER.decoder),
         )
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}(componentA={self.componentA!r}, "
-                f"componentB={self.componentB!r}, "
-                f"componentA_to_componentB={self._compA_to_compB!r}, "
-                f"annotations={self.annotations!r})")
+        return (
+            f"{self.__class__.__name__}(componentA={self.componentA!r}, "
+            f"componentB={self.componentB!r}, "
+            f"componentA_to_componentB={self._compA_to_compB!r}, "
+            f"annotations={self.annotations!r})"
+        )
 
     def _ipython_display_(self, d2d=None):  # pragma: no-cover
         """
@@ -144,9 +162,16 @@ class LigandAtomMapping(AtomMapping):
         """
         from IPython.display import Image, display
 
-        return display(Image(draw_mapping(self._compA_to_compB,
-                                          self.componentA.to_rdkit(),
-                                          self.componentB.to_rdkit(), d2d)))
+        return display(
+            Image(
+                draw_mapping(
+                    self._compA_to_compB,
+                    self.componentA.to_rdkit(),
+                    self.componentB.to_rdkit(),
+                    d2d,
+                )
+            )
+        )
 
     def draw_to_file(self, fname: str, d2d=None):
         """
@@ -162,16 +187,26 @@ class LigandAtomMapping(AtomMapping):
         fname : str
             Name of file to save atom map
         """
-        data = draw_mapping(self._compA_to_compB, self.componentA.to_rdkit(),
-                            self.componentB.to_rdkit(), d2d)
+        data = draw_mapping(
+            self._compA_to_compB,
+            self.componentA.to_rdkit(),
+            self.componentB.to_rdkit(),
+            d2d,
+        )
         if type(data) == bytes:
             mode = "wb"
         else:
             mode = "w"
 
         with open(fname, mode) as f:
-            f.write(draw_mapping(self._compA_to_compB, self.componentA.to_rdkit(),
-                                 self.componentB.to_rdkit(), d2d))
+            f.write(
+                draw_mapping(
+                    self._compA_to_compB,
+                    self.componentA.to_rdkit(),
+                    self.componentB.to_rdkit(),
+                    d2d,
+                )
+            )
 
     def with_annotations(self, annotations: dict[str, Any]) -> LigandAtomMapping:
         """Create a new mapping based on this one with extra annotations.
@@ -187,7 +222,7 @@ class LigandAtomMapping(AtomMapping):
             componentA=self.componentA,
             componentB=self.componentB,
             componentA_to_componentB=self._compA_to_compB,
-            annotations=dict(**self.annotations, **annotations)
+            annotations=dict(**self.annotations, **annotations),
         )
 
     def get_distances(self) -> NDArray[np.float64]:

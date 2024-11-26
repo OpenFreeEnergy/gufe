@@ -2,20 +2,19 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from copy import copy
-from collections import defaultdict
 import os
-from typing import Iterable, Optional, Union, Any
+import shutil
+from collections import defaultdict
+from collections.abc import Iterable
+from copy import copy
 from os import PathLike
 from pathlib import Path
-import shutil
+from typing import Any, Optional, Union
 
 import networkx as nx
 
-from ..tokenization import GufeTokenizable, GufeKey
-from .protocolunit import (
-    ProtocolUnit, ProtocolUnitResult, ProtocolUnitFailure, Context
-)
+from ..tokenization import GufeKey, GufeTokenizable
+from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
 
 class DAGMixin:
@@ -32,7 +31,7 @@ class DAGMixin:
     ## key of the ProtocolDAG this DAG extends
     _extends_key: Optional[GufeKey]
 
-    @staticmethod 
+    @staticmethod
     def _build_graph(nodes):
         """Build dependency DAG of ProtocolUnits with input keys stored on edges"""
         G = nx.DiGraph()
@@ -104,13 +103,13 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
     There may be many of these for a given `Transformation`. Data elements from
     these objects are combined by `Protocol.gather` into a `ProtocolResult`.
     """
+
     _protocol_unit_results: list[ProtocolUnitResult]
     _unit_result_mapping: dict[ProtocolUnit, list[ProtocolUnitResult]]
     _result_unit_mapping: dict[ProtocolUnitResult, ProtocolUnit]
 
-
     def __init__(
-        self, 
+        self,
         *,
         protocol_units: list[ProtocolUnit],
         protocol_unit_results: list[ProtocolUnitResult],
@@ -122,7 +121,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
 
-        self._transformation_key = GufeKey(transformation_key) if transformation_key is not None else None
+        self._transformation_key = (
+            GufeKey(transformation_key) if transformation_key is not None else None
+        )
         self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units
@@ -147,11 +148,13 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return {}
 
     def _to_dict(self):
-        return {'name': self.name,
-                'protocol_units': self._protocol_units,
-                'protocol_unit_results': self._protocol_unit_results,
-                'transformation_key': self._transformation_key,
-                'extends_key': self._extends_key}
+        return {
+            "name": self.name,
+            "protocol_units": self._protocol_units,
+            "protocol_unit_results": self._protocol_unit_results,
+            "transformation_key": self._transformation_key,
+            "extends_key": self._extends_key,
+        }
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -190,7 +193,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         # mypy can't figure out the types here, .ok() will ensure a certain type
         # https://mypy.readthedocs.io/en/stable/common_issues.html?highlight=cast#complex-type-tests
         return [r for r in self.protocol_unit_results if not r.ok()]  # type: ignore
-    
+
     @property
     def protocol_unit_successes(self) -> list[ProtocolUnitResult]:
         """A list of only successful `ProtocolUnit` results.
@@ -226,7 +229,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
             else:
                 raise KeyError("No success for `protocol_unit` found")
 
-    def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
+    def unit_to_all_results(
+        self, protocol_unit: ProtocolUnit
+    ) -> list[ProtocolUnitResult]:
         """Return all results (sucess and failure) for a given Unit.
 
         Returns
@@ -252,8 +257,10 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     def ok(self) -> bool:
         # ensure that for every protocol unit, there is an OK result object
-        return all(any(pur.ok() for pur in self._unit_result_mapping[pu])
-                   for pu in self._protocol_units)
+        return all(
+            any(pur.ok() for pur in self._unit_result_mapping[pu])
+            for pu in self._protocol_units
+        )
 
     @property
     def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
@@ -265,8 +272,11 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
           All ProtocolUnitResults which do not have a ProtocolUnitResult that
           follows on (depends) on them.
         """
-        return [u for u in self._protocol_unit_results
-                if not nx.ancestors(self._result_graph, u)]
+        return [
+            u
+            for u in self._protocol_unit_results
+            if not nx.ancestors(self._result_graph, u)
+        ]
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
@@ -324,7 +334,9 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self._name = name
         self._protocol_units = protocol_units
 
-        self._transformation_key = GufeKey(transformation_key) if transformation_key is not None else None
+        self._transformation_key = (
+            GufeKey(transformation_key) if transformation_key is not None else None
+        )
         self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units
@@ -336,24 +348,28 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return {}
 
     def _to_dict(self):
-        return {'name': self.name,
-                'protocol_units': self.protocol_units,
-                'transformation_key': self._transformation_key,
-                'extends_key': self._extends_key}
+        return {
+            "name": self.name,
+            "protocol_units": self.protocol_units,
+            "transformation_key": self._transformation_key,
+            "extends_key": self._extends_key,
+        }
 
     @classmethod
     def _from_dict(cls, dct: dict):
         return cls(**dct)
 
 
-def execute_DAG(protocoldag: ProtocolDAG, *,
-                shared_basedir: Path,
-                scratch_basedir: Path,
-                keep_shared: bool = False,
-                keep_scratch: bool = False,
-                raise_error: bool = True,
-                n_retries: int = 0,
-                ) -> ProtocolDAGResult:
+def execute_DAG(
+    protocoldag: ProtocolDAG,
+    *,
+    shared_basedir: Path,
+    scratch_basedir: Path,
+    keep_shared: bool = False,
+    keep_scratch: bool = False,
+    raise_error: bool = True,
+    n_retries: int = 0,
+) -> ProtocolDAGResult:
     """
     Locally execute a full :class:`ProtocolDAG` in serial and in-process.
 
@@ -400,21 +416,17 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
 
         attempt = 0
         while attempt <= n_retries:
-            shared = shared_basedir / f'shared_{str(unit.key)}_attempt_{attempt}'
+            shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
             shared_paths.append(shared)
             shared.mkdir()
 
-            scratch = scratch_basedir / f'scratch_{str(unit.key)}_attempt_{attempt}'
+            scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
             scratch.mkdir()
 
-            context = Context(shared=shared,
-                              scratch=scratch)
+            context = Context(shared=shared, scratch=scratch)
 
             # execute
-            result = unit.execute(
-                    context=context,
-                    raise_error=raise_error,
-                    **inputs)
+            result = unit.execute(context=context, raise_error=raise_error, **inputs)
             all_results.append(result)
 
             if not keep_scratch:
@@ -434,16 +446,18 @@ def execute_DAG(protocoldag: ProtocolDAG, *,
             shutil.rmtree(shared_path)
 
     return ProtocolDAGResult(
-            name=protocoldag.name, 
-            protocol_units=protocoldag.protocol_units, 
-            protocol_unit_results=all_results,
-            transformation_key=protocoldag.transformation_key,
-            extends_key=protocoldag.extends_key)
+        name=protocoldag.name,
+        protocol_units=protocoldag.protocol_units,
+        protocol_unit_results=all_results,
+        transformation_key=protocoldag.transformation_key,
+        extends_key=protocoldag.extends_key,
+    )
 
 
 def _pu_to_pur(
-        inputs: Union[dict[str, Any], list[Any], ProtocolUnit],
-        mapping: dict[GufeKey, ProtocolUnitResult]):
+    inputs: Union[dict[str, Any], list[Any], ProtocolUnit],
+    mapping: dict[GufeKey, ProtocolUnitResult],
+):
     """Convert each `ProtocolUnit` found within `inputs` to its corresponding
     `ProtocolUnitResult`.
 
@@ -467,4 +481,3 @@ def _pu_to_pur(
         return mapping[inputs.key]
     else:
         return inputs
-
