@@ -2,6 +2,7 @@
 [![build](https://github.com/OpenFreeEnergy/gufe/actions/workflows/ci.yaml/badge.svg)](https://github.com/OpenFreeEnergy/gufe/actions/workflows/ci.yaml)
 [![coverage](https://codecov.io/gh/OpenFreeEnergy/gufe/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenFreeEnergy/gufe)
 [![Documentation Status](https://readthedocs.org/projects/gufe/badge/?version=latest)](https://gufe.readthedocs.io/en/latest/?badge=latest)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/OpenFreeEnergy/gufe/main.svg)](https://results.pre-commit.ci/latest/github/OpenFreeEnergy/gufe/main)
 
 # gufe - Grand Unified Free Energy
 

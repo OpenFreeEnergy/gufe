@@ -2,29 +2,33 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import datetime
 import itertools
-from openff.units import unit
-from typing import Optional, Iterable, List, Dict, Any, Union, Sized
-from collections import defaultdict
-import pathlib
 
-import pytest
+from typing import Optional, Iterable, List, Dict, Any, Union, Sized
+
+
+import pathlib
+from collections import defaultdict
+from collections.abc import Iterable
+
+
 import networkx as nx
 import numpy as np
+import pytest
+from openff.units import unit
 
 import gufe
+from gufe import settings
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import ComponentMapping
-from gufe import settings
 from gufe.protocols import (
     Protocol,
     ProtocolDAG,
-    ProtocolUnit,
-    ProtocolResult,
     ProtocolDAGResult,
-    ProtocolUnitResult,
+    ProtocolResult,
+    ProtocolUnit,
     ProtocolUnitFailure,
+    ProtocolUnitResult,
 )
-
 from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -41,15 +45,15 @@ class InitializeUnit(ProtocolUnit):
 class SimulationUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx, *, initialization, **inputs):
-        output = [initialization.outputs['log']]
+        output = [initialization.outputs["log"]]
         output.append("running_md_{}".format(inputs["window"]))
 
         return dict(
             log=output,
             window=inputs["window"],
-            key_result=(100 - (inputs["window"] - 10)**2),
+            key_result=(100 - (inputs["window"] - 10) ** 2),
             scratch=ctx.scratch,
-            shared=ctx.shared
+            shared=ctx.shared,
         )
 
 
@@ -57,15 +61,14 @@ class FinishUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx, *, simulations, **inputs):
 
-        output = [s.outputs['log'] for s in simulations]
+        output = [s.outputs["log"] for s in simulations]
         output.append("assembling_results")
 
-        key_results = {str(s.inputs['window']): s.outputs['key_result'] for s in simulations}
+        key_results = {
+            str(s.inputs["window"]): s.outputs["key_result"] for s in simulations
+        }
 
-        return dict(
-            log=output,
-            key_results=key_results
-        )
+        return dict(log=output, key_results=key_results)
 
 
 class DummySpecificSettings(settings.Settings):
@@ -78,7 +81,7 @@ class DummyProtocolResult(ProtocolResult):
         # product of neighboring simulation window `key_result`s
 
         dgs = []
-        for sample in self.data['key_results']:
+        for sample in self.data["key_results"]:
             windows = sorted(sample.keys())
             dg = 0
             for i, j in zip(windows[:-1], windows[1:]):
@@ -88,8 +91,7 @@ class DummyProtocolResult(ProtocolResult):
 
         return np.mean(dg)
 
-    def get_uncertainty(self):
-        ...
+    def get_uncertainty(self): ...
 
 
 class DummyProtocol(Protocol):
@@ -112,16 +114,16 @@ class DummyProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]=None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
         extends: Optional[ProtocolDAGResult] = None,
-    ) -> List[ProtocolUnit]:
+    ) -> list[ProtocolUnit]:
 
         # rip apart `extends` if needed to feed into `InitializeUnit`
         if extends is not None:
             # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
             # any ProtocolUnits below, since this could create dependency hell;
             # instead, extract what's needed from it for starting point here
-            starting_point = extends.protocol_unit_results[-1].outputs['key_results']
+            starting_point = extends.protocol_unit_results[-1].outputs["key_results"]
         else:
             starting_point = None
 
@@ -133,30 +135,35 @@ class DummyProtocol(Protocol):
             stateB=stateB,
             mapping=mapping,
             start=starting_point,
-            some_dict={'a': 2, 'b': 12})
+            some_dict={"a": 2, "b": 12},
+        )
 
         # create several units that would each run an independent simulation
-        simulations: List[ProtocolUnit] = [
-            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha)
+        simulations: list[ProtocolUnit] = [
+            SimulationUnit(
+                settings=self.settings, name=f"sim {i}", window=i, initialization=alpha
+            )
             for i in range(self.settings.n_repeats)  # type: ignore
         ]
 
         # gather results from simulations, finalize outputs
-        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
+        omega = FinishUnit(
+            settings=self.settings, name="the end", simulations=simulations
+        )
 
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
 
     def _gather(
         self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
 
         outputs = defaultdict(list)
         for pdr in protocol_dag_results:
             for pur in pdr.terminal_protocol_unit_results:
                 if pur.name == "the end":
-                    outputs['logs'].append(pur.outputs['log'])
-                    outputs['key_results'].append(pur.outputs['key_results'])
+                    outputs["logs"].append(pur.outputs["log"])
+                    outputs["key_results"].append(pur.outputs["key_results"])
 
         return dict(outputs)
 
@@ -164,7 +171,7 @@ class DummyProtocol(Protocol):
 class BrokenSimulationUnit(SimulationUnit):
     @staticmethod
     def _execute(ctx, **inputs):
-        raise ValueError("I have failed my mission", {'data': 'lol'})
+        raise ValueError("I have failed my mission", {"data": "lol"})
 
 
 class BrokenProtocol(DummyProtocol):
@@ -172,7 +179,7 @@ class BrokenProtocol(DummyProtocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]=None,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
         extends: Optional[ProtocolDAGResult] = None,
     ) -> list[ProtocolUnit]:
 
@@ -186,15 +193,27 @@ class BrokenProtocol(DummyProtocol):
         )
 
         # create several units that would each run an independent simulation
-        simulations: List[ProtocolUnit] = [
-            SimulationUnit(settings=self.settings, name=f"sim {i}", window=i, initialization=alpha) for i in range(21)
+        simulations: list[ProtocolUnit] = [
+            SimulationUnit(
+                settings=self.settings, name=f"sim {i}", window=i, initialization=alpha
+            )
+            for i in range(21)
         ]
 
         # introduce a broken ProtocolUnit
-        simulations.append(BrokenSimulationUnit(settings=self.settings, window=21, name="problem child", initialization=alpha))
+        simulations.append(
+            BrokenSimulationUnit(
+                settings=self.settings,
+                window=21,
+                name="problem child",
+                initialization=alpha,
+            )
+        )
 
         # gather results from simulations, finalize outputs
-        omega = FinishUnit(settings=self.settings, name="the end", simulations=simulations)
+        omega = FinishUnit(
+            settings=self.settings, name="the end", simulations=simulations
+        )
 
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
@@ -213,18 +232,21 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def protocol_dag(self, solvated_ligand, vacuum_ligand, tmpdir):
         protocol = DummyProtocol(settings=DummyProtocol.default_settings())
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a dummy run",
+            stateA=solvated_ligand,
+            stateB=vacuum_ligand,
+            name="a dummy run",
             mapping=None,
         )
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
-            
-            scratch = pathlib.Path('scratch')
+
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
             dagresult: ProtocolDAGResult = execute_DAG(
-                    dag, shared_basedir=shared, scratch_basedir=scratch)
+                dag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         return protocol, dag, dagresult
 
@@ -232,18 +254,21 @@ class TestProtocol(GufeTokenizableTestsMixin):
     def protocol_dag_broken(self, solvated_ligand, vacuum_ligand, tmpdir):
         protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
+            stateA=solvated_ligand,
+            stateB=vacuum_ligand,
+            name="a broken dummy run",
             mapping=None,
         )
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
-            
-            scratch = pathlib.Path('scratch')
+
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
             dagfailure: ProtocolDAGResult = execute_DAG(
-                    dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=False)
+                dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=False
+            )
 
         return protocol, dag, dagfailure
 
@@ -257,24 +282,32 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert finishresult.name == "the end"
 
         # gather SimulationUnits
-        simulationresults = [dagresult.unit_to_result(pu)
-                             for pu in dagresult.protocol_units
-                             if isinstance(pu, SimulationUnit)]
+        simulationresults = [
+            dagresult.unit_to_result(pu)
+            for pu in dagresult.protocol_units
+            if isinstance(pu, SimulationUnit)
+        ]
 
         # check that we have dependency information in results
-        assert set(finishresult.inputs['simulations']) == {u for u in simulationresults}
+        assert set(finishresult.inputs["simulations"]) == {u for u in simulationresults}
 
         # check that we have as many units as we expect in resulting graph
         assert len(dagresult.graph) == 23
-        
+
         # check that each simulation has its own shared directory
-        assert len(set(i.outputs['shared'] for i in simulationresults)) == len(simulationresults)
+        assert len({i.outputs["shared"] for i in simulationresults}) == len(
+            simulationresults
+        )
 
         # check that each simulation has its own scratch directory
-        assert len(set(i.outputs['scratch'] for i in simulationresults)) == len(simulationresults)
+        assert len({i.outputs["scratch"] for i in simulationresults}) == len(
+            simulationresults
+        )
 
         # check that shared and scratch not the same for each simulation
-        assert all([i.outputs['scratch'] != i.outputs['shared'] for i in simulationresults])
+        assert all(
+            [i.outputs["scratch"] != i.outputs["shared"] for i in simulationresults]
+        )
 
     def test_terminal_units(self, protocol_dag):
         prot, dag, res = protocol_dag
@@ -283,7 +316,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         assert len(finals) == 1
         assert isinstance(finals[0], ProtocolUnitResult)
-        assert finals[0].name == 'the end'
+        assert finals[0].name == "the end"
 
     def test_dag_execute_failure(self, protocol_dag_broken):
         protocol, dag, dagfailure = protocol_dag_broken
@@ -297,28 +330,37 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert failed_units[0].name == "problem child"
 
         # parse exception arguments
-        assert failed_units[0].exception[1][1]['data'] == "lol"
+        assert failed_units[0].exception[1][1]["data"] == "lol"
         assert isinstance(failed_units[0], ProtocolUnitFailure)
 
         succeeded_units = dagfailure.protocol_unit_results
 
         assert len(succeeded_units) > 0
 
-    def test_dag_execute_failure_raise_error(self, solvated_ligand, vacuum_ligand, tmpdir):
+    def test_dag_execute_failure_raise_error(
+        self, solvated_ligand, vacuum_ligand, tmpdir
+    ):
         protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
         dag = protocol.create(
-            stateA=solvated_ligand, stateB=vacuum_ligand, name="a broken dummy run",
+            stateA=solvated_ligand,
+            stateB=vacuum_ligand,
+            name="a broken dummy run",
             mapping=None,
         )
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
-            
-            scratch = pathlib.Path('scratch')
+
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
             with pytest.raises(ValueError, match="I have failed my mission"):
-                execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=True)
+                execute_DAG(
+                    dag,
+                    shared_basedir=shared,
+                    scratch_basedir=scratch,
+                    raise_error=True,
+                )
 
     def test_create_execute_gather(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
@@ -336,7 +378,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
     def test_gather_infinite_iterable_guardrail(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
-        
+
         assert dagresult.ok()
 
         # we want an infinite generator, but one that would actually stop early in case
@@ -353,23 +395,31 @@ class TestProtocol(GufeTokenizableTestsMixin):
         with pytest.raises(ValueError, match="`protocol_dag_results` must implement `__len__`"):
             protocol.gather(infinite_generator())
 
-    def test_deprecation_warning_on_dict_mapping(self, instance, vacuum_ligand, solvated_ligand):
+    def test_deprecation_warning_on_dict_mapping(
+        self, instance, vacuum_ligand, solvated_ligand
+    ):
         lig = solvated_ligand.components['ligand']
+
+
         mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
 
-        with pytest.warns(DeprecationWarning,
-                          match="mapping input as a dict is deprecated"):
-            instance.create(stateA=solvated_ligand, stateB=vacuum_ligand,
-                            mapping={'ligand': mapping})
+        with pytest.warns(
+            DeprecationWarning, match="mapping input as a dict is deprecated"
+        ):
+            instance.create(
+                stateA=solvated_ligand,
+                stateB=vacuum_ligand,
+                mapping={"ligand": mapping},
+            )
 
     class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
-        
+
         def test_protocol_units(self, instance):
             # ensure that protocol units are given in-order based on DAG
             # dependencies
             checked = []
             for pu in instance.protocol_units:
-                assert set(pu.dependencies).issubset(checked) 
+                assert set(pu.dependencies).issubset(checked)
                 checked.append(pu)
 
         def test_graph(self, instance):
@@ -414,7 +464,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_protocol_unit_results(self, instance: ProtocolDAGResult):
             # ensure that protocolunitresults are given in-order based on DAG
             # dependencies
-            checked: List[Union[ProtocolUnitResult, ProtocolUnitFailure]] = []
+            checked: list[Union[ProtocolUnitResult, ProtocolUnitFailure]] = []
             for pur in instance.protocol_unit_results:
                 assert set(pur.dependencies).issubset(checked)
                 checked.append(pur)
@@ -450,7 +500,10 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         def test_protocol_unit_successes(self, instance: ProtocolDAGResult):
             assert len(instance.protocol_unit_successes) == 23
-            assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
+            assert all(
+                isinstance(i, ProtocolUnitResult)
+                for i in instance.protocol_unit_successes
+            )
 
     class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
         cls = ProtocolDAGResult
@@ -466,8 +519,12 @@ class TestProtocol(GufeTokenizableTestsMixin):
             # protocolunitfailures should have no dependents
             for puf in instance.protocol_unit_failures:
 
-                assert all([puf not in pu.dependencies
-                            for pu in instance.protocol_unit_results])
+                assert all(
+                    [
+                        puf not in pu.dependencies
+                        for pu in instance.protocol_unit_results
+                    ]
+                )
 
             for node in instance.result_graph.nodes:
                 with pytest.raises(KeyError):
@@ -484,10 +541,10 @@ class TestProtocol(GufeTokenizableTestsMixin):
     class TestProtocolUnit(GufeTokenizableTestsMixin):
         cls = SimulationUnit
         repr = None
-    
+
         @pytest.fixture
         def instance(self, vacuum_ligand, solvated_ligand):
-    
+
             # convert protocol inputs into starting points for independent simulations
             alpha = InitializeUnit(
                 name="the beginning",
@@ -496,9 +553,9 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 stateB=solvated_ligand,
                 mapping=None,
                 start=None,
-                some_dict={'a': 2, 'b': 12},
+                some_dict={"a": 2, "b": 12},
             )
-    
+
             return SimulationUnit(name=f"simulation", initialization=alpha)
 
         def test_key_stable(self, instance):
@@ -509,20 +566,21 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
 class NoDepUnit(ProtocolUnit):
     @staticmethod
-    def _execute(ctx, **inputs) -> Dict[str, Any]:
-        return {'local': inputs['val'] ** 2}
+    def _execute(ctx, **inputs) -> dict[str, Any]:
+        return {"local": inputs["val"] ** 2}
 
 
 class NoDepResults(ProtocolResult):
     def get_estimate(self):
-        return sum(self.data['vals'])
+        return sum(self.data["vals"])
 
     def get_uncertainty(self):
-        return len(self.data['vals'])
+        return len(self.data["vals"])
 
 
 class NoDepsProtocol(Protocol):
     """A protocol without dependencies"""
+
     result_cls = NoDepResults
 
     @classmethod
@@ -534,20 +592,22 @@ class NoDepsProtocol(Protocol):
         return settings.Settings.get_defaults()
 
     def _create(
-            self,
-            stateA: ChemicalSystem,
-            stateB: ChemicalSystem,
-            mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
-            extends: Optional[ProtocolDAGResult] = None,
-    ) -> List[ProtocolUnit]:
-        return [NoDepUnit(settings=self.settings,
-                          val=i)
-                for i in range(3)]
+        self,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        extends: Optional[ProtocolDAGResult] = None,
+    ) -> list[ProtocolUnit]:
+        return [NoDepUnit(settings=self.settings, val=i) for i in range(3)]
 
     def _gather(self, dag_results):
         return {
-            'vals': list(itertools.chain.from_iterable(
-                (d.outputs['local'] for d in dag.protocol_unit_results) for dag in dag_results)),
+            "vals": list(
+                itertools.chain.from_iterable(
+                    (d.outputs["local"] for d in dag.protocol_unit_results)
+                    for dag in dag_results
+                )
+            ),
         }
 
 
@@ -559,22 +619,29 @@ class TestNoDepProtocol:
     @pytest.fixture()
     def dag(self, protocol):
         return protocol.create(
-            stateA=ChemicalSystem(components={'solvent': gufe.SolventComponent(positive_ion='Na')}),
-            stateB=ChemicalSystem(components={'solvent': gufe.SolventComponent(positive_ion='Li')}),
-            mapping=None)
+            stateA=ChemicalSystem(
+                components={"solvent": gufe.SolventComponent(positive_ion="Na")}
+            ),
+            stateB=ChemicalSystem(
+                components={"solvent": gufe.SolventComponent(positive_ion="Li")}
+            ),
+            mapping=None,
+        )
 
     def test_create(self, dag):
         assert len(dag.protocol_units) == 3
 
     def test_gather(self, protocol, dag, tmpdir):
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
-            
-            scratch = pathlib.Path('scratch')
+
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
+            dag_result = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         assert dag_result.ok()
 
@@ -585,14 +652,16 @@ class TestNoDepProtocol:
 
     def test_terminal_units(self, protocol, dag, tmpdir):
         with tmpdir.as_cwd():
-            shared = pathlib.Path('shared')
+            shared = pathlib.Path("shared")
             shared.mkdir(parents=True)
-            
-            scratch = pathlib.Path('scratch')
+
+            scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
             # we have no dependencies, so this should be all three Unit results
-            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
+            dag_result = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         terminal_results = dag_result.terminal_protocol_unit_results
 
@@ -601,6 +670,7 @@ class TestNoDepProtocol:
 
 class TestProtocolDAGResult:
     """tests for combinations of failures and successes in a DAGResult"""
+
     @staticmethod
     @pytest.fixture()
     def units() -> list[ProtocolUnit]:
@@ -613,10 +683,16 @@ class TestProtocolDAGResult:
         t1 = datetime.datetime.now()
         t2 = datetime.datetime.now()
 
-        return [ProtocolUnitResult(source_key=u.key, inputs=u.inputs,
-                                   outputs={'result': i ** 2},
-                                   start_time=t1, end_time=t2)
-                for i, u in enumerate(units)]
+        return [
+            ProtocolUnitResult(
+                source_key=u.key,
+                inputs=u.inputs,
+                outputs={"result": i**2},
+                start_time=t1,
+                end_time=t2,
+            )
+            for i, u in enumerate(units)
+        ]
 
     @staticmethod
     @pytest.fixture()
@@ -625,13 +701,21 @@ class TestProtocolDAGResult:
         t1 = datetime.datetime.now()
         t2 = datetime.datetime.now()
 
-        return [[ProtocolUnitFailure(source_key=u.key, inputs=u.inputs,
-                                     outputs=dict(),
-                                     exception=('ValueError', "Didn't feel like it"),
-                                     traceback='foo',
-                                     start_time=t1, end_time=t2)
-                 for i in range(2)]
-                for u in units]
+        return [
+            [
+                ProtocolUnitFailure(
+                    source_key=u.key,
+                    inputs=u.inputs,
+                    outputs=dict(),
+                    exception=("ValueError", "Didn't feel like it"),
+                    traceback="foo",
+                    start_time=t1,
+                    end_time=t2,
+                )
+                for i in range(2)
+            ]
+            for u in units
+        ]
 
     def test_all_successes(self, units, successes):
         dagresult = ProtocolDAGResult(
@@ -699,22 +783,26 @@ class TestProtocolDAGResult:
 def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmpdir):
     protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
     dag = protocol.create(
-        stateA=solvated_ligand, stateB=vacuum_ligand, mapping=None,
+        stateA=solvated_ligand,
+        stateB=vacuum_ligand,
+        mapping=None,
     )
 
     with tmpdir.as_cwd():
-        shared = pathlib.Path('shared')
+        shared = pathlib.Path("shared")
         shared.mkdir(parents=True)
-        scratch = pathlib.Path('scratch')
+        scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
 
-        r = execute_DAG(dag,
-                        shared_basedir=shared,
-                        scratch_basedir=scratch,
-                        keep_shared=True,
-                        keep_scratch=True,
-                        raise_error=False,
-                        n_retries=3)
+        r = execute_DAG(
+            dag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            keep_shared=True,
+            keep_scratch=True,
+            raise_error=False,
+            n_retries=3,
+        )
 
         assert not r.ok()
 
@@ -728,26 +816,31 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmpdir):
         # final failure
         assert number_unit_results == number_dirs == 26
 
+
 def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
     protocol = BrokenProtocol(settings=BrokenProtocol.default_settings())
     dag = protocol.create(
-        stateA=solvated_ligand, stateB=vacuum_ligand, mapping=None,
+        stateA=solvated_ligand,
+        stateB=vacuum_ligand,
+        mapping=None,
     )
 
     with tmpdir.as_cwd():
-        shared = pathlib.Path('shared')
+        shared = pathlib.Path("shared")
         shared.mkdir(parents=True)
-        scratch = pathlib.Path('scratch')
+        scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
 
         with pytest.raises(ValueError):
-            r = execute_DAG(dag,
-                            shared_basedir=shared,
-                            scratch_basedir=scratch,
-                            keep_shared=True,
-                            keep_scratch=True,
-                            raise_error=False,
-                            n_retries=-1)
+            r = execute_DAG(
+                dag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                keep_shared=True,
+                keep_scratch=True,
+                raise_error=False,
+                n_retries=-1,
+            )
 
 
 def test_settings_readonly():

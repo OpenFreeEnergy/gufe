@@ -9,13 +9,15 @@ import importlib
 import inspect
 import json
 import logging
-import networkx as nx
 import re
 import warnings
 import weakref
+from collections.abc import Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, Union, List, Tuple, Dict, Generator, TextIO, Optional
+from typing import Any, Dict, List, Optional, TextIO, Tuple, Union
+
+import networkx as nx
 from typing_extensions import Self
 
 from gufe.custom_codecs import (
@@ -115,11 +117,12 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
     extra: :class:`.GufeTokenizable`
         the instance this adapter is associated with
     """
+
     def process(self, msg, kwargs):
-        extra = kwargs.get('extra', {})
-        if (extra_dict := getattr(self, '_extra_dict', None)) is None:
+        extra = kwargs.get("extra", {})
+        if (extra_dict := getattr(self, "_extra_dict", None)) is None:
             try:
-                gufekey = self.extra.key.split('-')[-1]
+                gufekey = self.extra.key.split("-")[-1]
             except Exception:
                 # no matter what happened, we have a bad key
                 gufekey = "UNKNOWN"
@@ -127,15 +130,13 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
             else:
                 save_extra_dict = True
 
-            extra_dict = {
-                'gufekey': gufekey
-            }
+            extra_dict = {"gufekey": gufekey}
 
             if save_extra_dict:
                 self._extra_dict = extra_dict
 
         extra.update(extra_dict)
-        kwargs['extra'] = extra
+        kwargs["extra"] = extra
         return msg, kwargs
 
 
@@ -193,8 +194,10 @@ def old_key_removed(dct, old_key, should_warn):
     if should_warn:
         # TODO: this should be put elsewhere so that the warning can be more
         # meaningful (somewhere that knows what class we're recreating)
-        warnings.warn(f"Outdated serialization: '{old_key}', with value "
-                      f"'{dct[old_key]}' is no longer used in this object")
+        warnings.warn(
+            f"Outdated serialization: '{old_key}', with value "
+            f"'{dct[old_key]}' is no longer used in this object"
+        )
 
     del dct[old_key]
     return dct
@@ -231,6 +234,7 @@ def _label_to_parts(label):
 
     See :func:`.nested_key_moved` for a description of the label.
     """
+
     def _intify_if_possible(part):
         try:
             part = int(part)
@@ -238,10 +242,8 @@ def _label_to_parts(label):
             pass
 
         return part
-    parts = [
-        _intify_if_possible(p) for p in re.split('\.|\[|\]', label)
-        if p != ""
-    ]
+
+    parts = [_intify_if_possible(p) for p in re.split(r"\.|\[|\]", label) if p != ""]
     return parts
 
 
@@ -326,6 +328,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.
     """
+
     @classmethod
     def _schema_version(cls) -> int:
         return 1
@@ -346,9 +349,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return hash(self.key)
 
     def _gufe_tokenize(self):
-        """Return a list of normalized inputs for `gufe.base.tokenize`.
-
-        """
+        """Return a list of normalized inputs for `gufe.base.tokenize`."""
         return tokenize(self)
         # return normalize(self.to_keyed_dict(include_defaults=False))
 
@@ -405,7 +406,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     @property
     def logger(self):
         """Return logger adapter for this instance"""
-        if (adapter := getattr(self, '_logger', None)) is None:
+        if (adapter := getattr(self, "_logger", None)) is None:
             cls = self.__class__
             logname = "gufekey." + cls.__module__ + "." + cls.__qualname__
             logger = logging.getLogger(logname)
@@ -415,7 +416,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @property
     def key(self):
-        if not hasattr(self, '_key') or self._key is None:
+        if not hasattr(self, "_key") or self._key is None:
             prefix = self.__class__.__qualname__
             token = self._gufe_tokenize()
             self._key = GufeKey(f"{prefix}-{token}")
@@ -433,7 +434,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         key : str
             contents of the GufeKey for this object
         """
-        if old_key := getattr(self, '_key', None):
+        if old_key := getattr(self, "_key", None):
             TOKENIZABLE_REGISTRY.pop(old_key)
 
         self._key = GufeKey(key)
@@ -448,7 +449,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         """
         defaults = cls._defaults()
-        defaults[':version:'] = cls._schema_version()
+        defaults[":version:"] = cls._schema_version()
         return defaults
 
     @classmethod
@@ -461,7 +462,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         sig = inspect.signature(cls.__init__)
 
         defaults = {
-            param.name: param.default for param in sig.parameters.values()
+            param.name: param.default
+            for param in sig.parameters.values()
             if param.default is not inspect.Parameter.empty
         }
 
@@ -617,13 +619,14 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         dct = self._to_dict()
         if invalid := set(replacements) - set(dct):
-            raise TypeError(f"Invalid replacement keys: {invalid}. "
-                            f"Allowed keys are: {set(dct)}")
+            raise TypeError(
+                f"Invalid replacement keys: {invalid}. " f"Allowed keys are: {set(dct)}"
+            )
 
         dct.update(replacements)
         return self._from_dict(dct)
 
-    def to_keyed_chain(self) -> List[Tuple[str, Dict]]:
+    def to_keyed_chain(self) -> list[tuple[str, dict]]:
         """
         Generate a keyed chain representation of the object.
 
@@ -634,7 +637,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return KeyedChain.gufe_to_keyed_chain_rep(self)
 
     @classmethod
-    def from_keyed_chain(cls, keyed_chain: List[Tuple[str, Dict]]):
+    def from_keyed_chain(cls, keyed_chain: list[tuple[str, dict]]):
         """
         Generate an instance from keyed chain representation.
 
@@ -674,13 +677,16 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             return json.dumps(self.to_keyed_chain(), cls=JSON_HANDLER.encoder)
 
         from gufe.utils import ensure_filelike
+
         with ensure_filelike(file, mode="w") as out:
             json.dump(self.to_keyed_chain(), out, cls=JSON_HANDLER.encoder)
 
         return None
 
     @classmethod
-    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
+    def from_json(
+        cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None
+    ):
         """
         Generate an instance from JSON keyed chain representation.
 
@@ -699,7 +705,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
 
         if content is not None and file is not None:
-            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+            raise ValueError(
+                "Cannot specify both `content` and `file`; only one input allowed"
+            )
         elif content is None and file is None:
             raise ValueError("Must specify either `content` and `file` for JSON input")
 
@@ -708,6 +716,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             return cls.from_keyed_chain(keyed_chain=keyed_chain)
 
         from gufe.utils import ensure_filelike
+
         with ensure_filelike(file, mode="r") as f:
             keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
 
@@ -715,26 +724,26 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
 
 class GufeKey(str):
-    def __repr__(self):   # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         return f"<GufeKey('{str(self)}')>"
 
     def to_dict(self):
-        return {':gufe-key:': str(self)}
+        return {":gufe-key:": str(self)}
 
     @property
     def prefix(self) -> str:
         """Commonly indicates a classname"""
-        return self.split('-')[0]
+        return self.split("-")[0]
 
     @property
     def token(self) -> str:
         """Unique hash of this key, typically a md5 value"""
-        return self.split('-')[1]
+        return self.split("-")[1]
 
 
 def gufe_objects_from_shallow_dict(
-    obj: Union[List, Dict, GufeTokenizable]
-) -> List[GufeTokenizable]:
+    obj: Union[list, dict, GufeTokenizable]
+) -> list[GufeTokenizable]:
     """Find GufeTokenizables within a shallow dict.
 
     This function recursively looks through the list/dict structures encoding
@@ -811,7 +820,7 @@ def gufe_to_digraph(gufe_obj):
     return graph
 
 
-class KeyedChain(object):
+class KeyedChain:
     """Keyed chain representation encoder of a GufeTokenizable.
 
     The keyed chain representation of a GufeTokenizable provides a
@@ -859,25 +868,25 @@ class KeyedChain(object):
 
     def to_gufe(self) -> GufeTokenizable:
         """Initialize a GufeTokenizable."""
-        gts: Dict[str, GufeTokenizable] = {}
+        gts: dict[str, GufeTokenizable] = {}
         for gufe_key, keyed_dict in self:
             gt = key_decode_dependencies(keyed_dict, registry=gts)
             gts[gufe_key] = gt
         return gt
 
     @classmethod
-    def from_keyed_chain_rep(cls, keyed_chain: List[Tuple[str, Dict]]) -> Self:
+    def from_keyed_chain_rep(cls, keyed_chain: list[tuple[str, dict]]) -> Self:
         """Initialize a KeyedChain from a keyed chain representation."""
         return cls(keyed_chain)
 
-    def to_keyed_chain_rep(self) -> List[Tuple[str, Dict]]:
+    def to_keyed_chain_rep(self) -> list[tuple[str, dict]]:
         """Return the keyed chain representation of this object."""
         return list(self)
 
     @staticmethod
     def gufe_to_keyed_chain_rep(
         gufe_object: GufeTokenizable,
-    ) -> List[Tuple[str, Dict]]:
+    ) -> list[tuple[str, dict]]:
         """Create the keyed chain representation of a GufeTokenizable.
 
         This represents the GufeTokenizable as a list of two-element tuples
@@ -907,7 +916,7 @@ class KeyedChain(object):
         for key, _ in self:
             yield key
 
-    def keyed_dicts(self) -> Generator[Dict, None, None]:
+    def keyed_dicts(self) -> Generator[dict, None, None]:
         """Create a generator that iterates over the keyed dicts in the KeyedChain."""
         for _, _dict in self:
             yield _dict
@@ -923,7 +932,9 @@ class KeyedChain(object):
 
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
-TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary()
+TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = (
+    weakref.WeakValueDictionary()
+)
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when
@@ -936,8 +947,10 @@ objects that are no longer referenced anywhere else.
 
 
 def module_qualname(obj):
-    return {'__qualname__': obj.__class__.__qualname__,
-            '__module__': obj.__class__.__module__}
+    return {
+        "__qualname__": obj.__class__.__qualname__,
+        "__module__": obj.__class__.__module__,
+    }
 
 
 def is_gufe_obj(obj: Any):
@@ -945,8 +958,7 @@ def is_gufe_obj(obj: Any):
 
 
 def is_gufe_dict(dct: Any):
-    return (isinstance(dct, dict) and '__qualname__' in dct
-            and '__module__' in dct)
+    return isinstance(dct, dict) and "__qualname__" in dct and "__module__" in dct
 
 
 def is_gufe_key_dict(dct: Any):
@@ -956,14 +968,16 @@ def is_gufe_key_dict(dct: Any):
 # conveniences to get a class from module/class name
 def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
     if (qualname is None) or (modname is None):
-        raise ValueError("`__qualname__` or `__module__` cannot be None; "
-                         f"unable to identify object {modname}.{qualname}")
+        raise ValueError(
+            "`__qualname__` or `__module__` cannot be None; "
+            f"unable to identify object {modname}.{qualname}"
+        )
 
     if (modname, qualname) in remappings:
         modname, qualname = remappings[(modname, qualname)]
 
     result = importlib.import_module(modname)
-    for name in qualname.split('.'):
+    for name in qualname.split("."):
         result = getattr(result, name)
 
     return result
@@ -1000,18 +1014,22 @@ def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=Tru
         If `True`, skip modifying `obj` itself; needed for recursive use to
         avoid early stopping on `obj`.
     """
-    if is_mine(obj) and not top and mode == 'encode':
+    if is_mine(obj) and not top and mode == "encode":
         obj = modifier(obj)
 
     if isinstance(obj, dict):
-        obj = {key: modify_dependencies(value, modifier, is_mine, mode=mode, top=False)
-               for key, value in obj.items()}
+        obj = {
+            key: modify_dependencies(value, modifier, is_mine, mode=mode, top=False)
+            for key, value in obj.items()
+        }
 
     elif isinstance(obj, list):
-        obj = [modify_dependencies(item, modifier, is_mine, mode=mode, top=False)
-               for item in obj]
+        obj = [
+            modify_dependencies(item, modifier, is_mine, mode=mode, top=False)
+            for item in obj
+        ]
 
-    if is_mine(obj) and not top and mode == 'decode':
+    if is_mine(obj) and not top and mode == "decode":
         obj = modifier(obj)
 
     return obj
@@ -1021,17 +1039,13 @@ def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=Tru
 def to_dict(obj: GufeTokenizable) -> dict:
     dct = obj._to_dict()
     dct.update(module_qualname(obj))
-    dct[':version:'] = obj._schema_version()
+    dct[":version:"] = obj._schema_version()
     return dct
 
 
 def dict_encode_dependencies(obj: GufeTokenizable) -> dict:
     return modify_dependencies(
-        obj.to_shallow_dict(),
-        to_dict,
-        is_gufe_obj,
-        mode='encode',
-        top=True
+        obj.to_shallow_dict(), to_dict, is_gufe_obj, mode="encode", top=True
     )
 
 
@@ -1040,8 +1054,8 @@ def key_encode_dependencies(obj: GufeTokenizable) -> dict:
         obj.to_shallow_dict(),
         lambda obj: obj.key.to_dict(),
         is_gufe_obj,
-        mode='encode',
-        top=True
+        mode="encode",
+        top=True,
     )
 
 
@@ -1064,9 +1078,9 @@ def from_dict(dct) -> GufeTokenizable:
 
 
 def _from_dict(dct: dict) -> GufeTokenizable:
-    module = dct.pop('__module__')
-    qualname = dct.pop('__qualname__')
-    version = dct.pop(':version:', 1)
+    module = dct.pop("__module__")
+    qualname = dct.pop("__qualname__")
+    version = dct.pop(":version:", 1)
 
     cls = get_class(module, qualname)
     dct = cls.serialization_migration(dct, version)
@@ -1075,13 +1089,12 @@ def _from_dict(dct: dict) -> GufeTokenizable:
 
 def dict_decode_dependencies(dct: dict) -> GufeTokenizable:
     return from_dict(
-        modify_dependencies(dct, from_dict, is_gufe_dict, mode='decode', top=True)
+        modify_dependencies(dct, from_dict, is_gufe_dict, mode="decode", top=True)
     )
 
 
 def key_decode_dependencies(
-    dct: dict,
-    registry=TOKENIZABLE_REGISTRY
+    dct: dict, registry=TOKENIZABLE_REGISTRY
 ) -> GufeTokenizable:
     # this version requires that all dependent objects are already registered
     # responsibility of the storage system that uses this to do so
@@ -1089,8 +1102,8 @@ def key_decode_dependencies(
         dct,
         lambda d: registry[GufeKey(d[":gufe-key:"])],
         is_gufe_key_dict,
-        mode='decode',
-        top=True
+        mode="decode",
+        top=True,
     )
     return from_dict(dct)
 
@@ -1111,12 +1124,12 @@ def get_all_gufe_objs(obj):
         all contained GufeTokenizables
     """
     results = {obj}
+
     def modifier(o):
         results.add(o)
         return o.to_shallow_dict()
 
-    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj,
-                            mode='encode')
+    _ = modify_dependencies(obj.to_shallow_dict(), modifier, is_gufe_obj, mode="encode")
     return results
 
 
@@ -1136,7 +1149,10 @@ def tokenize(obj: GufeTokenizable) -> str:
 
     """
     # hasher = hashlib.md5(str(normalize(obj)).encode(), usedforsecurity=False)
-    dumped = json.dumps(obj.to_keyed_dict(include_defaults=False),
-                        sort_keys=True, cls=JSON_HANDLER.encoder)
+    dumped = json.dumps(
+        obj.to_keyed_dict(include_defaults=False),
+        sort_keys=True,
+        cls=JSON_HANDLER.encoder,
+    )
     hasher = hashlib.md5(dumped.encode(), usedforsecurity=False)
     return hasher.hexdigest()

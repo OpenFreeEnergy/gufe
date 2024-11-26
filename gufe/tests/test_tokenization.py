@@ -1,17 +1,26 @@
-import pytest
 import abc
 import datetime
-import logging
 import io
-from unittest import mock
 import json
+import logging
 from typing import Optional
+from unittest import mock
+
+import pytest
 
 from gufe.tokenization import (
-    GufeTokenizable, GufeKey, tokenize, TOKENIZABLE_REGISTRY,
-    import_qualname, get_class, TOKENIZABLE_CLASS_REGISTRY, JSON_HANDLER,
-    get_all_gufe_objs, gufe_to_digraph, gufe_objects_from_shallow_dict,
+    JSON_HANDLER,
+    TOKENIZABLE_CLASS_REGISTRY,
+    TOKENIZABLE_REGISTRY,
+    GufeKey,
+    GufeTokenizable,
     KeyedChain,
+    get_all_gufe_objs,
+    get_class,
+    gufe_objects_from_shallow_dict,
+    gufe_to_digraph,
+    import_qualname,
+    tokenize,
 )
 
 
@@ -65,7 +74,7 @@ class Container(GufeTokenizable):
         self.dct = dct
 
     def _to_dict(self):
-        return {'obj': self.obj, 'lst': self.lst, 'dct': self.dct}
+        return {"obj": self.obj, "lst": self.lst, "dct": self.dct}
 
     @classmethod
     def _from_dict(cls, dct):
@@ -87,9 +96,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     @pytest.fixture
     def instance(self):
-        """Define instance to test with here.
-
-        """
+        """Define instance to test with here."""
         ...
 
     def test_to_dict_roundtrip(self, instance):
@@ -102,7 +109,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
-        #assert ser == reser
+        # assert ser == reser
 
     @pytest.mark.skip
     def test_to_dict_roundtrip_clear_registry(self, instance):
@@ -125,7 +132,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
-        #assert ser == reser
+        # assert ser == reser
 
     def test_to_shallow_dict_roundtrip(self, instance):
         ser = instance.to_shallow_dict()
@@ -137,7 +144,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
-        #assert ser == reser
+        # assert ser == reser
 
     def test_key_stable(self, instance):
         """Check that generating the instance from a dict representation yields
@@ -164,9 +171,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     @pytest.fixture
     def instance(self):
-        """Define instance to test with here.
-
-        """
+        """Define instance to test with here."""
         return self.cont
 
     def setup_method(self):
@@ -176,49 +181,55 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         self.cont = Container(bar, [leaf, 0], {"leaf": leaf, "a": "b"})
 
         def leaf_dict(a):
-            return {'__module__': __name__, '__qualname__': "Leaf", "a": a,
-                    "b": 2, ':version:': 1}
+            return {
+                "__module__": __name__,
+                "__qualname__": "Leaf",
+                "a": a,
+                "b": 2,
+                ":version:": 1,
+            }
 
         self.expected_deep = {
-            '__qualname__': "Container",
-            '__module__': __name__,
-            'obj': leaf_dict(leaf_dict("foo")),
-            'lst': [leaf_dict("foo"), 0],
-            'dct': {"leaf": leaf_dict("foo"), "a": "b"},
-            ':version:': 1,
+            "__qualname__": "Container",
+            "__module__": __name__,
+            "obj": leaf_dict(leaf_dict("foo")),
+            "lst": [leaf_dict("foo"), 0],
+            "dct": {"leaf": leaf_dict("foo"), "a": "b"},
+            ":version:": 1,
         }
 
         self.expected_shallow = {
-            '__qualname__': "Container",
-            '__module__': __name__,
-            'obj': bar,
-            'lst': [leaf, 0],
-            'dct': {'leaf': leaf, 'a': 'b'},
-            ':version:': 1,
+            "__qualname__": "Container",
+            "__module__": __name__,
+            "obj": bar,
+            "lst": [leaf, 0],
+            "dct": {"leaf": leaf, "a": "b"},
+            ":version:": 1,
         }
 
         self.expected_keyed = {
-            '__qualname__': "Container",
-            '__module__': __name__,
-            'obj': {":gufe-key:": bar.key},
-            'lst': [{":gufe-key:": leaf.key}, 0],
-            'dct': {'leaf': {":gufe-key:": leaf.key}, 'a': 'b'},
-            ':version:': 1,
+            "__qualname__": "Container",
+            "__module__": __name__,
+            "obj": {":gufe-key:": bar.key},
+            "lst": [{":gufe-key:": leaf.key}, 0],
+            "dct": {"leaf": {":gufe-key:": leaf.key}, "a": "b"},
+            ":version:": 1,
         }
 
         self.expected_keyed_chain = [
-            (str(leaf.key),
-             leaf_dict("foo")),
-            (str(bar.key),
-             leaf_dict({':gufe-key:': str(leaf.key)})),
-            (str(self.cont.key),
-             {':version:': 1,
-              '__module__': __name__,
-              '__qualname__': 'Container',
-              'dct': {'a': 'b',
-                      'leaf': {':gufe-key:': str(leaf.key)}},
-              'lst': [{':gufe-key:': str(leaf.key)}, 0],
-              'obj': {':gufe-key:': str(bar.key)}})
+            (str(leaf.key), leaf_dict("foo")),
+            (str(bar.key), leaf_dict({":gufe-key:": str(leaf.key)})),
+            (
+                str(self.cont.key),
+                {
+                    ":version:": 1,
+                    "__module__": __name__,
+                    "__qualname__": "Container",
+                    "dct": {"a": "b", "leaf": {":gufe-key:": str(leaf.key)}},
+                    "lst": [{":gufe-key:": str(leaf.key)}, 0],
+                    "obj": {":gufe-key:": str(bar.key)},
+                },
+            ),
         ]
 
     def test_set_key(self):
@@ -268,7 +279,9 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert json.loads(raw_json, cls=JSON_HANDLER.decoder) == expected_key_chain
 
     def test_from_json_string(self):
-        recreated = self.cls.from_json(content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder))
+        recreated = self.cls.from_json(
+            content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder)
+        )
 
         assert recreated == self.cont
         assert recreated is self.cont
@@ -279,11 +292,18 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in JSON so fix the expected result to use lists
         expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
-        assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
+        assert (
+            json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder)
+            == expected_key_chain
+        )
 
     def test_from_json_file(self, tmpdir):
         file_path = tmpdir / "container.json"
-        json.dump(self.expected_keyed_chain, file_path.open(mode="w"), cls=JSON_HANDLER.encoder)
+        json.dump(
+            self.expected_keyed_chain,
+            file_path.open(mode="w"),
+            cls=JSON_HANDLER.encoder,
+        )
         recreated = self.cls.from_json(file=file_path)
 
         assert recreated == self.cont
@@ -299,7 +319,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # here we keep the same objects in memory
         assert recreated.obj.a is recreated.lst[0]
-        assert recreated.obj.a is recreated.dct['leaf']
+        assert recreated.obj.a is recreated.dct["leaf"]
 
     def test_notequal_different_type(self):
         l1 = Leaf(4)
@@ -326,13 +346,11 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         with pytest.raises(TypeError, match="Invalid"):
             _ = l1.copy_with_replacements(foo=10)
 
-    @pytest.mark.parametrize('level', ["DEBUG", "INFO", "CRITICAL"])
+    @pytest.mark.parametrize("level", ["DEBUG", "INFO", "CRITICAL"])
     def test_logging(self, level):
         stream = io.StringIO()
         handler = logging.StreamHandler(stream)
-        fmt = logging.Formatter(
-            "%(name)s - %(gufekey)s - %(levelname)s - %(message)s"
-        )
+        fmt = logging.Formatter("%(name)s - %(gufekey)s - %(levelname)s - %(message)s")
         name = "gufekey.gufe.tests.test_tokenization.Leaf"
         logger = logging.getLogger(name)
         logger.setLevel(getattr(logging, level))
@@ -342,7 +360,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         leaf = Leaf(10)
 
         results = stream.getvalue()
-        key = leaf.key.split('-')[-1]
+        key = leaf.key.split("-")[-1]
 
         initial_log = f"{name} - UNKNOWN - INFO - no key defined!\n"
         info_log = f"{name} - {key} - INFO - a=10\n"
@@ -370,11 +388,14 @@ class Outer:
         pass
 
 
-@pytest.mark.parametrize('modname, qualname, expected', [
-    (__name__, "Outer", Outer),
-    (__name__, "Outer.Inner", Outer.Inner),
-    ("gufe.tokenization", 'import_qualname', import_qualname),
-])
+@pytest.mark.parametrize(
+    "modname, qualname, expected",
+    [
+        (__name__, "Outer", Outer),
+        (__name__, "Outer.Inner", Outer.Inner),
+        ("gufe.tokenization", "import_qualname", import_qualname),
+    ],
+)
 def test_import_qualname(modname, qualname, expected):
     assert import_qualname(modname, qualname) is expected
 
@@ -382,9 +403,9 @@ def test_import_qualname(modname, qualname, expected):
 def test_import_qualname_not_yet_imported():
     # this is specifically to test that something we don't have imported in
     # this module will import correctly
-    msg_cls = import_qualname(modname="email.message",
-                              qualname="EmailMessage")
+    msg_cls = import_qualname(modname="email.message", qualname="EmailMessage")
     from email.message import EmailMessage
+
     assert msg_cls is EmailMessage
 
 
@@ -393,26 +414,33 @@ def test_import_qualname_remappings():
     assert import_qualname("foo", "Bar.Baz", remappings) is Outer.Inner
 
 
-@pytest.mark.parametrize('modname, qualname', [
-    (None, "Outer.Inner"),
-    (__name__, None),
-])
+@pytest.mark.parametrize(
+    "modname, qualname",
+    [
+        (None, "Outer.Inner"),
+        (__name__, None),
+    ],
+)
 def test_import_qualname_error_none(modname, qualname):
     with pytest.raises(ValueError, match="cannot be None"):
         import_qualname(modname, qualname)
 
 
-
-@pytest.mark.parametrize('cls_reg', [
-    {},
-    {(__name__, "Outer.Inner"): Outer.Inner},
-])
+@pytest.mark.parametrize(
+    "cls_reg",
+    [
+        {},
+        {(__name__, "Outer.Inner"): Outer.Inner},
+    ],
+)
 def test_get_class(cls_reg):
     with mock.patch.dict("gufe.tokenization.TOKENIZABLE_CLASS_REGISTRY", cls_reg):
         assert get_class(__name__, "Outer.Inner") is Outer.Inner
 
+
 def test_path_to_json():
     import pathlib
+
     p = pathlib.Path("foo/bar")
     ser = json.dumps(p, cls=JSON_HANDLER.encoder)
     deser = json.loads(ser, cls=JSON_HANDLER.decoder)
@@ -423,19 +451,19 @@ def test_path_to_json():
 
 class TestGufeKey:
     def test_to_dict(self):
-        k = GufeKey('foo-bar')
+        k = GufeKey("foo-bar")
 
-        assert k.to_dict() == {':gufe-key:': 'foo-bar'}
+        assert k.to_dict() == {":gufe-key:": "foo-bar"}
 
     def test_prefix(self):
-        k = GufeKey('foo-bar')
+        k = GufeKey("foo-bar")
 
-        assert k.prefix == 'foo'
+        assert k.prefix == "foo"
 
     def test_token(self):
-        k = GufeKey('foo-bar')
+        k = GufeKey("foo-bar")
 
-        assert k.token == 'bar'
+        assert k.token == "bar"
 
 
 def test_gufe_to_digraph(solvated_complex):
@@ -472,9 +500,7 @@ class TestKeyedChain:
         assert len(kc) == expected_len
 
         original_keys = [obj.key for obj in contained_objects]
-        original_keyed_dicts = [
-            obj.to_keyed_dict() for obj in contained_objects
-        ]
+        original_keyed_dicts = [obj.to_keyed_dict() for obj in contained_objects]
 
         kc_gufe_keys = set(kc.gufe_keys())
         kc_keyed_dicts = list(kc.keyed_dicts())
@@ -498,7 +524,7 @@ class TestKeyedChain:
 
 
 def test_datetime_to_json():
-    d = datetime.datetime.fromisoformat('2023-05-05T09:06:43.699068')
+    d = datetime.datetime.fromisoformat("2023-05-05T09:06:43.699068")
 
     ser = json.dumps(d, cls=JSON_HANDLER.encoder)
 

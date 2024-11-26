@@ -6,15 +6,16 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Union, Sized
-from openff.units import Quantity
 import warnings
+from collections.abc import Iterable
+from typing import Any, Optional, Union, Sized
 
-from ..settings import Settings
-from ..tokenization import GufeTokenizable, GufeKey
+from openff.units import Quantity
+
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
-
+from ..settings import Settings, SettingsBaseModel
+from ..tokenization import GufeKey, GufeTokenizable
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
 
@@ -70,12 +71,10 @@ class ProtocolResult(GufeTokenizable):
         return self._data
 
     @abc.abstractmethod
-    def get_estimate(self) -> Quantity:
-        ...
+    def get_estimate(self) -> Quantity: ...
 
     @abc.abstractmethod
-    def get_uncertainty(self) -> Quantity:
-        ...
+    def get_uncertainty(self) -> Quantity: ...
 
 
 class Protocol(GufeTokenizable):
@@ -93,6 +92,7 @@ class Protocol(GufeTokenizable):
     - `_gather`
     - `_default_settings`
     """
+
     _settings: Settings
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
@@ -122,7 +122,7 @@ class Protocol(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'settings': self.settings}
+        return {"settings": self.settings}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -190,12 +190,14 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
+        mapping: Optional[
+            Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]
+        ],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
-        transformation_key: Optional[GufeKey] = None
+        transformation_key: Optional[GufeKey] = None,
     ) -> ProtocolDAG:
-        """Prepare a `ProtocolDAG` with all information required for execution.
+        r"""Prepare a `ProtocolDAG` with all information required for execution.
 
         A :class:`.ProtocolDAG` is composed of :class:`.ProtocolUnit` \s, with
         dependencies established between them. These form a directed, acyclic
@@ -234,9 +236,13 @@ class Protocol(GufeTokenizable):
             A directed, acyclic graph that can be executed by a `Scheduler`.
         """
         if isinstance(mapping, dict):
-            warnings.warn(("mapping input as a dict is deprecated, "
-                           "instead use either a single Mapping or list"),
-                          DeprecationWarning)
+            warnings.warn(
+                (
+                    "mapping input as a dict is deprecated, "
+                    "instead use either a single Mapping or list"
+                ),
+                DeprecationWarning,
+            )
             mapping = list(mapping.values())
 
         return ProtocolDAG(
@@ -248,7 +254,7 @@ class Protocol(GufeTokenizable):
                 extends=extends,
             ),
             transformation_key=transformation_key,
-            extends_key=extends.key if extends is not None else None
+            extends_key=extends.key if extends is not None else None,
         )
 
     def gather(

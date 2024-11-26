@@ -1,16 +1,16 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Optional, Iterable, Union
 import json
 import warnings
-
-from ..tokenization import GufeTokenizable, JSON_HANDLER
-from ..utils import ensure_filelike
+from collections.abc import Iterable
+from typing import Optional, Union
 
 from ..chemicalsystem import ChemicalSystem
-from ..protocols import Protocol, ProtocolDAG, ProtocolResult, ProtocolDAGResult
 from ..mapping import ComponentMapping
+from ..protocols import Protocol, ProtocolDAG, ProtocolDAGResult, ProtocolResult
+from ..tokenization import JSON_HANDLER, GufeTokenizable
+from ..utils import ensure_filelike
 
 
 class Transformation(GufeTokenizable):
@@ -25,10 +25,12 @@ class Transformation(GufeTokenizable):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
+        mapping: Optional[
+            Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]
+        ] = None,
         name: Optional[str] = None,
     ):
-        """Two chemical states with a method for estimating free energy difference
+        r"""Two chemical states with a method for estimating free energy difference
 
         Connects two :class:`.ChemicalSystem` objects, with directionality,
         and relates this to a :class:`.Protocol` which will provide an estimate of
@@ -49,9 +51,13 @@ class Transformation(GufeTokenizable):
            a human-readable tag for this transformation
         """
         if isinstance(mapping, dict):
-            warnings.warn(("mapping input as a dict is deprecated, "
-                           "instead use either a single Mapping or list"),
-                          DeprecationWarning)
+            warnings.warn(
+                (
+                    "mapping input as a dict is deprecated, "
+                    "instead use either a single Mapping or list"
+                ),
+                DeprecationWarning,
+            )
             mapping = list(mapping.values())
 
         self._stateA = stateA
@@ -66,8 +72,10 @@ class Transformation(GufeTokenizable):
         return super()._defaults()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(stateA={self.stateA}, "\
-               f"stateB={self.stateB}, protocol={self.protocol})"
+        return (
+            f"{self.__class__.__name__}(stateA={self.stateA}, "
+            f"stateB={self.stateB}, protocol={self.protocol})"
+        )
 
     @property
     def stateA(self) -> ChemicalSystem:
@@ -170,9 +178,8 @@ class Transformation(GufeTokenizable):
         file : Union[PathLike, FileLike]
             a pathlike of filelike to save this transformation to.
         """
-        with ensure_filelike(file, mode='w') as f:
-            json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder,
-                      sort_keys=True)
+        with ensure_filelike(file, mode="w") as f:
+            json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder, sort_keys=True)
 
     @classmethod
     def load(cls, file):
@@ -183,7 +190,7 @@ class Transformation(GufeTokenizable):
         file : Union[PathLike, FileLike]
             a pathlike or filelike to read this transformation from
         """
-        with ensure_filelike(file, mode='r') as f:
+        with ensure_filelike(file, mode="r") as f:
             dct = json.load(f, cls=JSON_HANDLER.decoder)
 
         return cls.from_dict(dct)
