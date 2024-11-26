@@ -28,40 +28,71 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from __future__ import print_function, division, absolute_import
+
 __author__ = "Peter Eastman"  # was true but now riesben vendored this! HarrHarr
 __version__ = "1.0"
 
+import math
 import os
 import sys
-import math
-import numpy as np
 import xml.etree.ElementTree as etree
 from copy import copy
 from datetime import date
 
+import numpy as np
+from openmm.unit import Quantity, angstroms, is_quantity, nanometers, norm
+
+from . import element as elem
+from .pdbstructure import PdbStructure
 from .topology import Topology
 from .unitcell import computeLengthsAndAngles
-from .pdbstructure import PdbStructure
-from . import element as elem
-
-from openmm.unit import nanometers, angstroms, is_quantity, norm, Quantity
 
 
-class PDBFile(object):
+class PDBFile:
     """PDBFile parses a Protein Data Bank (PDB) file and constructs a Topology and a set of atom positions from it.
 
     This class also provides methods for creating PDB files.  To write a file containing a single model, call
     writeFile().  You also can create files that contain multiple models.  To do this, first call writeHeader(),
-    then writeModel() once for each model in the file, and finally writeFooter() to complete the file."""
+    then writeModel() once for each model in the file, and finally writeFooter() to complete the file.
+    """
 
     _residueNameReplacements = {}
     _atomNameReplacements = {}
-    _standardResidues = ['ALA', 'ASN', 'CYS', 'GLU', 'HIS', 'LEU', 'MET', 'PRO', 'THR', 'TYR',
-                         'ARG', 'ASP', 'GLN', 'GLY', 'ILE', 'LYS', 'PHE', 'SER', 'TRP', 'VAL',
-                         'A', 'G', 'C', 'U', 'I', 'DA', 'DG', 'DC', 'DT', 'DI', 'HOH']
+    _standardResidues = [
+        "ALA",
+        "ASN",
+        "CYS",
+        "GLU",
+        "HIS",
+        "LEU",
+        "MET",
+        "PRO",
+        "THR",
+        "TYR",
+        "ARG",
+        "ASP",
+        "GLN",
+        "GLY",
+        "ILE",
+        "LYS",
+        "PHE",
+        "SER",
+        "TRP",
+        "VAL",
+        "A",
+        "G",
+        "C",
+        "U",
+        "I",
+        "DA",
+        "DG",
+        "DC",
+        "DT",
+        "DI",
+        "HOH",
+    ]
 
-    def __init__(self, file, extraParticleIdentifier='EP'):
+    def __init__(self, file, extraParticleIdentifier="EP"):
         """Load a PDB file.
 
         The atom positions and Topology can be retrieved by calling getPositions() and getTopology().
@@ -73,10 +104,46 @@ class PDBFile(object):
         extraParticleIdentifier : string='EP'
             if this value appears in the element column for an ATOM record, the Atom's element will be set to None to mark it as an extra particle
         """
-        
-        metalElements = ['Al','As','Ba','Ca','Cd','Ce','Co','Cs','Cu','Dy','Fe','Gd','Hg','Ho','In','Ir','K','Li','Mg',
-        'Mn','Mo','Na','Ni','Pb','Pd','Pt','Rb','Rh','Sm','Sr','Te','Tl','V','W','Yb','Zn']
-        
+
+        metalElements = [
+            "Al",
+            "As",
+            "Ba",
+            "Ca",
+            "Cd",
+            "Ce",
+            "Co",
+            "Cs",
+            "Cu",
+            "Dy",
+            "Fe",
+            "Gd",
+            "Hg",
+            "Ho",
+            "In",
+            "Ir",
+            "K",
+            "Li",
+            "Mg",
+            "Mn",
+            "Mo",
+            "Na",
+            "Ni",
+            "Pb",
+            "Pd",
+            "Pt",
+            "Rb",
+            "Rh",
+            "Sm",
+            "Sr",
+            "Te",
+            "Tl",
+            "V",
+            "W",
+            "Yb",
+            "Zn",
+        ]
+
         top = Topology()
         ## The Topology read from the PDB file
         self.topology = top
@@ -91,7 +158,11 @@ class PDBFile(object):
             if isinstance(file, str):
                 inputfile = open(file)
                 own_handle = True
-            pdb = PdbStructure(inputfile, load_all_models=True, extraParticleIdentifier=extraParticleIdentifier)
+            pdb = PdbStructure(
+                inputfile,
+                load_all_models=True,
+                extraParticleIdentifier=extraParticleIdentifier,
+            )
             if own_handle:
                 inputfile.close()
         PDBFile._loadNameReplacementTables()
@@ -105,7 +176,9 @@ class PDBFile(object):
                 resName = residue.get_name()
                 if resName in PDBFile._residueNameReplacements:
                     resName = PDBFile._residueNameReplacements[resName]
-                r = top.addResidue(resName, c, str(residue.number), residue.insertion_code)
+                r = top.addResidue(
+                    resName, c, str(residue.number), residue.insertion_code
+                )
                 if resName in PDBFile._atomNameReplacements:
                     atomReplacements = PDBFile._atomNameReplacements[resName]
                 else:
@@ -113,14 +186,17 @@ class PDBFile(object):
                 processedAtomNames = set()
                 for atom in residue.atoms_by_name.values():
                     atomName = atom.get_name()
-                    if atomName in processedAtomNames or atom.residue_name != residue.get_name():
+                    if (
+                        atomName in processedAtomNames
+                        or atom.residue_name != residue.get_name()
+                    ):
                         continue
                     processedAtomNames.add(atomName)
                     if atomName in atomReplacements:
                         atomName = atomReplacements[atomName]
                     atomName = atomName.strip()
                     element = atom.element
-                    if element == 'EP':
+                    if element == "EP":
                         element = None
                     elif element is None:
                         # Try to guess the element.
@@ -128,24 +204,26 @@ class PDBFile(object):
                         upper = atomName.upper()
                         while len(upper) > 1 and upper[0].isdigit():
                             upper = upper[1:]
-                        if upper.startswith('CL'):
+                        if upper.startswith("CL"):
                             element = elem.chlorine
-                        elif upper.startswith('NA'):
+                        elif upper.startswith("NA"):
                             element = elem.sodium
-                        elif upper.startswith('MG'):
+                        elif upper.startswith("MG"):
                             element = elem.magnesium
-                        elif upper.startswith('BE'):
+                        elif upper.startswith("BE"):
                             element = elem.beryllium
-                        elif upper.startswith('LI'):
+                        elif upper.startswith("LI"):
                             element = elem.lithium
-                        elif upper.startswith('K'):
+                        elif upper.startswith("K"):
                             element = elem.potassium
-                        elif upper.startswith('ZN'):
+                        elif upper.startswith("ZN"):
                             element = elem.zinc
-                        elif len(residue) == 1 and upper.startswith('CA'):
+                        elif len(residue) == 1 and upper.startswith("CA"):
                             element = elem.calcium
-                        elif upper.startswith('D') and any(a.name == atomName[1:] for a in residue.iter_atoms()):
-                            pass # A Drude particle
+                        elif upper.startswith("D") and any(
+                            a.name == atomName[1:] for a in residue.iter_atoms()
+                        ):
+                            pass  # A Drude particle
                         else:
                             try:
                                 element = elem.get_by_symbol(upper[0])
@@ -160,12 +238,15 @@ class PDBFile(object):
                 for residue in chain.iter_residues():
                     processedAtomNames = set()
                     for atom in residue.atoms_by_name.values():
-                        if atom.get_name() in processedAtomNames or atom.residue_name != residue.get_name():
+                        if (
+                            atom.get_name() in processedAtomNames
+                            or atom.residue_name != residue.get_name()
+                        ):
                             continue
                         processedAtomNames.add(atom.get_name())
                         pos = atom.get_position().value_in_unit(nanometers)
                         coords.append(np.array([pos[0], pos[1], pos[2]]))
-            self._positions.append(coords*nanometers)
+            self._positions.append(coords * nanometers)
         ## The atom positions read from the PDB file.  If the file contains multiple frames, these are the positions in the first frame.
         self.positions = self._positions[0]
         self.topology.setPeriodicBoxVectors(pdb.get_periodic_box_vectors())
@@ -179,21 +260,38 @@ class PDBFile(object):
         for connect in pdb.models[-1].connects:
             i = connect[0]
             for j in connect[1:]:
-                if i in atomByNumber and j in atomByNumber:    
-                    if atomByNumber[i].element is not None and atomByNumber[j].element is not None:
-                        if atomByNumber[i].element.symbol not in metalElements and atomByNumber[j].element.symbol not in metalElements:
-                            connectBonds.append((atomByNumber[i], atomByNumber[j])) 
-                        elif atomByNumber[i].element.symbol in metalElements and atomByNumber[j].residue.name not in PDBFile._standardResidues:
-                            connectBonds.append((atomByNumber[i], atomByNumber[j])) 
-                        elif atomByNumber[j].element.symbol in metalElements and atomByNumber[i].residue.name not in PDBFile._standardResidues:
-                            connectBonds.append((atomByNumber[i], atomByNumber[j]))     
+                if i in atomByNumber and j in atomByNumber:
+                    if (
+                        atomByNumber[i].element is not None
+                        and atomByNumber[j].element is not None
+                    ):
+                        if (
+                            atomByNumber[i].element.symbol not in metalElements
+                            and atomByNumber[j].element.symbol not in metalElements
+                        ):
+                            connectBonds.append((atomByNumber[i], atomByNumber[j]))
+                        elif (
+                            atomByNumber[i].element.symbol in metalElements
+                            and atomByNumber[j].residue.name
+                            not in PDBFile._standardResidues
+                        ):
+                            connectBonds.append((atomByNumber[i], atomByNumber[j]))
+                        elif (
+                            atomByNumber[j].element.symbol in metalElements
+                            and atomByNumber[i].residue.name
+                            not in PDBFile._standardResidues
+                        ):
+                            connectBonds.append((atomByNumber[i], atomByNumber[j]))
                     else:
-                        connectBonds.append((atomByNumber[i], atomByNumber[j]))         
+                        connectBonds.append((atomByNumber[i], atomByNumber[j]))
         if len(connectBonds) > 0:
             # Only add bonds that don't already exist.
             existingBonds = set(top.bonds())
             for bond in connectBonds:
-                if bond not in existingBonds and (bond[1], bond[0]) not in existingBonds:
+                if (
+                    bond not in existingBonds
+                    and (bond[1], bond[0]) not in existingBonds
+                ):
                     top.addBond(bond[0], bond[1])
                     existingBonds.add(bond)
 
@@ -218,9 +316,12 @@ class PDBFile(object):
         """
         if asNumpy:
             if self._numpyPositions is None:
-                self._numpyPositions = [None]*len(self._positions)
+                self._numpyPositions = [None] * len(self._positions)
             if self._numpyPositions[frame] is None:
-                self._numpyPositions[frame] = Quantity(np.array(self._positions[frame].value_in_unit(nanometers)), nanometers)
+                self._numpyPositions[frame] = Quantity(
+                    np.array(self._positions[frame].value_in_unit(nanometers)),
+                    nanometers,
+                )
             return self._numpyPositions[frame]
         return self._positions[frame]
 
@@ -228,31 +329,33 @@ class PDBFile(object):
     def _loadNameReplacementTables():
         """Load the list of atom and residue name replacements."""
         if len(PDBFile._residueNameReplacements) == 0:
-            tree = etree.parse(os.path.join(os.path.dirname(__file__), 'data', 'pdbNames.xml'))
+            tree = etree.parse(
+                os.path.join(os.path.dirname(__file__), "data", "pdbNames.xml")
+            )
             allResidues = {}
             proteinResidues = {}
             nucleicAcidResidues = {}
-            for residue in tree.getroot().findall('Residue'):
-                name = residue.attrib['name']
-                if name == 'All':
+            for residue in tree.getroot().findall("Residue"):
+                name = residue.attrib["name"]
+                if name == "All":
                     PDBFile._parseResidueAtoms(residue, allResidues)
-                elif name == 'Protein':
+                elif name == "Protein":
                     PDBFile._parseResidueAtoms(residue, proteinResidues)
-                elif name == 'Nucleic':
+                elif name == "Nucleic":
                     PDBFile._parseResidueAtoms(residue, nucleicAcidResidues)
             for atom in allResidues:
                 proteinResidues[atom] = allResidues[atom]
                 nucleicAcidResidues[atom] = allResidues[atom]
-            for residue in tree.getroot().findall('Residue'):
-                name = residue.attrib['name']
+            for residue in tree.getroot().findall("Residue"):
+                name = residue.attrib["name"]
                 for id in residue.attrib:
-                    if id == 'name' or id.startswith('alt'):
+                    if id == "name" or id.startswith("alt"):
                         PDBFile._residueNameReplacements[residue.attrib[id]] = name
-                if 'type' not in residue.attrib:
+                if "type" not in residue.attrib:
                     atoms = copy(allResidues)
-                elif residue.attrib['type'] == 'Protein':
+                elif residue.attrib["type"] == "Protein":
                     atoms = copy(proteinResidues)
-                elif residue.attrib['type'] == 'Nucleic':
+                elif residue.attrib["type"] == "Nucleic":
                     atoms = copy(nucleicAcidResidues)
                 else:
                     atoms = copy(allResidues)
@@ -261,13 +364,19 @@ class PDBFile(object):
 
     @staticmethod
     def _parseResidueAtoms(residue, map):
-        for atom in residue.findall('Atom'):
-            name = atom.attrib['name']
+        for atom in residue.findall("Atom"):
+            name = atom.attrib["name"]
             for id in atom.attrib:
                 map[atom.attrib[id]] = name
 
     @staticmethod
-    def writeFile(topology, positions, file=sys.stdout, keepIds=False, extraParticleIdentifier='EP'):
+    def writeFile(
+        topology,
+        positions,
+        file=sys.stdout,
+        keepIds=False,
+        extraParticleIdentifier="EP",
+    ):
         """Write a PDB file containing a single model.
 
         Parameters
@@ -287,7 +396,13 @@ class PDBFile(object):
             String to write in the element column of the ATOM records for atoms whose element is None (extra particles)
         """
         PDBFile.writeHeader(topology, file)
-        PDBFile.writeModel(topology, positions, file, keepIds=keepIds, extraParticleIdentifier=extraParticleIdentifier)
+        PDBFile.writeModel(
+            topology,
+            positions,
+            file,
+            keepIds=keepIds,
+            extraParticleIdentifier=extraParticleIdentifier,
+        )
         PDBFile.writeFooter(topology, file)
 
     @staticmethod
@@ -305,12 +420,29 @@ class PDBFile(object):
         vectors = topology.getPeriodicBoxVectors()
         if vectors is not None:
             a, b, c, alpha, beta, gamma = computeLengthsAndAngles(vectors)
-            RAD_TO_DEG = 180/math.pi
-            print("CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1           1 " % (
-                    a*10, b*10, c*10, alpha*RAD_TO_DEG, beta*RAD_TO_DEG, gamma*RAD_TO_DEG), file=file)
+            RAD_TO_DEG = 180 / math.pi
+            print(
+                "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1           1 "
+                % (
+                    a * 10,
+                    b * 10,
+                    c * 10,
+                    alpha * RAD_TO_DEG,
+                    beta * RAD_TO_DEG,
+                    gamma * RAD_TO_DEG,
+                ),
+                file=file,
+            )
 
     @staticmethod
-    def writeModel(topology, positions, file=sys.stdout, modelIndex=None, keepIds=False, extraParticleIdentifier='EP'):
+    def writeModel(
+        topology,
+        positions,
+        file=sys.stdout,
+        modelIndex=None,
+        keepIds=False,
+        extraParticleIdentifier="EP",
+    ):
         """Write out a model to a PDB file.
 
         Parameters
@@ -335,26 +467,30 @@ class PDBFile(object):
         """
 
         if len(list(topology.atoms())) != len(positions):
-            raise ValueError('The number of positions must match the number of atoms')
+            raise ValueError("The number of positions must match the number of atoms")
         if is_quantity(positions):
             positions = positions.value_in_unit(angstroms)
         if any(math.isnan(norm(pos)) for pos in positions):
-            raise ValueError('Particle position is NaN.  For more information, see https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions#nan')
+            raise ValueError(
+                "Particle position is NaN.  For more information, see https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions#nan"
+            )
         if any(math.isinf(norm(pos)) for pos in positions):
-            raise ValueError('Particle position is infinite.  For more information, see https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions#nan')
+            raise ValueError(
+                "Particle position is infinite.  For more information, see https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions#nan"
+            )
         nonHeterogens = PDBFile._standardResidues[:]
-        nonHeterogens.remove('HOH')
+        nonHeterogens.remove("HOH")
         atomIndex = 1
         posIndex = 0
         if modelIndex is not None:
             print("MODEL     %4d" % modelIndex, file=file)
-        for (chainIndex, chain) in enumerate(topology.chains()):
+        for chainIndex, chain in enumerate(topology.chains()):
             if keepIds and len(chain.id) == 1:
                 chainName = chain.id
             else:
-                chainName = chr(ord('A')+chainIndex%26)
+                chainName = chr(ord("A") + chainIndex % 26)
             residues = list(chain.residues())
-            for (resIndex, res) in enumerate(residues):
+            for resIndex, res in enumerate(residues):
                 if len(res.name) > 3:
                     resName = res.name[:3]
                 else:
@@ -362,7 +498,7 @@ class PDBFile(object):
                 if keepIds and len(res.id) < 5:
                     resId = res.id
                 else:
-                    resId = _formatIndex(resIndex+1, 4)
+                    resId = _formatIndex(resIndex + 1, 4)
                 if len(res.insertionCode) == 1:
                     resIC = res.insertionCode
                 else:
@@ -376,23 +512,44 @@ class PDBFile(object):
                         symbol = atom.element.symbol
                     else:
                         symbol = extraParticleIdentifier
-                    if len(atom.name) < 4 and atom.name[:1].isalpha() and len(symbol) < 2:
-                        atomName = ' '+atom.name
+                    if (
+                        len(atom.name) < 4
+                        and atom.name[:1].isalpha()
+                        and len(symbol) < 2
+                    ):
+                        atomName = " " + atom.name
                     elif len(atom.name) > 4:
                         atomName = atom.name[:4]
                     else:
                         atomName = atom.name
                     coords = positions[posIndex]
-                    line = "%s%5s %-4s %3s %s%4s%1s   %s%s%s  1.00  0.00          %2s  " % (
-                        recordName, _formatIndex(atomIndex, 5), atomName, resName, chainName, resId, resIC, _format_83(coords[0]),
-                        _format_83(coords[1]), _format_83(coords[2]), symbol)
+                    line = (
+                        "%s%5s %-4s %3s %s%4s%1s   %s%s%s  1.00  0.00          %2s  "
+                        % (
+                            recordName,
+                            _formatIndex(atomIndex, 5),
+                            atomName,
+                            resName,
+                            chainName,
+                            resId,
+                            resIC,
+                            _format_83(coords[0]),
+                            _format_83(coords[1]),
+                            _format_83(coords[2]),
+                            symbol,
+                        )
+                    )
                     if len(line) != 80:
-                        raise ValueError('Fixed width overflow detected')
+                        raise ValueError("Fixed width overflow detected")
                     print(line, file=file)
                     posIndex += 1
                     atomIndex += 1
-                if resIndex == len(residues)-1:
-                    print("TER   %5s      %3s %s%4s" % (_formatIndex(atomIndex, 5), resName, chainName, resId), file=file)
+                if resIndex == len(residues) - 1:
+                    print(
+                        "TER   %5s      %3s %s%4s"
+                        % (_formatIndex(atomIndex, 5), resName, chainName, resId),
+                        file=file,
+                    )
                     atomIndex += 1
         if modelIndex is not None:
             print("ENDMDL", file=file)
@@ -412,9 +569,17 @@ class PDBFile(object):
 
         conectBonds = []
         for atom1, atom2 in topology.bonds():
-            if atom1.residue.name not in PDBFile._standardResidues or atom2.residue.name not in PDBFile._standardResidues:
+            if (
+                atom1.residue.name not in PDBFile._standardResidues
+                or atom2.residue.name not in PDBFile._standardResidues
+            ):
                 conectBonds.append((atom1, atom2))
-            elif atom1.name == 'SG' and atom2.name == 'SG' and atom1.residue.name == 'CYS' and atom2.residue.name == 'CYS':
+            elif (
+                atom1.name == "SG"
+                and atom2.name == "SG"
+                and atom1.residue.name == "CYS"
+                and atom2.residue.name == "CYS"
+            ):
                 conectBonds.append((atom1, atom2))
         if len(conectBonds) > 0:
 
@@ -449,7 +614,16 @@ class PDBFile(object):
             for index1 in sorted(atomBonds):
                 bonded = atomBonds[index1]
                 while len(bonded) > 4:
-                    print("CONECT%5s%5s%5s%5s" % (_formatIndex(index1, 5), _formatIndex(bonded[0], 5), _formatIndex(bonded[1], 5), _formatIndex(bonded[2], 5)), file=file)
+                    print(
+                        "CONECT%5s%5s%5s%5s"
+                        % (
+                            _formatIndex(index1, 5),
+                            _formatIndex(bonded[0], 5),
+                            _formatIndex(bonded[1], 5),
+                            _formatIndex(bonded[2], 5),
+                        ),
+                        file=file,
+                    )
                     del bonded[:4]
                 line = "CONECT%5s" % _formatIndex(index1, 5)
                 for index2 in bonded:
@@ -464,19 +638,21 @@ def _format_83(f):
     gracefully degrade the precision by lopping off some of the decimal
     places. If it's much too large, we throw a ValueError"""
     if -999.999 < f < 9999.999:
-        return '%8.3f' % f
+        return "%8.3f" % f
     if -9999999 < f < 99999999:
-        return ('%8.3f' % f)[:8]
-    raise ValueError('coordinate "%s" could not be represented '
-                     'in a width-8 field' % f)
+        return ("%8.3f" % f)[:8]
+    raise ValueError(
+        'coordinate "%s" could not be represented ' "in a width-8 field" % f
+    )
+
 
 def _formatIndex(index, places):
     """Create a string representation of an atom or residue index.  If the value is larger than can fit
     in the available space, switch to hex.
     """
     if index < 10**places:
-        format = f'%{places}d'
+        format = f"%{places}d"
         return format % index
-    format = f'%{places}X'
-    shiftedIndex = (index - 10**places + 10*16**(places-1)) % (16**places)
+    format = f"%{places}X"
+    shiftedIndex = (index - 10**places + 10 * 16 ** (places - 1)) % (16**places)
     return format % shiftedIndex

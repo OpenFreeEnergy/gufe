@@ -22,6 +22,7 @@ class ensure_filelike:
         the stream will always be closed. Filelike inputs will close
         if this parameter is True.
     """
+
     def __init__(self, fn, mode=None, force_close=False):
         filelikes = (io.TextIOBase, io.RawIOBase, io.BufferedIOBase)
         if isinstance(fn, filelikes):
@@ -51,4 +52,3 @@ class ensure_filelike:
     def __exit__(self, type, value, traceback):
         if self.do_close:
             self.context.close()
-

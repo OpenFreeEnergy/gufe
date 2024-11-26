@@ -1,12 +1,11 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-from typing import Any, Collection, Optional
+from collections.abc import Collection
 from itertools import chain
+from typing import Any, Optional
 
 from rdkit import Chem
-from rdkit.Chem import Draw
-from rdkit.Chem import AllChem
-
+from rdkit.Chem import AllChem, Draw
 
 # highlight core element changes differently from unique atoms
 # RGBA color value needs to be between 0 and 1, so divide by 255
@@ -14,9 +13,7 @@ RED = (220 / 255, 50 / 255, 32 / 255, 1.0)
 BLUE = (0.0, 90 / 255, 181 / 255, 1.0)
 
 
-def _match_elements(
-        mol1: Chem.Mol, idx1: int, mol2: Chem.Mol, idx2: int
-) -> bool:
+def _match_elements(mol1: Chem.Mol, idx1: int, mol2: Chem.Mol, idx2: int) -> bool:
     """
     Convenience method to check if elements between two molecules (molA
     and molB) are the same.
@@ -43,7 +40,7 @@ def _match_elements(
 
 
 def _get_unique_bonds_and_atoms(
-        mapping: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol
+    mapping: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol
 ) -> dict:
     """
     Given an input mapping, returns new atoms, element changes, and
@@ -143,13 +140,14 @@ def _draw_molecules(
 
     if d2d is None:
         # select default layout based on number of molecules
-        grid_x, grid_y = {1: (1, 1), 2: (2, 1), }[len(mols)]
-        d2d = Draw.rdMolDraw2D.MolDraw2DCairo(
-            grid_x * 300, grid_y * 300, 300, 300)
+        grid_x, grid_y = {
+            1: (1, 1),
+            2: (2, 1),
+        }[len(mols)]
+        d2d = Draw.rdMolDraw2D.MolDraw2DCairo(grid_x * 300, grid_y * 300, 300, 300)
 
     # get molecule name labels
-    labels = [m.GetProp("ofe-name") if(m.HasProp("ofe-name"))
-              else "" for m in mols]
+    labels = [m.GetProp("ofe-name") if (m.HasProp("ofe-name")) else "" for m in mols]
 
     # squash to 2D
     copies = [Chem.Mol(mol) for mol in mols]
@@ -159,8 +157,7 @@ def _draw_molecules(
     # mol alignments if atom_mapping present
     for (i, j), atomMap in atom_mapping.items():
         AllChem.AlignMol(
-            copies[j], copies[i],
-            atomMap=[(k, v) for v, k in atomMap.items()]
+            copies[j], copies[i], atomMap=[(k, v) for v, k in atomMap.items()]
         )
 
     # standard settings for our visualization
@@ -181,7 +178,7 @@ def _draw_molecules(
 
 
 def draw_mapping(
-        mol1_to_mol2: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol, d2d=None
+    mol1_to_mol2: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol, d2d=None
 ):
     """
     Method to visualise the atom map correspondence between two rdkit
@@ -229,7 +226,6 @@ def draw_mapping(
     atom_colors = [at1_colors, at2_colors]
     bond_colors = [bd1_colors, bd2_colors]
 
-
     return _draw_molecules(
         d2d,
         [mol1, mol2],
@@ -270,14 +266,15 @@ def draw_one_molecule_mapping(mol1_to_mol2, mol1, mol2, d2d=None):
     atom_colors = [{at: BLUE for at in uniques["elements"]}]
     bond_colors = [{bd: BLUE for bd in uniques["bond_changes"]}]
 
-    return _draw_molecules(d2d,
-                           [mol1],
-                           atoms_list,
-                           bonds_list,
-                           atom_colors,
-                           bond_colors,
-                           RED,
-                           )
+    return _draw_molecules(
+        d2d,
+        [mol1],
+        atoms_list,
+        bonds_list,
+        atom_colors,
+        bond_colors,
+        RED,
+    )
 
 
 def draw_unhighlighted_molecule(mol, d2d=None):
