@@ -93,9 +93,8 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
             If `other` is not an instance of the same class as `self`.
         """
 
-        # TODO: is this too restrictive?
-        if self.__class__ is not other.__class__:
-            raise TypeError(f"Cannot compare instances of `{self.__class__.__qualname__}` with instances of `{other.__class__.__qualname__}`.")
+        if not isinstance(other, ChemicalSystem):
+            raise TypeError(f"`other` must be an instance of `{ChemicalSystem.__qualname__}`, not `{other.__class__.__qualname__}`")
 
         expanded_keys = self._components.keys() | other._components.keys()
 

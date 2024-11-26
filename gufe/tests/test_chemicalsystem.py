@@ -68,8 +68,7 @@ def test_chemical_system_component_diff(solvated_complex, solvated_ligand):
 
 
 def test_chemical_system_component_diff_incompatible_comparison(solvated_complex, phenol_ligand_comp):
-
-    with pytest.raises(TypeError, match=r"Cannot compare instances of `ChemicalSystem` with instances of `SmallMoleculeComponent`."):
+    with pytest.raises(TypeError, match=r"`other` must be an instance of `ChemicalSystem`, not `SmallMoleculeComponent`"):
         solvated_complex.component_diff(phenol_ligand_comp)
 
 
