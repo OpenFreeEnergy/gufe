@@ -8,7 +8,7 @@
 import abc
 import warnings
 from collections.abc import Iterable
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Sized
 
 from openff.units import Quantity
 
@@ -18,7 +18,6 @@ from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeKey, GufeTokenizable
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
-
 
 class ProtocolResult(GufeTokenizable):
     """
@@ -33,19 +32,33 @@ class ProtocolResult(GufeTokenizable):
     - `get_uncertainty`
     """
 
-    def __init__(self, **data):
+    def __init__(self, n_protocol_dag_results: int = 0, **data):
         self._data = data
+
+        if not n_protocol_dag_results >= 0:
+            raise ValueError("`n_protocol_dag_results` must be an integer greater than or equal to zero")
+
+        self._n_protocol_dag_results = n_protocol_dag_results
 
     @classmethod
     def _defaults(cls):
         return {}
 
     def _to_dict(self):
-        return {"data": self.data}
+        return {'n_protocol_dag_results': self.n_protocol_dag_results, 'data': self.data}
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls(**dct["data"])
+        # TODO: remove in gufe 2.0
+        try:
+            n_protocol_dag_results = dct['n_protocol_dag_results']
+        except KeyError:
+            n_protocol_dag_results = 0
+        return cls(n_protocol_dag_results=n_protocol_dag_results, **dct['data'])
+
+    @property
+    def n_protocol_dag_results(self) -> int:
+        return self._n_protocol_dag_results
 
     @property
     def data(self) -> dict[str, Any]:
@@ -260,7 +273,14 @@ class Protocol(GufeTokenizable):
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
         """
-        return self.result_cls(**self._gather(protocol_dag_results))
+        # Iterable does not implement __len__ and makes no guarantees that
+        # protocol_dag_results is finite, checking both in method signature
+        # doesn't appear possible, explicitly check for __len__ through the
+        # Sized type
+        if not isinstance(protocol_dag_results, Sized):
+            raise ValueError("`protocol_dag_results` must implement `__len__`")
+        return self.result_cls(n_protocol_dag_results=len(protocol_dag_results),
+                               **self._gather(protocol_dag_results))
 
     @abc.abstractmethod
     def _gather(
