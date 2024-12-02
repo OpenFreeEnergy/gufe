@@ -125,9 +125,7 @@ class PdbStructure:
     methods.
     """
 
-    def __init__(
-        self, input_stream, load_all_models=False, extraParticleIdentifier="EP"
-    ):
+    def __init__(self, input_stream, load_all_models=False, extraParticleIdentifier="EP"):
         """Create a PDB model from a PDB file stream.
 
         Parameters
@@ -465,8 +463,7 @@ class Chain:
         else:  # Residue name does not match
             # Only residue name does not match
             warnings.warn(
-                "WARNING: two consecutive residues with same number (%s, %s)"
-                % (atom, self._current_residue.atoms[-1])
+                "WARNING: two consecutive residues with same number ({}, {})".format(atom, self._current_residue.atoms[-1])
             )
             self._add_residue(
                 Residue(
@@ -547,9 +544,7 @@ class Chain:
 
 
 class Residue:
-    def __init__(
-        self, name, number, insertion_code=" ", primary_alternate_location_indicator=" "
-    ):
+    def __init__(self, name, number, insertion_code=" ", primary_alternate_location_indicator=" "):
         alt_loc = primary_alternate_location_indicator
         self.primary_location_id = alt_loc
         self.locations = {}
@@ -567,9 +562,7 @@ class Residue:
         """ """
         alt_loc = atom.alternate_location_indicator
         if alt_loc not in self.locations:
-            self.locations[alt_loc] = Residue.Location(
-                alt_loc, atom.residue_name_with_spaces
-            )
+            self.locations[alt_loc] = Residue.Location(alt_loc, atom.residue_name_with_spaces)
         assert atom.residue_number == self.number
         assert atom.insertion_code == self.insertion_code
         # Check whether this is an existing atom with another position
@@ -581,9 +574,7 @@ class Residue:
                     "WARNING: duplicate atom (%s, %s)"
                     % (
                         atom,
-                        old_atom._pdb_string(
-                            old_atom.serial_number, atom.alternate_location_indicator
-                        ),
+                        old_atom._pdb_string(old_atom.serial_number, atom.alternate_location_indicator),
                     )
                 )
             else:
@@ -812,15 +803,12 @@ class Atom:
                 if (
                     pdbstructure._current_model is None
                     or pdbstructure._current_model._current_chain is None
-                    or pdbstructure._current_model._current_chain._current_residue
-                    is None
+                    or pdbstructure._current_model._current_chain._current_residue is None
                 ):
                     # This is the first residue in the model.
                     self.residue_number = pdbstructure._next_residue_number
                 else:
-                    currentRes = (
-                        pdbstructure._current_model._current_chain._current_residue
-                    )
+                    currentRes = pdbstructure._current_model._current_chain._current_residue
                     if currentRes.name_with_spaces != self.residue_name_with_spaces:
                         # The residue name has changed.
                         self.residue_number = pdbstructure._next_residue_number
@@ -839,9 +827,7 @@ class Atom:
         except:
             occupancy = 1.0
         try:
-            temperature_factor = unit.Quantity(
-                float(pdb_line[60:66]), unit.angstroms**2
-            )
+            temperature_factor = unit.Quantity(float(pdb_line[60:66]), unit.angstroms**2)
         except:
             temperature_factor = unit.Quantity(0.0, unit.angstroms**2)
         self.locations = {}
@@ -1045,9 +1031,7 @@ class Atom:
         Inner class of Atom for holding alternate locations
         """
 
-        def __init__(
-            self, alt_loc, position, occupancy, temperature_factor, residue_name
-        ):
+        def __init__(self, alt_loc, position, occupancy, temperature_factor, residue_name):
             self.alternate_location_indicator = alt_loc
             self.position = position
             self.occupancy = occupancy
@@ -1096,9 +1080,7 @@ if __name__ == "__main__":
     import time
 
     # Test atom line parsing
-    pdb_line = (
-        "ATOM   2209  CB  TYR A 299       6.167  22.607  20.046  1.00  8.12           C"
-    )
+    pdb_line = "ATOM   2209  CB  TYR A 299       6.167  22.607  20.046  1.00  8.12           C"
     a = Atom(pdb_line)
     assert a.record_name == "ATOM"
     assert a.serial_number == 2209
@@ -1124,16 +1106,12 @@ if __name__ == "__main__":
 
     # misaligned residue name - bad
     try:
-        a = Atom(
-            "ATOM   2209  CB   TYRA 299       6.167  22.607  20.046  1.00  8.12           C"
-        )
+        a = Atom("ATOM   2209  CB   TYRA 299       6.167  22.607  20.046  1.00  8.12           C")
         assert False
     except ValueError:
         pass
     # four character residue name -- not so bad
-    a = Atom(
-        "ATOM   2209  CB  NTYRA 299       6.167  22.607  20.046  1.00  8.12           C"
-    )
+    a = Atom("ATOM   2209  CB  NTYRA 299       6.167  22.607  20.046  1.00  8.12           C")
 
     atom_count = 0
     residue_count = 0

@@ -53,9 +53,7 @@ class SettingsBaseModel(DefaultModel):
 
         def freeze_model(model):
             submodels = (
-                mod
-                for field in model.__fields__
-                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -76,9 +74,7 @@ class SettingsBaseModel(DefaultModel):
 
         def unfreeze_model(model):
             submodels = (
-                mod
-                for field in model.__fields__
-                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
@@ -112,16 +108,12 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: FloatQuantity["kelvin"] = Field(
-        None, description="Simulation temperature, default units kelvin"
-    )
+    temperature: FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
     pressure: FloatQuantity["standard_atmosphere"] = Field(
         None, description="Simulation pressure, default units standard atmosphere (atm)"
     )
     ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH")
-    redox_potential: Optional[float] = Field(
-        None, description="Simulation redox potential"
-    )
+    redox_potential: Optional[float] = Field(None, description="Simulation redox potential")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
@@ -171,9 +163,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     ]
     """List of force field paths for all components except :class:`SmallMoleculeComponent` """
 
-    small_molecule_forcefield: str = (
-        "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
-    )
+    small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
     nonbonded_method = "PME"
@@ -198,9 +188,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     def is_positive_distance(cls, v):
         # these are time units, not simulation steps
         if not v.is_compatible_with(unit.nanometer):
-            raise ValueError(
-                "nonbonded_cutoff must be in distance units " "(i.e. nanometers)"
-            )
+            raise ValueError("nonbonded_cutoff must be in distance units " "(i.e. nanometers)")
         if v < 0:
             errmsg = "nonbonded_cutoff must be a positive value"
             raise ValueError(errmsg)

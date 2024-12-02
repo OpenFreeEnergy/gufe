@@ -279,9 +279,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert json.loads(raw_json, cls=JSON_HANDLER.decoder) == expected_key_chain
 
     def test_from_json_string(self):
-        recreated = self.cls.from_json(
-            content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder)
-        )
+        recreated = self.cls.from_json(content=json.dumps(self.expected_keyed_chain, cls=JSON_HANDLER.encoder))
 
         assert recreated == self.cont
         assert recreated is self.cont
@@ -292,10 +290,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in JSON so fix the expected result to use lists
         expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
-        assert (
-            json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder)
-            == expected_key_chain
-        )
+        assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
 
     def test_from_json_file(self, tmpdir):
         file_path = tmpdir / "container.json"
@@ -469,9 +464,7 @@ class TestGufeKey:
 def test_gufe_to_digraph(solvated_complex):
     graph = gufe_to_digraph(solvated_complex)
 
-    connected_objects = gufe_objects_from_shallow_dict(
-        solvated_complex.to_shallow_dict()
-    )
+    connected_objects = gufe_objects_from_shallow_dict(solvated_complex.to_shallow_dict())
 
     assert len(graph.nodes) == 4
     assert len(graph.edges) == 3

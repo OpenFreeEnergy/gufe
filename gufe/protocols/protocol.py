@@ -8,7 +8,8 @@
 import abc
 import warnings
 from collections.abc import Iterable
-from typing import Any, Optional, Union, Sized
+from typing import Any, Optional, Union
+from collections.abc import Sized
 
 from openff.units import Quantity
 
@@ -18,6 +19,7 @@ from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeKey, GufeTokenizable
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
+
 
 class ProtocolResult(GufeTokenizable):
     """
@@ -45,16 +47,16 @@ class ProtocolResult(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'n_protocol_dag_results': self.n_protocol_dag_results, 'data': self.data}
+        return {"n_protocol_dag_results": self.n_protocol_dag_results, "data": self.data}
 
     @classmethod
     def _from_dict(cls, dct: dict):
         # TODO: remove in gufe 2.0
         try:
-            n_protocol_dag_results = dct['n_protocol_dag_results']
+            n_protocol_dag_results = dct["n_protocol_dag_results"]
         except KeyError:
             n_protocol_dag_results = 0
-        return cls(n_protocol_dag_results=n_protocol_dag_results, **dct['data'])
+        return cls(n_protocol_dag_results=n_protocol_dag_results, **dct["data"])
 
     @property
     def n_protocol_dag_results(self) -> int:
@@ -190,9 +192,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[
-            Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]
-        ],
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
         transformation_key: Optional[GufeKey] = None,
@@ -237,10 +237,7 @@ class Protocol(GufeTokenizable):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                (
-                    "mapping input as a dict is deprecated, "
-                    "instead use either a single Mapping or list"
-                ),
+                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
@@ -257,9 +254,7 @@ class Protocol(GufeTokenizable):
             extends_key=extends.key if extends is not None else None,
         )
 
-    def gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> ProtocolResult:
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
         Parameters
@@ -279,13 +274,10 @@ class Protocol(GufeTokenizable):
         # Sized type
         if not isinstance(protocol_dag_results, Sized):
             raise ValueError("`protocol_dag_results` must implement `__len__`")
-        return self.result_cls(n_protocol_dag_results=len(protocol_dag_results),
-                               **self._gather(protocol_dag_results))
+        return self.result_cls(n_protocol_dag_results=len(protocol_dag_results), **self._gather(protocol_dag_results))
 
     @abc.abstractmethod
-    def _gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> dict[str, Any]:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
         """Method to override in custom Protocol subclasses.
 
         This method should take any number of ``ProtocolDAGResult``s produced

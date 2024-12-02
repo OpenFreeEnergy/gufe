@@ -176,10 +176,7 @@ class Topology:
         Residue
              the newly created Residue
         """
-        if (
-            len(chain._residues) > 0
-            and self._numResidues != chain._residues[-1].index + 1
-        ):
+        if len(chain._residues) > 0 and self._numResidues != chain._residues[-1].index + 1:
             raise ValueError("All residues within a chain must be contiguous")
         if id is None:
             id = str(self._numResidues + 1)
@@ -342,9 +339,7 @@ class Topology:
         if not Topology._hasLoadedStandardBonds:
             # Load the standard bond definitions.
 
-            Topology.loadBondDefinitions(
-                os.path.join(os.path.dirname(__file__), "data", "residues.xml")
-            )
+            Topology.loadBondDefinitions(os.path.join(os.path.dirname(__file__), "data", "residues.xml"))
             Topology._hasLoadedStandardBonds = True
         for chain in self._chains:
             # First build a map of atom names to atoms.
@@ -384,33 +379,22 @@ class Topology:
                         bond_type = bond[2]
                         bond_order = bond[3]
 
-                        if (
-                            fromAtom in atomMaps[fromResidue]
-                            and toAtom in atomMaps[toResidue]
-                        ):
+                        if fromAtom in atomMaps[fromResidue] and toAtom in atomMaps[toResidue]:
 
                             # Histidine bond order correction depending on Protonation state of actual HIS
                             # HD1-ND1-CE1=ND2 <-> ND1=CE1-NE2-HE2 - avoid "charged" resonance structure
                             bond_atoms = (fromAtom, toAtom)
-                            if (
-                                name == "HIS"
-                                and "CE1" in bond_atoms
-                                and any([N in bond_atoms for N in ["ND1", "NE2"]])
-                            ):
+                            if name == "HIS" and "CE1" in bond_atoms and any([N in bond_atoms for N in ["ND1", "NE2"]]):
                                 atoms = atomMaps[i]
                                 ND1_protonated = "HD1" in atoms
                                 NE2_protonated = "HE2" in atoms
 
-                                if (
-                                    ND1_protonated and not NE2_protonated
-                                ):  # HD1-ND1-CE1=ND2
+                                if ND1_protonated and not NE2_protonated:  # HD1-ND1-CE1=ND2
                                     if "ND1" in bond_atoms:
                                         bond_order = 1
                                     else:
                                         bond_order = 2
-                                elif (
-                                    not ND1_protonated and NE2_protonated
-                                ):  # ND1=CE1-NE2-HE2
+                                elif not ND1_protonated and NE2_protonated:  # ND1=CE1-NE2-HE2
                                     if "ND1" in bond_atoms:
                                         bond_order = 2
                                     else:
@@ -458,9 +442,7 @@ class Topology:
                 sg2 = cyx[j]._atoms[atomNames[j].index("SG")]
                 pos2 = positions[sg2.index]
                 delta = [x - y for (x, y) in zip(pos1, pos2)]
-                distance = sqrt(
-                    delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]
-                )
+                distance = sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2])
                 if distance < candidate_distance and not isDisulfideBonded(sg2):
                     candidate_distance = distance
                     candidate_atom = sg2
@@ -521,27 +503,15 @@ class Residue:
 
     def bonds(self):
         """Iterate over all Bonds involving any atom in this residue."""
-        return (
-            bond
-            for bond in self.chain.topology.bonds()
-            if ((bond[0] in self._atoms) or (bond[1] in self._atoms))
-        )
+        return (bond for bond in self.chain.topology.bonds() if ((bond[0] in self._atoms) or (bond[1] in self._atoms)))
 
     def internal_bonds(self):
         """Iterate over all internal Bonds."""
-        return (
-            bond
-            for bond in self.chain.topology.bonds()
-            if ((bond[0] in self._atoms) and (bond[1] in self._atoms))
-        )
+        return (bond for bond in self.chain.topology.bonds() if ((bond[0] in self._atoms) and (bond[1] in self._atoms)))
 
     def external_bonds(self):
         """Iterate over all Bonds to external atoms."""
-        return (
-            bond
-            for bond in self.chain.topology.bonds()
-            if ((bond[0] in self._atoms) != (bond[1] in self._atoms))
-        )
+        return (bond for bond in self.chain.topology.bonds() if ((bond[0] in self._atoms) != (bond[1] in self._atoms)))
 
     def __len__(self):
         return len(self._atoms)

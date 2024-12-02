@@ -39,9 +39,7 @@ class LigandNetwork(GufeTokenizable):
             nodes = []
 
         self._edges = frozenset(edges)
-        edge_nodes = set(
-            chain.from_iterable((e.componentA, e.componentB) for e in edges)
-        )
+        edge_nodes = set(chain.from_iterable((e.componentA, e.componentB) for e in edges))
         self._nodes = frozenset(edge_nodes) | frozenset(nodes)
         self._graph = None
 
@@ -70,9 +68,7 @@ class LigandNetwork(GufeTokenizable):
             for node in sorted(self._nodes):
                 graph.add_node(node)
             for edge in sorted(self._edges):
-                graph.add_edge(
-                    edge.componentA, edge.componentB, object=edge, **edge.annotations
-                )
+                graph.add_edge(edge.componentA, edge.componentB, object=edge, **edge.annotations)
 
             self._graph = nx.freeze(graph)
 
@@ -116,14 +112,10 @@ class LigandNetwork(GufeTokenizable):
         # from here, we just build the graph
         serializable_graph = nx.MultiDiGraph()
         for mol, label in mol_to_label.items():
-            serializable_graph.add_node(
-                label, moldict=json.dumps(mol.to_dict(), sort_keys=True)
-            )
+            serializable_graph.add_node(label, moldict=json.dumps(mol.to_dict(), sort_keys=True))
 
         for molA, molB, mapping, annotation in edge_data:
-            serializable_graph.add_edge(
-                molA, molB, mapping=mapping, annotations=annotation
-            )
+            serializable_graph.add_edge(molA, molB, mapping=mapping, annotations=annotation)
 
         return serializable_graph
 
@@ -134,8 +126,7 @@ class LigandNetwork(GufeTokenizable):
         This is the inverse of ``_serializable_graph``.
         """
         label_to_mol = {
-            node: SmallMoleculeComponent.from_dict(json.loads(d))
-            for node, d in graph.nodes(data="moldict")
+            node: SmallMoleculeComponent.from_dict(json.loads(d)) for node, d in graph.nodes(data="moldict")
         }
 
         edges = [
@@ -242,9 +233,7 @@ class LigandNetwork(GufeTokenizable):
                     """
                     syscomps = {alchemical_label: component}
                     other_labels = set(labels) - {alchemical_label}
-                    syscomps.update(
-                        {label: components[label] for label in other_labels}
-                    )
+                    syscomps.update({label: components[label] for label in other_labels})
 
                     if autoname:
                         name = f"{component.name}_{leg_name}"
@@ -261,9 +250,7 @@ class LigandNetwork(GufeTokenizable):
                 else:
                     name = ""
 
-                transformation = gufe.Transformation(
-                    sysA, sysB, protocol, mapping=edge, name=name
-                )
+                transformation = gufe.Transformation(sysA, sysB, protocol, mapping=edge, name=name)
 
                 transformations.append(transformation)
 
