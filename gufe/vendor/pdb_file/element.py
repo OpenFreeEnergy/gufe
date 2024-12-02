@@ -130,9 +130,7 @@ class Element:
         # since the last call), re-generate the ordered by-mass dict cache
         if Element._elements_by_mass is None:
             Element._elements_by_mass = OrderedDict()
-            for elem in sorted(
-                Element._elements_by_symbol.values(), key=lambda x: x.mass
-            ):
+            for elem in sorted(Element._elements_by_symbol.values(), key=lambda x: x.mass):
                 Element._elements_by_mass[elem.mass.value_in_unit(daltons)] = elem
 
         diff = mass

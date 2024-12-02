@@ -63,11 +63,7 @@ def computePeriodicBoxVectors(a_length, b_length, c_length, alpha, beta, gamma):
     a = [a_length, 0, 0]
     b = [b_length * math.cos(gamma), b_length * math.sin(gamma), 0]
     cx = c_length * math.cos(beta)
-    cy = (
-        c_length
-        * (math.cos(alpha) - math.cos(beta) * math.cos(gamma))
-        / math.sin(gamma)
-    )
+    cy = c_length * (math.cos(alpha) - math.cos(beta) * math.cos(gamma)) / math.sin(gamma)
     cz = math.sqrt(c_length * c_length - cx * cx - cy * cy)
     c = [cx, cy, cz]
 
