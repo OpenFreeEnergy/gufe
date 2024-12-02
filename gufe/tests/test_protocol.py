@@ -4,9 +4,8 @@ import datetime
 import itertools
 import pathlib
 from collections import defaultdict
-from collections.abc import Iterable
-from typing import Any, Dict, List, Optional, Union
 from collections.abc import Iterable, Sized
+from typing import Any, Dict, List, Optional, Union
 
 import networkx as nx
 import numpy as np
