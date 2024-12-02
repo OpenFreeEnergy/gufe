@@ -769,9 +769,7 @@ class DataCategory(DataCategoryBase):
                 list, type = self.__formatPdbx(self._rowList[rowI][self._attributeNameList.index(attribute)])
                 return "".join(list)
             except IndexError:
-                self.__lfh.write(
-                    f"attributeName {attributeName} rowI {rowI!r} rowdata {self._rowList[rowI]!r}\n"
-                )
+                self.__lfh.write(f"attributeName {attributeName} rowI {rowI!r} rowdata {self._rowList[rowI]!r}\n")
                 raise IndexError
         raise TypeError(attribute)
 
