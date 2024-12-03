@@ -48,13 +48,9 @@ def test_complex_construction(prot_comp, solv_comp, toluene_ligand_comp):
 
 
 def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
-    c1 = ChemicalSystem(
-        {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp}
-    )
+    c1 = ChemicalSystem({"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp})
 
-    c2 = ChemicalSystem(
-        {"solvent": solv_comp, "ligand": toluene_ligand_comp, "protein": prot_comp}
-    )
+    c2 = ChemicalSystem({"solvent": solv_comp, "ligand": toluene_ligand_comp, "protein": prot_comp})
 
     assert c1 == c2
     assert hash(c1) == hash(c2)
@@ -66,9 +62,7 @@ def test_chemical_system_neq_1(solvated_complex, prot_comp):
     assert hash(solvated_complex) != hash(prot_comp)
 
 
-def test_chemical_system_neq_2(
-    solvated_complex, prot_comp, solv_comp, toluene_ligand_comp
-):
+def test_chemical_system_neq_2(solvated_complex, prot_comp, solv_comp, toluene_ligand_comp):
     # names are different
     complex2 = ChemicalSystem(
         {"protein": prot_comp, "solvent": solv_comp, "ligand": toluene_ligand_comp},
@@ -85,9 +79,7 @@ def test_chemical_system_neq_4(solvated_complex, solvated_ligand):
     assert hash(solvated_complex) != hash(solvated_ligand)
 
 
-def test_chemical_system_neq_5(
-    solvated_complex, prot_comp, solv_comp, phenol_ligand_comp
-):
+def test_chemical_system_neq_5(solvated_complex, prot_comp, solv_comp, phenol_ligand_comp):
     # same component keys, but different components
     complex2 = ChemicalSystem(
         {"protein": prot_comp, "solvent": solv_comp, "ligand": phenol_ligand_comp},
