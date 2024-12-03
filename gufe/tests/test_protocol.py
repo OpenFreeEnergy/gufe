@@ -4,7 +4,7 @@ import datetime
 import itertools
 import pathlib
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sized
 from typing import Any, Dict, List, Optional, Union
 
 import networkx as nx
@@ -341,13 +341,34 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # gather aggregated results of interest
         protocolresult = protocol.gather([dagresult])
 
+        assert protocolresult.n_protocol_dag_results == 1
         assert len(protocolresult.data["logs"]) == 1
         assert len(protocolresult.data["logs"][0]) == 21 + 1
 
         assert protocolresult.get_estimate() == 95500.0
 
+    def test_gather_infinite_iterable_guardrail(self, protocol_dag):
+        protocol, dag, dagresult = protocol_dag
+
+        assert dagresult.ok()
+
+        # we want an infinite generator, but one that would actually stop early in case
+        # the guardrail doesn't work, but the type system doesn't know that
+        def infinite_generator():
+            while True:
+                yield dag
+                break
+
+        gen = infinite_generator()
+        assert isinstance(gen, Iterable)
+        assert not isinstance(gen, Sized)
+
+        with pytest.raises(ValueError, match="`protocol_dag_results` must implement `__len__`"):
+            protocol.gather(infinite_generator())
+
     def test_deprecation_warning_on_dict_mapping(self, instance, vacuum_ligand, solvated_ligand):
         lig = solvated_ligand.components["ligand"]
+
         mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
 
         with pytest.warns(DeprecationWarning, match="mapping input as a dict is deprecated"):
