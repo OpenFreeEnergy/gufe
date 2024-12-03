@@ -361,7 +361,8 @@ class TestSmallMoleculeSerialization:
             # remove the hybridization atomic info which should be at index 7
             new_atoms.append(tuple([atom_info for i, atom_info in enumerate(atom) if i != 7]))
         phenol_dict["atoms"] = new_atoms
-        new_phenol = SmallMoleculeComponent.from_dict(phenol_dict)
+        with pytest.warns(match="The atom hybridization data was not found and has been set to unspecified."):
+            new_phenol = SmallMoleculeComponent.from_dict(phenol_dict)
         # they should be different objects due to the missing hybridization info
         assert new_phenol != phenol
         # make sure the rdkit objects are different

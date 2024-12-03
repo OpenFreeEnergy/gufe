@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import logging
+import warnings
 
 # openff complains about oechem being missing, shhh
 logger = logging.getLogger("openff.toolkit")
@@ -282,6 +283,9 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             try:
                 a.SetHybridization(_INT_TO_HYBRIDIZATION[atom[7]])
             except IndexError:
+                warnings.warn("The atom hybridization data was not found and has been set to unspecified. This can be"
+                              " fixed by recreating the SmallMoleculeComponent from the rdkit molecule after running "
+                              "sanitization.")
                 pass
 
             em.AddAtom(a)
