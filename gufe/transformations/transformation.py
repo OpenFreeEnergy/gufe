@@ -174,7 +174,7 @@ class Transformation(TransformationBase):
         self._name = name
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(stateA={self.stateA}, " f"stateB={self.stateB}, protocol={self.protocol})"
+        return f"{self.__class__.__name__}(stateA={self.stateA}, stateB={self.stateB}, protocol={self.protocol}, name={self.name})"
 
     @property
     def stateA(self) -> ChemicalSystem:
@@ -265,9 +265,7 @@ class NonTransformation(TransformationBase):
         self._name = name
 
     def __repr__(self):
-        attrs = ['name', 'system', 'protocol']
-        content = ", ".join([f"{i}={getattr(self, i)}" for i in attrs])
-        return f"{self.__class__.__name__}({content})"
+        return f"{self.__class__.__name__}(system={self.system}, protocol={self.protocol}, name={self.name})"
 
     @property
     def stateA(self) -> ChemicalSystem:
