@@ -75,6 +75,18 @@ class TransformationBase(GufeTokenizable):
         """
         raise NotImplementedError
 
+    @property
+    def protocol(self) -> Protocol:
+        """The :class:`.Protocol` used to perform the transformation.
+
+        The protocol estimates the free energy differences between ``stateA``
+        and ``stateB`` :class:`.ChemicalSystem` objects. It includes all
+        details needed to perform required simulations/calculations and encodes
+        the alchemical or non-alchemical pathway used.
+
+        """
+        return self._protocol
+
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple :class:`.ProtocolDAGResult` \s into a single
         :class:`.ProtocolResult`.
@@ -187,17 +199,6 @@ class Transformation(TransformationBase):
         return self._stateB
 
     @property
-    def protocol(self) -> Protocol:
-        """The :class:`.Protocol` used to perform the transformation.
-
-        This protocol estimates the free energy differences between ``stateA``
-        and ``stateB`` :class:`.ChemicalSystem` objects. It includes all details
-        needed to perform required simulations/calculations and encodes the
-        alchemical pathway used.
-        """
-        return self._protocol
-
-    @property
     def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
         """The mappings relevant for this Transformation"""
         return self._mapping
@@ -289,15 +290,6 @@ class NonTransformation(TransformationBase):
     def system(self) -> ChemicalSystem:
         """The :class:`.ChemicalSystem` this "transformation" samples."""
         return self._system
-
-    @property
-    def protocol(self):
-        """The :class:`.Protocol` for sampling dynamics of the ``system``.
-
-        Includes all details needed to perform required
-        simulations/calculations.
-        """
-        return self._protocol
 
     def _to_dict(self) -> dict:
         return {
