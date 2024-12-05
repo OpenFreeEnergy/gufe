@@ -70,7 +70,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         """
         return dict(self._components)
 
-    def component_diff(self, other) -> tuple[tuple[Component], tuple[Component]]:
+    def component_diff(self, other) -> tuple[tuple[Component, ...], tuple[Component, ...]]:
         """Compare the Components of this ChemicalSystem with the Components of another ChemicalSystem.
 
         Parameters
@@ -80,7 +80,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
 
         Returns
         -------
-        tuple[tuple[Component], tuple[Component]]
+        tuple[tuple[Component, ...], tuple[Component, ...]]
             A tuple containing two tuples. The first tuple contains
             the components that are unique to this ChemicalSystem, and
             the second tuple contains the components that are unique
