@@ -195,8 +195,7 @@ def old_key_removed(dct, old_key, should_warn):
         # TODO: this should be put elsewhere so that the warning can be more
         # meaningful (somewhere that knows what class we're recreating)
         warnings.warn(
-            f"Outdated serialization: '{old_key}', with value "
-            f"'{dct[old_key]}' is no longer used in this object"
+            f"Outdated serialization: '{old_key}', with value " f"'{dct[old_key]}' is no longer used in this object"
         )
 
     del dct[old_key]
@@ -619,9 +618,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         dct = self._to_dict()
         if invalid := set(replacements) - set(dct):
-            raise TypeError(
-                f"Invalid replacement keys: {invalid}. " f"Allowed keys are: {set(dct)}"
-            )
+            raise TypeError(f"Invalid replacement keys: {invalid}. " f"Allowed keys are: {set(dct)}")
 
         dct.update(replacements)
         return self._from_dict(dct)
@@ -684,9 +681,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return None
 
     @classmethod
-    def from_json(
-        cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None
-    ):
+    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
         """
         Generate an instance from JSON keyed chain representation.
 
@@ -705,9 +700,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
 
         if content is not None and file is not None:
-            raise ValueError(
-                "Cannot specify both `content` and `file`; only one input allowed"
-            )
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
         elif content is None and file is None:
             raise ValueError("Must specify either `content` and `file` for JSON input")
 
@@ -741,9 +734,7 @@ class GufeKey(str):
         return self.split("-")[1]
 
 
-def gufe_objects_from_shallow_dict(
-    obj: Union[list, dict, GufeTokenizable]
-) -> list[GufeTokenizable]:
+def gufe_objects_from_shallow_dict(obj: Union[list, dict, GufeTokenizable]) -> list[GufeTokenizable]:
     """Find GufeTokenizables within a shallow dict.
 
     This function recursively looks through the list/dict structures encoding
@@ -768,16 +759,10 @@ def gufe_objects_from_shallow_dict(
         return [obj]
 
     elif isinstance(obj, list):
-        return list(
-            chain.from_iterable([gufe_objects_from_shallow_dict(item) for item in obj])
-        )
+        return list(chain.from_iterable([gufe_objects_from_shallow_dict(item) for item in obj]))
 
     elif isinstance(obj, dict):
-        return list(
-            chain.from_iterable(
-                [gufe_objects_from_shallow_dict(item) for item in obj.values()]
-            )
-        )
+        return list(chain.from_iterable([gufe_objects_from_shallow_dict(item) for item in obj.values()]))
 
     return []
 
@@ -906,8 +891,7 @@ class KeyedChain:
 
         """
         key_and_keyed_dicts = [
-            (str(gt.key), gt.to_keyed_dict())
-            for gt in nx.topological_sort(gufe_to_digraph(gufe_object))
+            (str(gt.key), gt.to_keyed_dict()) for gt in nx.topological_sort(gufe_to_digraph(gufe_object))
         ][::-1]
         return key_and_keyed_dicts
 
@@ -932,9 +916,7 @@ class KeyedChain:
 
 
 # TOKENIZABLE_REGISTRY: Dict[str, weakref.ref[GufeTokenizable]] = {}
-TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = (
-    weakref.WeakValueDictionary()
-)
+TOKENIZABLE_REGISTRY: weakref.WeakValueDictionary[str, GufeTokenizable] = weakref.WeakValueDictionary()
 """Registry of tokenizable objects.
 
 Used to avoid duplication of tokenizable `gufe` objects in memory when
@@ -969,8 +951,7 @@ def is_gufe_key_dict(dct: Any):
 def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
     if (qualname is None) or (modname is None):
         raise ValueError(
-            "`__qualname__` or `__module__` cannot be None; "
-            f"unable to identify object {modname}.{qualname}"
+            "`__qualname__` or `__module__` cannot be None; " f"unable to identify object {modname}.{qualname}"
         )
 
     if (modname, qualname) in remappings:
@@ -1018,16 +999,10 @@ def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=Tru
         obj = modifier(obj)
 
     if isinstance(obj, dict):
-        obj = {
-            key: modify_dependencies(value, modifier, is_mine, mode=mode, top=False)
-            for key, value in obj.items()
-        }
+        obj = {key: modify_dependencies(value, modifier, is_mine, mode=mode, top=False) for key, value in obj.items()}
 
     elif isinstance(obj, list):
-        obj = [
-            modify_dependencies(item, modifier, is_mine, mode=mode, top=False)
-            for item in obj
-        ]
+        obj = [modify_dependencies(item, modifier, is_mine, mode=mode, top=False) for item in obj]
 
     if is_mine(obj) and not top and mode == "decode":
         obj = modifier(obj)
@@ -1044,9 +1019,7 @@ def to_dict(obj: GufeTokenizable) -> dict:
 
 
 def dict_encode_dependencies(obj: GufeTokenizable) -> dict:
-    return modify_dependencies(
-        obj.to_shallow_dict(), to_dict, is_gufe_obj, mode="encode", top=True
-    )
+    return modify_dependencies(obj.to_shallow_dict(), to_dict, is_gufe_obj, mode="encode", top=True)
 
 
 def key_encode_dependencies(obj: GufeTokenizable) -> dict:
@@ -1088,14 +1061,10 @@ def _from_dict(dct: dict) -> GufeTokenizable:
 
 
 def dict_decode_dependencies(dct: dict) -> GufeTokenizable:
-    return from_dict(
-        modify_dependencies(dct, from_dict, is_gufe_dict, mode="decode", top=True)
-    )
+    return from_dict(modify_dependencies(dct, from_dict, is_gufe_dict, mode="decode", top=True))
 
 
-def key_decode_dependencies(
-    dct: dict, registry=TOKENIZABLE_REGISTRY
-) -> GufeTokenizable:
+def key_decode_dependencies(dct: dict, registry=TOKENIZABLE_REGISTRY) -> GufeTokenizable:
     # this version requires that all dependent objects are already registered
     # responsibility of the storage system that uses this to do so
     dct = modify_dependencies(

@@ -96,9 +96,7 @@ NUMPY_CODEC = JSONCodec(
         "shape": list(obj.shape),
         "bytes": obj.tobytes(),
     },
-    from_dict=lambda dct: np.frombuffer(
-        dct["bytes"], dtype=np.dtype(dct["dtype"])
-    ).reshape(dct["shape"]),
+    from_dict=lambda dct: np.frombuffer(dct["bytes"], dtype=np.dtype(dct["dtype"])).reshape(dct["shape"]),
 )
 
 
@@ -118,8 +116,7 @@ OPENFF_QUANTITY_CODEC = JSONCodec(
         ":is_custom:": True,
         "pint_unit_registry": "openff_units",
     },
-    from_dict=lambda dct: dct["magnitude"]
-    * DEFAULT_UNIT_REGISTRY.Quantity(dct["unit"]),
+    from_dict=lambda dct: dct["magnitude"] * DEFAULT_UNIT_REGISTRY.Quantity(dct["unit"]),
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Quantity),
     is_my_dict=is_openff_quantity_dict,
 )
