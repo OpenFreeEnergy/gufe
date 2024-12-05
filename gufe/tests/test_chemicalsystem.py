@@ -56,6 +56,7 @@ def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
     assert c1 == c2
     assert hash(c1) == hash(c2)
 
+
 def test_chemical_system_component_diff(solvated_complex, solvated_ligand):
     comps_diff = solvated_complex.component_diff(solvated_ligand)
 
@@ -76,7 +77,9 @@ def test_chemical_system_component_diff(solvated_complex, solvated_ligand):
 
 
 def test_chemical_system_component_diff_incompatible_comparison(solvated_complex, phenol_ligand_comp):
-    with pytest.raises(TypeError, match=r"`other` must be an instance of `ChemicalSystem`, not `SmallMoleculeComponent`"):
+    with pytest.raises(
+        TypeError, match=r"`other` must be an instance of `ChemicalSystem`, not `SmallMoleculeComponent`"
+    ):
         solvated_complex.component_diff(phenol_ligand_comp)
 
 

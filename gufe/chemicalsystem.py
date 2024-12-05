@@ -90,7 +90,9 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         """
 
         if not isinstance(other, ChemicalSystem):
-            raise TypeError(f"`other` must be an instance of `{ChemicalSystem.__qualname__}`, not `{other.__class__.__qualname__}`")
+            raise TypeError(
+                f"`other` must be an instance of `{ChemicalSystem.__qualname__}`, not `{other.__class__.__qualname__}`"
+            )
 
         self_comps = set(self._components.values())
         other_comps = set(other._components.values())
