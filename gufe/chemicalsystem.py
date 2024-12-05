@@ -70,7 +70,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         """
         return dict(self._components)
 
-    def component_diff(self, other) -> dict[str, tuple[Component | None, Component | None]]:
+    def component_diff(self, other) -> tuple[tuple[Component], tuple[Component]]:
         """Compare the Components of this ChemicalSystem with the Components of another ChemicalSystem.
 
         Parameters
@@ -80,32 +80,29 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
 
         Returns
         -------
-        dict[str, tuple[Component | None, Component | None]]
-            A dictionary whose keys are the component labels present in either of the two ChemicalSystem objects.
-            The values are tuples containing the different Component objects from this and the other ChemicalSystem, respectively.
-            Only components that differ between the two ChemicalSystem objects will appear in the dictionary.
+        tuple[tuple[Component], tuple[Component]]
+            A tuple containing two tuples. The first tuple contains
+            the components that are unique to this ChemicalSystem, and
+            the second tuple contains the components that are unique
+            to the other ChemicalSystem.
 
         Raises
         ------
         TypeError
             If `other` is not an instance of `ChemicalSystem`.
+
         """
 
         if not isinstance(other, ChemicalSystem):
             raise TypeError(f"`other` must be an instance of `{ChemicalSystem.__qualname__}`, not `{other.__class__.__qualname__}`")
 
-        expanded_keys = self._components.keys() | other._components.keys()
+        self_comps = set(self._components.values())
+        other_comps = set(other._components.values())
 
-        difference : dict[str, tuple[Component | None, Component | None]] = {}
+        self_uniques = tuple(self_comps.difference(other_comps))
+        other_uniques = tuple(other_comps.difference(self_comps))
 
-        for key in expanded_keys:
-            value_self = self._components.get(key)
-            value_other = other._components.get(key)
-
-            if value_self != value_other:
-                difference[key] = (value_self, value_other)
-
-        return difference
+        return (self_uniques, other_uniques)
 
     @property
     def name(self):
