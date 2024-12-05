@@ -1,47 +1,51 @@
-import pytest
 import copy
+from typing import Any, Optional, Type
 
+import pytest
+from pydantic import BaseModel
+
+from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 from gufe.tokenization import (
     GufeTokenizable,
-    new_key_added,
-    old_key_removed,
-    key_renamed,
-    nested_key_moved,
-    from_dict,
     _label_to_parts,
     _pop_nested,
     _set_nested,
+    from_dict,
+    key_renamed,
+    nested_key_moved,
+    new_key_added,
+    old_key_removed,
 )
-
-from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
-from pydantic import BaseModel
-
-from typing import Optional, Any, Type
 
 
 @pytest.fixture
 def nested_data():
-    return {
-        "foo": {"foo2" : [{"foo3": "foo4"}, "foo5"]},
-        "bar": ["bar2", "bar3"]
-    }
+    return {"foo": {"foo2": [{"foo3": "foo4"}, "foo5"]}, "bar": ["bar2", "bar3"]}
 
-@pytest.mark.parametrize('label, expected', [
-    ("foo", ["foo"]),
-    ("foo.foo2", ["foo", "foo2"]),
-    ("foo.foo2[0]", ["foo", "foo2", 0]),
-    ("foo.foo2[0].foo3", ["foo", "foo2", 0, "foo3"]),
-])
+
+@pytest.mark.parametrize(
+    "label, expected",
+    [
+        ("foo", ["foo"]),
+        ("foo.foo2", ["foo", "foo2"]),
+        ("foo.foo2[0]", ["foo", "foo2", 0]),
+        ("foo.foo2[0].foo3", ["foo", "foo2", 0, "foo3"]),
+    ],
+)
 def test_label_to_parts(label, expected):
     assert _label_to_parts(label) == expected
 
-@pytest.mark.parametrize('label, popped, remaining', [
-    ("foo", {"foo2" : [{"foo3": "foo4"}, "foo5"]}, {}),
-    ("foo.foo2", [{"foo3": "foo4"}, "foo5"], {"foo": {}}),
-    ("foo.foo2[0]", {"foo3": "foo4"}, {"foo": {"foo2": ["foo5"]}}),
-    ("foo.foo2[0].foo3", "foo4", {"foo": {"foo2": [{}, "foo5"]}}),
-    ("foo.foo2[1]", "foo5", {"foo": {"foo2": [{"foo3": "foo4"}]}}),
-])
+
+@pytest.mark.parametrize(
+    "label, popped, remaining",
+    [
+        ("foo", {"foo2": [{"foo3": "foo4"}, "foo5"]}, {}),
+        ("foo.foo2", [{"foo3": "foo4"}, "foo5"], {"foo": {}}),
+        ("foo.foo2[0]", {"foo3": "foo4"}, {"foo": {"foo2": ["foo5"]}}),
+        ("foo.foo2[0].foo3", "foo4", {"foo": {"foo2": [{}, "foo5"]}}),
+        ("foo.foo2[1]", "foo5", {"foo": {"foo2": [{"foo3": "foo4"}]}}),
+    ],
+)
 def test_pop_nested(nested_data, label, popped, remaining):
     val = _pop_nested(nested_data, label)
     expected_remaining = {"bar": ["bar2", "bar3"]}
@@ -49,13 +53,17 @@ def test_pop_nested(nested_data, label, popped, remaining):
     assert val == popped
     assert nested_data == expected_remaining
 
-@pytest.mark.parametrize("label, expected_foo", [
-    ("foo", {"foo": 10}),
-    ("foo.foo2", {"foo": {"foo2": 10}}),
-    ("foo.foo2[0]", {"foo": {"foo2": [10, "foo5"]}}),
-    ("foo.foo2[0].foo3", {"foo": {"foo2": [{"foo3": 10}, "foo5"]}}),
-    ("foo.foo2[1]", {"foo": {"foo2": [{"foo3": "foo4"}, 10]}}),
-])
+
+@pytest.mark.parametrize(
+    "label, expected_foo",
+    [
+        ("foo", {"foo": 10}),
+        ("foo.foo2", {"foo": {"foo2": 10}}),
+        ("foo.foo2[0]", {"foo": {"foo2": [10, "foo5"]}}),
+        ("foo.foo2[0].foo3", {"foo": {"foo2": [{"foo3": 10}, "foo5"]}}),
+        ("foo.foo2[1]", {"foo": {"foo2": [{"foo3": "foo4"}, 10]}}),
+    ],
+)
 def test_set_nested(nested_data, label, expected_foo):
     _set_nested(nested_data, label, 10)
     expected = {"bar": ["bar2", "bar3"]}
@@ -65,6 +73,7 @@ def test_set_nested(nested_data, label, expected_foo):
 
 class _DefaultBase(GufeTokenizable):
     """Convenience class to avoid rewriting these methods"""
+
     @classmethod
     def _from_dict(cls, dct):
         return cls(**dct)
@@ -80,16 +89,17 @@ class _DefaultBase(GufeTokenizable):
 
 # this represents an "original" object with  fields `foo` and `bar`
 _SERIALIZED_OLD = {
-    '__module__': None,  # define in each test
-    '__qualname__': None, # define in each test
-    'foo': "foo",
-    'bar': "bar",
-    ':version:': 1,
+    "__module__": None,  # define in each test
+    "__qualname__": None,  # define in each test
+    "foo": "foo",
+    "bar": "bar",
+    ":version:": 1,
 }
 
 
 class KeyAdded(_DefaultBase):
     """Add key ``qux`` to the object's dict"""
+
     def __init__(self, foo, bar, qux=10):
         self.foo = foo
         self.bar = bar
@@ -98,7 +108,7 @@ class KeyAdded(_DefaultBase):
     @classmethod
     def serialization_migration(cls, dct, version):
         if version == 1:
-            dct = new_key_added(dct, 'qux', 10)
+            dct = new_key_added(dct, "qux", 10)
 
         return dct
 
@@ -108,6 +118,7 @@ class KeyAdded(_DefaultBase):
 
 class KeyRemoved(_DefaultBase):
     """Remove key ``bar`` from the object's dict"""
+
     def __init__(self, foo):
         self.foo = foo
 
@@ -124,6 +135,7 @@ class KeyRemoved(_DefaultBase):
 
 class KeyRenamed(_DefaultBase):
     """Rename key ``bar`` to ``baz`` in the object's dict"""
+
     def __init__(self, foo, baz):
         self.foo = foo
         self.baz = baz
@@ -153,17 +165,17 @@ class MigrationTester(GufeTokenizableTestsMixin):
 
     def _prep_dct(self, dct):
         dct = copy.deepcopy(self.input_dict)
-        dct['__module__'] = self.cls.__module__
-        dct['__qualname__'] = self.cls.__qualname__
+        dct["__module__"] = self.cls.__module__
+        dct["__qualname__"] = self.cls.__qualname__
         return dct
 
     def test_serialization_migration(self):
         # in these examples, self.kwargs is the same as the output of
         # serialization_migration (not necessarily true for all classes)
         dct = self._prep_dct(self.input_dict)
-        del dct['__module__']
-        del dct['__qualname__']
-        version = dct.pop(':version:')
+        del dct["__module__"]
+        del dct["__qualname__"]
+        version = dct.pop(":version:")
         assert self.cls.serialization_migration(dct, version) == self.kwargs
 
     def test_migration(self, instance):
@@ -171,6 +183,7 @@ class MigrationTester(GufeTokenizableTestsMixin):
         reconstructed = from_dict(dct)
         expected = instance
         assert expected == reconstructed
+
 
 class TestKeyAdded(MigrationTester):
     cls = KeyAdded
@@ -196,12 +209,7 @@ _SERIALIZED_NESTED_OLD = {
     "__module__": ...,
     "__qualname__": ...,
     ":version:": 1,
-    "settings": {
-        "son": {
-            "son_child": 10
-        },
-        "daughter": {}
-    }
+    "settings": {"son": {"son_child": 10}, "daughter": {}},
 }
 
 
@@ -211,6 +219,7 @@ class SonSettings(BaseModel):
 
 class DaughterSettings(BaseModel):
     """v2 model has child; v1 would not"""
+
     daughter_child: int
 
 
@@ -224,11 +233,11 @@ class Grandparent(_DefaultBase):
         self.settings = settings
 
     def _to_dict(self):
-        return {'settings': self.settings.dict()}
+        return {"settings": self.settings.dict()}
 
     @classmethod
     def _from_dict(cls, dct):
-        settings = GrandparentSettings.parse_obj(dct['settings'])
+        settings = GrandparentSettings.parse_obj(dct["settings"])
         return cls(settings=settings)
 
     @classmethod
@@ -241,7 +250,7 @@ class Grandparent(_DefaultBase):
             dct = nested_key_moved(
                 dct,
                 old_name="settings.son.son_child",
-                new_name="settings.daughter.daughter_child"
+                new_name="settings.daughter.daughter_child",
             )
 
         return dct
@@ -250,13 +259,8 @@ class Grandparent(_DefaultBase):
 class TestNestedKeyMoved(MigrationTester):
     cls = Grandparent
     input_dict = _SERIALIZED_NESTED_OLD
-    kwargs = {
-        'settings': {'son': {}, 'daughter': {'daughter_child': 10}}
-    }
+    kwargs = {"settings": {"son": {}, "daughter": {"daughter_child": 10}}}
 
     @pytest.fixture
     def instance(self):
-        return self.cls(GrandparentSettings(
-            son=SonSettings(),
-            daughter=DaughterSettings(daughter_child=10)
-        ))
+        return self.cls(GrandparentSettings(son=SonSettings(), daughter=DaughterSettings(daughter_child=10)))

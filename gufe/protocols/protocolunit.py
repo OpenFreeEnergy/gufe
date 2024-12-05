@@ -8,20 +8,19 @@ part of a `ProtocolDAG`.
 from __future__ import annotations
 
 import abc
-from dataclasses import dataclass
 import datetime
 import sys
+import tempfile
 import traceback
 import uuid
+from collections.abc import Iterable
+from copy import copy
+from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
-from copy import copy
-from typing import Iterable, Tuple, List, Dict, Any, Optional, Union
-import tempfile
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..tokenization import (
-    GufeTokenizable, GufeKey, TOKENIZABLE_REGISTRY
-)
+from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
 
 
 @dataclass
@@ -30,6 +29,7 @@ class Context:
     `ProtocolUnit._execute`.
 
     """
+
     scratch: PathLike
     shared: PathLike
 
@@ -55,14 +55,16 @@ class ProtocolUnitResult(GufeTokenizable):
     Successful result of a single :class:`ProtocolUnit` execution.
     """
 
-    def __init__(self, *,
-            name: Optional[str] = None,
-            source_key: GufeKey,
-            inputs: Dict[str, Any],
-            outputs: Dict[str, Any],
-            start_time: Optional[datetime.datetime] = None,
-            end_time: Optional[datetime.datetime] = None,
-        ):
+    def __init__(
+        self,
+        *,
+        name: str | None = None,
+        source_key: GufeKey,
+        inputs: dict[str, Any],
+        outputs: dict[str, Any],
+        start_time: datetime.datetime | None = None,
+        end_time: datetime.datetime | None = None,
+    ):
         """
         Parameters
         ----------
@@ -102,16 +104,18 @@ class ProtocolUnitResult(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'name': self.name,
-                '_key': self.key,
-                'source_key': self.source_key,
-                'inputs': self.inputs,
-                'outputs': self.outputs,
-                'start_time': self.start_time,
-                'end_time': self.end_time}
+        return {
+            "name": self.name,
+            "_key": self.key,
+            "source_key": self.source_key,
+            "inputs": self.inputs,
+            "outputs": self.outputs,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+        }
 
     @classmethod
-    def _from_dict(cls, dct: Dict):
+    def _from_dict(cls, dct: dict):
         key = dct.pop("_key")
         obj = cls(**dct)
         obj._set_key(key)
@@ -138,19 +142,19 @@ class ProtocolUnitResult(GufeTokenizable):
         """All results that this result was dependent on"""
         if self._dependencies is None:
             self._dependencies = _list_dependencies(self._inputs, ProtocolUnitResult)
-        return self._dependencies     # type: ignore
+        return self._dependencies  # type: ignore
 
     @staticmethod
     def ok() -> bool:
         return True
 
     @property
-    def start_time(self) -> Optional[datetime.datetime]:
+    def start_time(self) -> datetime.datetime | None:
         """The time execution of this Unit began"""
         return self._start_time
 
     @property
-    def end_time(self) -> Optional[datetime.datetime]:
+    def end_time(self) -> datetime.datetime | None:
         """The time at which execution of this Unit finished"""
         return self._end_time
 
@@ -159,18 +163,18 @@ class ProtocolUnitFailure(ProtocolUnitResult):
     """Failed result of a single :class:`ProtocolUnit` execution."""
 
     def __init__(
-            self,
-            *,
-            name=None,
-            source_key,
-            inputs,
-            outputs,
-            _key=None,
-            exception,
-            traceback,
-            start_time: Optional[datetime.datetime] = None,
-            end_time: Optional[datetime.datetime] = None,
-        ):
+        self,
+        *,
+        name=None,
+        source_key,
+        inputs,
+        outputs,
+        _key=None,
+        exception,
+        traceback,
+        start_time: datetime.datetime | None = None,
+        end_time: datetime.datetime | None = None,
+    ):
         """
         Parameters
         ----------
@@ -194,17 +198,22 @@ class ProtocolUnitFailure(ProtocolUnitResult):
         """
         self._exception = exception
         self._traceback = traceback
-        super().__init__(name=name, source_key=source_key, inputs=inputs, outputs=outputs,
-                         start_time=start_time, end_time=end_time)
+        super().__init__(
+            name=name,
+            source_key=source_key,
+            inputs=inputs,
+            outputs=outputs,
+            start_time=start_time,
+            end_time=end_time,
+        )
 
     def _to_dict(self):
         dct = super()._to_dict()
-        dct.update({'exception': self.exception,
-                    'traceback': self.traceback})
+        dct.update({"exception": self.exception, "traceback": self.traceback})
         return dct
 
     @property
-    def exception(self) -> Tuple[str, Tuple[Any, ...]]:
+    def exception(self) -> tuple[str, tuple[Any, ...]]:
         return self._exception
 
     @property
@@ -218,21 +227,17 @@ class ProtocolUnitFailure(ProtocolUnitResult):
 
 class ProtocolUnit(GufeTokenizable):
     """A unit of work within a ProtocolDAG."""
-    _dependencies: Optional[list[ProtocolUnit]]
 
-    def __init__(
-        self,
-        *,
-        name: Optional[str] = None,
-        **inputs
-    ):
+    _dependencies: list[ProtocolUnit] | None
+
+    def __init__(self, *, name: str | None = None, **inputs):
         """Create an instance of a ProtocolUnit.
 
         Parameters
         ----------
         name : str
-            Custom name to give this 
-        **inputs 
+            Custom name to give this
+        **inputs
             Keyword arguments, which can include other `ProtocolUnit`s on which
             this `ProtocolUnit` is dependent. Should be either `gufe` objects
             or JSON-serializables.
@@ -257,28 +262,25 @@ class ProtocolUnit(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'inputs': self.inputs,
-                'name': self.name,
-                '_key': self.key}
+        return {"inputs": self.inputs, "name": self.name, "_key": self.key}
 
     @classmethod
-    def _from_dict(cls, dct: Dict):
-        _key = dct.pop('_key')
+    def _from_dict(cls, dct: dict):
+        _key = dct.pop("_key")
 
-        obj = cls(name=dct['name'],
-                  **dct['inputs'])
+        obj = cls(name=dct["name"], **dct["inputs"])
         obj._set_key(_key)
         return obj
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """
         Optional name for the `ProtocolUnit`.
         """
         return self._name
 
     @property
-    def inputs(self) -> Dict[str, Any]:
+    def inputs(self) -> dict[str, Any]:
         """
         Inputs to the `ProtocolUnit`.
 
@@ -291,12 +293,11 @@ class ProtocolUnit(GufeTokenizable):
         """All units that this unit is dependent on (parents)"""
         if self._dependencies is None:
             self._dependencies = _list_dependencies(self._inputs, ProtocolUnit)
-        return self._dependencies     # type: ignore
+        return self._dependencies  # type: ignore
 
-    def execute(self, *, 
-                context: Context,
-                raise_error: bool = False,
-                **inputs) -> Union[ProtocolUnitResult, ProtocolUnitFailure]:
+    def execute(
+        self, *, context: Context, raise_error: bool = False, **inputs
+    ) -> ProtocolUnitResult | ProtocolUnitFailure:
         """Given `ProtocolUnitResult` s from dependencies, execute this `ProtocolUnit`.
 
         Parameters
@@ -313,14 +314,18 @@ class ProtocolUnit(GufeTokenizable):
             objects this unit is dependent on.
 
         """
-        result: Union[ProtocolUnitResult, ProtocolUnitFailure]
+        result: ProtocolUnitResult | ProtocolUnitFailure
         start = datetime.datetime.now()
 
         try:
             outputs = self._execute(context, **inputs)
             result = ProtocolUnitResult(
-                name=self.name, source_key=self.key, inputs=inputs, outputs=outputs,
-                start_time=start, end_time=datetime.datetime.now(),
+                name=self.name,
+                source_key=self.key,
+                inputs=inputs,
+                outputs=outputs,
+                start_time=start,
+                end_time=datetime.datetime.now(),
             )
 
         except KeyboardInterrupt:
@@ -345,7 +350,7 @@ class ProtocolUnit(GufeTokenizable):
 
     @staticmethod
     @abc.abstractmethod
-    def _execute(ctx: Context, **inputs) -> Dict[str, Any]:
+    def _execute(ctx: Context, **inputs) -> dict[str, Any]:
         """Method to override in custom `ProtocolUnit` subclasses.
 
         A `Context` is always given as its first argument, which provides execution
@@ -362,15 +367,15 @@ class ProtocolUnit(GufeTokenizable):
 
         where instantiation with the subclass `MyProtocolUnit` would look like:
 
-        >>> unit = MyProtocolUnit(settings=settings_dict, 
+        >>> unit = MyProtocolUnit(settings=settings_dict,
                                   initialization=another_protocolunit,
                                   some_arg=7,
                                   another_arg="five")
 
-        Inside of `_execute` above: 
+        Inside of `_execute` above:
         - `settings`, and `some_arg`, would have their values set as given
         - `initialization` would get the `ProtocolUnitResult` that comes from
-          `another_protocolunit`'s own execution. 
+          `another_protocolunit`'s own execution.
         - `another_arg` would be accessible via `inputs['another_arg']`
 
         This allows protocol developers to define how `ProtocolUnit`s are

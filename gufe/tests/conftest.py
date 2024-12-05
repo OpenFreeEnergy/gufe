@@ -1,15 +1,17 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+import functools
 import importlib.resources
+import io
 import urllib.request
 from urllib.error import URLError
-import io
-import functools
+
 import pytest
+from openff.units import unit
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from openff.units import unit
+
 import gufe
 from gufe.tests.test_protocol import DummyProtocol
 
@@ -22,7 +24,7 @@ else:
 
 
 class URLFileLike:
-    def __init__(self, url, encoding='utf-8'):
+    def __init__(self, url, encoding="utf-8"):
         self.url = url
         self.encoding = encoding
         self.data = None
@@ -39,21 +41,21 @@ class URLFileLike:
 
 
 def get_test_filename(filename):
-    with importlib.resources.path('gufe.tests.data', filename) as file:
+    with importlib.resources.path("gufe.tests.data", filename) as file:
         return str(file)
 
 
 _benchmark_pdb_names = [
-        "cmet_protein",
-        "hif2a_protein",
-        "mcl1_protein",
-        "p38_protein",
-        "ptp1b_protein",
-        "syk_protein",
-        "thrombin_protein",
-        "tnsk2_protein",
-        "tyk2_protein",
-        ]
+    "cmet_protein",
+    "hif2a_protein",
+    "mcl1_protein",
+    "p38_protein",
+    "ptp1b_protein",
+    "syk_protein",
+    "thrombin_protein",
+    "tnsk2_protein",
+    "tyk2_protein",
+]
 
 
 _pl_benchmark_url_pattern = (
@@ -62,14 +64,10 @@ _pl_benchmark_url_pattern = (
 
 
 PDB_BENCHMARK_LOADERS = {
-    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name))
-    for name in _benchmark_pdb_names
+    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name)) for name in _benchmark_pdb_names
 }
 
-PDB_FILE_LOADERS = {
-    name: lambda: get_test_filename(name)
-    for name in ["181l.pdb"]
-}
+PDB_FILE_LOADERS = {name: lambda: get_test_filename(name) for name in ["181l.pdb"]}
 
 ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
 
@@ -82,78 +80,72 @@ def ethane_sdf():
 
 @pytest.fixture
 def toluene_mol2_path():
-    with importlib.resources.path('gufe.tests.data', 'toluene.mol2') as f:
+    with importlib.resources.path("gufe.tests.data", "toluene.mol2") as f:
         yield str(f)
 
 
 @pytest.fixture
 def multi_molecule_sdf():
-    fn = 'multi_molecule.sdf'
-    with importlib.resources.path('gufe.tests.data', fn) as f:
+    fn = "multi_molecule.sdf"
+    with importlib.resources.path("gufe.tests.data", fn) as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDB_181L_path():
-    with importlib.resources.path('gufe.tests.data', '181l.pdb') as f:
+    with importlib.resources.path("gufe.tests.data", "181l.pdb") as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDB_181L_OpenMMClean_path():
-    with importlib.resources.path('gufe.tests.data',
-                                  '181l_openmmClean.pdb') as f:
+    with importlib.resources.path("gufe.tests.data", "181l_openmmClean.pdb") as f:
         yield str(f)
 
 
 @pytest.fixture
 def offxml_settings_path():
-    with importlib.resources.path('gufe.tests.data', 'offxml_settings.json') as f:
+    with importlib.resources.path("gufe.tests.data", "offxml_settings.json") as f:
         yield str(f)
 
 
 @pytest.fixture
 def all_settings_path():
-    with importlib.resources.path('gufe.tests.data', 'all_settings.json') as f:
+    with importlib.resources.path("gufe.tests.data", "all_settings.json") as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDB_thrombin_path():
-    with importlib.resources.path('gufe.tests.data',
-                                  'thrombin_protein.pdb') as f:
+    with importlib.resources.path("gufe.tests.data", "thrombin_protein.pdb") as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDBx_181L_path():
-    with importlib.resources.path('gufe.tests.data',
-                                  '181l.cif') as f:
+    with importlib.resources.path("gufe.tests.data", "181l.cif") as f:
         yield str(f)
 
 
 @pytest.fixture
 def PDBx_181L_openMMClean_path():
-    with importlib.resources.path('gufe.tests.data',
-                                  '181l_openmmClean.cif') as f:
+    with importlib.resources.path("gufe.tests.data", "181l_openmmClean.cif") as f:
         yield str(f)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def benzene_modifications():
-    with importlib.resources.path('gufe.tests.data',
-                                  'benzene_modifications.sdf') as f:
+    with importlib.resources.path("gufe.tests.data", "benzene_modifications.sdf") as f:
         supp = Chem.SDMolSupplier(str(f), removeHs=False)
 
         mols = list(supp)
 
-    return {m.GetProp('_Name'): m for m in mols}
+    return {m.GetProp("_Name"): m for m in mols}
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def benzene_transforms(benzene_modifications):
-    return {k: gufe.SmallMoleculeComponent(v)
-            for k, v in benzene_modifications.items()}
+    return {k: gufe.SmallMoleculeComponent(v) for k, v in benzene_modifications.items()}
 
 
 @pytest.fixture
@@ -168,7 +160,7 @@ def toluene(benzene_modifications):
 
 @pytest.fixture
 def phenol(benzene_modifications):
-    return gufe.SmallMoleculeComponent(benzene_modifications['phenol'])
+    return gufe.SmallMoleculeComponent(benzene_modifications["phenol"])
 
 
 @pytest.fixture
@@ -253,8 +245,9 @@ def absolute_transformation(solvated_ligand, solvated_complex):
 def complex_equilibrium(solvated_complex):
     return gufe.NonTransformation(
         solvated_complex,
-        protocol=DummyProtocol(settings=DummyProtocol.default_settings())
+        protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
     )
+
 
 @pytest.fixture
 def benzene_variants_star_map_transformations(
@@ -269,26 +262,20 @@ def benzene_variants_star_map_transformations(
     solv_comp,
 ):
 
-    variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde,
-                styrene]
+    variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde, styrene]
 
     # define the solvent chemical systems and transformations between
     # benzene and the others
     solvated_ligands = {}
     solvated_ligand_transformations = {}
 
-    solvated_ligands["benzene"] = gufe.ChemicalSystem(
-        {"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent"
-    )
+    solvated_ligands["benzene"] = gufe.ChemicalSystem({"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent")
 
     for ligand in variants:
         solvated_ligands[ligand.name] = gufe.ChemicalSystem(
-            {"solvent": solv_comp, "ligand": ligand},
-            name=f"{ligand.name}-solvnet"
+            {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvnet"
         )
-        solvated_ligand_transformations[
-            ("benzene", ligand.name)
-        ] = gufe.Transformation(
+        solvated_ligand_transformations[("benzene", ligand.name)] = gufe.Transformation(
             solvated_ligands["benzene"],
             solvated_ligands[ligand.name],
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
@@ -310,9 +297,7 @@ def benzene_variants_star_map_transformations(
             {"protein": prot_comp, "solvent": solv_comp, "ligand": ligand},
             name=f"{ligand.name}-complex",
         )
-        solvated_complex_transformations[
-            ("benzene", ligand.name)
-        ] = gufe.Transformation(
+        solvated_complex_transformations[("benzene", ligand.name)] = gufe.Transformation(
             solvated_complexes["benzene"],
             solvated_complexes[ligand.name],
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
@@ -325,7 +310,8 @@ def benzene_variants_star_map_transformations(
 @pytest.fixture
 def benzene_variants_star_map(benzene_variants_star_map_transformations):
     solvated_ligand_transformations, solvated_complex_transformations = benzene_variants_star_map_transformations
-    return gufe.AlchemicalNetwork(solvated_ligand_transformations+solvated_complex_transformations)
+    return gufe.AlchemicalNetwork(solvated_ligand_transformations + solvated_complex_transformations)
+
 
 @pytest.fixture
 def benzene_variants_ligand_star_map(benzene_variants_star_map_transformations):

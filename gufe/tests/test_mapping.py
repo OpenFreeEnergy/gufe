@@ -1,17 +1,21 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import gufe
-from gufe import AtomMapping
 import pytest
 
+import gufe
+from gufe import AtomMapping
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
 class ExampleMapping(AtomMapping):
-    def __init__(self, molA: gufe.SmallMoleculeComponent,
-                 molB: gufe.SmallMoleculeComponent, mapping):
+    def __init__(
+        self,
+        molA: gufe.SmallMoleculeComponent,
+        molB: gufe.SmallMoleculeComponent,
+        mapping,
+    ):
         super().__init__(molA, molB)
         self._mapping = mapping
 
@@ -21,9 +25,9 @@ class ExampleMapping(AtomMapping):
 
     def _to_dict(self):
         return {
-            'molA': self._componentA,
-            'molB': self._componentB,
-            'mapping': self._mapping,
+            "molA": self._componentA,
+            "molB": self._componentB,
+            "mapping": self._mapping,
         }
 
     @classmethod
@@ -37,12 +41,10 @@ class ExampleMapping(AtomMapping):
         return {v: k for k, v in self._mapping}
 
     def componentA_unique(self):
-        return (i for i in range(self._molA.to_rdkit().GetNumAtoms())
-                if i not in self._mapping)
+        return (i for i in range(self._molA.to_rdkit().GetNumAtoms()) if i not in self._mapping)
 
     def componentB_unique(self):
-        return (i for i in range(self._molB.to_rdkit().GetNumAtoms())
-                if i not in self._mapping.values())
+        return (i for i in range(self._molB.to_rdkit().GetNumAtoms()) if i not in self._mapping.values())
 
 
 class TestMappingAbstractClass(GufeTokenizableTestsMixin):

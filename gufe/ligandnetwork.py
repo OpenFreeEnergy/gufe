@@ -2,21 +2,24 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
-from itertools import chain
 import json
-import networkx as nx
-from typing import FrozenSet, Iterable, Optional
-import gufe
+from collections.abc import Iterable
+from itertools import chain
+from typing import FrozenSet, Optional
 
+import networkx as nx
+
+import gufe
 from gufe import SmallMoleculeComponent
+
 from .mapping import LigandAtomMapping
-from .tokenization import GufeTokenizable, JSON_HANDLER
+from .tokenization import JSON_HANDLER, GufeTokenizable
 
 
 class LigandNetwork(GufeTokenizable):
     """A directed graph connecting ligands according to their atom mapping.
        A network can be defined by specifying only edges, in which case the nodes are implicitly added.
-      
+
 
     Parameters
     ----------
@@ -26,17 +29,17 @@ class LigandNetwork(GufeTokenizable):
         Nodes for this network. Any nodes already included as a part of the 'edges' will be ignored.
         Nodes not already included in 'edges' will be added as isolated, unconnected nodes.
     """
+
     def __init__(
         self,
         edges: Iterable[LigandAtomMapping],
-        nodes: Optional[Iterable[SmallMoleculeComponent]] = None
+        nodes: Iterable[SmallMoleculeComponent] | None = None,
     ):
         if nodes is None:
             nodes = []
 
         self._edges = frozenset(edges)
-        edge_nodes = set(chain.from_iterable((e.componentA, e.componentB)
-                                             for e in edges))
+        edge_nodes = set(chain.from_iterable((e.componentA, e.componentB) for e in edges))
         self._nodes = frozenset(edge_nodes) | frozenset(nodes)
         self._graph = None
 
@@ -45,11 +48,11 @@ class LigandNetwork(GufeTokenizable):
         return {}
 
     def _to_dict(self) -> dict:
-        return {'graphml': self.to_graphml()}
+        return {"graphml": self.to_graphml()}
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls.from_graphml(dct['graphml'])
+        return cls.from_graphml(dct["graphml"])
 
     @property
     def graph(self) -> nx.MultiDiGraph:
@@ -65,20 +68,19 @@ class LigandNetwork(GufeTokenizable):
             for node in sorted(self._nodes):
                 graph.add_node(node)
             for edge in sorted(self._edges):
-                graph.add_edge(edge.componentA, edge.componentB, object=edge,
-                               **edge.annotations)
+                graph.add_edge(edge.componentA, edge.componentB, object=edge, **edge.annotations)
 
             self._graph = nx.freeze(graph)
 
         return self._graph
 
     @property
-    def edges(self) -> FrozenSet[LigandAtomMapping]:
+    def edges(self) -> frozenset[LigandAtomMapping]:
         """A read-only view of the edges of the Network"""
         return self._edges
 
     @property
-    def nodes(self) -> FrozenSet[SmallMoleculeComponent]:
+    def nodes(self) -> frozenset[SmallMoleculeComponent]:
         """A read-only view of the nodes of the Network"""
         return self._nodes
 
@@ -93,25 +95,24 @@ class LigandNetwork(GufeTokenizable):
         # identical networks will show no changes if you diff their
         # serialized versions
         sorted_nodes = sorted(self.nodes, key=lambda m: (m.smiles, m.name))
-        mol_to_label = {mol: f"mol{num}"
-                        for num, mol in enumerate(sorted_nodes)}
+        mol_to_label = {mol: f"mol{num}" for num, mol in enumerate(sorted_nodes)}
 
-        edge_data = sorted([
-            (
-                mol_to_label[edge.componentA],
-                mol_to_label[edge.componentB],
-                json.dumps(list(edge.componentA_to_componentB.items())),
-                json.dumps(edge.annotations, cls=JSON_HANDLER.encoder),
-            )
-            for edge in self.edges
-        ])
+        edge_data = sorted(
+            [
+                (
+                    mol_to_label[edge.componentA],
+                    mol_to_label[edge.componentB],
+                    json.dumps(list(edge.componentA_to_componentB.items())),
+                    json.dumps(edge.annotations, cls=JSON_HANDLER.encoder),
+                )
+                for edge in self.edges
+            ]
+        )
 
         # from here, we just build the graph
         serializable_graph = nx.MultiDiGraph()
         for mol, label in mol_to_label.items():
-            serializable_graph.add_node(label,
-                                        moldict=json.dumps(mol.to_dict(),
-                                                           sort_keys=True))
+            serializable_graph.add_node(label, moldict=json.dumps(mol.to_dict(), sort_keys=True))
 
         for molA, molB, mapping, annotation in edge_data:
             serializable_graph.add_edge(molA, molB, mapping=mapping, annotations=annotation)
@@ -124,15 +125,19 @@ class LigandNetwork(GufeTokenizable):
 
         This is the inverse of ``_serializable_graph``.
         """
-        label_to_mol = {node: SmallMoleculeComponent.from_dict(json.loads(d))
-                        for node, d in graph.nodes(data='moldict')}
+        label_to_mol = {
+            node: SmallMoleculeComponent.from_dict(json.loads(d)) for node, d in graph.nodes(data="moldict")
+        }
 
         edges = [
-            LigandAtomMapping(componentA=label_to_mol[node1],
-                              componentB=label_to_mol[node2],
-                              componentA_to_componentB=dict(json.loads(edge_data["mapping"])),
-                              annotations=json.loads(edge_data.get("annotations", 'null'), cls=JSON_HANDLER.decoder) # work around old graphml files with missing edge annotations
-                              )
+            LigandAtomMapping(
+                componentA=label_to_mol[node1],
+                componentB=label_to_mol[node2],
+                componentA_to_componentB=dict(json.loads(edge_data["mapping"])),
+                annotations=json.loads(
+                    edge_data.get("annotations", "null"), cls=JSON_HANDLER.decoder
+                ),  # work around old graphml files with missing edge annotations
+            )
             for node1, node2, edge_data in graph.edges(data=True)
         ]
 
@@ -183,10 +188,10 @@ class LigandNetwork(GufeTokenizable):
             a new network adding the given edges and nodes to this network
         """
         if edges is None:
-            edges = set([])
+            edges = set()
 
         if nodes is None:
-            nodes = set([])
+            nodes = set()
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
 
@@ -198,7 +203,7 @@ class LigandNetwork(GufeTokenizable):
         *,
         alchemical_label: str = "ligand",
         autoname=True,
-        autoname_prefix=""
+        autoname_prefix="",
     ) -> gufe.AlchemicalNetwork:
         """
         Parameters
@@ -228,8 +233,7 @@ class LigandNetwork(GufeTokenizable):
                     """
                     syscomps = {alchemical_label: component}
                     other_labels = set(labels) - {alchemical_label}
-                    syscomps.update({label: components[label]
-                                     for label in other_labels})
+                    syscomps.update({label: components[label] for label in other_labels})
 
                     if autoname:
                         name = f"{component.name}_{leg_name}"
@@ -246,9 +250,7 @@ class LigandNetwork(GufeTokenizable):
                 else:
                     name = ""
 
-                transformation = gufe.Transformation(sysA, sysB, protocol,
-                                                     mapping=edge,
-                                                     name=name)
+                transformation = gufe.Transformation(sysA, sysB, protocol, mapping=edge, name=name)
 
                 transformations.append(transformation)
 
@@ -262,7 +264,7 @@ class LigandNetwork(GufeTokenizable):
         *,
         autoname: bool = True,
         autoname_prefix: str = "easy_rbfe",
-        **other_components
+        **other_components,
     ) -> gufe.AlchemicalNetwork:
         """Convert the ligand network to an AlchemicalNetwork
 
@@ -279,22 +281,17 @@ class LigandNetwork(GufeTokenizable):
             additional non-alchemical components, keyword will be the string
             label for the component
         """
-        components = {
-            'protein': protein,
-            'solvent': solvent,
-            **other_components
-        }
+        components = {"protein": protein, "solvent": solvent, **other_components}
         leg_labels = {
             "solvent": ["ligand", "solvent"],
-            "complex": (["ligand", "solvent", "protein"]
-                        + list(other_components)),
+            "complex": (["ligand", "solvent", "protein"] + list(other_components)),
         }
         return self._to_rfe_alchemical_network(
             components=components,
             leg_labels=leg_labels,
             protocol=protocol,
             autoname=autoname,
-            autoname_prefix=autoname_prefix
+            autoname_prefix=autoname_prefix,
         )
 
     # on hold until we figure out how to best hack in the PME/NoCutoff

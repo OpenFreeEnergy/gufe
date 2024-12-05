@@ -1,15 +1,15 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-from typing import Generator, Iterable, Optional
-from typing_extensions import Self # Self is included in typing as of python 3.11
+from collections.abc import Generator, Iterable
+from typing import Optional
 
 import networkx as nx
-from .tokenization import GufeTokenizable
+from typing_extensions import Self  # Self is included in typing as of python 3.11
 
 from .chemicalsystem import ChemicalSystem
+from .tokenization import GufeTokenizable
 from .transformations import Transformation
-
 
 
 class AlchemicalNetwork(GufeTokenizable):
@@ -31,6 +31,7 @@ class AlchemicalNetwork(GufeTokenizable):
       the individual chemical states.  :class:`.ChemicalSystem` objects from
       Transformation objects in edges will be automatically extracted
     """
+
     def __init__(
         self,
         edges: Optional[Iterable[Transformation]] = None,
@@ -47,11 +48,7 @@ class AlchemicalNetwork(GufeTokenizable):
         else:
             self._nodes = frozenset(nodes)
 
-        self._nodes = (
-            self._nodes
-            | frozenset(e.stateA for e in self._edges)
-            | frozenset(e.stateB for e in self._edges)
-        )
+        self._nodes = self._nodes | frozenset(e.stateA for e in self._edges) | frozenset(e.stateB for e in self._edges)
 
         self._graph = None
 
@@ -60,9 +57,7 @@ class AlchemicalNetwork(GufeTokenizable):
         g = nx.MultiDiGraph()
 
         for transformation in edges:
-            g.add_edge(
-                transformation.stateA, transformation.stateB, object=transformation
-            )
+            g.add_edge(transformation.stateA, transformation.stateB, object=transformation)
 
         g.add_nodes_from(nodes)
 
@@ -99,15 +94,15 @@ class AlchemicalNetwork(GufeTokenizable):
         return self._name
 
     def _to_dict(self) -> dict:
-        return {"nodes": sorted(self.nodes),
-                "edges": sorted(self.edges),
-                "name": self.name}
+        return {
+            "nodes": sorted(self.nodes),
+            "edges": sorted(self.edges),
+            "name": self.name,
+        }
 
     @classmethod
     def _from_dict(cls, d: dict) -> Self:
-        return cls(nodes=frozenset(d['nodes']),
-                   edges=frozenset(d['edges']),
-                   name=d.get('name'))
+        return cls(nodes=frozenset(d["nodes"]), edges=frozenset(d["edges"]), name=d.get("name"))
 
     @classmethod
     def _defaults(cls):
@@ -126,7 +121,7 @@ class AlchemicalNetwork(GufeTokenizable):
     def _from_nx_graph(cls, nx_graph) -> Self:
         """Create an alchemical network from a networkx representation."""
         chemical_systems = [n for n in nx_graph.nodes()]
-        transformations = [e[2]['object'] for e in nx_graph.edges(data=True)]
+        transformations = [e[2]["object"] for e in nx_graph.edges(data=True)]
         return cls(nodes=chemical_systems, edges=transformations)
 
     def connected_subgraphs(self) -> Generator[Self, None, None]:
@@ -135,4 +130,4 @@ class AlchemicalNetwork(GufeTokenizable):
         for node_group in node_groups:
             nx_subgraph = self.graph.subgraph(node_group)
             alc_subgraph = self._from_nx_graph(nx_subgraph)
-            yield(alc_subgraph)
+            yield (alc_subgraph)
