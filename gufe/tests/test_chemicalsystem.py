@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from gufe import ChemicalSystem
+from gufe.components import ProteinComponent
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -54,6 +55,32 @@ def test_hash_and_eq(prot_comp, solv_comp, toluene_ligand_comp):
 
     assert c1 == c2
     assert hash(c1) == hash(c2)
+
+
+def test_chemical_system_component_diff(solvated_complex, solvated_ligand):
+    comps_diff = solvated_complex.component_diff(solvated_ligand)
+
+    assert isinstance(comps_diff, tuple)
+
+    comps_complex, comps_ligand = comps_diff
+
+    assert isinstance(comps_complex, tuple)
+    assert isinstance(comps_ligand, tuple)
+
+    assert len(comps_complex) == 1
+    assert len(comps_ligand) == 0
+
+    assert isinstance(comps_complex[0], ProteinComponent)
+
+    # A.component_diff(B) equals the reversed output of B.component_diff(A)
+    assert solvated_complex.component_diff(solvated_ligand) == solvated_ligand.component_diff(solvated_complex)[::-1]
+
+
+def test_chemical_system_component_diff_incompatible_comparison(solvated_complex, phenol_ligand_comp):
+    with pytest.raises(
+        TypeError, match=r"`other` must be an instance of `ChemicalSystem`, not `SmallMoleculeComponent`"
+    ):
+        solvated_complex.component_diff(phenol_ligand_comp)
 
 
 def test_chemical_system_neq_1(solvated_complex, prot_comp):
