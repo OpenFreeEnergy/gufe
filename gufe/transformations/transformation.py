@@ -253,7 +253,7 @@ class NonTransformation(TransformationBase):
         Parameters
         ----------
         system : ChemicalSystem
-            The (identical) end states of the "transformation" to be sampled
+            The system to be sampled, acting as both the starting and end state of the ``NonTransformation``.
         protocol : Protocol
             The sampling method to use on the ``system``
         name : str, optional
