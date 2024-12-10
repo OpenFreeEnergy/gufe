@@ -24,6 +24,8 @@ from gufe.protocols import (
     ProtocolUnit,
     ProtocolUnitFailure,
     ProtocolUnitResult,
+    MissingProtocolUnitError,
+    ProtocolUnitFailureError
 )
 from gufe.protocols.protocoldag import execute_DAG
 
@@ -692,7 +694,7 @@ class TestProtocolDAGResult:
 
         assert not dagresult.ok()
 
-        with pytest.raises(KeyError, match="No success for `protocol_unit` found") as e:
+        with pytest.raises(ProtocolUnitFailureError, match="No success for `protocol_unit`:NoDepUnit\(None\) found"):
             dagresult.unit_to_result(units[2])
 
     def test_plenty_of_fails(self, units, successes, failures):
@@ -721,11 +723,11 @@ class TestProtocolDAGResult:
             transformation_key=None,
         )
 
-        with pytest.raises(KeyError, match="No such `protocol_unit` present"):
+        with pytest.raises(MissingProtocolUnitError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_result(units[2])
-        with pytest.raises(KeyError, match="No such `protocol_unit` present"):
+        with pytest.raises(MissingProtocolUnitError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_all_results(units[2])
-        with pytest.raises(KeyError, match="No such `protocol_unit_result` present"):
+        with pytest.raises(MissingProtocolUnitError, match="No such `protocol_unit_result`:ProtocolUnitResult\(None\) present"):
             dagresult.result_to_unit(successes[2])
 
 
