@@ -270,18 +270,19 @@ class NonTransformation(TransformationBase):
 
     @property
     def stateA(self) -> ChemicalSystem:
-        """The :class:`.ChemicalSystem` this "transformation" samples.
+        """The :class:`.ChemicalSystem` this ``NonTransformation`` samples.
 
-        Synonomous with ``system`` attribute.
+        Synonomous with ``system`` attribute and identical to `stateB`.
 
         """
         return self._system
 
     @property
     def stateB(self) -> ChemicalSystem:
-        """The :class:`.ChemicalSystem` this "transformation" samples.
+        """The :class:`.ChemicalSystem` this ``NonTransformation`` samples.
 
-        Synonomous with ``system`` attribute.
+        Synonomous with ``system`` attribute and identical to `stateA`.
+
 
         """
         return self._system
