@@ -14,6 +14,7 @@ from typing import Any, Optional, Union
 import networkx as nx
 
 from ..tokenization import GufeKey, GufeTokenizable
+from .errors import MissingProtocolUnitError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
 
@@ -211,22 +212,24 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
         Raises
         ------
-        KeyError
-          if either there are no results, or only failures
+        MissingProtocolUnitError:
+          if either there are no results for that protocol unit
+        ProtocolUnitFailureError:
+          if all units failed
         """
         try:
             units = self._unit_result_mapping[protocol_unit]
         except KeyError:
-            raise KeyError("No such `protocol_unit` present")
+            raise MissingProtocolUnitError(f"No such `protocol_unit`:{protocol_unit} present")
         else:
             for u in units:
                 if u.ok():
                     return u
             else:
-                raise KeyError("No success for `protocol_unit` found")
+                raise ProtocolUnitFailureError(f"No success for `protocol_unit`:{protocol_unit} found")
 
     def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
-        """Return all results (sucess and failure) for a given Unit.
+        """Return all results (success and failure) for a given Unit.
 
         Returns
         -------
@@ -235,19 +238,19 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
         Raises
         ------
-        KeyError
+        MissingProtocolUnitError
           if no results present for a given unit
         """
         try:
             return self._unit_result_mapping[protocol_unit]
         except KeyError:
-            raise KeyError("No such `protocol_unit` present")
+            raise MissingProtocolUnitError(f"No such `protocol_unit`:{protocol_unit} present")
 
     def result_to_unit(self, protocol_unit_result: ProtocolUnitResult) -> ProtocolUnit:
         try:
             return self._result_unit_mapping[protocol_unit_result]
         except KeyError:
-            raise KeyError("No such `protocol_unit_result` present")
+            raise MissingProtocolUnitError(f"No such `protocol_unit_result`:{protocol_unit_result} present")
 
     def ok(self) -> bool:
         # ensure that for every protocol unit, there is an OK result object
