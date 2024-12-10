@@ -12,7 +12,6 @@ import openff.units
 import pytest
 from numpy import testing as npt
 from openff.units import unit
-from unittest import mock
 
 from gufe import tokenization
 from gufe.custom_codecs import (
