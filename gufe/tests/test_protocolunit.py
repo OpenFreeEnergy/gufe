@@ -3,12 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from gufe.protocols.protocolunit import (
-    Context,
-    ProtocolUnit,
-    ProtocolUnitFailure,
-    ProtocolUnitResult,
-)
+from gufe.protocols.protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 
 

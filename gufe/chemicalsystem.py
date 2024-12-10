@@ -40,15 +40,11 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         self._name = name
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(name={self.name}, components={self.components})"
-        )
+        return f"{self.__class__.__name__}(name={self.name}, components={self.components})"
 
     def _to_dict(self):
         return {
-            "components": {
-                key: value for key, value in sorted(self.components.items())
-            },
+            "components": {key: value for key, value in sorted(self.components.items())},
             "name": self.name,
         }
 
@@ -69,6 +65,42 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         instances as values.
         """
         return dict(self._components)
+
+    def component_diff(self, other) -> tuple[tuple[Component, ...], tuple[Component, ...]]:
+        """Compare the Components of this ChemicalSystem with the Components of another ChemicalSystem.
+
+        Parameters
+        ----------
+        other : ChemicalSystem
+            The ChemicalSystem to compare to.
+
+        Returns
+        -------
+        tuple[tuple[Component, ...], tuple[Component, ...]]
+            A tuple containing two tuples. The first tuple contains
+            the components that are unique to this ChemicalSystem, and
+            the second tuple contains the components that are unique
+            to the other ChemicalSystem.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not an instance of `ChemicalSystem`.
+
+        """
+
+        if not isinstance(other, ChemicalSystem):
+            raise TypeError(
+                f"`other` must be an instance of `{ChemicalSystem.__qualname__}`, not `{other.__class__.__qualname__}`"
+            )
+
+        self_comps = set(self._components.values())
+        other_comps = set(other._components.values())
+
+        self_uniques = tuple(self_comps.difference(other_comps))
+        other_uniques = tuple(other_comps.difference(self_comps))
+
+        return (self_uniques, other_uniques)
 
     @property
     def name(self):

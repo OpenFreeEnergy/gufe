@@ -51,13 +51,9 @@ def mols():
 @pytest.fixture
 def std_edges(mols):
     mol1, mol2, mol3 = mols
-    edge12 = LigandAtomMapping(
-        mol1, mol2, {0: 0, 1: 1}, {"score": 0.0, "length": 1.0 * unit.angstrom}
-    )
+    edge12 = LigandAtomMapping(mol1, mol2, {0: 0, 1: 1}, {"score": 0.0, "length": 1.0 * unit.angstrom})
     edge23 = LigandAtomMapping(mol2, mol3, {0: 0}, {"score": 1.0})
-    edge13 = LigandAtomMapping(
-        mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second}
-    )
+    edge13 = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second})
     return edge12, edge23, edge13
 
 
@@ -260,16 +256,12 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         # Adding a duplicate of an existing edge should create a new network
         # with the same edges and nodes as the previous one.
         mol1, _, mol3 = mols
-        duplicate = LigandAtomMapping(
-            mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second}
-        )
+        duplicate = LigandAtomMapping(mol1, mol3, {0: 0, 2: 1}, {"score": 0.5, "time": 2.0 * unit.second})
         network = simple_network.network
 
         existing = network.edges
         assert duplicate in existing  # matches by ==
-        assert any(
-            duplicate is edge for edge in existing
-        )  # one edge *is* the duplicate
+        assert any(duplicate is edge for edge in existing)  # one edge *is* the duplicate
 
         new_network = network.enlarge_graph(edges=[duplicate])
         assert len(new_network.nodes) == len(network.nodes)
@@ -289,9 +281,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         assert simple_network.network.to_graphml() == ligandnetwork_graphml
 
     def test_from_graphml(self, simple_network, ligandnetwork_graphml):
-        assert (
-            LigandNetwork.from_graphml(ligandnetwork_graphml) == simple_network.network
-        )
+        assert LigandNetwork.from_graphml(ligandnetwork_graphml) == simple_network.network
 
     def test_is_connected(self, simple_network):
         assert simple_network.network.is_connected()
@@ -342,10 +332,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
                 if with_cofactor:
                     labels.add("cofactor")
             else:  # -no-cov-
-                raise RuntimeError(
-                    "Something went weird in testing. Unable "
-                    f"to get leg for edge {edge}"
-                )
+                raise RuntimeError("Something went weird in testing. Unable " f"to get leg for edge {edge}")
 
             assert set(compsA) == labels
             assert set(compsB) == labels
@@ -360,9 +347,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert isinstance(edge.mapping, gufe.ComponentMapping)
             assert edge.mapping in real_molecules_network.edges
 
-    def test_to_rbfe_alchemical_network_autoname_false(
-        self, real_molecules_network, prot_comp, solv_comp
-    ):
+    def test_to_rbfe_alchemical_network_autoname_false(self, real_molecules_network, prot_comp, solv_comp):
         rbfe = real_molecules_network.to_rbfe_alchemical_network(
             solvent=solv_comp,
             protein=prot_comp,
@@ -374,9 +359,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             for sys in [edge.stateA, edge.stateB]:
                 assert sys.name == ""
 
-    def test_to_rbfe_alchemical_network_autoname_true(
-        self, real_molecules_network, prot_comp, solv_comp
-    ):
+    def test_to_rbfe_alchemical_network_autoname_true(self, real_molecules_network, prot_comp, solv_comp):
         rbfe = real_molecules_network.to_rbfe_alchemical_network(
             solvent=solv_comp,
             protein=prot_comp,
@@ -398,9 +381,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
         others = {}
         protocol = DummyProtocol(DummyProtocol.default_settings())
-        rhfe = real_molecules_network.to_rhfe_alchemical_network(
-            solvent=solv_comp, protocol=protocol, **others
-        )
+        rhfe = real_molecules_network.to_rhfe_alchemical_network(solvent=solv_comp, protocol=protocol, **others)
 
         expected_names = {
             "easy_rhfe_benzene_vacuum_toluene_vacuum",
@@ -423,10 +404,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             elif "solvent" in edge.name:
                 labels = {"ligand", "solvent"}
             else:  # -no-cov-
-                raise RuntimeError(
-                    "Something went weird in testing. Unable "
-                    f"to get leg for edge {edge}"
-                )
+                raise RuntimeError("Something went weird in testing. Unable " f"to get leg for edge {edge}")
 
             labels |= set(others)
 

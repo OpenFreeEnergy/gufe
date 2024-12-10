@@ -263,8 +263,4 @@ class TestNestedKeyMoved(MigrationTester):
 
     @pytest.fixture
     def instance(self):
-        return self.cls(
-            GrandparentSettings(
-                son=SonSettings(), daughter=DaughterSettings(daughter_child=10)
-            )
-        )
+        return self.cls(GrandparentSettings(son=SonSettings(), daughter=DaughterSettings(daughter_child=10)))
