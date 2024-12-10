@@ -213,7 +213,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         Raises
         ------
         MissingProtocolUnitError:
-          if either there are no results for that protocol unit
+          if there are no results for that protocol unit
         ProtocolUnitFailureError:
           if all units failed
         """
