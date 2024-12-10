@@ -31,7 +31,7 @@ class TransformationBase(GufeTokenizable):
             The sampling method to use for the transformation.
         name : str, optional
             A human-readable name for this transformation.
-    
+
         """
         self._protocol = protocol
         self._name = name
@@ -177,9 +177,10 @@ class Transformation(TransformationBase):
 
         """
         if isinstance(mapping, dict):
-            warnings.warn(("mapping input as a dict is deprecated, "
-                           "instead use either a single Mapping or list"),
-                          DeprecationWarning)
+            warnings.warn(
+                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
+                DeprecationWarning,
+            )
             mapping = list(mapping.values())
 
         self._stateA = stateA
