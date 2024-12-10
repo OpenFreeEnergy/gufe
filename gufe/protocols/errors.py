@@ -6,7 +6,7 @@
 class ProtocolValidationError(Exception):
     """Error when the protocol setup or settings can not be validated."""
 
-class ProtocolProtocolSetupError(Exception):
+class ProtocolSetupError(Exception):
     """Error when executing the setup unit of the protocol."""
 
 class ProtocolExecutionError(Exception):
