@@ -15,6 +15,9 @@ from ..utils import ensure_filelike
 
 
 class TransformationBase(GufeTokenizable):
+    _protocol: Protocol
+    _name: Optional[str]
+
     def __init__(
         self,
         protocol: Protocol,
@@ -139,9 +142,9 @@ class TransformationBase(GufeTokenizable):
 class Transformation(TransformationBase):
     _stateA: ChemicalSystem
     _stateB: ChemicalSystem
-    _name: Optional[str]
-    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
     _protocol: Protocol
+    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
+    _name: Optional[str]
 
     def __init__(
         self,
@@ -232,6 +235,9 @@ class Transformation(TransformationBase):
 
 
 class NonTransformation(TransformationBase):
+    _system: ChemicalSystem
+    _protocol: Protocol
+    _name: Optional[str]
 
     def __init__(
         self,
