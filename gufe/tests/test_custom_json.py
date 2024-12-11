@@ -23,6 +23,7 @@ from gufe.custom_codecs import (
     PATH_CODEC,
     SETTINGS_CODEC,
     UUID_CODEC,
+    JSONCodec,
 )
 from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
 from gufe.settings import models
@@ -104,7 +105,6 @@ class CustomJSONCodingTest:
         assert json.dumps(obj, cls=encoder) == json_str
         assert json.loads(json_str, cls=decoder) == obj
 
-
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = NUMPY_CODEC
@@ -113,15 +113,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
             np.array([1, 0]),
             np.array([1.0, 2.0, 3.0], dtype=np.float32),
         ]
-        shapes = [
-            [2, 2],
-            [
-                2,
-            ],
-            [
-                3,
-            ],
-        ]
+        shapes = [[2, 2], [2], [3]]
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
         self.dcts = [
@@ -182,6 +174,30 @@ class TestNumpyGenericCodec(TestNumpyCoding):
             }
             for dtype, byte_rep, classname in zip(dtypes, byte_reps, classes)
         ]
+
+
+class TestBytesCodec(CustomJSONCodingTest):
+    def setup_method(self):
+        self.codec = BYTES_CODEC
+        self.objs =[b'a test string']
+        self.dcts = [
+            {
+                ":is_custom:": True,
+                "__class__": "bytes",
+                "__module__": "builtins",
+                "latin-1": '(µ/ý \ri\x00\x00a test string'
+            }
+        ]
+
+    def test_legacy_uncompressed(self):
+        legacy_codec = JSONCodec(
+            cls=bytes,
+            to_dict=lambda obj: {"latin-1": obj.decode("latin-1")},
+            from_dict=lambda dct: dct["latin-1"].encode("latin-1")
+            )
+        legacy_encoder, _ = custom_json_factory([legacy_codec])
+        _, decoder= custom_json_factory([self.codec])
+        self._test_round_trip(legacy_encoder, decoder)
 
 
 class TestPathCodec(CustomJSONCodingTest):
