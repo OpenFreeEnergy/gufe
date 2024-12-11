@@ -5,10 +5,10 @@
 import datetime
 import functools
 import pathlib
+from uuid import UUID
 
 import numpy as np
 from openff.units import DEFAULT_UNIT_REGISTRY
-from uuid import UUID
 
 import gufe
 from gufe.custom_json import JSONCodec
@@ -62,15 +62,15 @@ PATH_CODEC = JSONCodec(
 
 BYTES_CODEC = JSONCodec(
     cls=bytes,
-    to_dict=lambda obj: {'latin-1': obj.decode('latin-1')},
-    from_dict=lambda dct: dct['latin-1'].encode('latin-1'),
+    to_dict=lambda obj: {"latin-1": obj.decode("latin-1")},
+    from_dict=lambda dct: dct["latin-1"].encode("latin-1"),
 )
 
 
 DATETIME_CODEC = JSONCodec(
     cls=datetime.datetime,
-    to_dict=lambda obj: {'isotime': obj.isoformat()},
-    from_dict=lambda dct: datetime.datetime.fromisoformat(dct['isotime']),
+    to_dict=lambda obj: {"isotime": obj.isoformat()},
+    from_dict=lambda dct: datetime.datetime.fromisoformat(dct["isotime"]),
 )
 
 # Note that this has inconsistent behaviour for some generic types
@@ -80,12 +80,10 @@ DATETIME_CODEC = JSONCodec(
 NPY_DTYPE_CODEC = JSONCodec(
     cls=np.generic,
     to_dict=lambda obj: {
-        'dtype': str(obj.dtype),
-        'bytes': obj.tobytes(),
+        "dtype": str(obj.dtype),
+        "bytes": obj.tobytes(),
     },
-    from_dict=lambda dct: np.frombuffer(
-        dct['bytes'], dtype=np.dtype(dct['dtype'])
-    )[0],
+    from_dict=lambda dct: np.frombuffer(dct["bytes"], dtype=np.dtype(dct["dtype"]))[0],
     is_my_obj=lambda obj: isinstance(obj, np.generic),
     is_my_dict=is_npy_dtype_dict,
 )
@@ -94,13 +92,11 @@ NPY_DTYPE_CODEC = JSONCodec(
 NUMPY_CODEC = JSONCodec(
     cls=np.ndarray,
     to_dict=lambda obj: {
-        'dtype': str(obj.dtype),
-        'shape': list(obj.shape),
-        'bytes': obj.tobytes()
+        "dtype": str(obj.dtype),
+        "shape": list(obj.shape),
+        "bytes": obj.tobytes(),
     },
-    from_dict=lambda dct: np.frombuffer(
-        dct['bytes'], dtype=np.dtype(dct['dtype'])
-    ).reshape(dct['shape'])
+    from_dict=lambda dct: np.frombuffer(dct["bytes"], dtype=np.dtype(dct["dtype"])).reshape(dct["shape"]),
 )
 
 
@@ -120,7 +116,7 @@ OPENFF_QUANTITY_CODEC = JSONCodec(
         ":is_custom:": True,
         "pint_unit_registry": "openff_units",
     },
-    from_dict=lambda dct: dct['magnitude'] * DEFAULT_UNIT_REGISTRY.Quantity(dct['unit']),
+    from_dict=lambda dct: dct["magnitude"] * DEFAULT_UNIT_REGISTRY.Quantity(dct["unit"]),
     is_my_obj=lambda obj: isinstance(obj, DEFAULT_UNIT_REGISTRY.Quantity),
     is_my_dict=is_openff_quantity_dict,
 )

@@ -2,6 +2,7 @@
 [![build](https://github.com/OpenFreeEnergy/gufe/actions/workflows/ci.yaml/badge.svg)](https://github.com/OpenFreeEnergy/gufe/actions/workflows/ci.yaml)
 [![coverage](https://codecov.io/gh/OpenFreeEnergy/gufe/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenFreeEnergy/gufe)
 [![Documentation Status](https://readthedocs.org/projects/gufe/badge/?version=latest)](https://gufe.readthedocs.io/en/latest/?badge=latest)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/OpenFreeEnergy/gufe/main.svg)](https://results.pre-commit.ci/latest/github/OpenFreeEnergy/gufe/main)
 
 # gufe - Grand Unified Free Energy
 
@@ -14,9 +15,9 @@ Looking to run a free energy calculation? You're probably looking for [openfe](h
 
 This library is made available under the [MIT](LICENSE) open source license.
 
-## Important note
+## API stability
 
-This is pre-alpha work, it should not be considered ready for production and API changes are expected at any time without prior warning.
+Our 1.0 releases follow semantic versioning and we will make an effort to keep the 1.0 API stable.
 
 ## Installation
 

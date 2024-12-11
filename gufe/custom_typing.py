@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from typing import TypeVar
+
 from rdkit import Chem
 
 try:

@@ -21,13 +21,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Note: pinned to macos-12
-        # see https://github.com/OpenFreeEnergy/openfe/issues/842
-        os: ['ubuntu-latest', 'macos-12']
+        os: ['ubuntu-latest', 'macos-latest']
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
 
     steps:
       - name: setup micromamba
@@ -52,12 +50,13 @@ jobs:
 
       - id: run-tests
         name: run tests
-        continue-on-error: true
         run: pytest -n auto --pyargs gufe
 
       - uses: actions/checkout@v4
+        if: ${{ always() }}
 
       - name: raise-or-close-issue
+        if: ${{ always() }}
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"

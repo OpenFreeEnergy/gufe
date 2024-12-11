@@ -1,13 +1,12 @@
-import pytest
-import pathlib
 import hashlib
 import os
+import pathlib
 from unittest import mock
 
+import pytest
+
+from gufe.storage.errors import ChangedExternalResourceError, MissingExternalResourceError
 from gufe.storage.externalresource import FileStorage, MemoryStorage
-from gufe.storage.errors import (
-    MissingExternalResourceError, ChangedExternalResourceError
-)
 
 # NOTE: Tests for the abstract base are just part of the tests of its
 # subclasses
@@ -21,43 +20,46 @@ def file_storage(tmp_path):
     * foo.txt : contents "bar"
     * with/directory.txt : contents "in a directory"
     """
-    with open(tmp_path / 'foo.txt', 'wb') as foo:
-        foo.write("bar".encode("utf-8"))
+    with open(tmp_path / "foo.txt", "wb") as foo:
+        foo.write(b"bar")
 
-    inner_dir = tmp_path / 'with'
+    inner_dir = tmp_path / "with"
     inner_dir.mkdir()
-    with open(inner_dir / 'directory.txt', 'wb') as with_dir:
-        with_dir.write("in a directory".encode("utf-8"))
+    with open(inner_dir / "directory.txt", "wb") as with_dir:
+        with_dir.write(b"in a directory")
 
     return FileStorage(tmp_path)
 
 
 class TestFileStorage:
-    @pytest.mark.parametrize('filename, expected', [
-        ('foo.txt', True),
-        ('notexisting.txt', False),
-        ('with/directory.txt', True),
-    ])
+    @pytest.mark.parametrize(
+        "filename, expected",
+        [
+            ("foo.txt", True),
+            ("notexisting.txt", False),
+            ("with/directory.txt", True),
+        ],
+    )
     def test_exists(self, filename, expected, file_storage):
         assert file_storage.exists(filename) == expected
 
     def test_store_bytes(self, file_storage):
         fileloc = file_storage.root_dir / "bar.txt"
         assert not fileloc.exists()
-        as_bytes = "This is bar".encode('utf-8')
+        as_bytes = b"This is bar"
 
         file_storage.store_bytes("bar.txt", as_bytes)
 
         assert fileloc.exists()
-        with open(fileloc, 'rb') as f:
+        with open(fileloc, "rb") as f:
             assert as_bytes == f.read()
 
-    @pytest.mark.parametrize('nested', [True, False])
+    @pytest.mark.parametrize("nested", [True, False])
     def test_store_path(self, file_storage, nested):
         orig_file = file_storage.root_dir / ".hidden" / "bar.txt"
         orig_file.parent.mkdir()
-        as_bytes = "This is bar".encode('utf-8')
-        with open(orig_file, 'wb') as f:
+        as_bytes = b"This is bar"
+        with open(orig_file, "wb") as f:
             f.write(as_bytes)
 
         nested_dir = "nested" if nested else ""
@@ -67,7 +69,7 @@ class TestFileStorage:
         file_storage.store_path(fileloc, orig_file)
 
         assert fileloc.exists()
-        with open(fileloc, 'rb') as f:
+        with open(fileloc, "rb") as f:
             assert as_bytes == f.read()
 
     def test_eq(self, tmp_path):
@@ -82,25 +84,28 @@ class TestFileStorage:
         file_storage.delete("foo.txt")
         assert not path.exists()
 
-    @pytest.mark.parametrize('prefix,expected', [
-        ("", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
-        ("foo", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
-        ("foo_dir/", {'foo_dir/a.txt', 'foo_dir/b.txt'}),
-        ("foo_dir/a", {'foo_dir/a.txt'}),
-        ("foo_dir/a.txt", {'foo_dir/a.txt'}),
-        ("baz", set()),
-    ])
+    @pytest.mark.parametrize(
+        "prefix,expected",
+        [
+            ("", {"foo.txt", "foo_dir/a.txt", "foo_dir/b.txt"}),
+            ("foo", {"foo.txt", "foo_dir/a.txt", "foo_dir/b.txt"}),
+            ("foo_dir/", {"foo_dir/a.txt", "foo_dir/b.txt"}),
+            ("foo_dir/a", {"foo_dir/a.txt"}),
+            ("foo_dir/a.txt", {"foo_dir/a.txt"}),
+            ("baz", set()),
+        ],
+    )
     def test_iter_contents(self, tmp_path, prefix, expected):
         files = [
-            'foo.txt',
-            'foo_dir/a.txt',
-            'foo_dir/b.txt',
+            "foo.txt",
+            "foo_dir/a.txt",
+            "foo_dir/b.txt",
         ]
         for file in files:
             path = tmp_path / file
             path.parent.mkdir(parents=True, exist_ok=True)
             assert not path.exists()
-            with open(path, 'wb') as f:
+            with open(path, "wb") as f:
                 f.write(b"")
 
         storage = FileStorage(tmp_path)
@@ -108,8 +113,7 @@ class TestFileStorage:
         assert set(storage.iter_contents(prefix)) == expected
 
     def test_delete_error_not_existing(self, file_storage):
-        with pytest.raises(MissingExternalResourceError,
-                           match="does not exist"):
+        with pytest.raises(MissingExternalResourceError, match="does not exist"):
             file_storage.delete("baz.txt")
 
     def test_get_filename(self, file_storage):
@@ -119,7 +123,7 @@ class TestFileStorage:
 
     def test_load_stream(self, file_storage):
         with file_storage.load_stream("foo.txt") as f:
-            results = f.read().decode('utf-8')
+            results = f.read().decode("utf-8")
 
         assert results == "bar"
 
@@ -130,25 +134,24 @@ class TestFileStorage:
 
 class TestMemoryStorage:
     def setup_method(self):
-        self.contents = {'path/to/foo.txt': 'bar'.encode('utf-8')}
+        self.contents = {"path/to/foo.txt": b"bar"}
         self.storage = MemoryStorage()
         self.storage._data = dict(self.contents)
 
-    @pytest.mark.parametrize('expected', [True, False])
+    @pytest.mark.parametrize("expected", [True, False])
     def test_exists(self, expected):
         path = "path/to/foo.txt" if expected else "path/to/bar.txt"
         assert self.storage.exists(path) is expected
 
     def test_delete(self):
         # checks internal state
-        assert 'path/to/foo.txt' in self.storage._data
-        self.storage.delete('path/to/foo.txt')
-        assert 'path/to/foo.txt' not in self.storage._data
+        assert "path/to/foo.txt" in self.storage._data
+        self.storage.delete("path/to/foo.txt")
+        assert "path/to/foo.txt" not in self.storage._data
 
     def test_delete_error_not_existing(self):
-        with pytest.raises(MissingExternalResourceError,
-                           match="Unable to delete"):
-            self.storage.delete('does/not/exist.txt')
+        with pytest.raises(MissingExternalResourceError, match="Unable to delete"):
+            self.storage.delete("does/not/exist.txt")
 
     def test_store_bytes(self):
         storage = MemoryStorage()
@@ -162,7 +165,7 @@ class TestMemoryStorage:
         for label, data in self.contents.items():
             path = tmp_path / label
             path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, mode='wb') as f:
+            with open(path, mode="wb") as f:
                 f.write(data)
 
             storage.store_path(label, path)
@@ -174,14 +177,17 @@ class TestMemoryStorage:
         assert reference == reference
         assert reference != MemoryStorage()
 
-    @pytest.mark.parametrize('prefix,expected', [
-        ("", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
-        ("foo", {'foo.txt', 'foo_dir/a.txt', 'foo_dir/b.txt'}),
-        ("foo_dir/", {'foo_dir/a.txt', 'foo_dir/b.txt'}),
-        ("foo_dir/a", {'foo_dir/a.txt'}),
-        ("foo_dir/a.txt", {'foo_dir/a.txt'}),
-        ("baz", set()),
-    ])
+    @pytest.mark.parametrize(
+        "prefix,expected",
+        [
+            ("", {"foo.txt", "foo_dir/a.txt", "foo_dir/b.txt"}),
+            ("foo", {"foo.txt", "foo_dir/a.txt", "foo_dir/b.txt"}),
+            ("foo_dir/", {"foo_dir/a.txt", "foo_dir/b.txt"}),
+            ("foo_dir/a", {"foo_dir/a.txt"}),
+            ("foo_dir/a.txt", {"foo_dir/a.txt"}),
+            ("baz", set()),
+        ],
+    )
     def test_iter_contents(self, prefix, expected):
         storage = MemoryStorage()
         storage._data = {
@@ -198,6 +204,6 @@ class TestMemoryStorage:
     def test_load_stream(self):
         path = "path/to/foo.txt"
         with self.storage.load_stream(path) as f:
-            results = f.read().decode('utf-8')
+            results = f.read().decode("utf-8")
 
         assert results == "bar"

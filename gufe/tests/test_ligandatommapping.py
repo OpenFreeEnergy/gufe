@@ -1,12 +1,14 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import importlib
-import pytest
-import pathlib
 import json
+import pathlib
+
 import numpy as np
-from rdkit import Chem
+import pytest
 from openff.units import unit
+from rdkit import Chem
+
 import gufe
 from gufe import LigandAtomMapping, SmallMoleculeComponent
 
@@ -20,7 +22,7 @@ def mol_from_smiles(smiles: str) -> gufe.SmallMoleculeComponent:
     return gufe.SmallMoleculeComponent(m)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def simple_mapping():
     """Disappearing oxygen on end
 
@@ -28,15 +30,15 @@ def simple_mapping():
 
     C C
     """
-    molA = mol_from_smiles('CCO')
-    molB = mol_from_smiles('CC')
+    molA = mol_from_smiles("CCO")
+    molB = mol_from_smiles("CC")
 
     m = LigandAtomMapping(molA, molB, componentA_to_componentB={0: 0, 1: 1})
 
     return m
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def other_mapping():
     """Disappearing middle carbon
 
@@ -44,8 +46,8 @@ def other_mapping():
 
     C   C
     """
-    molA = mol_from_smiles('CCO')
-    molB = mol_from_smiles('CC')
+    molA = mol_from_smiles("CCO")
+    molB = mol_from_smiles("CC")
 
     m = LigandAtomMapping(molA, molB, componentA_to_componentB={0: 0, 2: 1})
 
@@ -54,55 +56,82 @@ def other_mapping():
 
 @pytest.fixture
 def annotated_simple_mapping(simple_mapping):
-    mapping = LigandAtomMapping(simple_mapping.componentA,
-                                simple_mapping.componentB,
-                                simple_mapping.componentA_to_componentB,
-                                annotations={'foo': 'bar'})
+    mapping = LigandAtomMapping(
+        simple_mapping.componentA,
+        simple_mapping.componentB,
+        simple_mapping.componentA_to_componentB,
+        annotations={"foo": "bar"},
+    )
     return mapping
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def benzene_maps():
     MAPS = {
-        'phenol': {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6,
-                   7: 7, 8: 8, 9: 9, 10: 12, 11: 11},
-        'anisole': {0: 5, 1: 6, 2: 7, 3: 8, 4: 9, 5: 10,
-                    6: 11, 7: 12, 8: 13, 9: 14, 10: 2, 11: 15}}
+        "phenol": {
+            0: 0,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8,
+            9: 9,
+            10: 12,
+            11: 11,
+        },
+        "anisole": {
+            0: 5,
+            1: 6,
+            2: 7,
+            3: 8,
+            4: 9,
+            5: 10,
+            6: 11,
+            7: 12,
+            8: 13,
+            9: 14,
+            10: 2,
+            11: 15,
+        },
+    }
     return MAPS
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def benzene_phenol_mapping(benzene_transforms, benzene_maps):
-    molA = SmallMoleculeComponent(benzene_transforms['benzene'].to_rdkit())
-    molB = SmallMoleculeComponent(benzene_transforms['phenol'].to_rdkit())
-    m = LigandAtomMapping(molA, molB, benzene_maps['phenol'])
+    molA = SmallMoleculeComponent(benzene_transforms["benzene"].to_rdkit())
+    molB = SmallMoleculeComponent(benzene_transforms["phenol"].to_rdkit())
+    m = LigandAtomMapping(molA, molB, benzene_maps["phenol"])
     return m
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def benzene_anisole_mapping(benzene_transforms, benzene_maps):
-    molA = SmallMoleculeComponent(benzene_transforms['benzene'].to_rdkit())
-    molB = SmallMoleculeComponent(benzene_transforms['anisole'].to_rdkit())
-    m = LigandAtomMapping(molA, molB, benzene_maps['anisole'])
+    molA = SmallMoleculeComponent(benzene_transforms["benzene"].to_rdkit())
+    molB = SmallMoleculeComponent(benzene_transforms["anisole"].to_rdkit())
+    m = LigandAtomMapping(molA, molB, benzene_maps["anisole"])
     return m
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def atom_mapping_basic_test_files():
     # a dict of {filenames.strip(mol2): SmallMoleculeComponent} for a simple
     # set of ligands
     files = {}
     for f in [
-        '1,3,7-trimethylnaphthalene',
-        '1-butyl-4-methylbenzene',
-        '2,6-dimethylnaphthalene',
-        '2-methyl-6-propylnaphthalene',
-        '2-methylnaphthalene',
-        '2-naftanol',
-        'methylcyclohexane',
-        'toluene']:
-        with importlib.resources.path('gufe.tests.data.lomap_basic',
-                                      f + '.mol2') as fn:
+        "1,3,7-trimethylnaphthalene",
+        "1-butyl-4-methylbenzene",
+        "2,6-dimethylnaphthalene",
+        "2-methyl-6-propylnaphthalene",
+        "2-methylnaphthalene",
+        "2-naftanol",
+        "methylcyclohexane",
+        "toluene",
+    ]:
+        with importlib.resources.path("gufe.tests.data.lomap_basic", f + ".mol2") as fn:
             mol = Chem.MolFromMol2File(str(fn), removeHs=False)
             files[f] = SmallMoleculeComponent(mol, name=f)
 
@@ -120,15 +149,25 @@ def test_atommapping_usage(simple_mapping):
 
 def test_mapping_inversion(benzene_phenol_mapping):
     assert benzene_phenol_mapping.componentB_to_componentA == {
-        0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 11: 11,
-        12: 10
+        0: 0,
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+        11: 11,
+        12: 10,
     }
 
 
 def test_mapping_distances(benzene_phenol_mapping):
     d = benzene_phenol_mapping.get_distances()
 
-    ref = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.34005502, 0.]
+    ref = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.34005502, 0.0]
 
     assert isinstance(d, np.ndarray)
     for i, r in zip(d, ref):
@@ -137,15 +176,27 @@ def test_mapping_distances(benzene_phenol_mapping):
 
 def test_uniques(atom_mapping_basic_test_files):
     mapping = LigandAtomMapping(
-        componentA=atom_mapping_basic_test_files['methylcyclohexane'],
-        componentB=atom_mapping_basic_test_files['toluene'],
-        componentA_to_componentB={
-            0: 6, 1: 7, 2: 8, 3: 9, 4: 10, 5: 11, 6: 12
-        }
+        componentA=atom_mapping_basic_test_files["methylcyclohexane"],
+        componentB=atom_mapping_basic_test_files["toluene"],
+        componentA_to_componentB={0: 6, 1: 7, 2: 8, 3: 9, 4: 10, 5: 11, 6: 12},
     )
 
-    assert list(mapping.componentA_unique) == [7, 8, 9, 10, 11, 12, 13, 14, 15,
-                                               16, 17, 18, 19, 20]
+    assert list(mapping.componentA_unique) == [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+    ]
     assert list(mapping.componentB_unique) == [0, 1, 2, 3, 4, 5, 13, 14]
 
 
@@ -166,25 +217,23 @@ def test_atommapping_hash(simple_mapping, other_mapping):
 
 def test_draw_mapping_cairo(tmpdir, simple_mapping):
     with tmpdir.as_cwd():
-        simple_mapping.draw_to_file('test.png')
-        filed = pathlib.Path('test.png')
+        simple_mapping.draw_to_file("test.png")
+        filed = pathlib.Path("test.png")
         assert filed.exists()
 
 
 def test_draw_mapping_svg(tmpdir, other_mapping):
     with tmpdir.as_cwd():
         d2d = Chem.Draw.rdMolDraw2D.MolDraw2DSVG(600, 300, 300, 300)
-        other_mapping.draw_to_file('test.svg', d2d=d2d)
-        filed = pathlib.Path('test.svg')
+        other_mapping.draw_to_file("test.svg", d2d=d2d)
+        filed = pathlib.Path("test.svg")
         assert filed.exists()
 
 
 class TestLigandAtomMappingSerialization:
-    def test_deserialize_roundtrip(self, benzene_phenol_mapping,
-                                   benzene_anisole_mapping):
+    def test_deserialize_roundtrip(self, benzene_phenol_mapping, benzene_anisole_mapping):
 
-        roundtrip = LigandAtomMapping.from_dict(
-                        benzene_phenol_mapping.to_dict())
+        roundtrip = LigandAtomMapping.from_dict(benzene_phenol_mapping.to_dict())
 
         assert roundtrip == benzene_phenol_mapping
 
@@ -195,10 +244,10 @@ class TestLigandAtomMappingSerialization:
 
     def test_file_roundtrip(self, benzene_phenol_mapping, tmpdir):
         with tmpdir.as_cwd():
-            with open('tmpfile.json', 'w') as f:
+            with open("tmpfile.json", "w") as f:
                 f.write(json.dumps(benzene_phenol_mapping.to_dict()))
 
-            with open('tmpfile.json', 'r') as f:
+            with open("tmpfile.json") as f:
                 d = json.load(f)
 
             assert isinstance(d, dict)
@@ -207,27 +256,26 @@ class TestLigandAtomMappingSerialization:
             assert roundtrip == benzene_phenol_mapping
 
 
-def test_annotated_atommapping_hash_eq(simple_mapping,
-                                       annotated_simple_mapping):
+def test_annotated_atommapping_hash_eq(simple_mapping, annotated_simple_mapping):
     assert annotated_simple_mapping != simple_mapping
     assert hash(annotated_simple_mapping) != hash(simple_mapping)
 
 
 def test_annotation_immutability(annotated_simple_mapping):
     annot1 = annotated_simple_mapping.annotations
-    annot1['foo'] = 'baz'
+    annot1["foo"] = "baz"
     annot2 = annotated_simple_mapping.annotations
     assert annot1 != annot2
-    assert annot2 == {'foo': 'bar'}
+    assert annot2 == {"foo": "bar"}
 
 
 def test_with_annotations(simple_mapping, annotated_simple_mapping):
-    new_annot = simple_mapping.with_annotations({'foo': 'bar'})
+    new_annot = simple_mapping.with_annotations({"foo": "bar"})
     assert new_annot == annotated_simple_mapping
 
 
 def test_with_fancy_annotations(simple_mapping):
-    m = simple_mapping.with_annotations({'thing': 4.0 * unit.nanometer})
+    m = simple_mapping.with_annotations({"thing": 4.0 * unit.nanometer})
 
     assert m.key
 
@@ -240,42 +288,33 @@ class TestLigandAtomMappingBoundsChecks:
     @pytest.fixture
     def molA(self):
         # 9 atoms
-        return mol_from_smiles('CCO')
+        return mol_from_smiles("CCO")
 
     @pytest.fixture
     def molB(self):
         # 11 atoms
-        return mol_from_smiles('CCC')
+        return mol_from_smiles("CCC")
 
     def test_too_large_A(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentA"):
-            LigandAtomMapping(componentA=molA,
-                              componentB=molB,
-                              componentA_to_componentB={9: 5})
+            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={9: 5})
 
     def test_too_small_A(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentA"):
-            LigandAtomMapping(componentA=molA,
-                              componentB=molB,
-                              componentA_to_componentB={-2: 5})
+            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={-2: 5})
 
     def test_too_large_B(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentB"):
-            LigandAtomMapping(componentA=molA,
-                              componentB=molB,
-                              componentA_to_componentB={5: 11})
+            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={5: 11})
 
     def test_too_small_B(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentB"):
-            LigandAtomMapping(componentA=molA,
-                              componentB=molB,
-                              componentA_to_componentB={5: -1})
+            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={5: -1})
 
 
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):
     cls = LigandAtomMapping
     repr = "LigandAtomMapping(componentA=SmallMoleculeComponent(name=), componentB=SmallMoleculeComponent(name=), componentA_to_componentB={0: 0, 1: 1}, annotations={'foo': 'bar'})"
-    key = "LigandAtomMapping-c333723fbbee702c641cb9dca9beae49"
 
     @pytest.fixture
     def instance(self, annotated_simple_mapping):

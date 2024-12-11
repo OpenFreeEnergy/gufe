@@ -5,21 +5,15 @@ Pydantic models used for storing settings.
 """
 
 import abc
+import pprint
 from typing import Optional, Union
 
 from openff.models.models import DefaultModel
 from openff.models.types import FloatQuantity
 from openff.units import unit
-import pprint
 
 try:
-    from pydantic.v1 import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
+    from pydantic.v1 import Extra, Field, PositiveFloat, PrivateAttr, validator
 except ImportError:
     from pydantic import (
         Extra,
@@ -28,17 +22,20 @@ except ImportError:
         PrivateAttr,
         validator,
     )
+
 import pydantic
 
 
 class SettingsBaseModel(DefaultModel):
     """Settings and modifications we want for all settings classes."""
+
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
 
     class Config:
         """
         :noindex:
         """
+
         extra = pydantic.Extra.forbid
         arbitrary_types_allowed = False
         smart_union = True
@@ -56,8 +53,7 @@ class SettingsBaseModel(DefaultModel):
 
         def freeze_model(model):
             submodels = (
-                mod for field in model.__fields__
-                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -78,8 +74,7 @@ class SettingsBaseModel(DefaultModel):
 
         def unfreeze_model(model):
             submodels = (
-                mod for field in model.__fields__
-                if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
@@ -100,7 +95,8 @@ class SettingsBaseModel(DefaultModel):
             raise AttributeError(
                 f"Cannot set '{name}': Settings are immutable once attached"
                 " to a Protocol and cannot be modified. Modify Settings "
-                "*before* creating the Protocol.")
+                "*before* creating the Protocol."
+            )
         return super().__setattr__(name, value)
 
 
@@ -112,23 +108,22 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: FloatQuantity["kelvin"] = Field(
-        None, description="Simulation temperature, default units kelvin"
-    )
+    temperature: FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
     pressure: FloatQuantity["standard_atmosphere"] = Field(
         None, description="Simulation pressure, default units standard atmosphere (atm)"
     )
     ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH")
-    redox_potential: Optional[float] = Field(
-        None, description="Simulation redox potential"
-    )
+    redox_potential: Optional[float] = Field(None, description="Simulation redox potential")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
+
     class Config:
         """:noindex:"""
+
         pass
+
     ...
 
 
@@ -145,11 +140,13 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
+
     class Config:
         """:noindex:"""
+
         pass
-    
-    constraints: Optional[str] = 'hbonds'
+
+    constraints: Optional[str] = "hbonds"
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True
@@ -169,39 +166,37 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method = 'PME'
+    nonbonded_method = "PME"
     """
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff: FloatQuantity['nanometer'] = 1.0 * unit.nanometer
+    nonbonded_cutoff: FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
     """
 
-    @validator('nonbonded_method')
+    @validator("nonbonded_method")
     def allowed_nonbonded(cls, v):
-        if v.lower() not in ['pme', 'nocutoff']:
-            errmsg = (
-                "Only PME and NoCutoff are allowed nonbonded_methods")
+        if v.lower() not in ["pme", "nocutoff"]:
+            errmsg = "Only PME and NoCutoff are allowed nonbonded_methods"
             raise ValueError(errmsg)
         return v
 
-    @validator('nonbonded_cutoff')
+    @validator("nonbonded_cutoff")
     def is_positive_distance(cls, v):
         # these are time units, not simulation steps
         if not v.is_compatible_with(unit.nanometer):
-            raise ValueError("nonbonded_cutoff must be in distance units "
-                             "(i.e. nanometers)")
+            raise ValueError("nonbonded_cutoff must be in distance units " "(i.e. nanometers)")
         if v < 0:
             errmsg = "nonbonded_cutoff must be a positive value"
             raise ValueError(errmsg)
         return v
 
-    @validator('constraints')
+    @validator("constraints")
     def constraint_check(cls, v):
-        allowed = {'hbonds', 'hangles', 'allbonds'}
+        allowed = {"hbonds", "hangles", "allbonds"}
 
         if not (v is None or v.lower() in allowed):
             raise ValueError(f"Bad constraints value, use one of {allowed}")
@@ -217,6 +212,7 @@ class Settings(SettingsBaseModel):
 
     Protocols can subclass this to extend this to cater for their additional settings.
     """
+
     forcefield_settings: BaseForceFieldSettings
     thermo_settings: ThermoSettings
 

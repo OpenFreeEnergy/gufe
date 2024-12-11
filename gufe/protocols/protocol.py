@@ -6,15 +6,16 @@
 """
 
 import abc
-from typing import Optional, Iterable, Any, Union
-from openff.units import Quantity
 import warnings
+from collections.abc import Iterable, Sized
+from typing import Any, Optional, Union
 
-from ..settings import Settings, SettingsBaseModel
-from ..tokenization import GufeTokenizable, GufeKey
+from openff.units import Quantity
+
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
-
+from ..settings import Settings, SettingsBaseModel
+from ..tokenization import GufeKey, GufeTokenizable
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
 
@@ -32,19 +33,33 @@ class ProtocolResult(GufeTokenizable):
     - `get_uncertainty`
     """
 
-    def __init__(self, **data):
+    def __init__(self, n_protocol_dag_results: int = 0, **data):
         self._data = data
+
+        if not n_protocol_dag_results >= 0:
+            raise ValueError("`n_protocol_dag_results` must be an integer greater than or equal to zero")
+
+        self._n_protocol_dag_results = n_protocol_dag_results
 
     @classmethod
     def _defaults(cls):
         return {}
 
     def _to_dict(self):
-        return {'data': self.data}
+        return {"n_protocol_dag_results": self.n_protocol_dag_results, "data": self.data}
 
     @classmethod
     def _from_dict(cls, dct: dict):
-        return cls(**dct['data'])
+        # TODO: remove in gufe 2.0
+        try:
+            n_protocol_dag_results = dct["n_protocol_dag_results"]
+        except KeyError:
+            n_protocol_dag_results = 0
+        return cls(n_protocol_dag_results=n_protocol_dag_results, **dct["data"])
+
+    @property
+    def n_protocol_dag_results(self) -> int:
+        return self._n_protocol_dag_results
 
     @property
     def data(self) -> dict[str, Any]:
@@ -57,12 +72,10 @@ class ProtocolResult(GufeTokenizable):
         return self._data
 
     @abc.abstractmethod
-    def get_estimate(self) -> Quantity:
-        ...
+    def get_estimate(self) -> Quantity: ...
 
     @abc.abstractmethod
-    def get_uncertainty(self) -> Quantity:
-        ...
+    def get_uncertainty(self) -> Quantity: ...
 
 
 class Protocol(GufeTokenizable):
@@ -80,6 +93,7 @@ class Protocol(GufeTokenizable):
     - `_gather`
     - `_default_settings`
     """
+
     _settings: Settings
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
@@ -109,7 +123,7 @@ class Protocol(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {'settings': self.settings}
+        return {"settings": self.settings}
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -180,9 +194,9 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
         name: Optional[str] = None,
-        transformation_key: Optional[GufeKey] = None
+        transformation_key: Optional[GufeKey] = None,
     ) -> ProtocolDAG:
-        """Prepare a `ProtocolDAG` with all information required for execution.
+        r"""Prepare a `ProtocolDAG` with all information required for execution.
 
         A :class:`.ProtocolDAG` is composed of :class:`.ProtocolUnit` \s, with
         dependencies established between them. These form a directed, acyclic
@@ -221,9 +235,10 @@ class Protocol(GufeTokenizable):
             A directed, acyclic graph that can be executed by a `Scheduler`.
         """
         if isinstance(mapping, dict):
-            warnings.warn(("mapping input as a dict is deprecated, "
-                           "instead use either a single Mapping or list"),
-                          DeprecationWarning)
+            warnings.warn(
+                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
+                DeprecationWarning,
+            )
             mapping = list(mapping.values())
 
         return ProtocolDAG(
@@ -235,12 +250,10 @@ class Protocol(GufeTokenizable):
                 extends=extends,
             ),
             transformation_key=transformation_key,
-            extends_key=extends.key if extends is not None else None
+            extends_key=extends.key if extends is not None else None,
         )
 
-    def gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> ProtocolResult:
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
         Parameters
@@ -254,12 +267,16 @@ class Protocol(GufeTokenizable):
         ProtocolResult
             Aggregated results from many `ProtocolDAGResult`s from a given `Protocol`.
         """
-        return self.result_cls(**self._gather(protocol_dag_results))
+        # Iterable does not implement __len__ and makes no guarantees that
+        # protocol_dag_results is finite, checking both in method signature
+        # doesn't appear possible, explicitly check for __len__ through the
+        # Sized type
+        if not isinstance(protocol_dag_results, Sized):
+            raise ValueError("`protocol_dag_results` must implement `__len__`")
+        return self.result_cls(n_protocol_dag_results=len(protocol_dag_results), **self._gather(protocol_dag_results))
 
     @abc.abstractmethod
-    def _gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> dict[str, Any]:
+    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
         """Method to override in custom Protocol subclasses.
 
         This method should take any number of ``ProtocolDAGResult``s produced

@@ -1,20 +1,19 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
-import os
-import io
 import copy
+import io
+import os
+
 import pytest
+from numpy.testing import assert_almost_equal
+from openmm import unit
+from openmm.app import pdbfile
 from rdkit import Chem
 
 from gufe import ProteinComponent
 
-from .test_tokenization import GufeTokenizableTestsMixin
-
-from openmm.app import pdbfile
-from openmm import unit
-from numpy.testing import assert_almost_equal
-
 from .conftest import ALL_PDB_LOADERS
+from .test_tokenization import GufeTokenizableTestsMixin
 
 
 @pytest.fixture
@@ -34,13 +33,13 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     if hasattr(in_file_path, "readlines"):
         in_file = in_file_path
     else:
-        in_file =  open(in_file_path, "r")
+        in_file = open(in_file_path)
 
     if isinstance(out_file_path, io.StringIO):
         out_file = out_file_path
         must_close = False
     else:
-        out_file = open(out_file_path, mode='r')
+        out_file = open(out_file_path)
         must_close = True
 
     in_lines = in_file.readlines()
@@ -49,10 +48,8 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     if must_close:
         out_file.close()
 
-    in_lines = [l for l in in_lines
-                if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
-    out_lines = [l for l in out_lines
-                 if not l.startswith(('REMARK', 'CRYST', '# Created with'))]
+    in_lines = [l for l in in_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
+    out_lines = [l for l in out_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
 
     assert in_lines == out_lines
 
@@ -87,7 +84,6 @@ def assert_topology_equal(ref_top, top):
 class TestProteinComponent(GufeTokenizableTestsMixin):
 
     cls = ProteinComponent
-    key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
     repr = "ProteinComponent(name=Steve)"
 
     @pytest.fixture
@@ -95,7 +91,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
 
     # From
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
+    @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
     def test_from_pdb_file(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         p = self.cls.from_pdb_file(in_pdb_io, name="Steve")
@@ -126,8 +122,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert isinstance(rdkitmol, Chem.Mol)
         assert rdkitmol.GetNumAtoms() == 2639
 
-    def _test_file_output(self, input_path, output_path, input_type,
-                          output_func):
+    def _test_file_output(self, input_path, output_path, input_type, output_func):
         if input_type == "filename":
             inp = str(output_path)
         elif input_type == "Path":
@@ -135,7 +130,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         elif input_type == "StringIO":
             inp = io.StringIO()
         elif input_type == "TextIOWrapper":
-            inp = open(output_path, mode='w')
+            inp = open(output_path, mode="w")
 
         output_func(inp)
 
@@ -146,13 +141,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         if input_type == "TextIOWrapper":
             inp.close()
 
-        assert_same_pdb_lines(in_file_path=str(input_path),
-                              out_file_path=output_path)
+        assert_same_pdb_lines(in_file_path=str(input_path), out_file_path=output_path)
 
-    @pytest.mark.parametrize('input_type', ['filename', 'Path', 'StringIO',
-                                            'TextIOWrapper'])
-    def test_to_pdbx_file(self, PDBx_181L_openMMClean_path, tmp_path,
-                          input_type):
+    @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
+    def test_to_pdbx_file(self, PDBx_181L_openMMClean_path, tmp_path, input_type):
         p = self.cls.from_pdbx_file(str(PDBx_181L_openMMClean_path), name="Bob")
         out_file_name = "tmp_181L_pdbx.cif"
         out_file = tmp_path / out_file_name
@@ -161,28 +153,26 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
             input_path=PDBx_181L_openMMClean_path,
             output_path=out_file,
             input_type=input_type,
-            output_func=p.to_pdbx_file
+            output_func=p.to_pdbx_file,
         )
 
-    @pytest.mark.parametrize('input_type', ['filename', 'Path', 'StringIO',
-                                            'TextIOWrapper'])
-    def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path,
-                                input_type):
+    @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
+    def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path, input_type):
         p = self.cls.from_pdb_file(str(PDB_181L_OpenMMClean_path), name="Bob")
 
         self._test_file_output(
             input_path=PDB_181L_OpenMMClean_path,
             output_path=tmp_path / "tmp_181L.pdb",
             input_type=input_type,
-            output_func=p.to_pdb_file
+            output_func=p.to_pdb_file,
         )
 
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
+    @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
     def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         p = self.cls.from_pdb_file(in_pdb_io, name="Wuff")
-        out_file_name = "tmp_"+in_pdb_path+".pdb"
+        out_file_name = "tmp_" + in_pdb_path + ".pdb"
         out_file = tmp_path / out_file_name
 
         p.to_pdb_file(str(out_file))
@@ -191,7 +181,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
 
         # generate openMM reference file:
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
-        out_ref_file_name = "tmp_"+in_pdb_path+"_openmm_ref.pdb"
+        out_ref_file_name = "tmp_" + in_pdb_path + "_openmm_ref.pdb"
         out_ref_file = tmp_path / out_ref_file_name
 
         pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
@@ -214,10 +204,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert p == p2
 
     # parametrize
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
+    @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
     def test_to_openmm_positions(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
+        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
         openmm_pos = openmm_pdb.positions
@@ -231,10 +221,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin):
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
     # parametrize
-    @pytest.mark.parametrize('in_pdb_path', ALL_PDB_LOADERS.keys())
+    @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
     def test_to_openmm_topology(self, in_pdb_path):
-        in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
-        ref_in_pdb_io =  ALL_PDB_LOADERS[in_pdb_path]()
+        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
+        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
         openmm_top = openmm_pdb.topology

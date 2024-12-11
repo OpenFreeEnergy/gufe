@@ -22,13 +22,13 @@ class ensure_filelike:
         the stream will always be closed. Filelike inputs will close
         if this parameter is True.
     """
+
     def __init__(self, fn, mode=None, force_close=False):
         filelikes = (io.TextIOBase, io.RawIOBase, io.BufferedIOBase)
         if isinstance(fn, filelikes):
             if mode is not None:
                 warnings.warn(
-                    f"mode='{mode}' specified with {fn.__class__.__name__}."
-                    " User-specified mode will be ignored."
+                    f"mode='{mode}' specified with {fn.__class__.__name__}." " User-specified mode will be ignored."
                 )
             self.to_open = None
             self.do_close = force_close
@@ -51,4 +51,3 @@ class ensure_filelike:
     def __exit__(self, type, value, traceback):
         if self.do_close:
             self.context.close()
-
