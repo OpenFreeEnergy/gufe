@@ -17,15 +17,15 @@ from gufe import settings
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import ComponentMapping
 from gufe.protocols import (
+    MissingUnitResultError,
     Protocol,
     ProtocolDAG,
     ProtocolDAGResult,
     ProtocolResult,
     ProtocolUnit,
     ProtocolUnitFailure,
+    ProtocolUnitFailureError,
     ProtocolUnitResult,
-    MissingUnitResultError,
-    ProtocolUnitFailureError
 )
 from gufe.protocols.protocoldag import execute_DAG
 
@@ -727,7 +727,9 @@ class TestProtocolDAGResult:
             dagresult.unit_to_result(units[2])
         with pytest.raises(MissingUnitResultError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_all_results(units[2])
-        with pytest.raises(MissingUnitResultError, match="No such `protocol_unit_result`:ProtocolUnitResult\(None\) present"):
+        with pytest.raises(
+            MissingUnitResultError, match="No such `protocol_unit_result`:ProtocolUnitResult\(None\) present"
+        ):
             dagresult.result_to_unit(successes[2])
 
 

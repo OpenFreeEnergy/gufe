@@ -1,8 +1,10 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
+
 class BaseGufeError(Exception):
     """The base gufe error that other errors should subclass."""
+
 
 # Protocol Errors
 class ProtocolValidationError(BaseGufeError):
