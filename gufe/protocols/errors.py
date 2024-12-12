@@ -21,7 +21,7 @@ class ProtocolAnalysisError(Exception):
 
 # Protocol Results Errors
 class MissingProtocolUnitError(Exception):
-    """Error when a ProtocolDAGResult is massing a protocol unit."""
+    """Error when a ProtocolDAGResult is missing a protocol unit."""
 
 
 class ProtocolUnitFailureError(Exception):
