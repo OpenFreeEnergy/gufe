@@ -1,7 +1,7 @@
 """Defining processes for performing estimates of free energy differences"""
 
 from .errors import (
-    MissingProtocolUnitError,
+    MissingUnitResultError,
     ProtocolAnalysisError,
     ProtocolExecutionError,
     ProtocolSetupError,
