@@ -344,6 +344,11 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         assert len(reduced.nodes) == 2
         assert {n2, n3} == reduced.nodes
 
+        enlarged = network.enlarge_graph(nodes=[new_mol, n1], edges=[extra_edge, e2])
+        reduced = enlarged.reduce_graph(nodes=[new_mol], edges=[extra_edge])
+
+        assert reduced is network
+
     def test_serialization_cycle(self, simple_network):
         network = simple_network.network
         serialized = network.to_graphml()
