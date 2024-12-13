@@ -269,6 +269,81 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         assert len(new_network.edges) == len(network.edges)
         assert set(new_network.edges) == set(network.edges)
 
+    def test_reduce_graph_remove_nodes(self, simple_network, mols):
+        n1, n2, n3 = mols
+        network = simple_network.network
+
+        reduced = network.reduce_graph(nodes=[n1])
+
+        assert len(reduced.edges) == 1
+        assert len(reduced.nodes) == 2
+
+        reduced = network.reduce_graph(nodes=[n1, n3])
+
+        assert len(reduced.edges) == 0
+        assert len(reduced.nodes) == 1
+
+    def test_reduce_graph_remove_edges(self, simple_network, std_edges):
+        e1, e2, e3 = std_edges
+        network = simple_network.network
+
+        reduced = network.reduce_graph(edges=[e1])
+
+        assert len(reduced.edges) == 2
+        assert {e2, e3} == reduced.edges
+        assert len(reduced.nodes) == 3
+        assert reduced.is_connected()
+
+        reduced = network.reduce_graph(edges=[e1, e3])
+
+        assert len(reduced.edges) == 1
+        assert {e2} == reduced.edges
+        assert len(reduced.nodes) == 3
+        assert not reduced.is_connected()
+
+    def test_reduce_graph_remove_edges_and_nodes(self, simple_network, std_edges, mols):
+        n1, n2, n3 = mols
+        e1, e2, e3 = std_edges
+        network = simple_network.network
+
+        reduced = network.reduce_graph(nodes=[n1], edges=[e2])
+
+        assert len(reduced.edges) == 0
+        assert len(reduced.nodes) == 2
+        assert {n2, n3} == reduced.nodes
+
+        reduced = network.reduce_graph(nodes=[n1], edges=[e1, e3])
+
+        assert len(reduced.edges) == 1
+        assert len(reduced.nodes) == 2
+        assert {n2, n3} == reduced.nodes
+
+        reduced = network.reduce_graph(nodes=[n2, n1], edges=[e1, e3])
+
+        assert len(reduced.edges) == 0
+        assert len(reduced.nodes) == 1
+        assert {n3} == reduced.nodes
+
+    def test_reduce_graph_remove_edges_and_nodes_not_present(self, simple_network, std_edges, mols):
+        n1, n2, n3 = mols
+        e1, e2, e3 = std_edges
+        network = simple_network.network
+
+        new_mol = SmallMoleculeComponent(mol_from_smiles("CCCC"))
+        mol_CC = mols[1]
+        extra_edge = LigandAtomMapping(new_mol, mol_CC, {1: 0, 2: 1})
+
+        reduced = network.reduce_graph(nodes=[new_mol], edges=[extra_edge])
+
+        assert reduced == network
+        assert reduced is network
+
+        reduced = network.reduce_graph(nodes=[new_mol, n1], edges=[extra_edge, e2])
+
+        assert len(reduced.edges) == 0
+        assert len(reduced.nodes) == 2
+        assert {n2, n3} == reduced.nodes
+
     def test_serialization_cycle(self, simple_network):
         network = simple_network.network
         serialized = network.to_graphml()
@@ -425,41 +500,3 @@ def test_empty_ligand_network(mols):
 
     assert len(n.edges) == 0
     assert len(n.nodes) == 1
-
-
-class TestLigandNetworkRemoveEdges:
-    def test_remove_edges_single(self, std_edges):
-        e1, e2, e3 = std_edges
-
-        n = LigandNetwork(edges=[e1, e2, e3])
-
-        n2 = n.remove_edges(e1)
-
-        assert len(n2.edges) == 2
-        assert len(n2.nodes) == 3
-        assert e1 not in n2.edges
-        assert e2 in n2.edges
-        assert e3 in n2.edges
-        assert n.nodes == n2.nodes
-
-    def test_remove_edges_pair(self, std_edges):
-        e1, e2, e3 = std_edges
-
-        n = LigandNetwork(edges=[e1, e2, e3])
-
-        n2 = n.remove_edges([e1, e2])
-
-        assert len(n2.edges) == 1
-        assert len(n2.nodes) == 3
-        assert e1 not in n2.edges
-        assert e2 not in n2.edges
-        assert e3 in n2.edges
-        assert n.nodes == n2.nodes
-
-    def test_remove_edges_fail(self, std_edges):
-        e1, e2, e3 = std_edges
-
-        n = LigandNetwork([e1, e2])
-
-        with pytest.raises(ValueError):
-            n.remove_edges(e3)
