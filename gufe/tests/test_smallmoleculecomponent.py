@@ -25,6 +25,7 @@ from gufe.components.explicitmoleculecomponent import _ensure_ofe_name
 from gufe.tokenization import TOKENIZABLE_REGISTRY
 
 from .test_tokenization import GufeTokenizableTestsMixin
+from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 
 
 @pytest.fixture
@@ -74,7 +75,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
     assert rdkit.GetProp("ofe-name") == out_name
 
 
-class TestSmallMoleculeComponent(GufeTokenizableTestsMixin):
+class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
 
     cls = SmallMoleculeComponent
     repr = "SmallMoleculeComponent(name=ethane)"

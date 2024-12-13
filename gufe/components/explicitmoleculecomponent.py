@@ -9,10 +9,6 @@ from rdkit import Chem
 from ..custom_typing import RDKitMol
 from .component import Component
 
-# globally set RDKit to include all properties when pickling an RDKit Mol
-# see issue #322: https://github.com/OpenFreeEnergy/gufe/issues/322
-Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
-
 
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     """
@@ -131,17 +127,11 @@ class ExplicitMoleculeComponent(Component):
 
     def __getstate__(self):
         # TODO: check that RDKit setting is set before issuing warning
-        self.logger.warning("RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
-                            "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`")
+        if Chem.GetDefaultPickleProperties() == 0:
+            warnings.warn("RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
+                          "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`")
 
-        super().__getstate__()
-
-    def __setstate__(self, state):
-        # TODO: check that RDKit setting is set before issuing warning
-        self.logger.warning("RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
-                            "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`")
-
-        super().__setstate__(state)
+        return super().__getstate__()
 
     @classmethod
     def _defaults(cls):
