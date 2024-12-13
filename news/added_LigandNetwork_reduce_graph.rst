@@ -1,6 +1,6 @@
 **Added:**
 
-* added LigandNetwork.remove_edges
+* added LigandNetwork.reduce_graph
 
 **Changed:**
 
