@@ -170,8 +170,8 @@ class LigandNetwork(GufeTokenizable):
 
     def enlarge_graph(self,
                       *,
-                      edges: Iterable[Optional[LigandAtomMapping]] = None,
-                      nodes: Iterable[Optional[SmallMoleculeComponent]] = None) -> LigandNetwork:
+                      edges: Optional[Iterable[LigandAtomMapping]] = None,
+                      nodes: Optional[Iterable[SmallMoleculeComponent]] = None) -> LigandNetwork:
         """Create a new network with the given edges and nodes added.
 
         Parameters
@@ -196,8 +196,8 @@ class LigandNetwork(GufeTokenizable):
 
     def reduce_graph(self,
                      *,
-                     edges: Iterable[Optional[LigandAtomMapping]] = None,
-                     nodes: Iterable[Optional[SmallMoleculeComponent]] = None) -> LigandNetwork:
+                     edges: Optional[Iterable[LigandAtomMapping]] = None,
+                     nodes: Optional[Iterable[SmallMoleculeComponent]] = None) -> LigandNetwork:
         """Create a new network with the given edges and nodes removed.
 
         Note that for removed ``nodes``, any edges that include them will also
