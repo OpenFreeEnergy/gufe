@@ -134,7 +134,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
             np.array([1, 0]),
             np.array([1.0, 2.0, 3.0], dtype=np.float32),
         ]
-        shapes = [[2, 2], [2], [3]]
+        shapes = [[2, 2], [2], [3]]  # fmt: skip
         dtypes = [str(arr.dtype) for arr in self.objs]  # may change by system?
         byte_reps = [arr.tobytes() for arr in self.objs]
         self.dcts = [
