@@ -348,10 +348,10 @@ class LigandNetwork(GufeTokenizable):
     #     )
 
     def is_connected(self) -> bool:
-        """Indicates whether all ligands in the network are (indirectly)
+        """Indicates whether all ligands in the network are (directly or indirectly)
         connected to each other.
 
-        A ``False`` value indicates that either some ligands have no edges or
+        A ``False`` value indicates that either some nodes have no edges or
         that there are separate networks that do not link to each other.
 
         """
