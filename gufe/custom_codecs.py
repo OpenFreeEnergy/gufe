@@ -11,10 +11,9 @@ import numpy as np
 from openff.units import DEFAULT_UNIT_REGISTRY
 
 import gufe
+from gufe.compression import zst_compress, zst_decompress
 from gufe.custom_json import JSONCodec
 from gufe.settings.models import SettingsBaseModel
-
-from gufe.compression import zst_compress, zst_decompress
 
 
 def default_from_dict(dct):

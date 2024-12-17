@@ -25,7 +25,7 @@ from gufe.custom_codecs import (
     SETTINGS_CODEC,
     UUID_CODEC,
 )
-from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory, JSONCodec
+from gufe.custom_json import JSONCodec, JSONSerializerDeserializer, custom_json_factory
 from gufe.settings import models
 
 
@@ -106,13 +106,13 @@ class CustomJSONCodingTest(abc.ABC):
         legacy_bytes_codec = JSONCodec(
             cls=bytes,
             to_dict=lambda obj: {"latin-1": obj.decode("latin-1")},
-            from_dict=lambda dct: dct["latin-1"].encode("latin-1")
-            )
+            from_dict=lambda dct: dct["latin-1"].encode("latin-1"),
+        )
 
         required_codecs = [codec for codec in self.required_codecs if not codec is BYTES_CODEC]
 
         legacy_encoder, _ = custom_json_factory([legacy_bytes_codec, *required_codecs])
-        _, decoder= custom_json_factory([BYTES_CODEC, *required_codecs])
+        _, decoder = custom_json_factory([BYTES_CODEC, *required_codecs])
 
         self._test_round_trip(legacy_encoder, decoder)
 
@@ -201,13 +201,13 @@ class TestBytesCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = BYTES_CODEC
         self.required_codecs = [self.codec]
-        self.objs =[b'a test string']
+        self.objs = [b"a test string"]
         self.dcts = [
             {
                 ":is_custom:": True,
                 "__class__": "bytes",
                 "__module__": "builtins",
-                "latin-1": '(µ/ý \ri\x00\x00a test string'
+                "latin-1": "(µ/ý \ri\x00\x00a test string",
             }
         ]
 
