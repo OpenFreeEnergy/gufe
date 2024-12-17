@@ -3,6 +3,7 @@
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
 
+import abc
 import json
 import pathlib
 from uuid import uuid4
@@ -23,9 +24,8 @@ from gufe.custom_codecs import (
     PATH_CODEC,
     SETTINGS_CODEC,
     UUID_CODEC,
-    JSONCodec,
 )
-from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory
+from gufe.custom_json import JSONSerializerDeserializer, custom_json_factory, JSONCodec
 from gufe.settings import models
 
 
@@ -66,16 +66,20 @@ def test_numpy_codec_order_roundtrip(obj, codecs):
     assert obj.dtype == reconstructed.dtype
 
 
-class CustomJSONCodingTest:
+class CustomJSONCodingTest(abc.ABC):
     """Base class for testing codecs.
 
     In ``setup_method()``, user must define the following:
 
     * ``self.codec``: The codec to run
     * ``self.objs``: A list of objects to serialize
-    * ``self.dcts``: A list of expected serilized forms of each object in
-      ``self.objs``
+    * ``self.dcts``: A list of expected serialized forms of each object in ``self.objs``
+    * ``self.required_codecs``: A list of all codecs required to serialize objects of this type
     """
+
+    @abc.abstractmethod
+    def setup_method(self):
+        return NotImplementedError
 
     def test_default(self):
         for obj, dct in zip(self.objs, self.dcts):
@@ -94,20 +98,37 @@ class CustomJSONCodingTest:
             assert json_str == json_str_2
 
     def test_round_trip(self):
-        encoder, decoder = custom_json_factory([self.codec])
+        encoder, decoder = custom_json_factory(self.required_codecs)
         self._test_round_trip(encoder, decoder)
+
+    def test_legacy_bytes_uncompressed(self):
+        # NOTE: this can be removed in `gufe` 2.0, but is also somewhat harmless
+        legacy_bytes_codec = JSONCodec(
+            cls=bytes,
+            to_dict=lambda obj: {"latin-1": obj.decode("latin-1")},
+            from_dict=lambda dct: dct["latin-1"].encode("latin-1")
+            )
+
+        required_codecs = [codec for codec in self.required_codecs if not codec is BYTES_CODEC]
+
+        legacy_encoder, _ = custom_json_factory([legacy_bytes_codec, *required_codecs])
+        _, decoder= custom_json_factory([BYTES_CODEC, *required_codecs])
+
+        self._test_round_trip(legacy_encoder, decoder)
 
     def test_not_mine(self):
         # test that the default behavior is obeyed
         obj = {"test": 5}
         json_str = '{"test": 5}'
-        encoder, decoder = custom_json_factory([self.codec])
+        encoder, decoder = custom_json_factory(self.required_codecs)
         assert json.dumps(obj, cls=encoder) == json_str
         assert json.loads(json_str, cls=decoder) == obj
+
 
 class TestNumpyCoding(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = NUMPY_CODEC
+        self.required_codecs = [self.codec, BYTES_CODEC]
         self.objs = [
             np.array([[1.0, 0.0], [2.0, 3.2]]),
             np.array([1, 0]),
@@ -134,8 +155,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
             reconstructed = self.codec.object_hook(dct)
             npt.assert_array_equal(reconstructed, obj)
 
-    def test_round_trip(self):
-        encoder, decoder = custom_json_factory([self.codec, BYTES_CODEC])
+    def _test_round_trip(self, encoder, decoder):
         for obj, dct in zip(self.objs, self.dcts):
             json_str = json.dumps(obj, cls=encoder)
             reconstructed = json.loads(json_str, cls=decoder)
@@ -148,6 +168,7 @@ class TestNumpyCoding(CustomJSONCodingTest):
 class TestNumpyGenericCodec(TestNumpyCoding):
     def setup_method(self):
         self.codec = NPY_DTYPE_CODEC
+        self.required_codecs = [self.codec, BYTES_CODEC]
         # Note that np.float64 is treated as a float by the
         # default json encode (and so returns a float not a numpy
         # object).
@@ -179,6 +200,7 @@ class TestNumpyGenericCodec(TestNumpyCoding):
 class TestBytesCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = BYTES_CODEC
+        self.required_codecs = [self.codec]
         self.objs =[b'a test string']
         self.dcts = [
             {
@@ -189,20 +211,11 @@ class TestBytesCodec(CustomJSONCodingTest):
             }
         ]
 
-    def test_legacy_uncompressed(self):
-        legacy_codec = JSONCodec(
-            cls=bytes,
-            to_dict=lambda obj: {"latin-1": obj.decode("latin-1")},
-            from_dict=lambda dct: dct["latin-1"].encode("latin-1")
-            )
-        legacy_encoder, _ = custom_json_factory([legacy_codec])
-        _, decoder= custom_json_factory([self.codec])
-        self._test_round_trip(legacy_encoder, decoder)
-
 
 class TestPathCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = PATH_CODEC
+        self.required_codecs = [self.codec]
         self.objs = [
             pathlib.PosixPath("foo/bar"),
         ]
@@ -219,6 +232,11 @@ class TestPathCodec(CustomJSONCodingTest):
 class TestSettingsCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = SETTINGS_CODEC
+        self.required_codecs = [
+            self.codec,
+            OPENFF_QUANTITY_CODEC,
+            OPENFF_UNIT_CODEC,
+        ]
         self.objs = [
             models.Settings.get_defaults(),
         ]
@@ -276,15 +294,6 @@ class TestSettingsCodec(CustomJSONCodingTest):
                 },
             }
         ]
-        self.required_codecs = [
-            self.codec,
-            OPENFF_QUANTITY_CODEC,
-            OPENFF_UNIT_CODEC,
-        ]
-
-    def test_round_trip(self):
-        encoder, decoder = custom_json_factory(self.required_codecs)
-        self._test_round_trip(encoder, decoder)
 
     def test_full_dump(self):
         encoder, _ = custom_json_factory(self.required_codecs)
@@ -297,6 +306,7 @@ class TestSettingsCodec(CustomJSONCodingTest):
 class TestOpenFFQuantityCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = OPENFF_QUANTITY_CODEC
+        self.required_codecs = [self.codec]
         self.objs = [
             openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
         ]
@@ -324,6 +334,7 @@ def test_openff_quantity_array_roundtrip():
 class TestOpenFFUnitCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = OPENFF_UNIT_CODEC
+        self.required_codecs = [self.codec]
         self.objs = [
             openff.units.unit.amu,
         ]
@@ -339,6 +350,7 @@ class TestOpenFFUnitCodec(CustomJSONCodingTest):
 class TestUUIDCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = UUID_CODEC
+        self.required_codecs = [self.codec]
         self.objs = [uuid4()]
         self.dcts = [
             {
