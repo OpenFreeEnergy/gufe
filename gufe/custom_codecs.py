@@ -11,6 +11,7 @@ import numpy as np
 from openff.units import DEFAULT_UNIT_REGISTRY
 
 import gufe
+from gufe.compression import zst_compress, zst_decompress
 from gufe.custom_json import JSONCodec
 from gufe.settings.models import SettingsBaseModel
 
@@ -62,8 +63,8 @@ PATH_CODEC = JSONCodec(
 
 BYTES_CODEC = JSONCodec(
     cls=bytes,
-    to_dict=lambda obj: {"latin-1": obj.decode("latin-1")},
-    from_dict=lambda dct: dct["latin-1"].encode("latin-1"),
+    to_dict=lambda obj: {"latin-1": zst_compress(obj).decode("latin-1")},
+    from_dict=lambda dct: zst_decompress(dct["latin-1"].encode("latin-1")),
 )
 
 
