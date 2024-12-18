@@ -131,7 +131,7 @@ class ExplicitMoleculeComponent(Component):
             warnings.warn("RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
                           "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`")
 
-        return super().__getstate__()
+        return self.__dict__
 
     @classmethod
     def _defaults(cls):
