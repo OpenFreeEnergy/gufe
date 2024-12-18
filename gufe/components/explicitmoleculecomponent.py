@@ -128,8 +128,10 @@ class ExplicitMoleculeComponent(Component):
     def __getstate__(self):
         # TODO: check that RDKit setting is set before issuing warning
         if Chem.GetDefaultPickleProperties() != Chem.PropertyPickleOptions.AllProps:
-            warnings.warn("RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
-                          "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`")
+            warnings.warn(
+                "RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
+                "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`"
+            )
 
         return self.__dict__
 

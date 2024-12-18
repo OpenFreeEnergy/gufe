@@ -13,8 +13,8 @@ from rdkit import Chem
 from gufe import ProteinComponent
 
 from .conftest import ALL_PDB_LOADERS
-from .test_tokenization import GufeTokenizableTestsMixin
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
+from .test_tokenization import GufeTokenizableTestsMixin
 
 
 @pytest.fixture

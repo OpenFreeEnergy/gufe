@@ -24,8 +24,8 @@ from gufe import SmallMoleculeComponent
 from gufe.components.explicitmoleculecomponent import _ensure_ofe_name
 from gufe.tokenization import TOKENIZABLE_REGISTRY
 
-from .test_tokenization import GufeTokenizableTestsMixin
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
+from .test_tokenization import GufeTokenizableTestsMixin
 
 
 @pytest.fixture

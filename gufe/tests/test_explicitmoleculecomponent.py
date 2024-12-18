@@ -1,5 +1,6 @@
 import pickle
 
+
 class ExplicitMoleculeComponentMixin:
 
     def test_pickle(self, instance):
@@ -12,4 +13,3 @@ class ExplicitMoleculeComponentMixin:
         # it's currently the case that the flyweight pattern isn't respected by
         # pickling/unpickling
         assert not unpickled is instance
-
