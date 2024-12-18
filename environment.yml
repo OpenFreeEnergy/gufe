@@ -13,6 +13,7 @@ dependencies:
   - openff-models >=0.0.5
   - pip
   - pydantic >1
+  - zstandard
   - pytest
   - pytest-cov
   - pytest-xdist
