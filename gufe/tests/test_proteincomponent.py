@@ -13,6 +13,7 @@ from rdkit import Chem
 from gufe import ProteinComponent
 
 from .conftest import ALL_PDB_LOADERS
+from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
@@ -81,7 +82,7 @@ def assert_topology_equal(ref_top, top):
         assert ref_bond[1].index == bond[1].index
 
 
-class TestProteinComponent(GufeTokenizableTestsMixin):
+class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
 
     cls = ProteinComponent
     repr = "ProteinComponent(name=Steve)"
