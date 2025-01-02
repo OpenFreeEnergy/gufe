@@ -8,6 +8,7 @@ from itertools import chain
 from typing import FrozenSet, Iterable, Optional, Union
 
 import networkx as nx
+
 import gufe
 from gufe import SmallMoleculeComponent
 
@@ -168,10 +169,12 @@ class LigandNetwork(GufeTokenizable):
         """
         return cls._from_serializable_graph(nx.parse_graphml(graphml_str))
 
-    def enlarge_graph(self,
-                      *,
-                      edges: Optional[Iterable[LigandAtomMapping]] = None,
-                      nodes: Optional[Iterable[SmallMoleculeComponent]] = None) -> LigandNetwork:
+    def enlarge_graph(
+        self,
+        *,
+        edges: Optional[Iterable[LigandAtomMapping]] = None,
+        nodes: Optional[Iterable[SmallMoleculeComponent]] = None,
+    ) -> LigandNetwork:
         """Create a new network with the given edges and nodes added.
 
         Parameters
@@ -194,10 +197,12 @@ class LigandNetwork(GufeTokenizable):
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
 
-    def trim_graph(self,
-                     *,
-                     edges: Optional[Iterable[LigandAtomMapping]] = None,
-                     nodes: Optional[Iterable[SmallMoleculeComponent]] = None) -> LigandNetwork:
+    def trim_graph(
+        self,
+        *,
+        edges: Optional[Iterable[LigandAtomMapping]] = None,
+        nodes: Optional[Iterable[SmallMoleculeComponent]] = None,
+    ) -> LigandNetwork:
         """Create a new network with the given edges and nodes removed.
 
         Note that for removed ``nodes``, any edges that include them will also
@@ -226,8 +231,7 @@ class LigandNetwork(GufeTokenizable):
         graph.remove_nodes_from(nodes)
         graph.remove_edges_from([(edge.componentA, edge.componentB) for edge in edges])
 
-        return LigandNetwork(edges=[obj for u, v, obj in graph.edges.data('object')],
-                             nodes=graph.nodes)
+        return LigandNetwork(edges=[obj for u, v, obj in graph.edges.data("object")], nodes=graph.nodes)
 
     def _to_rfe_alchemical_network(
         self,
