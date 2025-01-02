@@ -194,7 +194,7 @@ class LigandNetwork(GufeTokenizable):
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
 
-    def reduce_graph(self,
+    def trim_graph(self,
                      *,
                      edges: Optional[Iterable[LigandAtomMapping]] = None,
                      nodes: Optional[Iterable[SmallMoleculeComponent]] = None) -> LigandNetwork:

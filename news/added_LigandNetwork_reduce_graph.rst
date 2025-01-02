@@ -1,6 +1,6 @@
 **Added:**
 
-* added LigandNetwork.reduce_graph
+* added LigandNetwork.trim_graph
 
 **Changed:**
 
