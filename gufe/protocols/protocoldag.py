@@ -215,7 +215,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         MissingUnitResultError:
           if there are no results for that protocol unit
         ProtocolUnitFailureError:
-          if all units failed
+          if there are only failures for that protocol unit
         """
         try:
             units = self._unit_result_mapping[protocol_unit]

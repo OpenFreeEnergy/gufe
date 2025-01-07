@@ -1,10 +1,10 @@
 """Defining processes for performing estimates of free energy differences"""
 
 from .errors import (
+    GufeProtocolError,
     MissingUnitResultError,
-    ProtocolAnalysisError,
-    ProtocolExecutionError,
-    ProtocolSetupError,
+    ProtocolDAGResultError,
+    ProtocolUnitExecutionError,
     ProtocolUnitFailureError,
     ProtocolValidationError,
 )
