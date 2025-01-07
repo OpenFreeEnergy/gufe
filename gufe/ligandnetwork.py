@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from itertools import chain
-from typing import FrozenSet, Optional
+from typing import FrozenSet, Iterable, Optional, Union
 
 import networkx as nx
 
@@ -18,8 +18,8 @@ from .tokenization import JSON_HANDLER, GufeTokenizable
 
 class LigandNetwork(GufeTokenizable):
     """A directed graph connecting ligands according to their atom mapping.
-       A network can be defined by specifying only edges, in which case the nodes are implicitly added.
 
+    A network can be defined by specifying only edges, in which case the nodes are implicitly added.
 
     Parameters
     ----------
@@ -56,10 +56,10 @@ class LigandNetwork(GufeTokenizable):
 
     @property
     def graph(self) -> nx.MultiDiGraph:
-        """NetworkX graph for this network
+        """NetworkX graph for this network.
 
-        This graph will have :class:`.ChemicalSystem` objects as nodes and
-        :class:`.Transformation` objects as directed edges
+        This graph will have :class:`.SmallMoleculeComponent` objects as nodes and
+        :class:`.LigandAtomMapping` objects as directed edges
         """
         if self._graph is None:
             graph = nx.MultiDiGraph()
@@ -76,20 +76,18 @@ class LigandNetwork(GufeTokenizable):
 
     @property
     def edges(self) -> frozenset[LigandAtomMapping]:
-        """A read-only view of the edges of the Network"""
+        """A read-only view of the edges of this network."""
         return self._edges
 
     @property
     def nodes(self) -> frozenset[SmallMoleculeComponent]:
-        """A read-only view of the nodes of the Network"""
+        """A read-only view of the nodes of this network."""
         return self._nodes
 
     def _serializable_graph(self) -> nx.Graph:
-        """
-        Create NetworkX graph with serializable attribute representations.
+        """Create a :mod:`networkx` graph with serializable attribute representations.
 
-        This enables us to use easily use different serialization
-        approaches.
+        This enables us to easily use different serialization approaches.
         """
         # sorting ensures that we always preserve order in files, so two
         # identical networks will show no changes if you diff their
@@ -121,7 +119,7 @@ class LigandNetwork(GufeTokenizable):
 
     @classmethod
     def _from_serializable_graph(cls, graph: nx.Graph):
-        """Create network from NetworkX graph with serializable attributes.
+        """Create network from :mod:`networkx` graph with serializable attributes.
 
         This is the inverse of ``_serializable_graph``.
         """
@@ -144,14 +142,14 @@ class LigandNetwork(GufeTokenizable):
         return cls(edges=edges, nodes=label_to_mol.values())
 
     def to_graphml(self) -> str:
-        """Return the GraphML string representing this Network
+        """Return the GraphML string representing this network.
 
         This is the primary serialization mechanism for this class.
 
         Returns
         -------
-        str :
-            string representing this network in GraphML format
+        str
+            String representing this network in GraphML format.
         """
         return "\n".join(nx.generate_graphml(self._serializable_graph()))
 
@@ -162,30 +160,34 @@ class LigandNetwork(GufeTokenizable):
         Parameters
         ----------
         graphml_str : str
-            GraphML string representation of a :class:`.Network`
+            GraphML string representation of a :class:`.Network`.
 
         Returns
         -------
         LigandNetwork
-            new network from the GraphML
+            New network from the GraphML.
         """
         return cls._from_serializable_graph(nx.parse_graphml(graphml_str))
 
-    def enlarge_graph(self, *, edges=None, nodes=None) -> LigandNetwork:
-        """
-        Create a new network with the given edges and nodes added
+    def enlarge_graph(
+        self,
+        *,
+        edges: Optional[Iterable[LigandAtomMapping]] = None,
+        nodes: Optional[Iterable[SmallMoleculeComponent]] = None,
+    ) -> LigandNetwork:
+        """Create a new network with the given edges and nodes added.
 
         Parameters
         ----------
         edges : Iterable[:class:`.LigandAtomMapping`]
-            edges to append to this network
+            Edges to append to this network.
         nodes : Iterable[:class:`.SmallMoleculeComponent`]
-            nodes to append to this network
+            Nodes to append to this network.
 
         Returns
         -------
         LigandNetwork
-            a new network adding the given edges and nodes to this network
+            A new network adding the given edges and nodes to this network.
         """
         if edges is None:
             edges = set()
@@ -194,6 +196,42 @@ class LigandNetwork(GufeTokenizable):
             nodes = set()
 
         return LigandNetwork(self.edges | set(edges), self.nodes | set(nodes))
+
+    def trim_graph(
+        self,
+        *,
+        edges: Optional[Iterable[LigandAtomMapping]] = None,
+        nodes: Optional[Iterable[SmallMoleculeComponent]] = None,
+    ) -> LigandNetwork:
+        """Create a new network with the given edges and nodes removed.
+
+        Note that for removed ``nodes``, any edges that include them will also
+        be removed.
+
+        Parameters
+        ----------
+        edges : Iterable[:class:`.LigandAtomMapping`]
+            Edges to drop from this network.
+        nodes : Iterable[:class:`.SmallMoleculeComponent`]
+            Nodes to drop from this network; all edges including these nodes
+            will also be dropped.
+
+        Returns
+        -------
+        LigandNetwork
+            A new network with the given edges and nodes removed.
+        """
+        if edges is None:
+            edges = list()
+
+        if nodes is None:
+            nodes = list()
+
+        graph = self.graph.copy()
+        graph.remove_nodes_from(nodes)
+        graph.remove_edges_from([(edge.componentA, edge.componentB) for edge in edges])
+
+        return LigandNetwork(edges=[obj for u, v, obj in graph.edges.data("object")], nodes=graph.nodes)
 
     def _to_rfe_alchemical_network(
         self,
@@ -205,21 +243,22 @@ class LigandNetwork(GufeTokenizable):
         autoname=True,
         autoname_prefix="",
     ) -> gufe.AlchemicalNetwork:
-        """
+        """Create an :class:`.AlchemicalNetwork` from this :class:`.LigandNetwork`.
+
         Parameters
         ----------
         components: dict[str, :class:`.Component`]
-            non-alchemical components (components that will be on both sides
-            of a transformation)
+            Non-alchemical components (components that will be on both sides
+            of a transformation).
         leg_labels: dict[str, list[str]]
-            mapping of the names for legs (the keys of this dict) to a list
-            of the component names. The component names must be the same as
-            used in the ``components`` dict.
+            Mapping of the names for legs (the keys of this dict) to a list of
+            the component names. The component names must be the same as used
+            in the ``components`` dict.
         protocol: :class:`.Protocol`
-            the protocol to apply
+            The protocol to apply.
         alchemical_label: str
-            the label for the component undergoing an alchemical
-            transformation (default ``'ligand'``)
+            The label for the component undergoing an alchemical transformation
+            (default ``'ligand'``).
         """
         transformations = []
         for edge in self.edges:
@@ -266,20 +305,20 @@ class LigandNetwork(GufeTokenizable):
         autoname_prefix: str = "easy_rbfe",
         **other_components,
     ) -> gufe.AlchemicalNetwork:
-        """Convert the ligand network to an AlchemicalNetwork
+        """Create an :class:`.AlchemicalNetwork` from this :class:`.LigandNetwork`.
 
         Parameters
         ----------
         protocol: Protocol
-            the method to apply to edges
+            The method to apply to edges.
         autoname: bool
-            whether to automatically name objects by the ligand name and
-            state label
+            Whether to automatically name objects by the ligand name and state
+            label.
         autoname_prefix: str
-            prefix for the autonaming; only used if autonaming is True
+            Prefix for the autonaming; only used if autonaming is ``True``.
         other_components:
-            additional non-alchemical components, keyword will be the string
-            label for the component
+            Additional non-alchemical components; keyword will be the string
+            label for the component.
         """
         components = {"protein": protein, "solvent": solvent, **other_components}
         leg_labels = {
@@ -313,9 +352,11 @@ class LigandNetwork(GufeTokenizable):
     #     )
 
     def is_connected(self) -> bool:
-        """Are all ligands in the network (indirectly) connected to each other
+        """Indicates whether all ligands in the network are (directly or indirectly)
+        connected to each other.
 
-        A "False" value indicates that either some ligands have no edges or that
-        there are separate networks that do not link to each other.
+        A ``False`` value indicates that either some nodes have no edges or
+        that there are separate networks that do not link to each other.
+
         """
         return nx.is_weakly_connected(self.graph)
