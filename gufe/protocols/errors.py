@@ -25,4 +25,4 @@ class MissingUnitResultError(ProtocolDAGResultError):
 
 
 class ProtocolUnitFailureError(ProtocolDAGResultError):
-    """Error when a ProtocolDAGResult contains a failed protocol unit."""
+    """Error when a ProtocolDAGResult has only ProtocolUnitFailure(s) for a given ProtocolUnit."""
