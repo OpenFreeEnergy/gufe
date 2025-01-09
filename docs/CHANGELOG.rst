@@ -4,6 +4,18 @@ gufe Change Log
 
 .. current developments
 
+v1.2.0
+====================
+
+**Added:**
+
+* Added `Protocol` errors hierarchy
+* added LigandNetwork.trim_graph
+* Added warning when pickling an ``ExplicitMoleculeComponent`` that RDKit mol properties not preserved by default.
+* JSON encoder now uses `zstandard compression <https://github.com/OpenFreeEnergy/gufe/pull/438>`_ .
+
+
+
 v1.1.0
 ====================
 
