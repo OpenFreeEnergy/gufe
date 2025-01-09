@@ -10,7 +10,8 @@ v1.2.0
 **Added:**
 
 * Added `Protocol` errors hierarchy
-* added LigandNetwork.trim_graph
+* Added `AtomMappingError`
+* Added LigandNetwork.trim_graph
 * Added warning when pickling an ``ExplicitMoleculeComponent`` that RDKit mol properties not preserved by default.
 * JSON encoder now uses `zstandard compression <https://github.com/OpenFreeEnergy/gufe/pull/438>`_ .
 
@@ -21,7 +22,7 @@ v1.1.0
 
 **Added:**
 
-* use rever to manage changelog
+* Use rever to manage changelog
 * KeyedChain GufeTokenizable representation was added, allowing
   GUFE objects to be deduplicated when serializing GufeTokenizables
   (PR #286).
