@@ -93,6 +93,7 @@ class DummyProtocolResult(ProtocolResult):
 class DummyProtocol(Protocol):
 
     result_cls = DummyProtocolResult
+    _settings_cls = DummySpecificSettings
 
     @classmethod
     def _default_settings(cls):
@@ -542,6 +543,7 @@ class NoDepsProtocol(Protocol):
     """A protocol without dependencies"""
 
     result_cls = NoDepResults
+    _settings_cls = settings.Settings
 
     @classmethod
     def _defaults(cls):
@@ -814,3 +816,47 @@ def test_settings_readonly():
         p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
 
     assert p.settings.thermo_settings.temperature == before
+
+
+class TestEnforcedProtocolSettings:
+
+    class ProtocolMissingSettingsClass(Protocol):
+
+        @classmethod
+        def _defaults(cls):
+            return {}
+
+        @classmethod
+        def _default_settings(cls):
+            return settings.Settings.get_defaults()
+
+        def _create(self):
+            raise NotImplementedError
+
+        def _gather(self):
+            raise NotImplementedError
+
+    def test_protocol_no_settings_class(self):
+
+        with pytest.raises(
+            NotImplementedError,
+            match=f"class `{TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.__qualname__}` must implement the `_settings_cls` attribute.",
+        ):
+            TestEnforcedProtocolSettings.ProtocolMissingSettingsClass(
+                TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
+            )
+
+    def test_protol_no_settings(self):
+
+        class PhonySettings(settings.Settings):
+            pass
+
+        class ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass):
+
+            _settings_cls = PhonySettings
+
+        with pytest.raises(
+            ValueError,
+            match=f"`{ProtocolWithSettingsClass.__qualname__}` expected a `{PhonySettings.__qualname__}` instance.",
+        ):
+            ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings())
