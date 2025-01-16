@@ -3,9 +3,10 @@ from pathlib import Path
 
 import pytest
 
+from gufe.protocols.errors import ExecutionInterrupt
 from gufe.protocols.protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
-from gufe.protocols.errors import ExecutionInterrupt
+
 
 class DummyUnit(ProtocolUnit):
     @staticmethod
@@ -26,6 +27,7 @@ class DummyKeyboardInterruptUnit(ProtocolUnit):
 
         return {"foo": "bar"}
 
+
 class DummyExecutionInterruptUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
@@ -34,6 +36,7 @@ class DummyExecutionInterruptUnit(ProtocolUnit):
             raise ExecutionInterrupt
 
         return {"foo": "bar"}
+
 
 @pytest.fixture
 def dummy_unit():
@@ -104,7 +107,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
 
             assert u.outputs == {"foo": "bar"}
-
 
     def test_execute_KeyboardInterrupt(self, tmpdir):
         with tmpdir.as_cwd():

@@ -20,8 +20,8 @@ from os import PathLike
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .errors import ExecutionInterrupt
 from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
+from .errors import ExecutionInterrupt
 
 
 @dataclass
