@@ -20,6 +20,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from .errors import ExecutionInterrupt
 from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
 
 
@@ -328,8 +329,8 @@ class ProtocolUnit(GufeTokenizable):
                 end_time=datetime.datetime.now(),
             )
 
-        except KeyboardInterrupt:
-            # if we "fail" due to a KeyboardInterrupt, we always want to raise
+        except KeyboardInterrupt or ExecutionInterrupt:
+            # we always want to raise in these situations
             raise
         except Exception as e:
             if raise_error:

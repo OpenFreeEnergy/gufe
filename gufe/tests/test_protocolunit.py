@@ -5,7 +5,7 @@ import pytest
 
 from gufe.protocols.protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
-
+from gufe.protocols.errors import ExecutionInterrupt
 
 class DummyUnit(ProtocolUnit):
     @staticmethod
@@ -26,6 +26,14 @@ class DummyKeyboardInterruptUnit(ProtocolUnit):
 
         return {"foo": "bar"}
 
+class DummyExecutionInterruptUnit(ProtocolUnit):
+    @staticmethod
+    def _execute(ctx: Context, an_input=2, **inputs):
+
+        if an_input != 2:
+            raise ExecutionInterrupt
+
+        return {"foo": "bar"}
 
 @pytest.fixture
 def dummy_unit():
@@ -76,6 +84,27 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
                 unit.execute(context=ctx, raise_error=True, an_input=3)
+
+    def test_execute_ExecutionInterrupt(self, tmpdir):
+        with tmpdir.as_cwd():
+
+            unit = DummyExecutionInterruptUnit()
+
+            shared = Path("shared") / str(unit.key)
+            shared.mkdir(parents=True)
+
+            scratch = Path("scratch") / str(unit.key)
+            scratch.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch)
+
+            with pytest.raises(ExecutionInterrupt):
+                unit.execute(context=ctx, an_input=3)
+
+            u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
+
+            assert u.outputs == {"foo": "bar"}
+
 
     def test_execute_KeyboardInterrupt(self, tmpdir):
         with tmpdir.as_cwd():
