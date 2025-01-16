@@ -119,7 +119,9 @@ class Protocol(GufeTokenizable):
             )
 
         if not isinstance(settings, self._settings_cls):
-            raise ValueError(f"`{self.__class__.__qualname__}` expected a `{self._settings_cls.__qualname__}` instance")
+            raise ValueError(
+                f"`{self.__class__.__qualname__}` expected a `{self._settings_cls.__qualname__}` instance."
+            )
 
         self._settings = settings.frozen_copy()
 
