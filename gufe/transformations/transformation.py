@@ -121,6 +121,10 @@ class TransformationBase(GufeTokenizable):
         file : Union[PathLike, FileLike]
             A pathlike of filelike to save this transformation to.
         """
+        warnings.warn(
+            ("use of this method is deprecated, " "instead use `to_json`"),
+            DeprecationWarning,
+        )
         with ensure_filelike(file, mode="w") as f:
             json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder, sort_keys=True)
 
@@ -133,6 +137,10 @@ class TransformationBase(GufeTokenizable):
         file : Union[PathLike, FileLike]
             A pathlike or filelike to read this transformation from.
         """
+        warnings.warn(
+            ("use of this method is deprecated, " "instead use `from_json`"),
+            DeprecationWarning,
+        )
         with ensure_filelike(file, mode="r") as f:
             dct = json.load(f, cls=JSON_HANDLER.decoder)
 
