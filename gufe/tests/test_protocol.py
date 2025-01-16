@@ -93,6 +93,7 @@ class DummyProtocolResult(ProtocolResult):
 class DummyProtocol(Protocol):
 
     result_cls = DummyProtocolResult
+    _settings_cls = DummySpecificSettings
 
     @classmethod
     def _default_settings(cls):
@@ -542,6 +543,7 @@ class NoDepsProtocol(Protocol):
     """A protocol without dependencies"""
 
     result_cls = NoDepResults
+    _settings_cls = settings.Settings
 
     @classmethod
     def _defaults(cls):
