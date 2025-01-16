@@ -329,7 +329,7 @@ class ProtocolUnit(GufeTokenizable):
                 end_time=datetime.datetime.now(),
             )
 
-        except KeyboardInterrupt or ExecutionInterrupt:
+        except (KeyboardInterrupt, ExecutionInterrupt):
             # we always want to raise in these situations
             raise
         except Exception as e:
