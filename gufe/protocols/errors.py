@@ -30,5 +30,7 @@ class ProtocolUnitFailureError(ProtocolDAGResultError):
 
 class ExecutionInterrupt(BaseException):
     """Exception for unrecoverable execution failures that are unrelated to user inputs.
-    Will not be caught by ProtocolUnit.execute().
+
+    Will not be caught by ``ProtocolUnit.execute()``.
+
     """
