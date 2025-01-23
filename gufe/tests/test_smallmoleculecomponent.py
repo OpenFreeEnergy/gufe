@@ -14,6 +14,7 @@ else:
 import json
 import os
 from unittest import mock
+import logging
 
 import pytest
 from rdkit import Chem
@@ -247,10 +248,11 @@ class TestSmallMoleculeComponentPartialCharges:
         off_ethane.assign_partial_charges(partial_charge_method="am1bcc")
         return off_ethane
 
-    def test_partial_charges_warning(self, charged_off_ethane):
-        matchmsg = "Partial charges have been provided"
-        with pytest.warns(UserWarning, match=matchmsg):
-            SmallMoleculeComponent.from_openff(charged_off_ethane)
+    def test_partial_charges_logging(self, charged_off_ethane, caplog):
+        caplog.set_level(logging.INFO)
+        SmallMoleculeComponent.from_openff(charged_off_ethane)
+
+        assert "Partial charges have been provided" in caplog.text
 
     def test_partial_charges_zero_warning(self, charged_off_ethane):
         charged_off_ethane.partial_charges[:] = 0 * unit.elementary_charge
@@ -271,7 +273,7 @@ class TestSmallMoleculeComponentPartialCharges:
         with pytest.raises(ValueError, match="Incorrect number of"):
             SmallMoleculeComponent.from_rdkit(mol)
 
-    def test_partial_charges_applied_to_atoms(self):
+    def test_partial_charges_applied_to_atoms(self, caplog):
         """
         Make sure that charges set at the molecule level
         are transferred to atoms and picked up by openFF.
@@ -280,9 +282,11 @@ class TestSmallMoleculeComponentPartialCharges:
         Chem.AllChem.Compute2DCoords(mol)
         # add some fake charges at the molecule level
         mol.SetProp("atom.dprop.PartialCharge", "-1 0.25 0.25 0.25 0.25")
-        matchmsg = "Partial charges have been provided"
-        with pytest.warns(UserWarning, match=matchmsg):
-            ofe = SmallMoleculeComponent.from_rdkit(mol)
+        caplog.set_level(logging.INFO)
+
+        ofe = SmallMoleculeComponent.from_rdkit(mol)
+        assert "Partial charges have been provided" in caplog.text
+
         # convert to openff and make sure the charges are set
         off_mol = ofe.to_openff()
         assert off_mol.partial_charges is not None
