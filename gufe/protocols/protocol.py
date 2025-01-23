@@ -92,6 +92,10 @@ class Protocol(GufeTokenizable):
     - `_create`
     - `_gather`
     - `_default_settings`
+
+    Additionally, the `_settings_cls` must be set to the intended
+    subclass of `Settings`. This attribute is validated during the
+    instantiation of the Protocol.
     """
 
     _settings: Settings
