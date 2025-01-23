@@ -86,7 +86,7 @@ def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
         wmsg = f"Partial charges provided all equal to " "zero. These may be ignored by some Protocols."
         warnings.warn(wmsg)
     else:
-        wmsg = (
+        message = (
             "Partial charges have been provided, these will "
             "preferentially be used instead of generating new "
             "partial charges."
@@ -94,7 +94,7 @@ def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
         if logger is None:
             logger = logging.getLogger()
 
-        logger.info(wmsg)
+        logger.info(message)
 
 
 class ExplicitMoleculeComponent(Component):
