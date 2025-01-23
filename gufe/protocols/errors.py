@@ -26,3 +26,11 @@ class MissingUnitResultError(ProtocolDAGResultError):
 
 class ProtocolUnitFailureError(ProtocolDAGResultError):
     """Error when a ProtocolDAGResult has only ProtocolUnitFailure(s) for a given ProtocolUnit."""
+
+
+class ExecutionInterrupt(BaseException):
+    """Exception for unrecoverable execution failures that are unrelated to user inputs.
+
+    Will not be caught by ``ProtocolUnit.execute()``.
+
+    """
