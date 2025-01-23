@@ -169,7 +169,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         # check the ordering of the edges
         edges = list(graph.edges(data=True))
         scores = [e[-1]["score"] for e in edges]
-        assert scores == [0.5, 0.0, 1.0]
+        assert scores == [1.0, 0.0, 0.5]
 
     def test_graph_annotations(self, mols, std_edges):
         mol1, mol2, mol3 = mols
