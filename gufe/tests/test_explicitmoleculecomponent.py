@@ -1,6 +1,5 @@
 import pickle
 
-
 class ExplicitMoleculeComponentMixin:
 
     def test_pickle(self, instance):
