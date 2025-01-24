@@ -92,7 +92,7 @@ def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
             "partial charges."
         )
         if logger is None:
-            logger = logging.getLogger()
+            logger = logging.getLogger(__name__)
 
         logger.info(message)
 
