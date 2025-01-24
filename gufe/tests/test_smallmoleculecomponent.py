@@ -12,9 +12,9 @@ except ImportError:
 else:
     HAS_OFFTK = True
 import json
+import logging
 import os
 from unittest import mock
-import logging
 
 import pytest
 from rdkit import Chem
@@ -22,7 +22,7 @@ from rdkit.Chem import AllChem
 
 import gufe
 from gufe import SmallMoleculeComponent
-from gufe.components.explicitmoleculecomponent import _ensure_ofe_name, _check_partial_charges
+from gufe.components.explicitmoleculecomponent import _check_partial_charges, _ensure_ofe_name
 from gufe.tokenization import TOKENIZABLE_REGISTRY
 
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -74,6 +74,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 
     assert out_name == expected
     assert rdkit.GetProp("ofe-name") == out_name
+
 
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
 
@@ -252,7 +253,6 @@ class TestSmallMoleculeComponentPartialCharges:
         caplog.set_level(logging.INFO)
         _check_partial_charges(rd_mol, logger=None)
         assert "Partial charges have been provided" in caplog.text
-
 
     def test_partial_charges_logging(self, charged_off_ethane, caplog):
         caplog.set_level(logging.INFO)
