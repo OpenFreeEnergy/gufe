@@ -163,6 +163,14 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert atommapping.componentA == mol1
             assert atommapping.componentB == mol2
 
+    def test_graph_edge_order(self, simple_network):
+        # Make sure the ordering of the edges is consistent
+        graph = simple_network.network.graph
+        # check the ordering of the edges
+        edges = list(graph.edges(data=True))
+        scores = [e[-1]["score"] for e in edges]
+        assert scores == [1.0, 0.0, 0.5]
+
     def test_graph_annotations(self, mols, std_edges):
         mol1, mol2, mol3 = mols
         edge12, edge23, edge13 = std_edges
