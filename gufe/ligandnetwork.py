@@ -66,6 +66,9 @@ class LigandNetwork(GufeTokenizable):
             graph = nx.MultiDiGraph()
             # set iterator order depends on PYTHONHASHSEED, sorting ensures
             # reproducibility
+            # we sort by inchikey which is more stable than gufekey
+            # but it's still susceptible to clashes on molecules that are
+            # the same but with different properties
             for node in sorted(self._nodes, key=lambda n: hashlib.md5(n.to_openff().to_inchikey(True).encode()).hexdigest()):
                 graph.add_node(node)
             for edge in sorted(self._edges, key=lambda e: hashlib.md5((e.componentA.to_openff().to_inchikey(True) + e.componentB.to_openff().to_inchikey(True)).encode()).hexdigest()):
