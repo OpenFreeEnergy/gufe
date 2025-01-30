@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Iterable
 from itertools import chain
@@ -65,9 +66,19 @@ class LigandNetwork(GufeTokenizable):
             graph = nx.MultiDiGraph()
             # set iterator order depends on PYTHONHASHSEED, sorting ensures
             # reproducibility
-            for node in sorted(self._nodes):
+            # we sort by inchikey which is more stable than gufekey
+            # but it's still susceptible to clashes on molecules that are
+            # the same but with different properties
+            for node in sorted(
+                self._nodes, key=lambda n: hashlib.md5(n.to_openff().to_inchikey(True).encode()).hexdigest()
+            ):
                 graph.add_node(node)
-            for edge in sorted(self._edges):
+            for edge in sorted(
+                self._edges,
+                key=lambda e: hashlib.md5(
+                    (e.componentA.to_openff().to_inchikey(True) + e.componentB.to_openff().to_inchikey(True)).encode()
+                ).hexdigest(),
+            ):
                 graph.add_edge(edge.componentA, edge.componentB, object=edge, **edge.annotations)
 
             self._graph = nx.freeze(graph)
