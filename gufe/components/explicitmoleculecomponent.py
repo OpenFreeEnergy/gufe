@@ -1,4 +1,5 @@
 import json
+import logging
 import warnings
 from typing import Optional
 
@@ -34,7 +35,7 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     return name
 
 
-def _check_partial_charges(mol: RDKitMol) -> None:
+def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
     """
     Checks for the presence of partial charges.
 
@@ -82,15 +83,18 @@ def _check_partial_charges(mol: RDKitMol) -> None:
                 raise ValueError(errmsg)
 
     if np.all(np.isclose(p_chgs, 0.0)):
-        wmsg = f"Partial charges provided all equal to " "zero. These may be ignored by some Protocols."
+        wmsg = "Partial charges provided all equal to zero. These may be ignored by some Protocols."
         warnings.warn(wmsg)
     else:
-        wmsg = (
-            "Partial charges have been provided, these will "
-            "preferentially be used instead of generating new "
-            "partial charges"
-        )
-        warnings.warn(wmsg)
+        msg = "Partial charges have been provided"
+        if name := mol.GetProp("ofe-name"):
+            msg += f" for {name}"
+        msg += ", these will preferentially be used instead of generating new partial charges."
+
+        if logger is None:
+            logger = logging.getLogger(__name__)
+
+        logger.info(msg)
 
 
 class ExplicitMoleculeComponent(Component):
@@ -106,7 +110,7 @@ class ExplicitMoleculeComponent(Component):
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
-        _check_partial_charges(rdkit)
+        _check_partial_charges(rdkit, logger=self.logger)
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
