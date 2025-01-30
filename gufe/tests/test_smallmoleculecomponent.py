@@ -243,8 +243,8 @@ class TestSmallMoleculeComponentConversion:
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff tookit available")
 class TestSmallMoleculeComponentPartialCharges:
     @pytest.fixture(scope="function")
-    def charged_off_ethane(self, ethane):
-        off_ethane = ethane.to_openff()
+    def charged_off_ethane(self, named_ethane):
+        off_ethane = named_ethane.to_openff()
         off_ethane.assign_partial_charges(partial_charge_method="am1bcc")
         return off_ethane
 
@@ -252,7 +252,7 @@ class TestSmallMoleculeComponentPartialCharges:
         rd_mol = charged_off_ethane.to_rdkit()
         caplog.set_level(logging.INFO)
         _check_partial_charges(rd_mol, logger=None)
-        assert "Partial charges have been provided" in caplog.text
+        assert "Partial charges have been provided for ethane, these" in caplog.text
 
     def test_partial_charges_logging(self, charged_off_ethane, caplog):
         caplog.set_level(logging.INFO)
