@@ -12,6 +12,7 @@ except ImportError:
 else:
     HAS_OFFTK = True
 import json
+import logging
 import os
 from unittest import mock
 
@@ -21,7 +22,7 @@ from rdkit.Chem import AllChem
 
 import gufe
 from gufe import SmallMoleculeComponent
-from gufe.components.explicitmoleculecomponent import _ensure_ofe_name
+from gufe.components.explicitmoleculecomponent import _check_partial_charges, _ensure_ofe_name
 from gufe.tokenization import TOKENIZABLE_REGISTRY
 
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -242,15 +243,22 @@ class TestSmallMoleculeComponentConversion:
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff tookit available")
 class TestSmallMoleculeComponentPartialCharges:
     @pytest.fixture(scope="function")
-    def charged_off_ethane(self, ethane):
-        off_ethane = ethane.to_openff()
+    def charged_off_ethane(self, named_ethane):
+        off_ethane = named_ethane.to_openff()
         off_ethane.assign_partial_charges(partial_charge_method="am1bcc")
         return off_ethane
 
-    def test_partial_charges_warning(self, charged_off_ethane):
-        matchmsg = "Partial charges have been provided"
-        with pytest.warns(UserWarning, match=matchmsg):
-            SmallMoleculeComponent.from_openff(charged_off_ethane)
+    def test_check_partial_charges_without_gufe_logger(self, charged_off_ethane, caplog):
+        rd_mol = charged_off_ethane.to_rdkit()
+        caplog.set_level(logging.INFO)
+        _check_partial_charges(rd_mol, logger=None)
+        assert "Partial charges have been provided for ethane, these" in caplog.text
+
+    def test_partial_charges_logging(self, charged_off_ethane, caplog):
+        caplog.set_level(logging.INFO)
+        SmallMoleculeComponent.from_openff(charged_off_ethane)
+
+        assert "Partial charges have been provided" in caplog.text
 
     def test_partial_charges_zero_warning(self, charged_off_ethane):
         charged_off_ethane.partial_charges[:] = 0 * unit.elementary_charge
@@ -271,7 +279,7 @@ class TestSmallMoleculeComponentPartialCharges:
         with pytest.raises(ValueError, match="Incorrect number of"):
             SmallMoleculeComponent.from_rdkit(mol)
 
-    def test_partial_charges_applied_to_atoms(self):
+    def test_partial_charges_applied_to_atoms(self, caplog):
         """
         Make sure that charges set at the molecule level
         are transferred to atoms and picked up by openFF.
@@ -280,9 +288,11 @@ class TestSmallMoleculeComponentPartialCharges:
         Chem.AllChem.Compute2DCoords(mol)
         # add some fake charges at the molecule level
         mol.SetProp("atom.dprop.PartialCharge", "-1 0.25 0.25 0.25 0.25")
-        matchmsg = "Partial charges have been provided"
-        with pytest.warns(UserWarning, match=matchmsg):
-            ofe = SmallMoleculeComponent.from_rdkit(mol)
+        caplog.set_level(logging.INFO)
+
+        ofe = SmallMoleculeComponent.from_rdkit(mol)
+        assert "Partial charges have been provided" in caplog.text
+
         # convert to openff and make sure the charges are set
         off_mol = ofe.to_openff()
         assert off_mol.partial_charges is not None
