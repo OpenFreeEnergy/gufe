@@ -87,9 +87,9 @@ def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
         warnings.warn(wmsg)
     else:
         msg = "Partial charges have been provided"
-        if name:= mol.GetProp("ofe-name"):
-            msg+= f" for {name}"
-        msg+=", these will preferentially be used instead of generating new partial charges."
+        if name := mol.GetProp("ofe-name"):
+            msg += f" for {name}"
+        msg += ", these will preferentially be used instead of generating new partial charges."
 
         if logger is None:
             logger = logging.getLogger(__name__)
