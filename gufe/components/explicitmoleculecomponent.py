@@ -63,7 +63,8 @@ def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
         errmsg = f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
         raise ValueError(errmsg)
 
-    if (sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
+    if abs(sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
+        import pdb;pdb.set_trace()
         errmsg = (
             f"Sum of partial charges {sum(p_chgs)} differs from " f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
         )
