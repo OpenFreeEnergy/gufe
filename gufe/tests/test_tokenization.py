@@ -238,7 +238,6 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
         registry = dict(TOKENIZABLE_REGISTRY)
         with mock.patch.dict(patch_loc, registry, clear=True):
-            # import pdb; pdb.set_trace()
             leaf._set_key("qux")
             assert leaf.key == "qux"
             assert TOKENIZABLE_REGISTRY["qux"] is leaf
