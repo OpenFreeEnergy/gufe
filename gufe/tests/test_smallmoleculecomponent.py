@@ -266,8 +266,9 @@ class TestSmallMoleculeComponentPartialCharges:
         with pytest.warns(UserWarning, match=matchmsg):
             SmallMoleculeComponent.from_openff(charged_off_ethane)
 
-    def test_partial_charges_not_formal_error(self, charged_off_ethane):
-        charged_off_ethane.partial_charges[:] = 1 * unit.elementary_charge
+    @pytest.mark.parametrize("wrong_charge_val", [-1, 1])
+    def test_partial_charges_not_formal_error(self, charged_off_ethane, wrong_charge_val):
+        charged_off_ethane.partial_charges[:] = wrong_charge_val * unit.elementary_charge
         with pytest.raises(ValueError, match="Sum of partial charges"):
             SmallMoleculeComponent.from_openff(charged_off_ethane)
 
