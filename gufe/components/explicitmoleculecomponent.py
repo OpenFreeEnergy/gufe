@@ -14,7 +14,8 @@ from .component import Component
 def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     """
     Determine the correct name from the rdkit.Chem.Mol and the user-provided
-    name; ensure that is set in the rdkit representation.
+    name; ensure that is set in the rdkit representation. We also perform some sanitation of the name
+    to help downstream tools.
     """
     try:
         rdkit_name = mol.GetProp("_Name")
@@ -30,6 +31,16 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
         warnings.warn(f"Component being renamed from {rdkit_name}" f"to {name}.")
     elif name == "":
         name = rdkit_name
+
+    # sanitize the name before we set it
+    # list of characters to replace
+    to_replace = [" ", "/"]
+    if any([i in name for i in to_replace]):
+        # strip leading and trailing whitespace
+        name = name.strip()
+        for i in to_replace:
+            name = name.replace(i, "-")
+        warnings.warn(f"Component name sanitized to: {name}")
 
     mol.SetProp("ofe-name", name)
     return name
