@@ -5,8 +5,9 @@
 **Changed:**
 
 * ``Protocol`` subclasses now require that the ``_settings_cls``
-  attribute is set to the intended ``Settings`` subclass. This
-  attribute is validated during ``Protocol`` instantiation.
+  attribute is set to the intended ``SettingsbaseModel``
+  subclass. This attribute is validated during ``Protocol``
+  instantiation.
 
 **Deprecated:**
 

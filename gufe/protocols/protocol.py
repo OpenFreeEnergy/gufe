@@ -94,12 +94,13 @@ class Protocol(GufeTokenizable):
     - `_default_settings`
 
     Additionally, the `_settings_cls` must be set to the intended
-    subclass of `Settings`. This attribute is validated during the
-    instantiation of the Protocol.
+    subclass of `SettingsBaseModel`. This attribute is validated
+    during the instantiation of the Protocol.
+
     """
 
     _settings: Settings
-    _settings_cls: type[Settings]
+    _settings_cls: type[SettingsBaseModel]
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
 
