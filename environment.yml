@@ -17,6 +17,7 @@ dependencies:
   - pytest
   - pytest-cov
   - pytest-xdist
+  - rdkit==2024.03.5
   - typing-extensions
   - ambertools >=22.0  # why were we getting old ones?
   # docs
