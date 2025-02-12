@@ -820,6 +820,7 @@ def test_settings_readonly():
 
 class TestEnforcedProtocolSettings:
 
+    # A boilerplate Protocol that does not define a _settings_cls
     class ProtocolMissingSettingsClass(Protocol):
 
         @classmethod
@@ -830,9 +831,11 @@ class TestEnforcedProtocolSettings:
         def _default_settings(cls):
             return settings.Settings.get_defaults()
 
+        # we don't need _create in these tests
         def _create(self):
             raise NotImplementedError
 
+        # we don't need _gather in these tests
         def _gather(self):
             raise NotImplementedError
 
@@ -846,11 +849,13 @@ class TestEnforcedProtocolSettings:
                 TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
             )
 
-    def test_protol_no_settings(self):
+    def test_protocol_wrong_settings(self):
 
+        # Basic subclass of Settings
         class PhonySettings(settings.Settings):
             pass
 
+        # Define a protocol that expects the above Settings
         class ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass):
 
             _settings_cls = PhonySettings
@@ -859,4 +864,6 @@ class TestEnforcedProtocolSettings:
             ValueError,
             match=f"`{ProtocolWithSettingsClass.__qualname__}` expected a `{PhonySettings.__qualname__}` instance.",
         ):
-            ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings())
+            _settings = TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
+            # instantiate with incorrect settings object
+            ProtocolWithSettingsClass(_settings)
