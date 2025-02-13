@@ -38,6 +38,7 @@ class WriterProtocolResult(gufe.ProtocolResult):
 
 class WriterProtocol(gufe.Protocol):
     result_cls = WriterProtocolResult
+    _settings_cls = WriterSettings
 
     @classmethod
     def _default_settings(cls):
