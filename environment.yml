@@ -18,6 +18,7 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - typing-extensions
+  - rdkit!=2024.03.6  # https://github.com/OpenFreeEnergy/gufe/issues/456
   - ambertools >=22.0  # why were we getting old ones?
   # docs
   - pydata-sphinx-theme
