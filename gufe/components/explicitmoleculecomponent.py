@@ -103,15 +103,6 @@ class ExplicitMoleculeComponent(Component):
         """Return an RDKit copied representation of this molecule"""
         return Chem.Mol(self._rdkit)
 
-    def to_json(self):
-        return json.dumps(self.to_dict())
-
-    # From
-    @classmethod
-    def from_json(cls, json_str):
-        dct = json.loads(json_str)
-        return cls.from_dict(dct)
-
     @classmethod
     def from_rdkit(cls, rdkit: RDKitMol, name: str = ""):
         """Create a Component, copying from an RDKit Mol"""

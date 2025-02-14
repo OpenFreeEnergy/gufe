@@ -705,15 +705,23 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             raise ValueError("Must specify either `content` and `file` for JSON input")
 
         if content is not None:
-            keyed_chain = json.loads(content, cls=JSON_HANDLER.decoder)
-            return cls.from_keyed_chain(keyed_chain=keyed_chain)
+            deserialized = json.loads(content, cls=JSON_HANDLER.decoder)
+            try:
+                return cls.from_keyed_chain(keyed_chain=deserialized)
+            except:
+                # if the above fails, try to load as the dict representation
+                return cls.from_dict(deserialized)
 
         from gufe.utils import ensure_filelike
 
         with ensure_filelike(file, mode="r") as f:
-            keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
+            deserialized = json.load(f, cls=JSON_HANDLER.decoder)
 
-        return cls.from_keyed_chain(keyed_chain=keyed_chain)
+        try:
+            return cls.from_keyed_chain(keyed_chain=deserialized)
+        except:
+            # if the above fails, try to load as the dict representation
+            return cls.from_dict(deserialized)
 
 
 class GufeKey(str):
