@@ -68,7 +68,6 @@ class ExplicitMoleculeComponent(Component):
 
         self._check_partial_charges()
 
-
     def __getstate__(self):
         # TODO: check that RDKit setting is set before issuing warning
         if Chem.GetDefaultPickleProperties() != Chem.PropertyPickleOptions.AllProps:
@@ -154,7 +153,9 @@ class ExplicitMoleculeComponent(Component):
         p_chgs = np.array(mol.GetProp("atom.dprop.PartialCharge").split(), dtype=float)
 
         if len(p_chgs) != mol.GetNumAtoms():
-            errmsg = f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
+            errmsg = (
+                f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
+            )
             raise ValueError(errmsg)
 
         if abs(sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
@@ -172,7 +173,8 @@ class ExplicitMoleculeComponent(Component):
                 atom_charge = atom.GetDoubleProp("PartialCharge")
                 if not np.isclose(atom_charge, charge):
                     errmsg = (
-                        f"non-equivalent partial charges between atom and " f"molecule properties: {atom_charge} {charge}"
+                        f"non-equivalent partial charges between atom and "
+                        f"molecule properties: {atom_charge} {charge}"
                     )
                     raise ValueError(errmsg)
 
