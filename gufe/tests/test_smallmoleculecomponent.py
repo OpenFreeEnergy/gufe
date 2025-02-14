@@ -252,7 +252,7 @@ class TestSmallMoleculeComponentPartialCharges:
         caplog.set_level(logging.INFO)
         SmallMoleculeComponent.from_openff(charged_off_ethane)
 
-        assert "Partial charges have been provided" in caplog.text
+        assert "Partial charges are present for SmallMoleculeComponent-" in caplog.text
 
     def test_partial_charges_zero_warning(self, charged_off_ethane):
         charged_off_ethane.partial_charges[:] = 0 * unit.elementary_charge
@@ -286,7 +286,7 @@ class TestSmallMoleculeComponentPartialCharges:
         caplog.set_level(logging.INFO)
 
         ofe = SmallMoleculeComponent.from_rdkit(mol)
-        assert "Partial charges have been provided" in caplog.text
+        assert "Partial charges are present for SmallMoleculeComponent-" in caplog.text
 
         # convert to openff and make sure the charges are set
         off_mol = ofe.to_openff()

@@ -180,5 +180,5 @@ class ExplicitMoleculeComponent(Component):
             wmsg = "Partial charges provided all equal to zero. These may be ignored by some Protocols."
             warnings.warn(wmsg)
         else:
-            msg = f"Partial charges are present for {self.key} (name: {self.name})"
+            msg = f"Partial charges are present for {self.key} (name: '{self.name}')"
             self.logger.info(msg)
