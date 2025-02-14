@@ -56,7 +56,7 @@ def named_ethane():
         (" foo bar ", "", "", "foobar"),
         ("foo*bar", "", "", "foobar"),
         ("foo", "foo/bar", "", "foobar"),
-        ("", "", "foo/bar", "foobar")
+        ("", "", "foo/bar", "foobar"),
     ],
 )
 def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
