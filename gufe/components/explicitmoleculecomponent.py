@@ -35,68 +35,6 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
     return name
 
 
-def _check_partial_charges(mol: RDKitMol, logger=None) -> None:
-    """
-    Checks for the presence of partial charges.
-
-    Note
-    ----
-    We ensure the charges are set as atom properties
-    to ensure they are detected by OpenFF
-
-    Raises
-    ------
-    ValueError
-      * If the partial charges are not of length atoms.
-      * If the sum of partial charges is not equal to the
-        formal charge.
-    UserWarning
-      * If partial charges are found.
-      * If the partial charges are near 0 for all atoms.
-    """
-    if "atom.dprop.PartialCharge" not in mol.GetPropNames():
-        return
-
-    p_chgs = np.array(mol.GetProp("atom.dprop.PartialCharge").split(), dtype=float)
-
-    if len(p_chgs) != mol.GetNumAtoms():
-        errmsg = f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
-        raise ValueError(errmsg)
-
-    if abs(sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
-        errmsg = (
-            f"Sum of partial charges {sum(p_chgs)} differs from " f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
-        )
-        raise ValueError(errmsg)
-
-    # set the charges on the atoms if not already set
-    for i, charge in enumerate(p_chgs):
-        atom = mol.GetAtomWithIdx(i)
-        if not atom.HasProp("PartialCharge"):
-            atom.SetDoubleProp("PartialCharge", charge)
-        else:
-            atom_charge = atom.GetDoubleProp("PartialCharge")
-            if not np.isclose(atom_charge, charge):
-                errmsg = (
-                    f"non-equivalent partial charges between atom and " f"molecule properties: {atom_charge} {charge}"
-                )
-                raise ValueError(errmsg)
-
-    if np.all(np.isclose(p_chgs, 0.0)):
-        wmsg = "Partial charges provided all equal to zero. These may be ignored by some Protocols."
-        warnings.warn(wmsg)
-    else:
-        msg = "Partial charges have been provided"
-        if name := mol.GetProp("ofe-name"):
-            msg += f" for {name}"
-        msg += ", these will preferentially be used instead of generating new partial charges."
-
-        if logger is None:
-            logger = logging.getLogger(__name__)
-
-        logger.info(msg)
-
-
 class ExplicitMoleculeComponent(Component):
     """Base class for explicit molecules.
 
@@ -110,7 +48,6 @@ class ExplicitMoleculeComponent(Component):
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
         name = _ensure_ofe_name(rdkit, name)
-        _check_partial_charges(rdkit, logger=self.logger)
         conformers = list(rdkit.GetConformers())
         if not conformers:
             raise ValueError("Molecule was provided with no conformers.")
@@ -128,6 +65,8 @@ class ExplicitMoleculeComponent(Component):
         self._rdkit = rdkit
         self._smiles: Optional[str] = None
         self._name = name
+
+        self._check_partial_charges()
 
     def __getstate__(self):
         # TODO: check that RDKit setting is set before issuing warning
@@ -186,3 +125,62 @@ class ExplicitMoleculeComponent(Component):
 
     def _to_dict(self) -> dict:
         raise NotImplementedError()
+
+    def _check_partial_charges(self) -> None:
+        """
+        Checks for the presence of partial charges.
+
+        Note
+        ----
+        We ensure the charges are set as atom properties
+        to ensure they are detected by OpenFF
+
+        Raises
+        ------
+        ValueError
+        * If the partial charges are not of length atoms.
+        * If the sum of partial charges is not equal to the
+            formal charge.
+        UserWarning
+        * If partial charges are found.
+        * If the partial charges are near 0 for all atoms.
+        """
+        mol = self._rdkit
+
+        if "atom.dprop.PartialCharge" not in mol.GetPropNames():
+            return
+
+        p_chgs = np.array(mol.GetProp("atom.dprop.PartialCharge").split(), dtype=float)
+
+        if len(p_chgs) != mol.GetNumAtoms():
+            errmsg = (
+                f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
+            )
+            raise ValueError(errmsg)
+
+        if abs(sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
+            errmsg = (
+                f"Sum of partial charges {sum(p_chgs)} differs from " f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
+            )
+            raise ValueError(errmsg)
+
+        # set the charges on the atoms if not already set
+        for i, charge in enumerate(p_chgs):
+            atom = mol.GetAtomWithIdx(i)
+            if not atom.HasProp("PartialCharge"):
+                atom.SetDoubleProp("PartialCharge", charge)
+            else:
+                atom_charge = atom.GetDoubleProp("PartialCharge")
+                if not np.isclose(atom_charge, charge):
+                    errmsg = (
+                        f"non-equivalent partial charges between atom and "
+                        f"molecule properties: {atom_charge} {charge}"
+                    )
+                    raise ValueError(errmsg)
+
+        if np.all(np.isclose(p_chgs, 0.0)):
+            wmsg = "Partial charges provided all equal to zero. These may be ignored by some Protocols."
+            warnings.warn(wmsg)
+        else:
+            msg = f"Partial charges are present for {self.key} (name: '{self.name}')"
+            self.logger.info(msg)
