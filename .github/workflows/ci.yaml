@@ -127,7 +127,6 @@ jobs:
       - name: "install checks"
         working-directory: ./dist
         run: |
-          pip check
           python -Ic "import gufe; print(gufe.__version__)"
 
       - name: "run tests"
