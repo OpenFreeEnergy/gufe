@@ -13,7 +13,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash -l {0}
+    shell: bash -leo pipefail {0}
 
 jobs:
   mypy:
@@ -40,7 +40,7 @@ jobs:
 
       - name: "Environment Information"
         run: |
-          micromamba info -a
+          micromamba info
           micromamba list
 
       - name: "Lint with mypy"
