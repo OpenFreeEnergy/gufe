@@ -1,6 +1,6 @@
 **Added:**
 
-* Added warning when pickling an ``ExplicitMoleculeComponent`` that RDKit mol properties not preserved by default.
+* Added ExecutionInterrupt, a special exception that does not get handled as a ``ProtocolUnitFailure``.
 
 **Changed:**
 

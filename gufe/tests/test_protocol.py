@@ -17,12 +17,14 @@ from gufe import settings
 from gufe.chemicalsystem import ChemicalSystem
 from gufe.mapping import ComponentMapping
 from gufe.protocols import (
+    MissingUnitResultError,
     Protocol,
     ProtocolDAG,
     ProtocolDAGResult,
     ProtocolResult,
     ProtocolUnit,
     ProtocolUnitFailure,
+    ProtocolUnitFailureError,
     ProtocolUnitResult,
 )
 from gufe.protocols.protocoldag import execute_DAG
@@ -91,6 +93,7 @@ class DummyProtocolResult(ProtocolResult):
 class DummyProtocol(Protocol):
 
     result_cls = DummyProtocolResult
+    _settings_cls = DummySpecificSettings
 
     @classmethod
     def _default_settings(cls):
@@ -540,6 +543,7 @@ class NoDepsProtocol(Protocol):
     """A protocol without dependencies"""
 
     result_cls = NoDepResults
+    _settings_cls = settings.Settings
 
     @classmethod
     def _defaults(cls):
@@ -692,7 +696,7 @@ class TestProtocolDAGResult:
 
         assert not dagresult.ok()
 
-        with pytest.raises(KeyError, match="No success for `protocol_unit` found") as e:
+        with pytest.raises(ProtocolUnitFailureError, match="No success for `protocol_unit`:NoDepUnit\(None\) found"):
             dagresult.unit_to_result(units[2])
 
     def test_plenty_of_fails(self, units, successes, failures):
@@ -721,11 +725,13 @@ class TestProtocolDAGResult:
             transformation_key=None,
         )
 
-        with pytest.raises(KeyError, match="No such `protocol_unit` present"):
+        with pytest.raises(MissingUnitResultError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_result(units[2])
-        with pytest.raises(KeyError, match="No such `protocol_unit` present"):
+        with pytest.raises(MissingUnitResultError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_all_results(units[2])
-        with pytest.raises(KeyError, match="No such `protocol_unit_result` present"):
+        with pytest.raises(
+            MissingUnitResultError, match="No such `protocol_unit_result`:ProtocolUnitResult\(None\) present"
+        ):
             dagresult.result_to_unit(successes[2])
 
 
@@ -810,3 +816,54 @@ def test_settings_readonly():
         p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
 
     assert p.settings.thermo_settings.temperature == before
+
+
+class TestEnforcedProtocolSettings:
+
+    # A boilerplate Protocol that does not define a _settings_cls
+    class ProtocolMissingSettingsClass(Protocol):
+
+        @classmethod
+        def _defaults(cls):
+            return {}
+
+        @classmethod
+        def _default_settings(cls):
+            return settings.Settings.get_defaults()
+
+        # we don't need _create in these tests
+        def _create(self):
+            raise NotImplementedError
+
+        # we don't need _gather in these tests
+        def _gather(self):
+            raise NotImplementedError
+
+    def test_protocol_no_settings_class(self):
+
+        with pytest.raises(
+            NotImplementedError,
+            match=f"class `{TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.__qualname__}` must implement the `_settings_cls` attribute.",
+        ):
+            TestEnforcedProtocolSettings.ProtocolMissingSettingsClass(
+                TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
+            )
+
+    def test_protocol_wrong_settings(self):
+
+        # Basic subclass of Settings
+        class PhonySettings(settings.Settings):
+            pass
+
+        # Define a protocol that expects the above Settings
+        class ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass):
+
+            _settings_cls = PhonySettings
+
+        with pytest.raises(
+            ValueError,
+            match=f"`{ProtocolWithSettingsClass.__qualname__}` expected a `{PhonySettings.__qualname__}` instance.",
+        ):
+            _settings = TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
+            # instantiate with incorrect settings object
+            ProtocolWithSettingsClass(_settings)
