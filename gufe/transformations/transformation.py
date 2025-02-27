@@ -122,7 +122,7 @@ class TransformationBase(GufeTokenizable):
             A pathlike of filelike to save this transformation to.
         """
         warnings.warn(
-            ("use of this method is deprecated, " "instead use `to_json`"),
+            ("use of this method is deprecated; instead use `to_json`"),
             DeprecationWarning,
         )
         with ensure_filelike(file, mode="w") as f:
@@ -138,7 +138,7 @@ class TransformationBase(GufeTokenizable):
             A pathlike or filelike to read this transformation from.
         """
         warnings.warn(
-            ("use of this method is deprecated, " "instead use `from_json`"),
+            ("use of this method is deprecated; instead use `from_json`"),
             DeprecationWarning,
         )
         with ensure_filelike(file, mode="r") as f:
@@ -186,7 +186,7 @@ class Transformation(TransformationBase):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
+                ("mapping input as a dict is deprecated; instead use either a single Mapping or list"),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
