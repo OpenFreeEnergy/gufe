@@ -708,8 +708,11 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             deserialized = json.loads(content, cls=JSON_HANDLER.decoder)
             try:
                 return cls.from_keyed_chain(keyed_chain=deserialized)
-            except:
+            except ValueError:
                 # if the above fails, try to load as the dict representation
+                warnings.warn(
+                    f"keyed-chain deserialization failed; falling back to deserializing dict representation"
+                )
                 return cls.from_dict(deserialized)
 
         from gufe.utils import ensure_filelike
