@@ -199,7 +199,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""):
+    def _from_openmmPDBFile(
+        cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""
+    ):
         """Converts to our internal representation (rdkit Mol)
 
         Parameters
@@ -254,7 +256,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Set Positions
         rd_mol = editable_rdmol.GetMol()
-        positions = np.array(openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3)
+        positions = np.array(
+            openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3
+        )
 
         for frame_id, frame in enumerate(positions):
             conf = Conformer(frame_id)
@@ -265,33 +269,41 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Add Additionals
         # Formal Charge
         netcharge = 0
-        for a in rd_mol.GetAtoms():
-            atom_name = a.GetMonomerInfo().GetName().strip()
-            atomic_num = a.GetAtomicNum()
+        for omm_atom, rd_atom in zip(mol_topology.atoms(), rd_mol.GetAtoms()):
+            # Transfer formal charge from OpenMM atom to RDKit atom if it exists
 
-            connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
-            default_valence = periodicTable.GetDefaultValence(atomic_num)
-
-            if connectivity == 0:  # ions
-                ion_key = atom_name.strip().upper()
-                if ion_key in ions_dict:
-                    fc = ions_dict[ion_key]
-                else:
-                    resn = a.GetMonomerInfo().GetResidueName()
-                    resind = int(a.GetMonomerInfo().GetResidueNumber())
-                    raise ValueError(
-                        f"Unknown ion: {atom_name} in residue {resn} at index {resind}. "
-                        f"Check if it's in the ions_dict dictionary."
-                    )
-            elif default_valence > connectivity:
-                fc = -(default_valence - connectivity)  # negative charge
-            elif default_valence < connectivity:
-                fc = +(connectivity - default_valence)  # positive charge
+            if hasattr(omm_atom, "formalCharge") and omm_atom.formalCharge is not None:
+                fc = omm_atom.formalCharge
             else:
-                fc = 0  # neutral
+                atom_name = rd_atom.GetMonomerInfo().GetName().strip()
+                atomic_num = rd_atom.GetAtomicNum()
 
-            a.SetFormalCharge(fc)
-            a.UpdatePropertyCache(strict=True)
+                connectivity = sum(
+                    _BONDORDER_TO_ORDER[bond.GetBondType()]
+                    for bond in rd_atom.GetBonds()
+                )
+                default_valence = periodicTable.GetDefaultValence(atomic_num)
+
+                if connectivity == 0:  # ions
+                    ion_key = atom_name.strip().upper()
+                    if ion_key in ions_dict:
+                        fc = ions_dict[ion_key]
+                    else:
+                        resn = rd_atom.GetMonomerInfo().GetResidueName()
+                        resind = int(rd_atom.GetMonomerInfo().GetResidueNumber())
+                        raise ValueError(
+                            f"Unknown ion: {atom_name} in residue {resn} at index {resind}. "
+                            f"Check if it's in the ions_dict dictionary."
+                        )
+                elif default_valence > connectivity:
+                    fc = -(default_valence - connectivity)  # negative charge
+                elif default_valence < connectivity:
+                    fc = +(connectivity - default_valence)  # positive charge
+                else:
+                    fc = 0  # neutral
+
+            rd_atom.SetFormalCharge(fc)
+            rd_atom.UpdatePropertyCache(strict=True)
 
             netcharge += fc
 
@@ -410,7 +422,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             if (new_resid := reskey(mi)) != current_resid:
                 _, resname, resnum, icode = new_resid
-                r = top.addResidue(name=resname, chain=c, id=str(resnum), insertionCode=icode)
+                r = top.addResidue(
+                    name=resname, chain=c, id=str(resnum), insertionCode=icode
+                )
                 current_resid = new_resid
 
             a = top.addAtom(
@@ -418,6 +432,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
                 id=str(mi.GetSerialNumber()),
+                formalCharge=None
+                if atom.GetFormalCharge() == 0
+                else atom.GetFormalCharge(),
             )
 
             atom_lookup[atom.GetIdx()] = a
@@ -425,7 +442,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond in self._rdkit.GetBonds():
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
-            top.addBond(a1, a2, order=_BONDORDERS_RDKIT_TO_OPENMM.get(bond.GetBondType(), None))
+            top.addBond(
+                a1, a2, order=_BONDORDERS_RDKIT_TO_OPENMM.get(bond.GetBondType(), None)
+            )
 
         return top
 
@@ -447,7 +466,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
+    def to_pdb_file(
+        self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
+    ) -> str:
         """
         serialize protein to pdb file.
 
@@ -489,7 +510,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbx_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
+    def to_pdbx_file(
+        self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
+    ) -> str:
         """
         serialize protein to pdbx file.
 
@@ -567,7 +590,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ]
 
         conformers = [
-            serialize_numpy(conf.GetPositions()) for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
+            serialize_numpy(conf.GetPositions())
+            for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
         ]
 
         # Result

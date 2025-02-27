@@ -222,7 +222,7 @@ class PDBFile:
                                 element = elem.get_by_symbol(upper[0])
                             except KeyError:
                                 pass
-                    newAtom = top.addAtom(atomName, element, r, str(atom.serial_number))
+                    newAtom = top.addAtom(atomName, element, r, str(atom.serial_number), formalCharge=atom.formal_charge)
                     atomByNumber[atom.serial_number] = newAtom
         self._positions = []
         for model in pdb.iter_models(True):
@@ -499,7 +499,11 @@ class PDBFile:
                     else:
                         atomName = atom.name
                     coords = positions[posIndex]
-                    line = "%s%5s %-4s %3s %s%4s%1s   %s%s%s  1.00  0.00          %2s  " % (
+                    if atom.formalCharge is not None:
+                        formalCharge = ("%+2d" % atom.formalCharge)[::-1]
+                    else:
+                        formalCharge = '  '
+                    line = "%s%5s %-4s %3s %s%4s%1s   %s%s%s  1.00  0.00          %2s%2s" % (
                         recordName,
                         _formatIndex(atomIndex, 5),
                         atomName,
@@ -511,6 +515,7 @@ class PDBFile:
                         _format_83(coords[1]),
                         _format_83(coords[2]),
                         symbol,
+                        formalCharge
                     )
                     if len(line) != 80:
                         raise ValueError("Fixed width overflow detected")

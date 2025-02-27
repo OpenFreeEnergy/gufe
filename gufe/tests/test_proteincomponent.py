@@ -52,6 +52,35 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     in_lines = [l for l in in_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
     out_lines = [l for l in out_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
 
+    # Since when parsing PDB, we may guess formal charge from connectivity if it is not present
+    # in the PDB, we need to loosen the comparison here. If the formal charge is present int old,
+    # it should also be present in the new file. The reverse is not true.
+    # Process lines to handle charge differences
+    for i in range(len(in_lines)):
+        if i >= len(out_lines):
+            break
+
+        in_line = in_lines[i]
+        out_line = out_lines[i]
+
+        # Only process ATOM/HETATM lines that are long enough
+        if (
+            in_line.startswith(("ATOM", "HETATM"))
+            and out_line.startswith(("ATOM", "HETATM"))
+            and len(in_line) >= 80
+            and len(out_line) >= 80
+        ):
+            # Check if lines differ only in the charge columns (79-80)
+            if (
+                in_line[:78] == out_line[:78]
+                and in_line[78:80].strip() != out_line[78:80].strip()
+            ):
+                # If input has no charge but output has charge, make them match
+                # This allows the connectivity-based charges to be added
+                if not in_line[78:80].strip():
+                    in_lines[i] = in_line[:78] + out_line[78:]
+
+    # Now compare the modified lines
     assert in_lines == out_lines
 
 
@@ -278,7 +307,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_protein_total_charge(self, PDB_181L_path):
         m1 = self.cls.from_pdb_file(PDB_181L_path)
 
-        assert m1.total_charge == 7
+        assert m1.total_charge == 20
 
     def test_protein_total_charge_thromb(self):
         m1 = self.cls.from_pdb_file(ALL_PDB_LOADERS["thrombin_protein"]())
