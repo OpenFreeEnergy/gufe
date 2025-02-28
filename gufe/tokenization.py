@@ -720,8 +720,11 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         try:
             return cls.from_keyed_chain(keyed_chain=deserialized)
-        except:
+        except ValueError:
             # if the above fails, try to load as the dict representation
+            warnings.warn(
+                f"keyed-chain deserialization failed; falling back to deserializing dict representation"
+            )
             return cls.from_dict(deserialized)
 
 
