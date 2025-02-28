@@ -1,9 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-"""Classes in this module must be subclassed by protocol authors.
-
-"""
+"""Classes in this module must be subclassed by protocol authors."""
 
 import abc
 import warnings

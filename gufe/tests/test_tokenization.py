@@ -8,6 +8,7 @@ from unittest import mock
 
 import pytest
 
+from gufe.custom_msgpack import packb, unpackb
 from gufe.tokenization import (
     JSON_HANDLER,
     TOKENIZABLE_CLASS_REGISTRY,
@@ -299,6 +300,39 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             cls=JSON_HANDLER.encoder,
         )
         recreated = self.cls.from_json(file=file_path)
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_msgpack_bytes(self):
+        msgpack_bytes = self.cont.to_msgpack()
+        expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
+
+        assert unpackb(msgpack_bytes) == expected_keyed_chain
+
+    def test_from_msgpack_bytes(self):
+        data = packb(self.cont.to_keyed_chain())
+        # TODO forgetting content leads to confusing error for a user
+        recreated = self.cls.from_msgpack(content=data)
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_msgpack_file(self, tmpdir):
+        file_path = tmpdir / "container.messagepack"
+        self.cont.to_msgpack(file=file_path)
+
+        # tuples are converted to lists in msgpack so fix the expected result to use lists
+        expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
+        assert unpackb(file_path.open("rb").read()) == expected_keyed_chain
+
+    def test_from_msgpack_file(self, tmpdir):
+        file_path = tmpdir / "container.messagepack"
+
+        with open(file_path, "wb") as f:
+            f.write(packb(self.expected_keyed_chain))
+
+        recreated = self.cls.from_msgpack(file=file_path)
 
         assert recreated == self.cont
         assert recreated is self.cont

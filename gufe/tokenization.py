@@ -715,6 +715,42 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
         return cls.from_keyed_chain(keyed_chain=keyed_chain)
 
+    def to_msgpack(self, file: Optional[PathLike | TextIO] = None) -> None | bytes:
+        # TODO: docstring
+
+        # need to import here to avoid circular imports
+        from gufe.custom_msgpack import packb
+
+        if file is not None:
+            from gufe.utils import ensure_filelike
+
+            with ensure_filelike(file, mode="w+b") as out:
+                out.write(packb(self.to_keyed_chain()))
+            return None
+        return packb(self.to_keyed_chain())
+
+    @classmethod
+    def from_msgpack(cls, file: Optional[PathLike | TextIO] = None, content: Optional[bytes] = None):
+        # TODO: docstring
+
+        # need to import here to avoid circular import
+        from gufe.custom_msgpack import unpackb
+
+        if content is not None and file is not None:
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+        elif content is None and file is None:
+            raise ValueError("Must specify either `content` and `file` for MessagePack input")
+
+        if content is not None:
+            keyed_chain = unpackb(content)
+        else:
+            from gufe.utils import ensure_filelike
+
+            with ensure_filelike(file, mode="rb") as f:
+                keyed_chain = unpackb(f.read())
+
+        return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
 
 class GufeKey(str):
     def __repr__(self):  # pragma: no cover
