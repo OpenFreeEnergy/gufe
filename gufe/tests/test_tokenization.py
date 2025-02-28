@@ -283,7 +283,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_from_json_dict(self):
+    def test_from_json_string_dict(self):
         """Test that we can still load json-serialized dict representations."""
         with pytest.warns(UserWarning, match="keyed-chain deserialization failed"):
             recreated = self.cls.from_json(content=json.dumps(self.expected_deep, cls=JSON_HANDLER.encoder))
