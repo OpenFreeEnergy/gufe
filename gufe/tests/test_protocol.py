@@ -93,6 +93,7 @@ class DummyProtocolResult(ProtocolResult):
 class DummyProtocol(Protocol):
 
     result_cls = DummyProtocolResult
+    _settings_cls = DummySpecificSettings
 
     @classmethod
     def _default_settings(cls):
@@ -542,6 +543,7 @@ class NoDepsProtocol(Protocol):
     """A protocol without dependencies"""
 
     result_cls = NoDepResults
+    _settings_cls = settings.Settings
 
     @classmethod
     def _defaults(cls):
@@ -814,3 +816,54 @@ def test_settings_readonly():
         p.settings.thermo_settings.temperature = 400.0 * unit.kelvin
 
     assert p.settings.thermo_settings.temperature == before
+
+
+class TestEnforcedProtocolSettings:
+
+    # A boilerplate Protocol that does not define a _settings_cls
+    class ProtocolMissingSettingsClass(Protocol):
+
+        @classmethod
+        def _defaults(cls):
+            return {}
+
+        @classmethod
+        def _default_settings(cls):
+            return settings.Settings.get_defaults()
+
+        # we don't need _create in these tests
+        def _create(self):
+            raise NotImplementedError
+
+        # we don't need _gather in these tests
+        def _gather(self):
+            raise NotImplementedError
+
+    def test_protocol_no_settings_class(self):
+
+        with pytest.raises(
+            NotImplementedError,
+            match=f"class `{TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.__qualname__}` must implement the `_settings_cls` attribute.",
+        ):
+            TestEnforcedProtocolSettings.ProtocolMissingSettingsClass(
+                TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
+            )
+
+    def test_protocol_wrong_settings(self):
+
+        # Basic subclass of Settings
+        class PhonySettings(settings.Settings):
+            pass
+
+        # Define a protocol that expects the above Settings
+        class ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass):
+
+            _settings_cls = PhonySettings
+
+        with pytest.raises(
+            ValueError,
+            match=f"`{ProtocolWithSettingsClass.__qualname__}` expected a `{PhonySettings.__qualname__}` instance.",
+        ):
+            _settings = TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.default_settings()
+            # instantiate with incorrect settings object
+            ProtocolWithSettingsClass(_settings)

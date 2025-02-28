@@ -92,9 +92,15 @@ class Protocol(GufeTokenizable):
     - `_create`
     - `_gather`
     - `_default_settings`
+
+    Additionally, the `_settings_cls` must be set to the intended
+    subclass of `SettingsBaseModel`. This attribute is validated
+    during the instantiation of the Protocol.
+
     """
 
     _settings: Settings
+    _settings_cls: type[SettingsBaseModel]
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
 
@@ -111,6 +117,17 @@ class Protocol(GufeTokenizable):
         Once the Protocol object is created, the input Settings are frozen,
         so should be finalised before creating the Protocol instance.
         """
+
+        if not hasattr(self.__class__, "_settings_cls"):
+            raise NotImplementedError(
+                f"class `{self.__class__.__qualname__}` must implement the `_settings_cls` attribute."
+            )
+
+        if not isinstance(settings, self._settings_cls):
+            raise ValueError(
+                f"`{self.__class__.__qualname__}` expected a `{self._settings_cls.__qualname__}` instance."
+            )
+
         self._settings = settings.frozen_copy()
 
     @property
