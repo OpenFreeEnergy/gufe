@@ -8,7 +8,7 @@
 
 **Deprecated:**
 
-* ``Transformation.dump``, ``Transformation.load`` are now deprecated
+* ``Transformation.dump``, ``Transformation.load`` are now deprecated, use Transformation.to_json and Transformation.from_json instead
 
 **Removed:**
 
