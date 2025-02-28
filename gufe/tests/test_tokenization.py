@@ -284,6 +284,14 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
+    def test_from_json_string_dict(self):
+        """Test that we can still load json-serialized dict representations."""
+        with pytest.warns(UserWarning, match="keyed-chain deserialization failed"):
+            recreated = self.cls.from_json(content=json.dumps(self.expected_deep, cls=JSON_HANDLER.encoder))
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
     def test_to_json_file(self, tmpdir):
         file_path = tmpdir / "container.json"
         self.cont.to_json(file=file_path)
@@ -300,6 +308,20 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
             cls=JSON_HANDLER.encoder,
         )
         recreated = self.cls.from_json(file=file_path)
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_from_json_file_dict(self, tmpdir):
+        """Test that we can still load json-serialized dict representations from files."""
+        file_path = tmpdir / "container.json"
+        json.dump(
+            self.expected_deep,
+            file_path.open(mode="w"),
+            cls=JSON_HANDLER.encoder,
+        )
+        with pytest.warns(UserWarning, match="keyed-chain deserialization failed"):
+            recreated = self.cls.from_json(file=file_path)
 
         assert recreated == self.cont
         assert recreated is self.cont
