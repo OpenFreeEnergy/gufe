@@ -35,39 +35,39 @@ def pack_default(obj) -> msgpack.ExtType:
     match obj:
         case GufeTokenizable():
             gt_payload: bytes = msgpack.packb(obj.to_keyed_chain(), default=pack_default)
-            return msgpack.ExtType(MPEXT.GUFETOKENIZABLE.value, gt_payload)
+            return msgpack.ExtType(MPEXT.GUFETOKENIZABLE, gt_payload)
         case datetime():
             dt_payload: bytes = msgpack.packb(obj.isoformat())
-            return msgpack.ExtType(MPEXT.DATETIME.value, dt_payload)
+            return msgpack.ExtType(MPEXT.DATETIME, dt_payload)
         case SettingsBaseModel():
             settings_data = {field: getattr(obj, field) for field in obj.__fields__}
             settings_data.update({"__class__": obj.__class__.__qualname__, "__module__": obj.__class__.__module__})
             settings_payload: bytes = msgpack.packb(settings_data, default=pack_default)
-            return msgpack.ExtType(MPEXT.SETTINGS.value, settings_payload)
+            return msgpack.ExtType(MPEXT.SETTINGS, settings_payload)
         case pint.registry.UnitRegistry.Quantity():
             unit_data: list = [obj.m, str(obj.u), "openff_units"]
             unit_payload: bytes = msgpack.packb(unit_data, default=pack_default)
             return msgpack.ExtType(
-                MPEXT.UNIT.value,
+                MPEXT.UNIT,
                 unit_payload,
             )
         case Path():
-            return msgpack.ExtType(MPEXT.PATH.value, msgpack.packb(str(obj)))
+            return msgpack.ExtType(MPEXT.PATH, msgpack.packb(str(obj)))
         case np.generic():
             npg_payload: bytes = msgpack.packb([str(obj.dtype), obj.tobytes()], default=pack_default)
-            return msgpack.ExtType(MPEXT.NPGENERIC.value, npg_payload)
+            return msgpack.ExtType(MPEXT.NPGENERIC, npg_payload)
         case np.ndarray():
             npa_payload: bytes = msgpack.packb([str(obj.dtype), list(obj.shape), obj.tobytes()], default=pack_default)
-            return msgpack.ExtType(MPEXT.NDARRAY.value, npa_payload)
+            return msgpack.ExtType(MPEXT.NDARRAY, npa_payload)
         case int():
             try:
                 return msgpack.packb(obj)
             except OverflowError:
-                return msgpack.ExtType(MPEXT.LARGEINT.value, pack_largeint(obj))
+                return msgpack.ExtType(MPEXT.LARGEINT, pack_largeint(obj))
         case uuid.UUID():
             # since a UUID is really a 128 bit int, rely on the LARGEINT extension type downstream
             uuid_payload: bytes = msgpack.packb(int(obj), default=pack_default)
-            return msgpack.ExtType(MPEXT.UUID.value, uuid_payload)
+            return msgpack.ExtType(MPEXT.UUID, uuid_payload)
 
 
 def unpack_default(code: int, data: bytes):
