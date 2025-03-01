@@ -359,6 +359,12 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
+    def test_from_msgpack_file_bad_args(self):
+        with pytest.raises(ValueError, match="Cannot specify both"):
+            self.cls.from_msgpack("fake_file.messagepack", content=b"bad content")
+        with pytest.raises(ValueError, match="Must specify either"):
+            self.cls.from_msgpack()
+
     def test_to_shallow_dict(self):
         assert self.cont.to_shallow_dict() == self.expected_shallow
 

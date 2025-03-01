@@ -12,6 +12,12 @@ from gufe.custom_msgpack import packb, unpackb
 from gufe.settings import models
 
 
+def test_unpack_unknown_extension():
+    payload = bytes([0xD4, 0x7F, 0x00])
+    with pytest.raises(ValueError, match="Found an unknown extension code: 127"):
+        unpackb(payload)
+
+
 class CustomMessagePackCodingTest(abc.ABC):
 
     @abc.abstractmethod
@@ -45,7 +51,7 @@ class TestNumpyCoding(CustomMessagePackCodingTest):
 
 
 # TODO this is technically anything greater than 64 bit
-class TestInt128Coding(CustomMessagePackCodingTest):
+class TestLargeIntCoding(CustomMessagePackCodingTest):
 
     def setup_method(self):
         self.objs = [

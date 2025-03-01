@@ -14,18 +14,18 @@ from gufe.tokenization import GufeTokenizable
 
 
 class MPEXT(IntEnum):
-    TIMESTAMP = 0
-    INT128 = 1
-    PATH = 2
-    UNIT = 3
-    NDARRAY = 4
-    NPGENERIC = 5
-    GUFETOKENIZABLE = 6
-    SETTINGS = 7
-    UUID = 8
+    LARGEINT = 0
+    PATH = 1
+    UNIT = 2
+    NDARRAY = 3
+    NPGENERIC = 4
+    GUFETOKENIZABLE = 5
+    SETTINGS = 6
+    UUID = 7
+    DATETIME = 8
 
 
-def pack_int128(large_int: int) -> bytes:
+def pack_largeint(large_int: int) -> bytes:
     return msgpack.packb(str(large_int))
 
 
@@ -34,87 +34,82 @@ def pack_default(obj) -> msgpack.ExtType:
     data."""
     match obj:
         case GufeTokenizable():
-            data = obj.to_keyed_chain()
-            return msgpack.ExtType(MPEXT.GUFETOKENIZABLE.value, msgpack.packb(data, default=pack_default))
+            payload: bytes = msgpack.packb(obj.to_keyed_chain(), default=pack_default)
+            return msgpack.ExtType(MPEXT.GUFETOKENIZABLE.value, payload)
         case datetime():
-            data = msgpack.ext.Timestamp.from_datetime(obj)
-            return msgpack.ExtType(MPEXT.TIMESTAMP.value, data.to_bytes())
+            payload: bytes = msgpack.packb(obj.isoformat())
+            return msgpack.ExtType(MPEXT.DATETIME.value, payload)
         case SettingsBaseModel():
-            data = {field: getattr(obj, field) for field in obj.__fields__}
-            data.update({"__class__": obj.__class__.__qualname__, "__module__": obj.__class__.__module__})
-            return msgpack.ExtType(MPEXT.SETTINGS.value, msgpack.packb(data, default=pack_default))
+            settings_data = {field: getattr(obj, field) for field in obj.__fields__}
+            settings_data.update({"__class__": obj.__class__.__qualname__, "__module__": obj.__class__.__module__})
+            payload: bytes = msgpack.packb(settings_data, default=pack_default)
+            return msgpack.ExtType(MPEXT.SETTINGS.value, payload)
         case pint.Quantity():
-
+            unit_data: list = [obj.m, str(obj.u), "openff_units"]
+            payload: bytes = msgpack.packb(unit_data, default=pack_default)
             return msgpack.ExtType(
                 MPEXT.UNIT.value,
-                msgpack.packb(
-                    {
-                        "magnitude": obj.m,
-                        "unit": str(obj.u),
-                        "pint_unit_registry": "openff_units",
-                    },
-                    default=pack_default,
-                ),
+                payload,
             )
         case Path():
             return msgpack.ExtType(MPEXT.PATH.value, msgpack.packb(str(obj)))
         case np.generic():
-            data = [str(obj.dtype), obj.tobytes()]
-            return msgpack.ExtType(MPEXT.NPGENERIC.value, msgpack.packb(data, default=pack_default))
+            payload: bytes = msgpack.packb([str(obj.dtype), obj.tobytes()], default=pack_default)
+            return msgpack.ExtType(MPEXT.NPGENERIC.value, payload)
         case np.ndarray():
-            # data = {"dtype": str(obj.dtype), "shape": list(obj.shape), "bytes": obj.tobytes()}
-            data = [str(obj.dtype), list(obj.shape), obj.tobytes()]
-            return msgpack.ExtType(MPEXT.NDARRAY.value, msgpack.packb(data))
+            payload: bytes = msgpack.packb([str(obj.dtype), list(obj.shape), obj.tobytes()], default=pack_default)
+            return msgpack.ExtType(MPEXT.NDARRAY.value, payload)
         case int():
             try:
                 return msgpack.packb(obj)
             except OverflowError:
-                return msgpack.ExtType(MPEXT.INT128.value, pack_int128(obj))
+                return msgpack.ExtType(MPEXT.LARGEINT.value, pack_largeint(obj))
         case uuid.UUID():
-            # since a UUID is really a 128 bit int, rely on the INT128 extension type downstream
-            data = msgpack.packb(int(obj), default=pack_default)
-            return msgpack.ExtType(MPEXT.UUID.value, data)
+            # since a UUID is really a 128 bit int, rely on the LARGEINT extension type downstream
+            payload: bytes = msgpack.packb(int(obj), default=pack_default)
+            return msgpack.ExtType(MPEXT.UUID.value, payload)
 
 
 def unpack_default(code: int, data: bytes):
     """For non-standard datatypes, unpack into the appropriate structures."""
-    match MPEXT(code):
+
+    try:
+        extension_type = MPEXT(code)
+    except ValueError as e:
+        raise ValueError(f"Found an unknown extension code: {code}")
+
+    match extension_type:
         case MPEXT.GUFETOKENIZABLE:
             return gufe.tokenization.KeyedChain(
                 msgpack.unpackb(data, ext_hook=unpack_default, strict_map_key=False)
             ).to_gufe()
         case MPEXT.SETTINGS:
-            data = msgpack.unpackb(data, ext_hook=unpack_default)
-            try:
-                module = data.pop("__module__")
-                qualname = data.pop("__class__")
-            except KeyError as e:
-                raise e
+            settings_data = msgpack.unpackb(data, ext_hook=unpack_default)
+            module = settings_data.pop("__module__")
+            qualname = settings_data.pop("__class__")
             cls = gufe.tokenization.get_class(module, qualname)
-            return cls(**data)
+            return cls(**settings_data)
         case MPEXT.UNIT:
-            data = msgpack.unpackb(data, ext_hook=unpack_default)
-            unit_data = data["magnitude"] * DEFAULT_UNIT_REGISTRY.Quantity(data["unit"])
-            return data["magnitude"] * DEFAULT_UNIT_REGISTRY.Quantity(data["unit"])
+            magnitude, unit, _ = msgpack.unpackb(data, ext_hook=unpack_default)
+            return magnitude * DEFAULT_UNIT_REGISTRY.Quantity(unit)
         case MPEXT.NDARRAY:
             _dtype, _shape, _bytes = msgpack.unpackb(data)
             return np.frombuffer(_bytes, dtype=np.dtype(_dtype)).reshape(_shape)
-        case MPEXT.INT128:
+        case MPEXT.LARGEINT:
             string_rep_data = msgpack.unpackb(data)
             return int(string_rep_data)
         case MPEXT.PATH:
             string_rep_data = msgpack.unpackb(data)
             return Path(string_rep_data)
-        case MPEXT.TIMESTAMP:
-            return msgpack.ext.Timestamp.from_bytes(data).to_datetime()
+        case MPEXT.DATETIME:
+            isoformat = msgpack.unpackb(data)
+            return datetime.fromisoformat(isoformat)
         case MPEXT.UUID:
-            data = msgpack.unpackb(data, ext_hook=unpack_default)
-            return uuid.UUID(int=int(data))
+            uuid_data = msgpack.unpackb(data, ext_hook=unpack_default)
+            return uuid.UUID(int=int(uuid_data))
         case MPEXT.NPGENERIC:
             _dtype, _bytes = msgpack.unpackb(data, ext_hook=unpack_default)
             return np.frombuffer(_bytes, dtype=np.dtype(_dtype))
-        case _:
-            raise NotImplementedError(code)
 
 
 def packb(obj) -> bytes:
