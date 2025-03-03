@@ -51,23 +51,78 @@ _CHIRALITY_RDKIT_TO_STR = {
 _CHIRALITY_STR_TO_RDKIT = {v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()}
 
 
-negative_ions = ["F", "CL", "BR", "I"]
-positive_ions = [
-    # +1
-    "LI",
-    "NA",
-    "K",
-    "RB",
-    "CS",
-    # +2
-    "BE",
-    "MG",
-    "CA",
-    "SR",
-    "BA",
-    "RA",
-    "ZN",
-]
+ions_dict = {
+    # Alkali metals
+    "LI": 1,
+    "NA": 1,
+    "K": 1,
+    "RB": 1,
+    "CS": 1,
+    "K+": 1,
+    "Na+": 1,
+    # Alkaline earth metals
+    "Be": 2,
+    "MG": 2,
+    "CA": 2,
+    "SR": 2,
+    "BA": 2,
+    "Ra": 2,
+    # Transition metals
+    "CE": 3,
+    "Ce": 4,
+    "CR": 3,
+    "Cr": 2,
+    "MN": 2,
+    "FE": 3,
+    "FE2": 2,
+    "CO": 2,
+    "NI": 2,
+    "CU": 2,
+    "CU1": 1,
+    "ZN": 2,
+    "AG": 1,
+    "Ag": 2,
+    "CD": 2,
+    "PD": 2,
+    "PT": 2,
+    "HG": 2,
+    "AL": 3,
+    "IN": 3,
+    "TL": 1,
+    "SN": 2,
+    "Sn": 2,
+    "PB": 2,
+    "PR": 3,
+    "ND": 3,
+    "SM": 3,
+    "Sm": 2,
+    "EU": 2,
+    "EU3": 3,
+    "GD3": 3,
+    "TB": 3,
+    "Dy": 3,
+    "Er": 3,
+    "Tm": 3,
+    "YB2": 2,
+    # Actinides
+    "Th": 4,
+    "U4+": 4,
+    "Pu": 3,
+    # Halogens
+    "F": -1,
+    "CL": -1,
+    "Cl-": -1,
+    "BR": -1,
+    "IOD": -1,
+    # Other common ions
+    "H3O+": 1,
+    "NH4": 1,
+    "HZ+": 1,
+    "HE+": 1,
+    # Other metals
+    "Zr": 4,
+    "Hf": 4,
+}
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
@@ -211,25 +266,22 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Formal Charge
         netcharge = 0
         for a in rd_mol.GetAtoms():
+            atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
-            atom_name = a.GetMonomerInfo().GetName()
 
             connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
-            if connectivity == 0:  # ions:
-                # strip catches cases like 'CL1' as name
-                if atom_name.strip(string.digits).upper() in positive_ions:
-                    fc = default_valence  # e.g. Sodium ions
-                elif atom_name.strip(string.digits).upper() in negative_ions:
-                    fc = -default_valence  # e.g. Chlorine ions
-                else:  # -no-cov-
+            if connectivity == 0:  # ions
+                ion_key = atom_name.strip().upper()
+                if ion_key in ions_dict:
+                    fc = ions_dict[ion_key]
+                else:
                     resn = a.GetMonomerInfo().GetResidueName()
                     resind = int(a.GetMonomerInfo().GetResidueNumber())
                     raise ValueError(
-                        "I don't know this Ion or something really went "
-                        f"wrong! \t{atom_name}\t{resn}\t-{resind}\t"
-                        f"connectivity{connectivity}"
+                        f"Unknown ion: {atom_name} in residue {resn} at index {resind}. "
+                        f"Check if it's in the ions_dict dictionary."
                     )
             elif default_valence > connectivity:
                 fc = -(default_valence - connectivity)  # negative charge
