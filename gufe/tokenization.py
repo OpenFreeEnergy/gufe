@@ -725,6 +725,72 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
 
+    def to_msgpack(self, file: Optional[PathLike | TextIO] = None) -> None | bytes:
+        """
+        Generate a MessagePack keyed chain representation.
+
+        This will be writen to the filepath or filelike object if passed.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to write the encoded msgpack to.
+
+        Returns
+        -------
+        None | bytes
+            A minimal msgpack representation of the object if `file` is `None`; else None.
+
+        See Also
+        --------
+        from_msgpack
+        """
+        # need to import here to avoid circular imports
+        from gufe.custom_msgpack import packb
+
+        if file is not None:
+            from gufe.utils import ensure_filelike
+
+            with ensure_filelike(file, mode="w+b") as out:
+                out.write(packb(self.to_keyed_chain()))
+            return None
+        return packb(self.to_keyed_chain())
+
+    @classmethod
+    def from_msgpack(cls, file: Optional[PathLike | TextIO] = None, content: Optional[bytes] = None):
+        """Generate an instance from a MessagePack keyed chain representation.
+
+        Can provide either a filepath/filelike as `file`, or msgpack content via `content`.
+
+        Parameters
+        ----------
+        file : TextIO | PathLike | None
+            A filepath or filelike object to read msgpack data from.
+        content : bytes
+            Bytes to read msgpack data from.
+
+        See Also
+        --------
+        to_msgpack
+        """
+        # need to import here to avoid circular import
+        from gufe.custom_msgpack import unpackb
+
+        if content is not None and file is not None:
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+        elif content is None and file is None:
+            raise ValueError("Must specify either `content` and `file` for MessagePack input")
+
+        if content is not None:
+            keyed_chain = unpackb(content)
+        else:
+            from gufe.utils import ensure_filelike
+
+            with ensure_filelike(file, mode="rb") as f:
+                keyed_chain = unpackb(f.read())
+
+        return cls.from_keyed_chain(keyed_chain=keyed_chain)
+
 
 class GufeKey(str):
     def __repr__(self):  # pragma: no cover
