@@ -50,7 +50,6 @@ class TestNumpyCoding(CustomMessagePackCodingTest):
         assert original.dtype == reconstructed.dtype
 
 
-# TODO this is technically anything greater than 64 bit
 class TestLargeIntCoding(CustomMessagePackCodingTest):
 
     def setup_method(self):
@@ -92,10 +91,22 @@ class TestNumpyGenericCoding(CustomMessagePackCodingTest):
 class TestUnitCoding(CustomMessagePackCodingTest):
 
     def setup_method(self):
-        # TODO this is not exhaustive
         self.objs = [
             openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
+            1 * openff.units.unit.nanometer,
+            1.0 * openff.units.unit.nanometer,
+            0.8 * openff.units.unit.nanometer,
+            np.array([-1.0, 0, 1.0]) * openff.units.unit.nanometer,
         ]
+
+    def _equality_check(self, original, reconstructed):
+
+        match original.m:
+            case np.ndarray():
+                npt.assert_array_equal(original, reconstructed)
+                assert original.dtype == reconstructed.dtype
+            case _:
+                assert original == reconstructed
 
 
 class TestSettingsCoding(CustomMessagePackCodingTest):

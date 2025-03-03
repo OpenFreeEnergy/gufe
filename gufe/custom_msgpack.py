@@ -113,8 +113,32 @@ def unpack_default(code: int, data: bytes):
 
 
 def packb(obj) -> bytes:
+    """Serialize an object with MessagePack serialization.
+
+    Paramters
+    ---------
+    obj
+        The object to be serialized.
+
+    Returns
+    -------
+    bytes
+        The serialized object as bytes.
+    """
     return msgpack.packb(obj, default=pack_default)
 
 
 def unpackb(data: bytes):
+    """Deserialize MessagePack encoded bytes.
+
+    Parameters
+    ----------
+    data: bytes
+        The bytes to be deserialized.
+
+    Returns
+    -------
+    deserialized
+        The deserialized object.
+    """
     return msgpack.unpackb(data, ext_hook=unpack_default)

@@ -334,7 +334,6 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
     def test_from_msgpack_bytes(self):
         data = packb(self.cont.to_keyed_chain())
-        # TODO forgetting content leads to confusing error for a user
         recreated = self.cls.from_msgpack(content=data)
 
         assert recreated == self.cont

@@ -726,8 +726,25 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             return cls.from_dict(deserialized)
 
     def to_msgpack(self, file: Optional[PathLike | TextIO] = None) -> None | bytes:
-        # TODO: docstring
+        """
+        Generate a MessagePack keyed chain representation.
 
+        This will be writen to the filepath or filelike object if passed.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to write the encoded msgpack to.
+
+        Returns
+        -------
+        None | bytes
+            A minimal msgpack representation of the object if `file` is `None`; else None.
+
+        See Also
+        --------
+        from_msgpack
+        """
         # need to import here to avoid circular imports
         from gufe.custom_msgpack import packb
 
@@ -741,8 +758,21 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     @classmethod
     def from_msgpack(cls, file: Optional[PathLike | TextIO] = None, content: Optional[bytes] = None):
-        # TODO: docstring
+        """Generate an instance from a MessagePack keyed chain representation.
 
+        Can provide either a filepath/filelike as `file`, or msgpack content via `content`.
+
+        Parameters
+        ----------
+        file : TextIO | PathLike | None
+            A filepath or filelike object to read msgpack data from.
+        content : bytes
+            Bytes to read msgpack data from.
+
+        See Also
+        --------
+        to_msgpack
+        """
         # need to import here to avoid circular import
         from gufe.custom_msgpack import unpackb
 
