@@ -71,10 +71,7 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
             and len(out_line) >= 80
         ):
             # Check if lines differ only in the charge columns (79-80)
-            if (
-                in_line[:78] == out_line[:78]
-                and in_line[78:80].strip() != out_line[78:80].strip()
-            ):
+            if in_line[:78] == out_line[:78] and in_line[78:80].strip() != out_line[78:80].strip():
                 # If input has no charge but output has charge, make them match
                 # This allows the connectivity-based charges to be added
                 if not in_line[78:80].strip():

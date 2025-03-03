@@ -850,7 +850,7 @@ class Atom:
             # formal_charge should always be a one digit followed by a sign, eg "2-", "3+"
             # this is a bit more permissive, it will also read "-2", "+3", or "3 "
             formal_charge = pdb_line[78:80]
-            if formal_charge.endswith('+') or formal_charge.endswith('-'):
+            if formal_charge.endswith("+") or formal_charge.endswith("-"):
                 formal_charge = formal_charge[::-1]
             self.formal_charge = int(formal_charge)
         except ValueError:
@@ -989,7 +989,7 @@ class Atom:
         )
         end = "%-4s%2s" % (self.segment_id, self.element_symbol)
         formal_charge = "  "
-        if (self.formal_charge is not None):
+        if self.formal_charge is not None:
             formal_charge = ("%+2d" % self.formal_charge)[::-1]
         return names + numbers + end + formal_charge
 

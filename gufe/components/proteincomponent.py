@@ -199,9 +199,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(
-        cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""
-    ):
+    def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""):
         """Converts to our internal representation (rdkit Mol)
 
         Parameters
@@ -256,9 +254,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Set Positions
         rd_mol = editable_rdmol.GetMol()
-        positions = np.array(
-            openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3
-        )
+        positions = np.array(openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3)
 
         for frame_id, frame in enumerate(positions):
             conf = Conformer(frame_id)
@@ -278,10 +274,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 atom_name = rd_atom.GetMonomerInfo().GetName().strip()
                 atomic_num = rd_atom.GetAtomicNum()
 
-                connectivity = sum(
-                    _BONDORDER_TO_ORDER[bond.GetBondType()]
-                    for bond in rd_atom.GetBonds()
-                )
+                connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in rd_atom.GetBonds())
                 default_valence = periodicTable.GetDefaultValence(atomic_num)
 
                 if connectivity == 0:  # ions
@@ -422,9 +415,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             if (new_resid := reskey(mi)) != current_resid:
                 _, resname, resnum, icode = new_resid
-                r = top.addResidue(
-                    name=resname, chain=c, id=str(resnum), insertionCode=icode
-                )
+                r = top.addResidue(name=resname, chain=c, id=str(resnum), insertionCode=icode)
                 current_resid = new_resid
 
             a = top.addAtom(
@@ -432,9 +423,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
                 id=str(mi.GetSerialNumber()),
-                formalCharge=None
-                if atom.GetFormalCharge() == 0
-                else atom.GetFormalCharge(),
+                formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
             )
 
             atom_lookup[atom.GetIdx()] = a
@@ -442,9 +431,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for bond in self._rdkit.GetBonds():
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
-            top.addBond(
-                a1, a2, order=_BONDORDERS_RDKIT_TO_OPENMM.get(bond.GetBondType(), None)
-            )
+            top.addBond(a1, a2, order=_BONDORDERS_RDKIT_TO_OPENMM.get(bond.GetBondType(), None))
 
         return top
 
@@ -466,9 +453,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(
-        self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
-    ) -> str:
+    def to_pdb_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
         """
         serialize protein to pdb file.
 
@@ -510,9 +495,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbx_file(
-        self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]
-    ) -> str:
+    def to_pdbx_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
         """
         serialize protein to pdbx file.
 
@@ -590,8 +573,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ]
 
         conformers = [
-            serialize_numpy(conf.GetPositions())
-            for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
+            serialize_numpy(conf.GetPositions()) for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
         ]
 
         # Result
