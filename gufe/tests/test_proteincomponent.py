@@ -63,19 +63,18 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
         in_line = in_lines[i]
         out_line = out_lines[i]
 
-        # Only process ATOM/HETATM lines that are long enough
         if (
             in_line.startswith(("ATOM", "HETATM"))
             and out_line.startswith(("ATOM", "HETATM"))
             and len(in_line) >= 80
             and len(out_line) >= 80
+            and in_line[:78] == out_line[:78]
+            and in_line[78:80].strip() != out_line[78:80].strip()
+            and not in_line[78:80].strip()
         ):
-            # Check if lines differ only in the charge columns (79-80)
-            if in_line[:78] == out_line[:78] and in_line[78:80].strip() != out_line[78:80].strip():
-                # If input has no charge but output has charge, make them match
-                # This allows the connectivity-based charges to be added
-                if not in_line[78:80].strip():
-                    in_lines[i] = in_line[:78] + out_line[78:]
+            # If input has no charge but output has charge, make them match
+            # This allows the connectivity-based charges to be added
+            in_lines[i] = in_line[:78] + out_line[78:]
 
     # Now compare the modified lines
     assert in_lines == out_lines
