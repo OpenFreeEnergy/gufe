@@ -8,7 +8,7 @@ import openff
 import pytest
 from numpy import testing as npt
 
-from gufe.custom_msgpack import packb, unpackb
+from gufe.serialization.msgpack import packb, unpackb
 from gufe.settings import models
 
 

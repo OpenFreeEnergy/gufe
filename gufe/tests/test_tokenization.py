@@ -8,7 +8,7 @@ from unittest import mock
 
 import pytest
 
-from gufe.custom_msgpack import packb, unpackb
+from gufe.serialization.msgpack import packb, unpackb
 from gufe.tokenization import (
     JSON_HANDLER,
     TOKENIZABLE_CLASS_REGISTRY,

@@ -32,7 +32,7 @@ from gufe.custom_codecs import (
     UUID_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer
-from gufe.custom_msgpack import packb, unpackb
+from gufe.serialization.msgpack import packb, unpackb
 
 _default_json_codecs = [
     PATH_CODEC,
