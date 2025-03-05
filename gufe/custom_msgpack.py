@@ -10,7 +10,6 @@ from openff.units import DEFAULT_UNIT_REGISTRY
 
 import gufe
 from gufe.settings import SettingsBaseModel
-from gufe.tokenization import GufeTokenizable
 
 
 class MPEXT(IntEnum):
@@ -19,10 +18,9 @@ class MPEXT(IntEnum):
     UNIT = 2
     NDARRAY = 3
     NPGENERIC = 4
-    GUFETOKENIZABLE = 5
-    SETTINGS = 6
-    UUID = 7
-    DATETIME = 8
+    SETTINGS = 5
+    UUID = 6
+    DATETIME = 7
 
 
 def pack_largeint(large_int: int) -> bytes:
@@ -33,9 +31,6 @@ def pack_default(obj) -> msgpack.ExtType:
     """For non-standard datatypes, create an ExtType containing packed
     data."""
     match obj:
-        case GufeTokenizable():
-            gt_payload: bytes = msgpack.packb(obj.to_keyed_chain(), default=pack_default)
-            return msgpack.ExtType(MPEXT.GUFETOKENIZABLE, gt_payload)
         case datetime():
             dt_payload: bytes = msgpack.packb(obj.isoformat())
             return msgpack.ExtType(MPEXT.DATETIME, dt_payload)
@@ -79,10 +74,6 @@ def unpack_default(code: int, data: bytes):
         raise ValueError(f"Found an unknown extension code: {code}")
 
     match extension_type:
-        case MPEXT.GUFETOKENIZABLE:
-            return gufe.tokenization.KeyedChain(
-                msgpack.unpackb(data, ext_hook=unpack_default, strict_map_key=False)
-            ).to_gufe()
         case MPEXT.SETTINGS:
             settings_data = msgpack.unpackb(data, ext_hook=unpack_default)
             module = settings_data.pop("__module__")

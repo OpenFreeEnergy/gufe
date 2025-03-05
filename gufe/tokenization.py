@@ -32,6 +32,7 @@ from gufe.custom_codecs import (
     UUID_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer
+from gufe.custom_msgpack import packb, unpackb
 
 _default_json_codecs = [
     PATH_CODEC,
@@ -745,8 +746,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         --------
         from_msgpack
         """
-        # need to import here to avoid circular imports
-        from gufe.custom_msgpack import packb
 
         if file is not None:
             from gufe.utils import ensure_filelike
@@ -773,8 +772,6 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         --------
         to_msgpack
         """
-        # need to import here to avoid circular import
-        from gufe.custom_msgpack import unpackb
 
         if content is not None and file is not None:
             raise ValueError("Cannot specify both `content` and `file`; only one input allowed")

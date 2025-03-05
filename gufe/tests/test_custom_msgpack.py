@@ -117,19 +117,6 @@ class TestSettingsCoding(CustomMessagePackCodingTest):
         ]
 
 
-class TestGufeTokenizableCoding(CustomMessagePackCodingTest):
-
-    def setup_method(self, network):
-        # due to restrictions from pytest, just skip the setup_method
-        pass
-
-    def test_round_trip(self, benzene_variants_star_map):
-        msgpack_bytes = packb(benzene_variants_star_map)
-        reconstructed = unpackb(msgpack_bytes)
-
-        self._equality_check(benzene_variants_star_map, reconstructed)
-
-
 class TestTimeStampCoding(CustomMessagePackCodingTest):
 
     def setup_method(self):
