@@ -12,6 +12,9 @@ import gufe
 from gufe.settings import SettingsBaseModel
 
 
+# The integer values below represent the leading bytes of the extension format.
+# When adding a new type, manually assign the next available number (do not use auto()).
+# If you need to remove a type, avoid reusing its value in the future (preferably comment out the line).
 class MPEXT(IntEnum):
     LARGEINT = 0
     PATH = 1
