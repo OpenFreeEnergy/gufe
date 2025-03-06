@@ -270,6 +270,15 @@ class Protocol(GufeTokenizable):
             extends_key=extends.key if extends is not None else None,
         )
 
+    @abc.abstractmethod
+    def _validate(self):
+        # TODO docstring
+        ...
+
+    def validate(self):
+        # TODO docstring
+        raise NotImplementedError
+
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
