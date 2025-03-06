@@ -1,9 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-"""Classes in this module must be subclassed by protocol authors.
-
-"""
+"""Classes in this module must be subclassed by protocol authors."""
 
 import abc
 import warnings
@@ -279,13 +277,12 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
     ):
-        """Method to override in custom :class:`Protocol` subclasses.
+        """Method to override in custom `Protocol` subclasses.
 
         This method should take two `ChemicalSystem`s, and optionally
-        one or more ``ComponentMapping`` objects and
-        `ProtocolDAGResult` objects used for extensions, and validate
-        them, raising a ``ValueError`` where validation is not
-        successful.
+        one or more `ComponentMapping` objects and `ProtocolDAGResult`
+        objects used for extensions, and validate them, raising a
+        `ValueError` where validation is not successful.
 
         See also
         --------
@@ -303,7 +300,7 @@ class Protocol(GufeTokenizable):
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
         extends: Optional[ProtocolDAGResult] = None,
     ):
-        r"""Validate the inputs to be used in creating a `ProtocolDAG`.
+        r"""Validate the inputs to be used in creating a :class:`ProtocolDAG`.
 
         This method allows for the validation of inputs that will be
         used to create a :class:`.ProtocolDAG`.
@@ -311,27 +308,25 @@ class Protocol(GufeTokenizable):
         Parameters
         ----------
         stateA : ChemicalSystem
-            The starting `ChemicalSystem` for the transformation.
+            The starting :class:`.ChemicalSystem` for the transformation.
         stateB : ChemicalSystem
-            The ending `ChemicalSystem` for the transformation.
+            The ending :class:`.ChemicalSystem` for the transformation.
         mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
             Mappings of e.g. atoms between a labelled component in the
-            stateA and stateB `ChemicalSystem` .
+            stateA and stateB :class:`.ChemicalSystem`.
         extends : Optional[ProtocolDAGResult]
-            If provided, then the `ProtocolDAG` produced will start from the
-            end state of the given `ProtocolDAGResult`. This allows for
-            extension from a previously-run `ProtocolDAG`.
+            If provided, then the :class:`.ProtocolDAG` produced will start from the
+            end state of the given :class:`.ProtocolDAGResult`. This allows for
+            extension from a previously-run :class:`.ProtocolDAG`.
 
         Raises
         ------
         ValueError
             When a provided set of inputs does not pass validation.
 
-        Returns
-        -------
-        ProtocolDAG
-            A directed, acyclic graph that can be executed by a `Scheduler`.
-
+        See also
+        --------
+        :meth:`Protocol.create`
         """
 
         if isinstance(mapping, dict):
