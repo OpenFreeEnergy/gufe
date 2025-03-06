@@ -8,5 +8,6 @@ dependencies:
 - python=3.10
 - sphinx
 - openmm
+- msgpack-python
 - pip:
   - git+https://github.com/OpenFreeEnergy/ofe-sphinx-theme@a45f3edd5bc3e973c1a01b577c71efa1b62a65d6
