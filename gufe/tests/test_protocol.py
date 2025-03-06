@@ -147,6 +147,10 @@ class DummyProtocol(Protocol):
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
 
+    def _validate(self):
+        # TODO implement
+        raise NotImplementedError
+
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
 
         outputs = defaultdict(list)
@@ -255,6 +259,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
             )
 
         return protocol, dag, dagfailure
+
+    def test_validation(self, instance):
+        # 1. Test for good inputs
+        # 2. Test for bad inputs
+        raise NotImplementedError
 
     def test_dag_execute(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
@@ -562,6 +571,9 @@ class NoDepsProtocol(Protocol):
     ) -> list[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings, val=i) for i in range(3)]
 
+    def _validate(self):
+        raise NotImplementedError
+
     def _gather(self, dag_results):
         return {
             "vals": list(
@@ -837,6 +849,10 @@ class TestEnforcedProtocolSettings:
 
         # we don't need _gather in these tests
         def _gather(self):
+            raise NotImplementedError
+
+        # we don't need _validate in these tests
+        def _validate(self):
             raise NotImplementedError
 
     def test_protocol_no_settings_class(self):
