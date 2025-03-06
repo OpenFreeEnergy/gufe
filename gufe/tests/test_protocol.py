@@ -290,19 +290,19 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         # Test bad state input
         with pytest.raises(ValueError, match="stateA and stateB must be instances of a ChemicalSystem"):
-            instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)
+            instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)  # type: ignore
 
         # Test bad mappings
         expected_msg = "A non-ComponentMapping object provided as a mapping."
         with pytest.raises(ValueError, match=expected_msg):
-            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")  # type: ignore
 
         with pytest.raises(ValueError, match=expected_msg):
-            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))  # type: ignore
 
         # Test bad extends
         with pytest.raises(ValueError, match="A non-ProtocolDAGResult object provided as extends."):
-            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
 
     def test_validation_deprecation_warning(self, instance, vacuum_ligand, solvated_ligand):
         ligand = solvated_ligand.components["ligand"]
