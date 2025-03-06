@@ -271,13 +271,77 @@ class Protocol(GufeTokenizable):
         )
 
     @abc.abstractmethod
-    def _validate(self):
-        # TODO docstring
+    def _validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
+        extends: Optional[ProtocolDAGResult] = None,
+    ):
+        """Method to override in custom :class:`Protocol` subclasses.
+
+        This method should take two `ChemicalSystem`s, and optionally
+        one or more ``ComponentMapping`` objects and
+        `ProtocolDAGResult` objects used for extensions, and validate
+        them, raising a ``ValueError`` where validation is not
+        successful.
+
+        See also
+        --------
+        :meth:`Protocol.create`
+        :meth:`Protocol.validate`
+
+        """
         ...
 
-    def validate(self):
-        # TODO docstring
-        raise NotImplementedError
+    def validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
+        extends: Optional[ProtocolDAGResult] = None,
+    ):
+        r"""Validate the inputs to be used in creating a `ProtocolDAG`.
+
+        This method allows for the validation of inputs that will be
+        used to create a :class:`.ProtocolDAG`.
+
+        Parameters
+        ----------
+        stateA : ChemicalSystem
+            The starting `ChemicalSystem` for the transformation.
+        stateB : ChemicalSystem
+            The ending `ChemicalSystem` for the transformation.
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
+            Mappings of e.g. atoms between a labelled component in the
+            stateA and stateB `ChemicalSystem` .
+        extends : Optional[ProtocolDAGResult]
+            If provided, then the `ProtocolDAG` produced will start from the
+            end state of the given `ProtocolDAGResult`. This allows for
+            extension from a previously-run `ProtocolDAG`.
+
+        Raises
+        ------
+        ValueError
+            When a provided set of inputs does not pass validation.
+
+        Returns
+        -------
+        ProtocolDAG
+            A directed, acyclic graph that can be executed by a `Scheduler`.
+
+        """
+
+        if isinstance(mapping, dict):
+            warnings.warn(
+                "mapping input as a dict is deprecated, instead use either a single Mapping or list",
+                DeprecationWarning,
+            )
+            mapping = list(mapping.values())
+
+        self._validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.

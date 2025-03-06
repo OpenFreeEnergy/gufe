@@ -147,9 +147,30 @@ class DummyProtocol(Protocol):
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
 
-    def _validate(self):
-        # TODO implement
-        raise NotImplementedError
+    def _validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        extends: Optional[ProtocolDAGResult] = None,
+    ):
+
+        for cs in [stateA, stateB]:
+            if not isinstance(cs, ChemicalSystem):
+                raise ValueError("stateA and stateB must be instances of a ChemicalSystem.")
+
+        if mapping:
+            if not isinstance(mapping, list):
+                mapping = [mapping]
+
+            for element in mapping:
+                if not isinstance(element, ComponentMapping):
+                    raise ValueError("A non-ComponentMapping object provided as a mapping.")
+
+        if extends:
+            if not isinstance(extends, ProtocolDAGResult):
+                raise ValueError("A non-ProtocolDAGResult object provided as extends.")
 
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
 
@@ -260,10 +281,39 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         return protocol, dag, dagfailure
 
-    def test_validation(self, instance):
-        # 1. Test for good inputs
-        # 2. Test for bad inputs
-        raise NotImplementedError
+    def test_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
+        ligand = solvated_ligand.components["ligand"]
+        mapping = gufe.LigandAtomMapping(ligand, ligand, componentA_to_componentB={})
+
+        # Test good inputs
+        instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping)
+
+        # Test bad state input
+        with pytest.raises(ValueError, match="stateA and stateB must be instances of a ChemicalSystem"):
+            instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)
+
+        # Test bad mappings
+        expected_msg = "A non-ComponentMapping object provided as a mapping."
+        with pytest.raises(ValueError, match=expected_msg):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")
+
+        with pytest.raises(ValueError, match=expected_msg):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))
+
+        # Test bad extends
+        with pytest.raises(ValueError, match="A non-ProtocolDAGResult object provided as extends."):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")
+
+    def test_validation_deprecation_warning(self, instance, vacuum_ligand, solvated_ligand):
+        ligand = solvated_ligand.components["ligand"]
+        mapping = gufe.LigandAtomMapping(ligand, ligand, componentA_to_componentB={})
+
+        with pytest.warns(DeprecationWarning, match="mapping input as a dict is deprecated"):
+            instance.validate(
+                stateA=solvated_ligand,
+                stateB=vacuum_ligand,
+                mapping={"ligand": mapping},
+            )
 
     def test_dag_execute(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
