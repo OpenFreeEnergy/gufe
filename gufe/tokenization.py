@@ -15,7 +15,7 @@ import weakref
 from collections.abc import Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, Dict, List, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
 
 import networkx as nx
 from typing_extensions import Self
@@ -726,7 +726,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
 
-    def to_msgpack(self, file: Optional[PathLike | TextIO] = None) -> None | bytes:
+    def to_msgpack(self, file: Optional[PathLike | BinaryIO] = None) -> None | bytes:
         """
         Generate a MessagePack keyed chain representation.
 
@@ -756,14 +756,14 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return packb(self.to_keyed_chain())
 
     @classmethod
-    def from_msgpack(cls, file: Optional[PathLike | TextIO] = None, content: Optional[bytes] = None):
+    def from_msgpack(cls, file: Optional[PathLike | BinaryIO] = None, content: Optional[bytes] = None):
         """Generate an instance from a MessagePack keyed chain representation.
 
         Can provide either a filepath/filelike as `file`, or msgpack content via `content`.
 
         Parameters
         ----------
-        file : TextIO | PathLike | None
+        file : BinaryIO | PathLike | None
             A filepath or filelike object to read msgpack data from.
         content : bytes
             Bytes to read msgpack data from.
