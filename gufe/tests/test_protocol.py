@@ -27,6 +27,7 @@ from gufe.protocols import (
     ProtocolUnitFailureError,
     ProtocolUnitResult,
 )
+from gufe.protocols.errors import ProtocolValidationError
 from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -158,7 +159,7 @@ class DummyProtocol(Protocol):
 
         for cs in [stateA, stateB]:
             if not isinstance(cs, ChemicalSystem):
-                raise ValueError("stateA and stateB must be instances of a ChemicalSystem.")
+                raise ProtocolValidationError("stateA and stateB must be instances of a ChemicalSystem.")
 
         if mapping:
             if not isinstance(mapping, list):
@@ -166,11 +167,11 @@ class DummyProtocol(Protocol):
 
             for element in mapping:
                 if not isinstance(element, ComponentMapping):
-                    raise ValueError("A non-ComponentMapping object provided as a mapping.")
+                    raise ProtocolValidationError("A non-ComponentMapping object provided as a mapping.")
 
         if extends:
             if not isinstance(extends, ProtocolDAGResult):
-                raise ValueError("A non-ProtocolDAGResult object provided as extends.")
+                raise ProtocolValidationError("A non-ProtocolDAGResult object provided as extends.")
 
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
 
@@ -289,19 +290,19 @@ class TestProtocol(GufeTokenizableTestsMixin):
         instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping)
 
         # Test bad state input
-        with pytest.raises(ValueError, match="stateA and stateB must be instances of a ChemicalSystem"):
+        with pytest.raises(ProtocolValidationError, match="stateA and stateB must be instances of a ChemicalSystem"):
             instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)  # type: ignore
 
         # Test bad mappings
         expected_msg = "A non-ComponentMapping object provided as a mapping."
-        with pytest.raises(ValueError, match=expected_msg):
+        with pytest.raises(ProtocolValidationError, match=expected_msg):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")  # type: ignore
 
-        with pytest.raises(ValueError, match=expected_msg):
+        with pytest.raises(ProtocolValidationError, match=expected_msg):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))  # type: ignore
 
         # Test bad extends
-        with pytest.raises(ValueError, match="A non-ProtocolDAGResult object provided as extends."):
+        with pytest.raises(ProtocolValidationError, match="A non-ProtocolDAGResult object provided as extends."):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
 
     def test_validation_deprecation_warning(self, instance, vacuum_ligand, solvated_ligand):

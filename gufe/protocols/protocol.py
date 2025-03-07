@@ -282,7 +282,7 @@ class Protocol(GufeTokenizable):
         This method should take two `ChemicalSystem`s, and optionally
         one or more `ComponentMapping` objects and `ProtocolDAGResult`
         objects used for extensions, and validate them, raising a
-        `ValueError` where validation is not successful.
+        `ProtocolValidationError` where validation is not successful.
 
         See also
         --------
@@ -322,7 +322,7 @@ class Protocol(GufeTokenizable):
 
         Raises
         ------
-        ValueError
+        ProtocolValidationError
             When a provided set of inputs does not pass validation.
 
         See also
