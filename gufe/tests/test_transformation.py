@@ -70,6 +70,33 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert "logs" in protocolresult.data
         assert "key_results" in protocolresult.data
 
+    def test_validation_good_inputs(self, solvated_ligand, solvated_complex):
+        Transformation(
+            solvated_ligand,
+            solvated_complex,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+            mapping=None,
+            validate=True,
+        )
+
+    def test_validation_bad_state(self, solvated_ligand, solvated_complex, tmpdir):
+        # show that instantiation without validation is possible (even though it's wrong)
+        Transformation(
+            solvated_ligand,
+            None,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+            mapping=None,
+        )
+
+        with pytest.raises(ValueError, match="stateA and stateB must be instances of a ChemicalSystem"):
+            tf = Transformation(
+                solvated_ligand,
+                None,
+                protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+                mapping=None,
+                validate=True,
+            )
+
     def test_protocol_extend(self, absolute_transformation, tmpdir):
         tnf = absolute_transformation
 
@@ -181,6 +208,26 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         assert len(protocolresult.data) == 2
         assert "logs" in protocolresult.data
         assert "key_results" in protocolresult.data
+
+    def test_validation_good_inputs(self, solvated_complex):
+        NonTransformation(
+            solvated_complex,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+        )
+
+    def test_validation_bad_state(self, solvated_ligand, solvated_complex, tmpdir):
+        # show that instantiation without validation is possible (even though it's wrong)
+        NonTransformation(
+            None,
+            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+        )
+
+        with pytest.raises(ValueError, match="stateA and stateB must be instances of a ChemicalSystem"):
+            ntf = NonTransformation(
+                None,
+                protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+                validate=True,
+            )
 
     def test_protocol_extend(self, complex_equilibrium, tmpdir):
         ntnf = complex_equilibrium
