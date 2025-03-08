@@ -6,7 +6,8 @@
 import functools
 import json
 from collections.abc import Iterable
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from collections.abc import Callable
 
 
 class JSONCodec:
@@ -36,10 +37,10 @@ class JSONCodec:
 
     def __init__(
         self,
-        cls: Union[type, None],
+        cls: type | None,
         to_dict: Callable[[Any], dict],
         from_dict: Callable[[dict], Any],
-        is_my_obj: Optional[Callable[[Any], bool]] = None,
+        is_my_obj: Callable[[Any], bool] | None = None,
         is_my_dict=None,
     ):
         if is_my_obj is None:

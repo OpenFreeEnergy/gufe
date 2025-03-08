@@ -8,6 +8,6 @@ from rdkit import Chem
 try:
     from typing import TypeAlias  # type: ignore
 except ImportError:
-    from typing_extensions import TypeAlias
+    from typing import TypeAlias
 
 RDKitMol: TypeAlias = Chem.rdchem.Mol
