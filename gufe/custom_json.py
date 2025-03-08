@@ -5,9 +5,8 @@
 
 import functools
 import json
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
-from collections.abc import Callable
 
 
 class JSONCodec:
