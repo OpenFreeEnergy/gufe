@@ -161,6 +161,7 @@ class Transformation(TransformationBase):
         protocol: Protocol,
         mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
         name: Optional[str] = None,
+        validate: bool = False,
     ):
         """Two chemical states with a method for estimating the free energy
         difference between them.
@@ -182,6 +183,13 @@ class Transformation(TransformationBase):
             of the two states.
         name : str, optional
             A human-readable name for this transformation.
+        validate: bool, optional
+            Whether or not to validate the inputs to be provided to
+            the :class:`.Protocol`.
+
+        See also
+        --------
+        :meth:`.Protocol.validate`
 
         """
         if isinstance(mapping, dict):
@@ -196,6 +204,13 @@ class Transformation(TransformationBase):
         self._protocol = protocol
         self._mapping = mapping
         self._name = name
+
+        if validate:
+            self.protocol.validate(
+                stateA=self.stateA,
+                stateB=self.stateB,
+                mapping=self.mapping,
+            )
 
     def __repr__(self):
         return f"{self.__class__.__name__}(stateA={self.stateA}, stateB={self.stateB}, protocol={self.protocol}, name={self.name})"
@@ -253,6 +268,7 @@ class NonTransformation(TransformationBase):
         system: ChemicalSystem,
         protocol: Protocol,
         name: Optional[str] = None,
+        validate: bool = False,
     ):
         """A non-alchemical edge of an alchemical network.
 
@@ -273,12 +289,21 @@ class NonTransformation(TransformationBase):
             The sampling method to use on the ``system``
         name : str, optional
             A human-readable name for this transformation.
-
+        validate: bool, optional
+            Whether or not to validate the inputs to be provided to
+            the :class:`.Protocol`.
         """
 
         self._system = system
         self._protocol = protocol
         self._name = name
+
+        if validate:
+            self.protocol.validate(
+                stateA=self.system,
+                stateB=self.system,
+                mapping=None,
+            )
 
     def __repr__(self):
         return f"{self.__class__.__name__}(system={self.system}, protocol={self.protocol}, name={self.name})"

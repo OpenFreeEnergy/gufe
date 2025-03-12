@@ -27,6 +27,7 @@ from gufe.protocols import (
     ProtocolUnitFailureError,
     ProtocolUnitResult,
 )
+from gufe.protocols.errors import ProtocolValidationError
 from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -147,6 +148,31 @@ class DummyProtocol(Protocol):
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
 
+    def _validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
+        extends: Optional[ProtocolDAGResult] = None,
+    ):
+
+        for cs in [stateA, stateB]:
+            if not isinstance(cs, ChemicalSystem):
+                raise ProtocolValidationError("stateA and stateB must be instances of a ChemicalSystem.")
+
+        if mapping:
+            if not isinstance(mapping, list):
+                mapping = [mapping]
+
+            for element in mapping:
+                if not isinstance(element, ComponentMapping):
+                    raise ProtocolValidationError("A non-ComponentMapping object provided as a mapping.")
+
+        if extends:
+            if not isinstance(extends, ProtocolDAGResult):
+                raise ProtocolValidationError("A non-ProtocolDAGResult object provided as extends.")
+
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
 
         outputs = defaultdict(list)
@@ -255,6 +281,40 @@ class TestProtocol(GufeTokenizableTestsMixin):
             )
 
         return protocol, dag, dagfailure
+
+    def test_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
+        ligand = solvated_ligand.components["ligand"]
+        mapping = gufe.LigandAtomMapping(ligand, ligand, componentA_to_componentB={})
+
+        # Test good inputs
+        instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping)
+
+        # Test bad state input
+        with pytest.raises(ProtocolValidationError, match="stateA and stateB must be instances of a ChemicalSystem"):
+            instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)  # type: ignore
+
+        # Test bad mappings
+        expected_msg = "A non-ComponentMapping object provided as a mapping."
+        with pytest.raises(ProtocolValidationError, match=expected_msg):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")  # type: ignore
+
+        with pytest.raises(ProtocolValidationError, match=expected_msg):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))  # type: ignore
+
+        # Test bad extends
+        with pytest.raises(ProtocolValidationError, match="A non-ProtocolDAGResult object provided as extends."):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
+
+    def test_validation_deprecation_warning(self, instance, vacuum_ligand, solvated_ligand):
+        ligand = solvated_ligand.components["ligand"]
+        mapping = gufe.LigandAtomMapping(ligand, ligand, componentA_to_componentB={})
+
+        with pytest.warns(DeprecationWarning, match="mapping input as a dict is deprecated"):
+            instance.validate(
+                stateA=solvated_ligand,
+                stateB=vacuum_ligand,
+                mapping={"ligand": mapping},
+            )
 
     def test_dag_execute(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
@@ -562,6 +622,9 @@ class NoDepsProtocol(Protocol):
     ) -> list[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings, val=i) for i in range(3)]
 
+    def _validate(self):
+        raise NotImplementedError
+
     def _gather(self, dag_results):
         return {
             "vals": list(
@@ -837,6 +900,10 @@ class TestEnforcedProtocolSettings:
 
         # we don't need _gather in these tests
         def _gather(self):
+            raise NotImplementedError
+
+        # we don't need _validate in these tests
+        def _validate(self):
             raise NotImplementedError
 
     def test_protocol_no_settings_class(self):

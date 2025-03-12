@@ -1,9 +1,7 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-"""Classes in this module must be subclassed by protocol authors.
-
-"""
+"""Classes in this module must be subclassed by protocol authors."""
 
 import abc
 import warnings
@@ -269,6 +267,78 @@ class Protocol(GufeTokenizable):
             transformation_key=transformation_key,
             extends_key=extends.key if extends is not None else None,
         )
+
+    @abc.abstractmethod
+    def _validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
+        extends: Optional[ProtocolDAGResult] = None,
+    ):
+        """Method to override in custom `Protocol` subclasses.
+
+        This method should take two `ChemicalSystem`s, and optionally
+        one or more `ComponentMapping` objects and `ProtocolDAGResult`
+        objects used for extensions, and validate them, raising a
+        `ProtocolValidationError` where validation is not successful.
+
+        See also
+        --------
+        :meth:`Protocol.create`
+        :meth:`Protocol.validate`
+
+        """
+        ...
+
+    def validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
+        extends: Optional[ProtocolDAGResult] = None,
+    ):
+        r"""Validate the inputs to be used in creating a :class:`ProtocolDAG`.
+
+        This method allows for the validation of inputs that will be
+        used to create a :class:`.ProtocolDAG`.
+
+        Parameters
+        ----------
+        stateA : ChemicalSystem
+            The starting :class:`.ChemicalSystem` for the transformation.
+        stateB : ChemicalSystem
+            The ending :class:`.ChemicalSystem` for the transformation.
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
+            Mappings of e.g. atoms between a labelled component in the
+            stateA and stateB :class:`.ChemicalSystem`.
+        extends : Optional[ProtocolDAGResult]
+            If provided, the :class:`.ProtocolDAGResult` from a
+            previous execution may be validated against the current
+            :class:`.Protocol` object's ``Settings``, depending on the
+            ``Protocol`` implementation.
+
+        Raises
+        ------
+        ProtocolValidationError
+            When a provided set of inputs does not pass validation.
+
+        See also
+        --------
+        :meth:`Protocol.create`
+
+        """
+
+        if isinstance(mapping, dict):
+            warnings.warn(
+                "mapping input as a dict is deprecated, instead use either a single Mapping or list",
+                DeprecationWarning,
+            )
+            mapping = list(mapping.values())
+
+        self._validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
