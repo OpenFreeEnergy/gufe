@@ -53,7 +53,7 @@ v1.1.0
 
 * Use rever to manage changelog
 * KeyedChain GufeTokenizable representation was added, allowing
-  GUFE objects to be deduplicated when serializing GufeTokenizables
+  gufe objects to be deduplicated when serializing GufeTokenizables
   (PR #286).
 * Added `to_json` and `from_json` convenience methods to GufeTokenizables
   to more easily convert to a JSON keyed chain representation (PR #368).
