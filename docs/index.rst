@@ -32,10 +32,19 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   guide
+   installation
+   concepts/index
+   how-tos/index
+   guides/index
+
+Reference
+---------
+.. toctree::
+   :maxdepth: 1
+
    api
    CHANGELOG
 
-* :ref:`genindex`
+:ref:`genindex`
