@@ -1,7 +1,4 @@
 
-.. TODO: add a section here about the various to_*_dict from_*_dict forms:
-   shallow_dict; (deep) dict; keyed_dict
-
 GufeTokenizables must be functionally immutable
 -----------------------------------------------
 
@@ -30,7 +27,7 @@ On the other hand, a flag that changes code path in a way that might
 change the results of any operation would mean that the object cannot be a
 :class:`.GufeTokenizable`.
 
-.. _customjson:
+
 
 
 .. Using JSON codecs outside of JSON

@@ -83,6 +83,8 @@ recording ``str(obj.key)``-- since the key is stable, it shouldn't change
 (and, in fact, that is tested). This will add several tests to your test
 suite to ensure that you can save and reload your :class:`.GufeTokenizable`.
 
+.. _customjson:
+
 Supporting custom types in serialization
 ----------------------------------------
 
