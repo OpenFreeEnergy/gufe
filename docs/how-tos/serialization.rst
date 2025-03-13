@@ -234,3 +234,13 @@ in a more complicated ``parent._to_dict`` method, with similarly more
 complicated ``parent._from_dict``. This approach is particularly useful if
 the ``child`` object isn't too complicated, and if the ``child`` is unlikely
 to be reused outside the context of the ``parent``.
+
+.. Using JSON codecs outside of JSON
+.. ---------------------------------
+
+.. In a custom recursive storage scheme,
+
+.. TODO: DWHS wants to write something here that describes how to use the
+   codecs in your own non-JSON storage scheme. But this is complicated
+   enough that it will take significant time
+
