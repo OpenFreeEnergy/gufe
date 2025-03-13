@@ -1,18 +1,6 @@
-Overview
-========
-
-Gufe exists to define interoperable APIs for free energy calculations, which
-can be used by an ecosystem of Python packages to develop tools that focus
-on performing specific aspects of the free energy pipeline, while
-benefitting from other tools for other aspects.
-
-In order to do this, gufe distinguishes several aspects of the process of
-calculating free energies, and define APIs for each of them. Gufe provides
-the underlying infrastructure; the real science is done in packages that
-implement parts of the gufe APIs.
 
 Core data models
-----------------
+================
 
 In order to ensure interoperability, gufe defines objects that represent the
 core chemistry and alchemistry of a free energy pipeline, including
@@ -71,13 +59,3 @@ for an object that, at the scale of an alchemical network, can dynamically
 decide where to focus more simulation effort based on the results that have
 been received so far. This will be useful for adaptive approaches to
 sampling a network.
-
-Core gufe infrastructure
-------------------------
-
-Behind the scenes, gufe implements a number of details common to all of its
-objects. Nearly all objects in gufe are subclasses of
-:class:`.GufeTokenizable`, which sets a few requirements and behaviors on
-these objects, including that they are immutable, serializable, and
-hashable. These provide important guarantees to downstream packages that
-facilitate repeatability and reproducibility.
