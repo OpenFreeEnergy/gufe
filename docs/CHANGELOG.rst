@@ -1,5 +1,5 @@
 ===============
-gufe Change Log
+CHANGELOG
 ===============
 
 .. current developments
