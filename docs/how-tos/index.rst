@@ -2,5 +2,3 @@ How-To Guides
 =============
 
 .. toctree::
-
-
