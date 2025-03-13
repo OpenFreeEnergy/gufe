@@ -41,10 +41,10 @@ change the results of any operation would mean that the object cannot be a
 
 
 
-Understanding the theory: The GUFE key
+Understanding the theory: The gufe key
 --------------------------------------
 
-One of the important concepts is that every GUFE object has a unique
+One of the important concepts is that every gufe object has a unique
 identifier, which we call its ``key``. The ``key`` is a string, typically
 in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``, e.g.,
 ``ProteinComponent-7338abda590510f1dae764e068a65fdc``. For most objects, the
@@ -52,7 +52,7 @@ hexadecimal label is generated based on the contents of the class -- in
 particular, it is based on contents of the ``_to_dict`` dictionary, filtered
 to remove anything that matches the ``_defaults`` dictionary.
 
-This gives the GUFE key a number of important properties:
+This gives the gufe key a number of important properties:
 
 * Because the key is based on a cryptographic hash, it is extremely unlikely
   that two objects that are functionally different will have the same key.
@@ -65,7 +65,7 @@ This gives the GUFE key a number of important properties:
   used here.
 
 These properties, in particular the stability across Python sessions,  make
-the GUFE key a stable identifier for the object, which means that they can
+the gufe key a stable identifier for the object, which means that they can
 be used for store-by-reference.
 
 Deduplication of GufeTokenizables
@@ -81,7 +81,7 @@ registry of all instantiated GufeTokenizables.
 Deduplication in memory
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Memory deduplication means that only one object with a given GUFE ``key``
+Memory deduplication means that only one object with a given gufe ``key``
 will exist in any single Python session. We ensure this by maintaining a
 registry of all GufeTokenizables that gets updated any time a
 GufeTokenizable is created. (This is a mapping to weak references, which

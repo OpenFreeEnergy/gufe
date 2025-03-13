@@ -1,15 +1,15 @@
-Serializing GUFE objects
+Serializing gufe objects
 ========================
 
-When you create objects the follow the GUFE APIs, you will want them to be
+When you create objects the follow the gufe APIs, you will want them to be
 serializable; that is, you'll want to be able to store everything to disk.
-In this section, we'll discuss how GUFE handles serialization, and what a
+In this section, we'll discuss how gufe handles serialization, and what a
 developer needs to do to serialize an object.
 
 From a user perspective, this information is mainly relevant for
-understanding what you can expect from storage systems built for GUFE
+understanding what you can expect from storage systems built for gufe
 objects. From a developer perspective, this will tell you what you need to
-do to be compatible with (and get the most from) the GUFE serialization
+do to be compatible with (and get the most from) the gufe serialization
 mechanisms.
 
 In practice: What a developer needs to do
@@ -89,8 +89,8 @@ Supporting custom types in serialization
 ----------------------------------------
 
 Occasionally, you may need to add support for a custom type that is not
-already known by GUFE. For example, there may be objects that are included
-in your GUFE object that come from another library, and are not GUFE
+already known by gufe. For example, there may be objects that are included
+in your gufe object that come from another library, and are not gufe
 tokenizables.
 
 When this happens, you will need to create and register a custom JSON
