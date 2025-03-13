@@ -20,11 +20,11 @@ Related Projects
 
 Open Free Energy Ecosystem:
 
-* `openfe <https://docs.openfree.energy/>`_
-* `lomap <https://lomap.openfree.energy/>`_
-* `kartograf <https://kartograf.openfree.energy/>`_
-* `konnektor <https://konnektor.openfree.energy/>`_
-* `cinnabar <https://cinnabar.openfree.energy/>`_
+* `openfe <https://docs.openfree.energy/>`_: The OpenFE ecosystem's central toolkit for performing free energy calculations.
+* `lomap <https://lomap.openfree.energy/>`_: Atom mapping tools from the `Mobley Lab <https://mobleylab.org/>`_
+* `kartograf <https://kartograf.openfree.energy/>`_: Atom mapping tools focusing on 3D geometries.
+* `konnektor <https://konnektor.openfree.energy/>`_: Network generation tools designed with alchemical networks in mind.
+* `cinnabar <https://cinnabar.openfree.energy/>`_: Tools for the analysis of free energy network results.
 
 .. do we want to add packages we depend on, like openff-units, rdkit, openmm?
 
