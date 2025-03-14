@@ -92,7 +92,7 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
-    repr: Optional[str]
+    repr: str | None
 
     @pytest.fixture
     def instance(self):

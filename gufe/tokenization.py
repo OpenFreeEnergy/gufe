@@ -649,7 +649,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return KeyedChain(keyed_chain=keyed_chain).to_gufe()
 
-    def to_json(self, file: Optional[PathLike | TextIO] = None) -> None | str:
+    def to_json(self, file: PathLike | TextIO | None = None) -> None | str:
         """
         Generate a JSON keyed chain representation.
 
@@ -681,7 +681,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return None
 
     @classmethod
-    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
+    def from_json(cls, file: PathLike | TextIO | None = None, content: str | None = None):
         """
         Generate an instance from JSON keyed chain representation.
 
@@ -744,7 +744,7 @@ class GufeKey(str):
         return self.split("-")[1]
 
 
-def gufe_objects_from_shallow_dict(obj: Union[list, dict, GufeTokenizable]) -> list[GufeTokenizable]:
+def gufe_objects_from_shallow_dict(obj: list | dict | GufeTokenizable) -> list[GufeTokenizable]:
     """Find GufeTokenizables within a shallow dict.
 
     This function recursively looks through the list/dict structures encoding
@@ -984,7 +984,7 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=True):
+def modify_dependencies(obj: dict | list, modifier, is_mine, mode, top=True):
     """
     Parameters
     ----------

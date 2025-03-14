@@ -15,8 +15,8 @@ from .transformations import Transformation
 class AlchemicalNetwork(GufeTokenizable):
     _edges: frozenset[Transformation]
     _nodes: frozenset[ChemicalSystem]
-    _name: Optional[str]
-    _graph: Optional[nx.MultiDiGraph]  # lazily created and cached
+    _name: str | None
+    _graph: nx.MultiDiGraph | None  # lazily created and cached
 
     """A network with all the information needed for a simulation campaign.
 
@@ -34,9 +34,9 @@ class AlchemicalNetwork(GufeTokenizable):
 
     def __init__(
         self,
-        edges: Optional[Iterable[Transformation]] = None,
-        nodes: Optional[Iterable[ChemicalSystem]] = None,
-        name: Optional[str] = None,
+        edges: Iterable[Transformation] | None = None,
+        nodes: Iterable[ChemicalSystem] | None = None,
+        name: str | None = None,
     ):
         self._edges = frozenset(edges) if edges else frozenset()
         self._name = name
@@ -89,7 +89,7 @@ class AlchemicalNetwork(GufeTokenizable):
         return self._nodes
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """Optional identifier for the network."""
         return self._name
 

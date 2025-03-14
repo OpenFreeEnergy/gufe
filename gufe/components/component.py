@@ -26,6 +26,6 @@ class Component(GufeTokenizable):
 
     @property
     @abc.abstractmethod
-    def total_charge(self) -> Union[int, None]:
+    def total_charge(self) -> int | None:
         """Net formal charge for the ``Component``, if defined."""
         ...

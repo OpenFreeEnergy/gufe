@@ -63,7 +63,7 @@ class ExplicitMoleculeComponent(Component):
             )
 
         self._rdkit = rdkit
-        self._smiles: Optional[str] = None
+        self._smiles: str | None = None
         self._name = name
 
         self._check_partial_charges()

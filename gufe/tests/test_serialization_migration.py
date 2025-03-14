@@ -152,9 +152,9 @@ class KeyRenamed(_DefaultBase):
 
 
 class MigrationTester(GufeTokenizableTestsMixin):
-    input_dict: Optional[dict[str, Any]] = None
+    input_dict: dict[str, Any] | None = None
     """Initial input dict (except class name info)"""
-    kwargs: Optional[dict[str, Any]] = None
+    kwargs: dict[str, Any] | None = None
     """kwargs to create an equivalent object from scratch"""
 
     repr = None

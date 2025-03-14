@@ -112,8 +112,8 @@ class ThermoSettings(SettingsBaseModel):
     pressure: FloatQuantity["standard_atmosphere"] = Field(
         None, description="Simulation pressure, default units standard atmosphere (atm)"
     )
-    ph: Union[PositiveFloat, None] = Field(None, description="Simulation pH")
-    redox_potential: Optional[float] = Field(None, description="Simulation redox potential")
+    ph: PositiveFloat | None = Field(None, description="Simulation pH")
+    redox_potential: float | None = Field(None, description="Simulation redox potential")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
@@ -146,7 +146,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
 
         pass
 
-    constraints: Optional[str] = "hbonds"
+    constraints: str | None = "hbonds"
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True

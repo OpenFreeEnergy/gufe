@@ -21,16 +21,16 @@ from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUn
 class DAGMixin:
     _protocol_units: list[ProtocolUnit]
 
-    _name: Optional[str]
+    _name: str | None
     _graph: nx.DiGraph
 
     # labels for identifying source of this DAG
 
     ## key of the Transformation that this DAG corresponds to
-    _transformation_key: Union[GufeKey, None]
+    _transformation_key: GufeKey | None
 
     ## key of the ProtocolDAG this DAG extends
-    _extends_key: Optional[GufeKey]
+    _extends_key: GufeKey | None
 
     @staticmethod
     def _build_graph(nodes):
@@ -49,7 +49,7 @@ class DAGMixin:
         return reversed(list(nx.lexicographical_topological_sort(graph, key=lambda pu: pu.key)))
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """Optional identifier."""
         return self._name
 
@@ -69,7 +69,7 @@ class DAGMixin:
         return list(self._iterate_dag_order(self._graph))
 
     @property
-    def transformation_key(self) -> Union[GufeKey, None]:
+    def transformation_key(self) -> GufeKey | None:
         """
         The `GufeKey` of the `Transformation` this object performs.
 
@@ -82,7 +82,7 @@ class DAGMixin:
         return self._transformation_key
 
     @property
-    def extends_key(self) -> Union[GufeKey, None]:
+    def extends_key(self) -> GufeKey | None:
         """The `GufeKey` of the `ProtocolDAGResult` this object extends.
 
         If `None`, then this object does not extend from a result at all.
@@ -112,9 +112,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         *,
         protocol_units: list[ProtocolUnit],
         protocol_unit_results: list[ProtocolUnitResult],
-        transformation_key: Union[GufeKey, None],
-        extends_key: Optional[GufeKey] = None,
-        name: Optional[str] = None,
+        transformation_key: GufeKey | None,
+        extends_key: GufeKey | None = None,
+        name: str | None = None,
     ):
         self._name = name
         self._protocol_units = protocol_units
@@ -296,9 +296,9 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self,
         *,
         protocol_units: list[ProtocolUnit],
-        transformation_key: Union[GufeKey, None],
-        extends_key: Optional[GufeKey] = None,
-        name: Optional[str] = None,
+        transformation_key: GufeKey | None,
+        extends_key: GufeKey | None = None,
+        name: str | None = None,
     ):
         """Create a new `ProtocolDAG`
 
@@ -443,7 +443,7 @@ def execute_DAG(
 
 
 def _pu_to_pur(
-    inputs: Union[dict[str, Any], list[Any], ProtocolUnit],
+    inputs: dict[str, Any] | list[Any] | ProtocolUnit,
     mapping: dict[GufeKey, ProtocolUnitResult],
 ):
     """Convert each `ProtocolUnit` found within `inputs` to its corresponding
