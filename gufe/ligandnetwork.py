@@ -6,7 +6,7 @@ import hashlib
 import json
 from collections.abc import Iterable
 from itertools import chain
-from typing import FrozenSet, Iterable, Optional, Union
+from typing import FrozenSet, Optional, Union
 
 import networkx as nx
 
@@ -183,8 +183,8 @@ class LigandNetwork(GufeTokenizable):
     def enlarge_graph(
         self,
         *,
-        edges: Optional[Iterable[LigandAtomMapping]] = None,
-        nodes: Optional[Iterable[SmallMoleculeComponent]] = None,
+        edges: Iterable[LigandAtomMapping] | None = None,
+        nodes: Iterable[SmallMoleculeComponent] | None = None,
     ) -> LigandNetwork:
         """Create a new network with the given edges and nodes added.
 
@@ -211,8 +211,8 @@ class LigandNetwork(GufeTokenizable):
     def trim_graph(
         self,
         *,
-        edges: Optional[Iterable[LigandAtomMapping]] = None,
-        nodes: Optional[Iterable[SmallMoleculeComponent]] = None,
+        edges: Iterable[LigandAtomMapping] | None = None,
+        nodes: Iterable[SmallMoleculeComponent] | None = None,
     ) -> LigandNetwork:
         """Create a new network with the given edges and nodes removed.
 

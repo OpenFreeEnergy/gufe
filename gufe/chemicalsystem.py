@@ -12,7 +12,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     def __init__(
         self,
         components: dict[str, Component],
-        name: Optional[str] = "",
+        name: str | None = "",
     ):
         r"""A combination of Components that form a system
 
