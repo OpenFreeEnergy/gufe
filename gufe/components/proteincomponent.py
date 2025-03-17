@@ -9,6 +9,8 @@ from os import PathLike
 from typing import Optional, Union
 
 import numpy as np
+import openff.toolkit.topology
+import openmm.app
 from openmm import app
 from openmm import unit as omm_unit
 from rdkit import Chem
@@ -19,6 +21,8 @@ from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
+from openff.pablo import CCD_RESIDUE_DEFINITION_CACHE, topology_from_pdb
+from openff.units import unit
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
     1: BondType.SINGLE,
@@ -120,8 +124,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        openmm_PDBFile = PDBFile(pdb_file)
-        return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
+        # openmm_PDBFile = PDBFile(pdb_file)
+        openfe_topology = topology_from_pdb(file=pdb_file, residue_database=CCD_RESIDUE_DEFINITION_CACHE, verbose_errors=True)
+        return cls._from_openff_topology(openff_topology=openfe_topology, name=name)
 
     @classmethod
     def from_pdbx_file(cls, pdbx_file: str, name=""):
@@ -144,12 +149,12 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""):
+    def _from_openff_topology(cls, openff_topology: openff.toolkit.topology.Topology, name: str = ""):
         """Converts to our internal representation (rdkit Mol)
 
         Parameters
         ----------
-        openmm_PDBFile : PDBFile or PDBxFile
+        openff_topology : openff.toolkit.topology.Topology
             object of the protein
         name : str
             name of the protein
@@ -160,13 +165,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
             the deserialized molecule
         """
         periodicTable = Chem.GetPeriodicTable()
-        mol_topology = openmm_PDBFile.getTopology()
+        openmm_topology = openff_topology.to_openmm()
 
         rd_mol = Mol()
         editable_rdmol = EditableMol(rd_mol)
 
         # Add Atoms
-        for atom in mol_topology.atoms():
+        for atom in openmm_topology.atoms():
             a = Atom(atom.element.atomic_number)
 
             atom_monomerInfo = Chem.AtomPDBResidueInfo()
@@ -189,7 +194,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             editable_rdmol.AddAtom(a)
 
         # Add Bonds
-        for bond in mol_topology.bonds():
+        for bond in openmm_topology.bonds():
             bond_order = _BONDORDERS_OPENMM_TO_RDKIT[bond.order]
             editable_rdmol.AddBond(
                 beginAtomIdx=bond.atom1.index,
@@ -199,7 +204,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Set Positions
         rd_mol = editable_rdmol.GetMol()
-        positions = np.array(openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3)
+        positions = np.array(openff_topology.get_positions().to(unit.angstrom), ndmin=3)
 
         for frame_id, frame in enumerate(positions):
             conf = Conformer(frame_id)
