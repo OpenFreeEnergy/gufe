@@ -14,6 +14,7 @@ from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeKey, GufeTokenizable
+from .errors import ProtocolValidationError
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
 
@@ -268,14 +269,38 @@ class Protocol(GufeTokenizable):
             extends_key=extends.key if extends is not None else None,
         )
 
-    @abc.abstractmethod
+    def _default_validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: ComponentMapping | list[ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
+    ):
+        r"""The default validation run for all ``Protocol.validate`` calls."""
+        for cs in [stateA, stateB]:
+            if not isinstance(cs, ChemicalSystem):
+                raise ProtocolValidationError("stateA and stateB must be instances of a ChemicalSystem.")
+
+        if mapping:
+            if not isinstance(mapping, list):
+                mapping = [mapping]
+
+            for element in mapping:
+                if not isinstance(element, ComponentMapping):
+                    raise ProtocolValidationError("A non-ComponentMapping object provided as a mapping.")
+
+        if extends:
+            if not isinstance(extends, ProtocolDAGResult):
+                raise ProtocolValidationError("A non-ProtocolDAGResult object provided as extends.")
+
     def _validate(
         self,
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
-        extends: Optional[ProtocolDAGResult] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
     ):
         """Method to override in custom `Protocol` subclasses.
 
@@ -290,15 +315,15 @@ class Protocol(GufeTokenizable):
         :meth:`Protocol.validate`
 
         """
-        ...
+        raise NotImplementedError
 
     def validate(
         self,
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
-        extends: Optional[ProtocolDAGResult] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
     ):
         r"""Validate the inputs to be used in creating a :class:`ProtocolDAG`.
 
@@ -338,7 +363,14 @@ class Protocol(GufeTokenizable):
             )
             mapping = list(mapping.values())
 
-        self._validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+        # run default validation for inputs
+        self._default_validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+
+        # run protocol author defined validations if they exist
+        try:
+            self._validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+        except NotImplementedError:
+            pass
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.

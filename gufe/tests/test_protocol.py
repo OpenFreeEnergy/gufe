@@ -148,31 +148,6 @@ class DummyProtocol(Protocol):
         # return all `ProtocolUnit`s we created
         return [alpha, *simulations, omega]
 
-    def _validate(
-        self,
-        *,
-        stateA: ChemicalSystem,
-        stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
-        extends: Optional[ProtocolDAGResult] = None,
-    ):
-
-        for cs in [stateA, stateB]:
-            if not isinstance(cs, ChemicalSystem):
-                raise ProtocolValidationError("stateA and stateB must be instances of a ChemicalSystem.")
-
-        if mapping:
-            if not isinstance(mapping, list):
-                mapping = [mapping]
-
-            for element in mapping:
-                if not isinstance(element, ComponentMapping):
-                    raise ProtocolValidationError("A non-ComponentMapping object provided as a mapping.")
-
-        if extends:
-            if not isinstance(extends, ProtocolDAGResult):
-                raise ProtocolValidationError("A non-ProtocolDAGResult object provided as extends.")
-
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
 
         outputs = defaultdict(list)
@@ -304,6 +279,19 @@ class TestProtocol(GufeTokenizableTestsMixin):
         # Test bad extends
         with pytest.raises(ProtocolValidationError, match="A non-ProtocolDAGResult object provided as extends."):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
+
+    def test_author_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
+
+        error_msg = "An intentional exception from a very picky author"
+
+        # implement a _validate method that always errors
+        class NewProtocol(DummyProtocol):
+
+            def _validate(self, *, stateA, stateB, mapping, extends):
+                raise ProtocolValidationError(error_msg)
+
+        with pytest.raises(ProtocolValidationError, match=error_msg):
+            self.test_validation(NewProtocol(NewProtocol.default_settings()), solvated_ligand, vacuum_ligand)
 
     def test_validation_deprecation_warning(self, instance, vacuum_ligand, solvated_ligand):
         ligand = solvated_ligand.components["ligand"]
@@ -622,9 +610,6 @@ class NoDepsProtocol(Protocol):
     ) -> list[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings, val=i) for i in range(3)]
 
-    def _validate(self):
-        raise NotImplementedError
-
     def _gather(self, dag_results):
         return {
             "vals": list(
@@ -900,10 +885,6 @@ class TestEnforcedProtocolSettings:
 
         # we don't need _gather in these tests
         def _gather(self):
-            raise NotImplementedError
-
-        # we don't need _validate in these tests
-        def _validate(self):
             raise NotImplementedError
 
     def test_protocol_no_settings_class(self):
