@@ -89,7 +89,9 @@ class TestTransformation(GufeTokenizableTestsMixin):
             mapping=None,
         )
 
-        with pytest.raises(ProtocolValidationError, match="stateA and stateB must be instances of a ChemicalSystem"):
+        with pytest.raises(
+            ProtocolValidationError, match="`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+        ):
             tf = Transformation(
                 solvated_ligand,
                 None,
@@ -223,7 +225,9 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         )
 
-        with pytest.raises(ProtocolValidationError, match="stateA and stateB must be instances of a ChemicalSystem"):
+        with pytest.raises(
+            ProtocolValidationError, match="`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+        ):
             ntf = NonTransformation(
                 None,
                 protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
