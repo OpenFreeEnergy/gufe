@@ -21,6 +21,7 @@ Related Projects
 Open Free Energy Ecosystem:
 
 * `openfe <https://docs.openfree.energy/>`_: The OpenFE ecosystem's central toolkit for performing free energy calculations.
+* `alchemiscale <https://alchemiscale.org/>`_: A distributed execution system for alchemical` networks.
 * `lomap <https://lomap.openfree.energy/>`_: Atom mapping tools from the `Mobley Lab <https://mobleylab.org/>`_.
 * `kartograf <https://kartograf.openfree.energy/>`_: Atom mapping tools focusing on 3D geometries.
 * `konnektor <https://konnektor.openfree.energy/>`_: Network generation tools designed with alchemical networks in mind.
