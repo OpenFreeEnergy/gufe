@@ -31,7 +31,7 @@ _BONDTYPES_OPENMM_TO_RDKIT = {
     app.Double: BondType.DOUBLE,
     app.Triple: BondType.TRIPLE,
     app.Aromatic: BondType.AROMATIC,
-    None: BondType.UNSPECIFIED
+    None: BondType.UNSPECIFIED,
 }
 _BONDORDERS_RDKIT_TO_OPENMM = {v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()}
 _BONDTYPES_RDKIT_TO_OPENMM = {v: k for k, v in _BONDTYPES_OPENMM_TO_RDKIT.items()}
