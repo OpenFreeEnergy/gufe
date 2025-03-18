@@ -135,4 +135,4 @@ def unpackb(data: bytes):
     deserialized
         The deserialized object.
     """
-    return msgpack.unpackb(data, ext_hook=unpack_default)
+    return msgpack.unpackb(data, strict_map_key=False, ext_hook=unpack_default)
