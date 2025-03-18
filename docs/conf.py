@@ -72,7 +72,7 @@ autodoc_mock_imports = [
 #
 html_theme = "furo"
 # html_theme_options = {
-#     "accent_color": "FeelingFabulous",
+#    "accent_color": "FeelingFabulous",
 # }
 
 # Add any paths that contain custom static files (such as style sheets) here,
