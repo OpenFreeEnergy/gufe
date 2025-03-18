@@ -239,6 +239,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
         assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
         assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
+        # Make sure bond.order is the expected type int or None
+        assert all(isinstance(bond.order, (int, type(None))) for bond in openmm_top.bonds())
 
     # Functionality
     def test_eq(self, PDB_181L_path):
