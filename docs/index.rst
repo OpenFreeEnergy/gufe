@@ -1,7 +1,7 @@
 gufe
 ====
 
-**gufe** is Open Free Energy's framework for defining object models used in alchemical free energy calculations.
+**gufe** is the Open Free Energy (OpenFE) framework for defining object models used in alchemical free energy calculations.
 It is intended for use by free energy method developers, and direct access by end-users should be avoided.
 
 If you are looking to perform free energy calculations, see `openfe <https://docs.openfree.energy/>`_.
@@ -11,7 +11,7 @@ Resources
 
 * github repository: https://github.com/OpenFreeEnergy/gufe
 * issue tracker: https://github.com/OpenFreeEnergy/gufe/issues
-* openfe discussions board: https://github.com/OpenFreeEnergy/openfe/discussions
+* OpenFE discussions board: https://github.com/OpenFreeEnergy/openfe/discussions
 
 Related Projects
 ----------------
@@ -21,7 +21,7 @@ Related Projects
 Open Free Energy Ecosystem:
 
 * `openfe <https://docs.openfree.energy/>`_: The OpenFE ecosystem's central toolkit for performing free energy calculations.
-* `lomap <https://lomap.openfree.energy/>`_: Atom mapping tools from the `Mobley Lab <https://mobleylab.org/>`_
+* `lomap <https://lomap.openfree.energy/>`_: Atom mapping tools from the `Mobley Lab <https://mobleylab.org/>`_.
 * `kartograf <https://kartograf.openfree.energy/>`_: Atom mapping tools focusing on 3D geometries.
 * `konnektor <https://konnektor.openfree.energy/>`_: Network generation tools designed with alchemical networks in mind.
 * `cinnabar <https://cinnabar.openfree.energy/>`_: Tools for the analysis of free energy network results.
