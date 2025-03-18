@@ -18,7 +18,7 @@ Related Projects
 
 .. add links
 
-Open Free Energy Ecosystem:
+Open Free Energy ecosystem tools that use **gufe**:
 
 * `openfe <https://docs.openfree.energy/>`_: The OpenFE ecosystem's central toolkit for performing free energy calculations.
 * `alchemiscale <https://alchemiscale.org/>`_: A distributed execution system for alchemical` networks.
