@@ -280,7 +280,7 @@ class Protocol(GufeTokenizable):
         r"""The default validation run for all ``Protocol.validate`` calls."""
         for cs in [stateA, stateB]:
             if not isinstance(cs, ChemicalSystem):
-                raise ProtocolValidationError("stateA and stateB must be instances of a `ChemicalSystem`")
+                raise ProtocolValidationError("`stateA` and `stateB` must be instances of a `ChemicalSystem`")
 
         if mapping:
             if not isinstance(mapping, list):
