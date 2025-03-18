@@ -16,12 +16,12 @@ from ..utils import ensure_filelike
 
 class TransformationBase(GufeTokenizable):
     _protocol: Protocol
-    _name: Optional[str]
+    _name: str | None
 
     def __init__(
         self,
         protocol: Protocol,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         """Transformation base class.
 
@@ -41,7 +41,7 @@ class TransformationBase(GufeTokenizable):
         return super()._defaults()
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """Optional identifier for the transformation; used as part of its hash.
 
         Set this to a unique value if adding multiple, otherwise identical
@@ -70,8 +70,8 @@ class TransformationBase(GufeTokenizable):
     def create(
         self,
         *,
-        extends: Optional[ProtocolDAGResult] = None,
-        name: Optional[str] = None,
+        extends: ProtocolDAGResult | None = None,
+        name: str | None = None,
     ) -> ProtocolDAG:
         """
         Returns a :class:`.ProtocolDAG` executing this ``Transformation.protocol``.
@@ -91,7 +91,7 @@ class TransformationBase(GufeTokenizable):
         return self._protocol
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
-        """Gather multiple :class:`.ProtocolDAGResult` \s into a single
+        r"""Gather multiple :class:`.ProtocolDAGResult` \s into a single
         :class:`.ProtocolResult`.
 
         Parameters
@@ -151,19 +151,19 @@ class Transformation(TransformationBase):
     _stateA: ChemicalSystem
     _stateB: ChemicalSystem
     _protocol: Protocol
-    _mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]]
-    _name: Optional[str]
+    _mapping: ComponentMapping | list[ComponentMapping] | None
+    _name: str | None
 
     def __init__(
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]] = None,
-        name: Optional[str] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None = None,
+        name: str | None = None,
         validate: bool = False,
     ):
-        """Two chemical states with a method for estimating the free energy
+        r"""Two chemical states with a method for estimating the free energy
         difference between them.
 
         Connects two :class:`.ChemicalSystem` objects, with directionality, and
@@ -226,7 +226,7 @@ class Transformation(TransformationBase):
         return self._stateB
 
     @property
-    def mapping(self) -> Optional[Union[ComponentMapping, list[ComponentMapping]]]:
+    def mapping(self) -> ComponentMapping | list[ComponentMapping] | None:
         """The mappings relevant for this Transformation"""
         return self._mapping
 
@@ -242,8 +242,8 @@ class Transformation(TransformationBase):
     def create(
         self,
         *,
-        extends: Optional[ProtocolDAGResult] = None,
-        name: Optional[str] = None,
+        extends: ProtocolDAGResult | None = None,
+        name: str | None = None,
     ) -> ProtocolDAG:
         """
         Returns a ``ProtocolDAG`` executing this ``Transformation.protocol``.
@@ -261,13 +261,13 @@ class Transformation(TransformationBase):
 class NonTransformation(TransformationBase):
     _system: ChemicalSystem
     _protocol: Protocol
-    _name: Optional[str]
+    _name: str | None
 
     def __init__(
         self,
         system: ChemicalSystem,
         protocol: Protocol,
-        name: Optional[str] = None,
+        name: str | None = None,
         validate: bool = False,
     ):
         """A non-alchemical edge of an alchemical network.
@@ -342,8 +342,8 @@ class NonTransformation(TransformationBase):
     def create(
         self,
         *,
-        extends: Optional[ProtocolDAGResult] = None,
-        name: Optional[str] = None,
+        extends: ProtocolDAGResult | None = None,
+        name: str | None = None,
     ) -> ProtocolDAG:
         """
         Returns a ``ProtocolDAG`` executing this ``NonTransformation.protocol``.

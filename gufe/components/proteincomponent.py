@@ -144,7 +144,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile: Union[PDBFile, PDBxFile], name: str = ""):
+    def _from_openmmPDBFile(cls, openmm_PDBFile: PDBFile | PDBxFile, name: str = ""):
         """Converts to our internal representation (rdkit Mol)
 
         Parameters
@@ -395,7 +395,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
+    def to_pdb_file(self, out_path: str | bytes | PathLike[str] | PathLike[bytes] | io.TextIOBase) -> str:
         """
         serialize protein to pdb file.
 
@@ -437,7 +437,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbx_file(self, out_path: Union[str, bytes, PathLike[str], PathLike[bytes], io.TextIOBase]) -> str:
+    def to_pdbx_file(self, out_path: str | bytes | PathLike[str] | PathLike[bytes] | io.TextIOBase) -> str:
         """
         serialize protein to pdbx file.
 
