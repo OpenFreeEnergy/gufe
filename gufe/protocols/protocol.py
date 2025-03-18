@@ -280,7 +280,7 @@ class Protocol(GufeTokenizable):
         r"""The default validation run for all ``Protocol.validate`` calls."""
         for cs in [stateA, stateB]:
             if not isinstance(cs, ChemicalSystem):
-                raise ProtocolValidationError("stateA and stateB must be instances of a ChemicalSystem.")
+                raise ProtocolValidationError("stateA and stateB must be instances of a `ChemicalSystem`")
 
         if mapping:
             if not isinstance(mapping, list):
@@ -288,11 +288,11 @@ class Protocol(GufeTokenizable):
 
             for element in mapping:
                 if not isinstance(element, ComponentMapping):
-                    raise ProtocolValidationError("A non-ComponentMapping object provided as a mapping.")
+                    raise ProtocolValidationError("a non-`ComponentMapping` object provided as a `mapping`")
 
         if extends:
             if not isinstance(extends, ProtocolDAGResult):
-                raise ProtocolValidationError("A non-ProtocolDAGResult object provided as extends.")
+                raise ProtocolValidationError("a non-`ProtocolDAGResult` object provided as `extends`")
 
     def _validate(
         self,
@@ -302,12 +302,15 @@ class Protocol(GufeTokenizable):
         mapping: ComponentMapping | list[ComponentMapping] | None,
         extends: ProtocolDAGResult | None = None,
     ):
-        """Method to override in custom `Protocol` subclasses.
+        r"""Method to override in custom :class:`Protocol` subclasses.
 
-        This method should take two `ChemicalSystem`s, and optionally
-        one or more `ComponentMapping` objects and `ProtocolDAGResult`
-        objects used for extensions, and validate them, raising a
-        `ProtocolValidationError` where validation is not successful.
+        This method should take two ``ChemicalSystem``s, optionally one or more
+        ``ComponentMapping`` objects, and optionally a ``ProtocolDAGResult``
+        object used for extensions. It should validate this combination for
+        internal consistency with this ``Protocol``s ``Settings``.
+
+        This method should raise a :class:`ProtocolValidationError` where
+        validation is not successful.
 
         See also
         --------
@@ -327,8 +330,9 @@ class Protocol(GufeTokenizable):
     ):
         r"""Validate the inputs to be used in creating a :class:`ProtocolDAG`.
 
-        This method allows for the validation of inputs that will be
-        used to create a :class:`.ProtocolDAG`.
+        This method allows for the validation of inputs that will be used to
+        create a ``ProtocolDAG``, in particular checking these inputs against
+        each other and this ``Protocol`` 's ``Settings``.
 
         Parameters
         ----------
