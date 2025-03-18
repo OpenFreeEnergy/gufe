@@ -265,11 +265,13 @@ class TestProtocol(GufeTokenizableTestsMixin):
         instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping)
 
         # Test bad state input
-        with pytest.raises(ProtocolValidationError, match="stateA and stateB must be instances of a ChemicalSystem"):
+        with pytest.raises(
+            ProtocolValidationError, match="`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+        ):
             instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)  # type: ignore
 
         # Test bad mappings
-        expected_msg = "A non-ComponentMapping object provided as a mapping."
+        expected_msg = "a non-`ComponentMapping` object provided as a `mapping`"
         with pytest.raises(ProtocolValidationError, match=expected_msg):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")  # type: ignore
 
@@ -277,7 +279,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))  # type: ignore
 
         # Test bad extends
-        with pytest.raises(ProtocolValidationError, match="A non-ProtocolDAGResult object provided as extends."):
+        with pytest.raises(ProtocolValidationError, match="a non-`ProtocolDAGResult` object provided as `extends`"):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
 
     def test_author_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
