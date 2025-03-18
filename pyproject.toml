@@ -22,17 +22,8 @@ classifiers = [
 ]
 urls = {Homepage = "https://github.com/OpenFreeEnergy/gufe"}
 requires-python = ">= 3.10"
-dependencies = [
-    "numpy",
-    "networkx",
-]
-dynamic = ["version"]
 
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-xdist",
-]
+dynamic = ["version"]
 
 [tool.setuptools]
 zip-safe = false
