@@ -246,6 +246,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_protein_component_openmm_bond(self, in_pdb_path):
         """
         Test that `to_openmm_topology().bonds()` produces a valid bond object.
+        See https://github.com/OpenFreeEnergy/gufe/issues/501
         """
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         prot = self.cls.from_pdb_file(in_pdb_io, name="Alice")
