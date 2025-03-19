@@ -111,8 +111,8 @@ class DummyProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
-        extends: Optional[ProtocolDAGResult] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | None = None,
+        extends: ProtocolDAGResult | None = None,
     ) -> list[ProtocolUnit]:
 
         # rip apart `extends` if needed to feed into `InitializeUnit`
@@ -170,8 +170,8 @@ class BrokenProtocol(DummyProtocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
-        extends: Optional[ProtocolDAGResult] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | None = None,
+        extends: ProtocolDAGResult | None = None,
     ) -> list[ProtocolUnit]:
 
         # convert protocol inputs into starting points for independent simulations
@@ -433,7 +433,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_protocol_unit_results(self, instance: ProtocolDAGResult):
             # ensure that protocolunitresults are given in-order based on DAG
             # dependencies
-            checked: list[Union[ProtocolUnitResult, ProtocolUnitFailure]] = []
+            checked: list[ProtocolUnitResult | ProtocolUnitFailure] = []
             for pur in instance.protocol_unit_results:
                 assert set(pur.dependencies).issubset(checked)
                 checked.append(pur)
@@ -557,8 +557,8 @@ class NoDepsProtocol(Protocol):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]] = None,
-        extends: Optional[ProtocolDAGResult] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | None = None,
+        extends: ProtocolDAGResult | None = None,
     ) -> list[ProtocolUnit]:
         return [NoDepUnit(settings=self.settings, val=i) for i in range(3)]
 
@@ -696,7 +696,7 @@ class TestProtocolDAGResult:
 
         assert not dagresult.ok()
 
-        with pytest.raises(ProtocolUnitFailureError, match="No success for `protocol_unit`:NoDepUnit\(None\) found"):
+        with pytest.raises(ProtocolUnitFailureError, match=r"No success for `protocol_unit`:NoDepUnit\(None\) found"):
             dagresult.unit_to_result(units[2])
 
     def test_plenty_of_fails(self, units, successes, failures):
@@ -725,12 +725,12 @@ class TestProtocolDAGResult:
             transformation_key=None,
         )
 
-        with pytest.raises(MissingUnitResultError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
+        with pytest.raises(MissingUnitResultError, match=r"No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_result(units[2])
-        with pytest.raises(MissingUnitResultError, match="No such `protocol_unit`:NoDepUnit\(None\) present"):
+        with pytest.raises(MissingUnitResultError, match=r"No such `protocol_unit`:NoDepUnit\(None\) present"):
             dagresult.unit_to_all_results(units[2])
         with pytest.raises(
-            MissingUnitResultError, match="No such `protocol_unit_result`:ProtocolUnitResult\(None\) present"
+            MissingUnitResultError, match=r"No such `protocol_unit_result`:ProtocolUnitResult\(None\) present"
         ):
             dagresult.result_to_unit(successes[2])
 

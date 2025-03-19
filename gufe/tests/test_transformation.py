@@ -122,9 +122,11 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
     def test_dump_load_roundtrip(self, absolute_transformation):
         string = io.StringIO()
-        absolute_transformation.dump(string)
+        with pytest.warns(DeprecationWarning, match="use of this method is deprecated; instead use `to_json`"):
+            absolute_transformation.dump(string)
         string.seek(0)
-        recreated = Transformation.load(string)
+        with pytest.warns(DeprecationWarning, match="use of this method is deprecated; instead use `from_json`"):
+            recreated = Transformation.load(string)
         assert absolute_transformation == recreated
 
     def test_deprecation_warning_on_dict_mapping(self, solvated_ligand, solvated_complex):

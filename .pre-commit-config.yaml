@@ -4,7 +4,7 @@ ci:
   autofix_prs: false
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v5.0.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -19,7 +19,7 @@ repos:
   - id: trailing-whitespace
     exclude: '\.(pdb|gro|top|sdf|xml|cif|graphml)$'
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.2.0
+  rev: 24.10.0
   hooks:
   - id: black
   - id: black-jupyter
@@ -29,7 +29,7 @@ repos:
   - id: isort
     args: ["--profile", "black", "--filter-files"]
 - repo: https://github.com/econchick/interrogate
-  rev: 1.5.0
+  rev: 1.7.0
   hooks:
     - id: interrogate
       args: [--fail-under=28]
