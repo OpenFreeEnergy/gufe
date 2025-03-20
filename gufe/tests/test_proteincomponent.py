@@ -29,6 +29,22 @@ def PDB_181L_mutant(PDB_181L_path):
     return ProteinComponent.from_rdkit(rdm)
 
 
+@pytest.fixture
+def custom_pdb_charge(PDB_181L_path):
+    new_charge = "Cl-"
+    with open(PDB_181L_path, 'r') as f:
+        orig_pdb = f.read()
+
+    str_to_replace = "HETATM 2614 CL" #    CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
+
+    new_str = str_to_replace.replace("CL", "Sm")
+
+    test_pdb = orig_pdb.replace(str_to_replace, new_str)
+
+    with io.StringIO(test_pdb) as f:
+        yield f
+
+
 def assert_same_pdb_lines(in_file_path, out_file_path):
     in_lines = []
     if hasattr(in_file_path, "readlines"):
@@ -306,6 +322,9 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
         assert m1.total_charge == 6
 
+    def test_pdb_ion_parsing(self, custom_pdb_charge):
+        m1 = self.cls.from_pdb_file(custom_pdb_charge)
+        assert m1.total_charge == 11
 
 def test_no_monomer_info_error(ethane):
     with pytest.raises(TypeError):
