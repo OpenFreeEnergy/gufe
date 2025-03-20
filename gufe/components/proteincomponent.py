@@ -6,7 +6,7 @@ import json
 import string
 from collections import defaultdict
 from os import PathLike
-from typing import Optional, Union
+from typing import Optional, Union, TextIO
 
 import numpy as np
 from openmm import app
@@ -163,14 +163,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     # FROM
     @classmethod
-    def from_pdb_file(cls, pdb_file: str, name: str = ""):
+    def from_pdb_file(cls, pdb_file: PathLike | TextIO, name: str = ""):
         """
         Create ``ProteinComponent`` from PDB-formatted file.
 
         Parameters
         ----------
-        pdb_file : str
-            path to the pdb file.
+        pdb_file : str or file
+            path to the pdb file or filelike object
         name : str, optional
             name of the input protein, by default ""
 
