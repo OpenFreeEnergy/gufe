@@ -34,9 +34,9 @@ def custom_pdb_ion(PDB_181L_path):
         with open(PDB_181L_path, 'r') as f:
             orig_pdb = f.read()
 
-        str_to_replace = "HETATM 2614 CL" #    CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
+        str_to_replace = "HETATM 2614 CL  " #  CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
 
-        new_str = str_to_replace.replace("CL", new_ion)
+        new_str = str_to_replace.replace("CL  ", new_ion)
 
         test_pdb = orig_pdb.replace(str_to_replace, new_str)
 
@@ -323,11 +323,12 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
         assert m1.total_charge == 6
 
-    @pytest.mark.parametrize("ion_name,expected_total_charge", [('SM',11), ('BR',7)])
-    def test_pdb_ion_parsing(self, custom_pdb_ion, ion_name, expected_total_charge):
+    # these whitespaces in the ion names are intentional to fit pdb formatting
+    @pytest.mark.parametrize("ion_name,ion_charge", [('SM  ',3), ('Sm  ', 2), ('BR  ',-1), ('EU3 ', 3), (' U4+',4)])
+    def test_pdb_ion_parsing(self, custom_pdb_ion, ion_name, ion_charge):
         pdb_generator = custom_pdb_ion(ion_name)
         pc = self.cls.from_pdb_file(next(pdb_generator))
-
+        expected_total_charge = 8+ion_charge
         assert pc.total_charge == expected_total_charge
 
 def test_no_monomer_info_error(ethane):
