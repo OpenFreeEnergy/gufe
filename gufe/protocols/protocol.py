@@ -170,8 +170,8 @@ class Protocol(GufeTokenizable):
         self,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping]]],
-        extends: Optional[ProtocolDAGResult] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
     ) -> list[ProtocolUnit]:
         """Method to override in custom :class:`Protocol` subclasses.
 
@@ -206,10 +206,10 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: Optional[Union[ComponentMapping, list[ComponentMapping], dict[str, ComponentMapping]]],
-        extends: Optional[ProtocolDAGResult] = None,
-        name: Optional[str] = None,
-        transformation_key: Optional[GufeKey] = None,
+        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
+        name: str | None = None,
+        transformation_key: GufeKey | None = None,
     ) -> ProtocolDAG:
         r"""Prepare a `ProtocolDAG` with all information required for execution.
 
