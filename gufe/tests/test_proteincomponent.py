@@ -246,12 +246,17 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_protein_component_openmm_bond(self, in_pdb_path):
         """
         Test that `to_openmm_topology().bonds()` produces a valid bond object.
+
+        We are expecting an StopIteration in order to test that the bonds iterator
+        is fully exhausted. Meaning, they are all valid.
+
         See https://github.com/OpenFreeEnergy/gufe/issues/501
         """
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         prot = self.cls.from_pdb_file(in_pdb_io, name="Alice")
         omm_topology_bonds = prot.to_openmm_topology().bonds()
 
+        # Check we are fully exhausting the bond iterator
         with pytest.raises(StopIteration):
             while True:
                 repr(next(omm_topology_bonds))
