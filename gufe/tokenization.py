@@ -649,7 +649,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         return KeyedChain(keyed_chain=keyed_chain).to_gufe()
 
-    def to_json(self, file: Optional[PathLike | TextIO] = None) -> None | str:
+    def to_json(self, file: PathLike | TextIO | None = None) -> None | str:
         """
         Generate a JSON keyed chain representation.
 
@@ -681,7 +681,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return None
 
     @classmethod
-    def from_json(cls, file: Optional[PathLike | TextIO] = None, content: Optional[str] = None):
+    def from_json(cls, file: PathLike | TextIO | None = None, content: str | None = None):
         """
         Generate an instance from JSON keyed chain representation.
 
@@ -705,15 +705,25 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             raise ValueError("Must specify either `content` and `file` for JSON input")
 
         if content is not None:
-            keyed_chain = json.loads(content, cls=JSON_HANDLER.decoder)
-            return cls.from_keyed_chain(keyed_chain=keyed_chain)
+            deserialized = json.loads(content, cls=JSON_HANDLER.decoder)
+            try:
+                return cls.from_keyed_chain(keyed_chain=deserialized)
+            except ValueError:
+                # if the above fails, try to load as the dict representation
+                warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
+                return cls.from_dict(deserialized)
 
         from gufe.utils import ensure_filelike
 
         with ensure_filelike(file, mode="r") as f:
-            keyed_chain = json.load(f, cls=JSON_HANDLER.decoder)
+            deserialized = json.load(f, cls=JSON_HANDLER.decoder)
 
-        return cls.from_keyed_chain(keyed_chain=keyed_chain)
+        try:
+            return cls.from_keyed_chain(keyed_chain=deserialized)
+        except ValueError:
+            # if the above fails, try to load as the dict representation
+            warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
+            return cls.from_dict(deserialized)
 
 
 class GufeKey(str):
@@ -734,7 +744,7 @@ class GufeKey(str):
         return self.split("-")[1]
 
 
-def gufe_objects_from_shallow_dict(obj: Union[list, dict, GufeTokenizable]) -> list[GufeTokenizable]:
+def gufe_objects_from_shallow_dict(obj: list | dict | GufeTokenizable) -> list[GufeTokenizable]:
     """Find GufeTokenizables within a shallow dict.
 
     This function recursively looks through the list/dict structures encoding
@@ -974,7 +984,7 @@ def get_class(module: str, qualname: str):
         return cls
 
 
-def modify_dependencies(obj: Union[dict, list], modifier, is_mine, mode, top=True):
+def modify_dependencies(obj: dict | list, modifier, is_mine, mode, top=True):
     """
     Parameters
     ----------

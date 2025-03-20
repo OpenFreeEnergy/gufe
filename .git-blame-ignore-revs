@@ -1,2 +1,4 @@
 # https://github.com/OpenFreeEnergy/gufe/pull/421 -- big auto format MMH
 d27100a5b7b303df155e2b6d7874883d105e24bf
+# https://github.com/OpenFreeEnergy/gufe/pull/431 -- fix some files that didn't get formatted MMH
+f8c49d59e756130a995d02dfe04d7a91acb1d791

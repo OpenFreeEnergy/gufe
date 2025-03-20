@@ -34,7 +34,7 @@ def complex_equilibrium(solvated_complex):
 
 class TestTransformation(GufeTokenizableTestsMixin):
     cls = Transformation
-    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>)"
+    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -122,9 +122,11 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
     def test_dump_load_roundtrip(self, absolute_transformation):
         string = io.StringIO()
-        absolute_transformation.dump(string)
+        with pytest.warns(DeprecationWarning, match="use of this method is deprecated; instead use `to_json`"):
+            absolute_transformation.dump(string)
         string.seek(0)
-        recreated = Transformation.load(string)
+        with pytest.warns(DeprecationWarning, match="use of this method is deprecated; instead use `from_json`"):
+            recreated = Transformation.load(string)
         assert absolute_transformation == recreated
 
     def test_deprecation_warning_on_dict_mapping(self, solvated_ligand, solvated_complex):
@@ -144,7 +146,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 class TestNonTransformation(GufeTokenizableTestsMixin):
 
     cls = NonTransformation
-    repr = "NonTransformation(stateA=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>)"
+    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):

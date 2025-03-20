@@ -11,7 +11,7 @@ from .base import ExternalStorage
 
 # TODO: this should use pydantic to check init inputs
 class FileStorage(ExternalStorage):
-    def __init__(self, root_dir: Union[pathlib.Path, str]):
+    def __init__(self, root_dir: pathlib.Path | str):
         self.root_dir = pathlib.Path(root_dir)
 
     def _exists(self, location):
@@ -54,7 +54,7 @@ class FileStorage(ExternalStorage):
     def _as_path(self, location):
         return self.root_dir / pathlib.Path(location)
 
-    def _get_location(self, path: Union[str, pathlib.Path]) -> str:
+    def _get_location(self, path: str | pathlib.Path) -> str:
         # this is essentially the reverse behavior of _as_path
         path = pathlib.Path(path)
         relpath = path.relative_to(self.root_dir.resolve())

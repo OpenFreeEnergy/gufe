@@ -163,6 +163,14 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert atommapping.componentA == mol1
             assert atommapping.componentB == mol2
 
+    def test_graph_edge_order(self, simple_network):
+        # Make sure the ordering of the edges is consistent
+        graph = simple_network.network.graph
+        # check the ordering of the edges
+        edges = list(graph.edges(data=True))
+        scores = [e[-1]["score"] for e in edges]
+        assert scores == [1.0, 0.0, 0.5]
+
     def test_graph_annotations(self, mols, std_edges):
         mol1, mol2, mol3 = mols
         edge12, edge23, edge13 = std_edges
@@ -268,6 +276,86 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
         assert set(new_network.nodes) == set(network.nodes)
         assert len(new_network.edges) == len(network.edges)
         assert set(new_network.edges) == set(network.edges)
+
+    def test_trim_graph_remove_nodes(self, simple_network, mols):
+        n1, n2, n3 = mols
+        network = simple_network.network
+
+        trimmed = network.trim_graph(nodes=[n1])
+
+        assert len(trimmed.edges) == 1
+        assert len(trimmed.nodes) == 2
+
+        trimmed = network.trim_graph(nodes=[n1, n3])
+
+        assert len(trimmed.edges) == 0
+        assert len(trimmed.nodes) == 1
+
+    def test_trim_graph_remove_edges(self, simple_network, std_edges):
+        e1, e2, e3 = std_edges
+        network = simple_network.network
+
+        trimmed = network.trim_graph(edges=[e1])
+
+        assert len(trimmed.edges) == 2
+        assert {e2, e3} == trimmed.edges
+        assert len(trimmed.nodes) == 3
+        assert trimmed.is_connected()
+
+        trimmed = network.trim_graph(edges=[e1, e3])
+
+        assert len(trimmed.edges) == 1
+        assert {e2} == trimmed.edges
+        assert len(trimmed.nodes) == 3
+        assert not trimmed.is_connected()
+
+    def test_trim_graph_remove_edges_and_nodes(self, simple_network, std_edges, mols):
+        n1, n2, n3 = mols
+        e1, e2, e3 = std_edges
+        network = simple_network.network
+
+        trimmed = network.trim_graph(nodes=[n1], edges=[e2])
+
+        assert len(trimmed.edges) == 0
+        assert len(trimmed.nodes) == 2
+        assert {n2, n3} == trimmed.nodes
+
+        trimmed = network.trim_graph(nodes=[n1], edges=[e1, e3])
+
+        assert len(trimmed.edges) == 1
+        assert len(trimmed.nodes) == 2
+        assert {n2, n3} == trimmed.nodes
+
+        trimmed = network.trim_graph(nodes=[n2, n1], edges=[e1, e3])
+
+        assert len(trimmed.edges) == 0
+        assert len(trimmed.nodes) == 1
+        assert {n3} == trimmed.nodes
+
+    def test_trim_graph_remove_edges_and_nodes_not_present(self, simple_network, std_edges, mols):
+        n1, n2, n3 = mols
+        e1, e2, e3 = std_edges
+        network = simple_network.network
+
+        new_mol = SmallMoleculeComponent(mol_from_smiles("CCCC"))
+        mol_CC = mols[1]
+        extra_edge = LigandAtomMapping(new_mol, mol_CC, {1: 0, 2: 1})
+
+        trimmed = network.trim_graph(nodes=[new_mol], edges=[extra_edge])
+
+        assert trimmed == network
+        assert trimmed is network
+
+        trimmed = network.trim_graph(nodes=[new_mol, n1], edges=[extra_edge, e2])
+
+        assert len(trimmed.edges) == 0
+        assert len(trimmed.nodes) == 2
+        assert {n2, n3} == trimmed.nodes
+
+        enlarged = network.enlarge_graph(nodes=[new_mol, n1], edges=[extra_edge, e2])
+        trimmed = enlarged.trim_graph(nodes=[new_mol], edges=[extra_edge])
+
+        assert trimmed is network
 
     def test_serialization_cycle(self, simple_network):
         network = simple_network.network
