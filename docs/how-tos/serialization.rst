@@ -1,3 +1,5 @@
+.. _how_to_serialize:
+
 Serializing gufe objects
 ========================
 
@@ -11,6 +13,7 @@ understanding what you can expect from storage systems built for gufe
 objects. From a developer perspective, this will tell you what you need to
 do to be compatible with (and get the most from) the gufe serialization
 mechanisms.
+
 
 In practice: What a developer needs to do
 -----------------------------------------
