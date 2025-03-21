@@ -747,13 +747,13 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         from_msgpack
         """
 
-        if file is not None:
-            from gufe.utils import ensure_filelike
+        if file is None:
+            return packb(self.to_keyed_chain())
 
-            with ensure_filelike(file, mode="w+b") as out:
-                out.write(packb(self.to_keyed_chain()))
-            return None
-        return packb(self.to_keyed_chain())
+        from gufe.utils import ensure_filelike
+
+        with ensure_filelike(file, mode="w+b") as out:
+            out.write(packb(self.to_keyed_chain()))
 
     @classmethod
     def from_msgpack(cls, file: PathLike | BinaryIO | None = None, content: bytes | None = None):
