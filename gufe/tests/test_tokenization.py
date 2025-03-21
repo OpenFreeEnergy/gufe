@@ -147,6 +147,13 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # include `np.nan`s
         # assert ser == reser
 
+    def test_to_msgpack_roundtrip(self, instance):
+        ser = instance.to_msgpack()
+        deser = self.cls.from_msgpack(content=ser)
+
+        assert instance == deser
+        assert instance is deser
+
     def test_key_stable(self, instance):
         """Check that generating the instance from a dict representation yields
         the same key (and the same instance).
@@ -298,15 +305,17 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in JSON so fix the expected result to use lists
         expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
-        assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
+        with file_path.open(mode="r") as f:
+            assert json.load(f, cls=JSON_HANDLER.decoder) == expected_key_chain
 
     def test_from_json_file(self, tmpdir):
         file_path = tmpdir / "container.json"
-        json.dump(
-            self.expected_keyed_chain,
-            file_path.open(mode="w"),
-            cls=JSON_HANDLER.encoder,
-        )
+        with file_path.open(mode="w") as f:
+            json.dump(
+                self.expected_keyed_chain,
+                f,
+                cls=JSON_HANDLER.encoder,
+            )
         recreated = self.cls.from_json(file=file_path)
 
         assert recreated == self.cont
@@ -315,11 +324,12 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
     def test_from_json_file_dict(self, tmpdir):
         """Test that we can still load json-serialized dict representations from files."""
         file_path = tmpdir / "container.json"
-        json.dump(
-            self.expected_deep,
-            file_path.open(mode="w"),
-            cls=JSON_HANDLER.encoder,
-        )
+        with file_path.open(mode="w") as f:
+            json.dump(
+                self.expected_deep,
+                f,
+                cls=JSON_HANDLER.encoder,
+            )
         with pytest.warns(UserWarning, match="keyed-chain deserialization failed"):
             recreated = self.cls.from_json(file=file_path)
 
@@ -345,7 +355,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in msgpack so fix the expected result to use lists
         expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
-        assert unpackb(file_path.open("rb").read()) == expected_keyed_chain
+        with file_path.open("rb") as f:
+            assert unpackb(f.read()) == expected_keyed_chain
 
     def test_from_msgpack_file(self, tmpdir):
         file_path = tmpdir / "container.messagepack"
