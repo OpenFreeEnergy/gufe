@@ -76,12 +76,13 @@ def pack_default(obj) -> msgpack.ExtType:
             dt_payload: bytes = msgpack.packb(obj.isoformat())
             return msgpack.ExtType(MPEXT.DATETIME, dt_payload)
 
+
 def unpack_default(code: int, data: bytes):
     """For non-standard datatypes, unpack into the appropriate structures."""
 
     try:
         extension_type = MPEXT(code)
-    except ValueError as e:
+    except ValueError:
         raise ValueError(f"Found an unknown extension code: {code}")
 
     match extension_type:
