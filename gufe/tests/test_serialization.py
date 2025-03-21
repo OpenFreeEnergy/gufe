@@ -115,7 +115,7 @@ class TestMessagePack:
     class TestTimeStampCoding(CustomMessagePackCodingTest):
 
         def setup_method(self):
-            self.objs = [datetime.now(timezone.utc)]
+            self.objs = [datetime.now(timezone.utc), datetime.now()]
 
     class TestUUIDCoding(CustomMessagePackCodingTest):
 
