@@ -1029,7 +1029,9 @@ def to_dict(obj: GufeTokenizable) -> dict:
 
 
 def dict_encode_dependencies(obj: GufeTokenizable) -> dict:
-    return modify_dependencies(obj=obj.to_shallow_dict(), modifier=to_dict, is_mine=is_gufe_obj, mode="encode", top=True)
+    return modify_dependencies(
+        obj=obj.to_shallow_dict(), modifier=to_dict, is_mine=is_gufe_obj, mode="encode", top=True
+    )
 
 
 def key_encode_dependencies(obj: GufeTokenizable) -> dict:
