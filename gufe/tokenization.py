@@ -726,7 +726,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
 
-    def to_msgpack(self, file: Optional[PathLike | BinaryIO] = None) -> None | bytes:
+    def to_msgpack(self, file: PathLike | BinaryIO | None = None) -> None | bytes:
         """
         Generate a MessagePack keyed chain representation.
 
@@ -756,7 +756,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         return packb(self.to_keyed_chain())
 
     @classmethod
-    def from_msgpack(cls, file: Optional[PathLike | BinaryIO] = None, content: Optional[bytes] = None):
+    def from_msgpack(cls, file: PathLike | BinaryIO | None = None, content: bytes | None = None):
         """Generate an instance from a MessagePack keyed chain representation.
 
         Can provide either a filepath/filelike as `file`, or msgpack content via `content`.
