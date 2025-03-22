@@ -77,7 +77,7 @@ def pack_default(obj) -> msgpack.ExtType:
             return msgpack.ExtType(MPEXT.DATETIME, dt_payload)
 
 
-def unpack_default(code: int, data: bytes):
+def ext_hook_default(code: int, data: bytes):
     """For non-standard datatypes, unpack into the appropriate structures."""
 
     try:
@@ -86,33 +86,33 @@ def unpack_default(code: int, data: bytes):
         raise ValueError(f"Found an unknown extension code: {code}")
 
     match extension_type:
-        case MPEXT.SETTINGS:
-            settings_data = msgpack.unpackb(data, ext_hook=unpack_default)
-            module = settings_data.pop("__module__")
-            qualname = settings_data.pop("__class__")
-            cls = gufe.tokenization.get_class(module, qualname)
-            return cls(**settings_data)
-        case MPEXT.UNIT:
-            magnitude, unit, _ = msgpack.unpackb(data, ext_hook=unpack_default)
-            return magnitude * DEFAULT_UNIT_REGISTRY.Quantity(unit)
-        case MPEXT.NDARRAY:
-            _dtype, _shape, _bytes = msgpack.unpackb(data)
-            return np.frombuffer(_bytes, dtype=np.dtype(_dtype)).reshape(_shape)
         case MPEXT.LARGEINT:
             string_rep_data = msgpack.unpackb(data)
             return int(string_rep_data)
         case MPEXT.PATH:
             string_rep_data = msgpack.unpackb(data)
             return Path(string_rep_data)
+        case MPEXT.UNIT:
+            magnitude, unit, _ = msgpack.unpackb(data, ext_hook=ext_hook_default)
+            return magnitude * DEFAULT_UNIT_REGISTRY.Quantity(unit)
+        case MPEXT.NDARRAY:
+            _dtype, _shape, _bytes = msgpack.unpackb(data)
+            return np.frombuffer(_bytes, dtype=np.dtype(_dtype)).reshape(_shape)
+        case MPEXT.NPGENERIC:
+            _dtype, _bytes = msgpack.unpackb(data, ext_hook=ext_hook_default)
+            return np.frombuffer(_bytes, dtype=np.dtype(_dtype))
+        case MPEXT.SETTINGS:
+            settings_data = msgpack.unpackb(data, ext_hook=ext_hook_default)
+            module = settings_data.pop("__module__")
+            qualname = settings_data.pop("__class__")
+            cls = gufe.tokenization.get_class(module, qualname)
+            return cls(**settings_data)
+        case MPEXT.UUID:
+            uuid_data = msgpack.unpackb(data, ext_hook=ext_hook_default)
+            return uuid.UUID(int=int(uuid_data))
         case MPEXT.DATETIME:
             isoformat = msgpack.unpackb(data)
             return datetime.fromisoformat(isoformat)
-        case MPEXT.UUID:
-            uuid_data = msgpack.unpackb(data, ext_hook=unpack_default)
-            return uuid.UUID(int=int(uuid_data))
-        case MPEXT.NPGENERIC:
-            _dtype, _bytes = msgpack.unpackb(data, ext_hook=unpack_default)
-            return np.frombuffer(_bytes, dtype=np.dtype(_dtype))
 
 
 def packb(obj) -> bytes:
@@ -144,4 +144,4 @@ def unpackb(data: bytes):
     deserialized
         The deserialized object.
     """
-    return msgpack.unpackb(data, strict_map_key=False, ext_hook=unpack_default)
+    return msgpack.unpackb(data, strict_map_key=False, ext_hook=ext_hook_default)
