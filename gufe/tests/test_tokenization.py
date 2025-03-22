@@ -8,6 +8,7 @@ from unittest import mock
 
 import pytest
 
+from gufe.serialization.msgpack import packb, unpackb
 from gufe.tokenization import (
     JSON_HANDLER,
     TOKENIZABLE_CLASS_REGISTRY,
@@ -145,6 +146,20 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # not generally true that the dict forms are equal, e.g. if they
         # include `np.nan`s
         # assert ser == reser
+
+    def test_to_msgpack_roundtrip(self, instance):
+        ser = instance.to_msgpack()
+        deser = self.cls.from_msgpack(content=ser)
+
+        assert instance == deser
+        assert instance is deser
+
+    def test_to_json_roundtrip(self, instance):
+        ser = instance.to_json()
+        deser = self.cls.from_json(content=ser)
+
+        assert instance == deser
+        assert instance is deser
 
     def test_key_stable(self, instance):
         """Check that generating the instance from a dict representation yields
@@ -297,15 +312,17 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in JSON so fix the expected result to use lists
         expected_key_chain = [list(tok) for tok in self.expected_keyed_chain]
-        assert json.load(file_path.open(mode="r"), cls=JSON_HANDLER.decoder) == expected_key_chain
+        with file_path.open(mode="r") as f:
+            assert json.load(f, cls=JSON_HANDLER.decoder) == expected_key_chain
 
     def test_from_json_file(self, tmpdir):
         file_path = tmpdir / "container.json"
-        json.dump(
-            self.expected_keyed_chain,
-            file_path.open(mode="w"),
-            cls=JSON_HANDLER.encoder,
-        )
+        with file_path.open(mode="w") as f:
+            json.dump(
+                self.expected_keyed_chain,
+                f,
+                cls=JSON_HANDLER.encoder,
+            )
         recreated = self.cls.from_json(file=file_path)
 
         assert recreated == self.cont
@@ -314,16 +331,56 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
     def test_from_json_file_dict(self, tmpdir):
         """Test that we can still load json-serialized dict representations from files."""
         file_path = tmpdir / "container.json"
-        json.dump(
-            self.expected_deep,
-            file_path.open(mode="w"),
-            cls=JSON_HANDLER.encoder,
-        )
+        with file_path.open(mode="w") as f:
+            json.dump(
+                self.expected_deep,
+                f,
+                cls=JSON_HANDLER.encoder,
+            )
         with pytest.warns(UserWarning, match="keyed-chain deserialization failed"):
             recreated = self.cls.from_json(file=file_path)
 
         assert recreated == self.cont
         assert recreated is self.cont
+
+    def test_to_msgpack_bytes(self):
+        msgpack_bytes = self.cont.to_msgpack()
+        expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
+
+        assert unpackb(msgpack_bytes) == expected_keyed_chain
+
+    def test_from_msgpack_bytes(self):
+        data = packb(self.cont.to_keyed_chain())
+        recreated = self.cls.from_msgpack(content=data)
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_to_msgpack_file(self, tmpdir):
+        file_path = tmpdir / "container.messagepack"
+        self.cont.to_msgpack(file=file_path)
+
+        # tuples are converted to lists in msgpack so fix the expected result to use lists
+        expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
+        with file_path.open("rb") as f:
+            assert unpackb(f.read()) == expected_keyed_chain
+
+    def test_from_msgpack_file(self, tmpdir):
+        file_path = tmpdir / "container.messagepack"
+
+        with open(file_path, "wb") as f:
+            f.write(packb(self.expected_keyed_chain))
+
+        recreated = self.cls.from_msgpack(file=file_path)
+
+        assert recreated == self.cont
+        assert recreated is self.cont
+
+    def test_from_msgpack_file_bad_args(self):
+        with pytest.raises(ValueError, match="Cannot specify both"):
+            self.cls.from_msgpack("fake_file.messagepack", content=b"bad content")
+        with pytest.raises(ValueError, match="Must specify either"):
+            self.cls.from_msgpack()
 
     def test_to_shallow_dict(self):
         assert self.cont.to_shallow_dict() == self.expected_shallow
