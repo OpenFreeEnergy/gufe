@@ -755,6 +755,8 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         with ensure_filelike(file, mode="w+b") as out:
             out.write(packb(self.to_keyed_chain()))
 
+        return None
+
     @classmethod
     def from_msgpack(cls, file: PathLike | BinaryIO | None = None, content: bytes | None = None):
         """Generate an instance from a MessagePack keyed chain representation.
