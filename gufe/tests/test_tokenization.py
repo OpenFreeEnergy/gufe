@@ -154,6 +154,13 @@ class GufeTokenizableTestsMixin(abc.ABC):
         assert instance == deser
         assert instance is deser
 
+    def test_to_json_roundtrip(self, instance):
+        ser = instance.to_json()
+        deser = self.cls.from_json(content=ser)
+
+        assert instance == deser
+        assert instance is deser
+
     def test_key_stable(self, instance):
         """Check that generating the instance from a dict representation yields
         the same key (and the same instance).
