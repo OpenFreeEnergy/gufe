@@ -38,20 +38,14 @@ class DummyExecutionInterruptUnit(ProtocolUnit):
         return {"foo": "bar"}
 
 
-@pytest.fixture
-def dummy_unit():
-    return DummyUnit(name="qux")
-
-
 class TestProtocolUnit(GufeTokenizableTestsMixin):
     cls = DummyUnit
     key = "predetermined"
     repr = "DummyUnit(qux)"
 
     @pytest.fixture
-    def instance(self, dummy_unit):
-        dummy_unit._set_key("predetermined")
-        return dummy_unit
+    def instance(self):
+        return DummyUnit(name="qux")
 
     def test_key_differs(self):
         u1 = DummyUnit()
@@ -128,8 +122,8 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
             assert u.outputs == {"foo": "bar"}
 
-    def test_normalize(self, dummy_unit):
-        thingy = dummy_unit.key
+    def test_normalize(self, instance):
+        thingy = instance.key
 
         assert thingy.startswith("DummyUnit-")
         assert all(t in string.hexdigits for t in thingy.partition("-")[-1])
