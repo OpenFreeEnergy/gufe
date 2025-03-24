@@ -3,7 +3,7 @@ channels:
   - jaimergp/label/unsupported-cudatoolkit-shim
   - conda-forge
 dependencies:
-  - openmm =8.2
+  - openmm
   - coverage
   - networkx
   - numpy
