@@ -14,6 +14,7 @@ from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 from ..settings import Settings, SettingsBaseModel
 from ..tokenization import GufeKey, GufeTokenizable
+from .errors import ProtocolValidationError
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
 
@@ -267,6 +268,113 @@ class Protocol(GufeTokenizable):
             transformation_key=transformation_key,
             extends_key=extends.key if extends is not None else None,
         )
+
+    def _default_validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: ComponentMapping | list[ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
+    ):
+        r"""The default validation run for all ``Protocol.validate`` calls."""
+        for cs in [stateA, stateB]:
+            if not isinstance(cs, ChemicalSystem):
+                raise ProtocolValidationError("`stateA` and `stateB` must be instances of a `ChemicalSystem`")
+
+        if mapping:
+            if not isinstance(mapping, list):
+                mapping = [mapping]
+
+            for element in mapping:
+                if not isinstance(element, ComponentMapping):
+                    raise ProtocolValidationError("a non-`ComponentMapping` object provided as a `mapping`")
+
+        if extends:
+            if not isinstance(extends, ProtocolDAGResult):
+                raise ProtocolValidationError("a non-`ProtocolDAGResult` object provided as `extends`")
+
+    def _validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: ComponentMapping | list[ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
+    ):
+        r"""Method to override in custom :class:`Protocol` subclasses.
+
+        This method should take two ``ChemicalSystem``s, optionally one or more
+        ``ComponentMapping`` objects, and optionally a ``ProtocolDAGResult``
+        object used for extensions. It should validate this combination for
+        internal consistency with this ``Protocol``s ``Settings``.
+
+        This method should raise a :class:`ProtocolValidationError` where
+        validation is not successful.
+
+        See also
+        --------
+        :meth:`Protocol.create`
+        :meth:`Protocol.validate`
+
+        """
+        raise NotImplementedError
+
+    def validate(
+        self,
+        *,
+        stateA: ChemicalSystem,
+        stateB: ChemicalSystem,
+        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None,
+        extends: ProtocolDAGResult | None = None,
+    ):
+        r"""Validate the inputs to be used in creating a :class:`ProtocolDAG`.
+
+        This method allows for the validation of inputs that will be used to
+        create a ``ProtocolDAG``, in particular checking these inputs against
+        each other and this ``Protocol`` 's ``Settings``.
+
+        Parameters
+        ----------
+        stateA : ChemicalSystem
+            The starting :class:`.ChemicalSystem` for the transformation.
+        stateB : ChemicalSystem
+            The ending :class:`.ChemicalSystem` for the transformation.
+        mapping : Optional[Union[ComponentMapping, list[ComponentMapping]]]
+            Mappings of e.g. atoms between a labelled component in the
+            stateA and stateB :class:`.ChemicalSystem`.
+        extends : Optional[ProtocolDAGResult]
+            If provided, the :class:`.ProtocolDAGResult` from a
+            previous execution may be validated against the current
+            :class:`.Protocol` object's ``Settings``, depending on the
+            ``Protocol`` implementation.
+
+        Raises
+        ------
+        ProtocolValidationError
+            When a provided set of inputs does not pass validation.
+
+        See also
+        --------
+        :meth:`Protocol.create`
+
+        """
+
+        if isinstance(mapping, dict):
+            warnings.warn(
+                "mapping input as a dict is deprecated, instead use either a single Mapping or list",
+                DeprecationWarning,
+            )
+            mapping = list(mapping.values())
+
+        # run default validation for inputs
+        self._default_validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+
+        # run protocol author defined validations if they exist
+        try:
+            self._validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+        except NotImplementedError:
+            pass
 
     def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
