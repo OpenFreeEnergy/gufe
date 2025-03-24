@@ -15,7 +15,7 @@ import weakref
 from collections.abc import Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, Dict, List, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
 
 import networkx as nx
 from typing_extensions import Self
@@ -32,6 +32,7 @@ from gufe.custom_codecs import (
     UUID_CODEC,
 )
 from gufe.custom_json import JSONSerializerDeserializer
+from gufe.serialization.msgpack import packb, unpackb
 
 _default_json_codecs = [
     PATH_CODEC,
@@ -724,6 +725,70 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             # if the above fails, try to load as the dict representation
             warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
+
+    def to_msgpack(self, file: PathLike | BinaryIO | None = None) -> None | bytes:
+        """
+        Generate a MessagePack keyed chain representation.
+
+        This will be writen to the filepath or filelike object if passed.
+
+        Parameters
+        ----------
+        file
+            A filepath or filelike object to write the encoded msgpack to.
+
+        Returns
+        -------
+        None | bytes
+            A minimal msgpack representation of the object if `file` is `None`; else None.
+
+        See Also
+        --------
+        from_msgpack
+        """
+
+        if file is None:
+            return packb(self.to_keyed_chain())
+
+        from gufe.utils import ensure_filelike
+
+        with ensure_filelike(file, mode="w+b") as out:
+            out.write(packb(self.to_keyed_chain()))
+
+        return None
+
+    @classmethod
+    def from_msgpack(cls, file: PathLike | BinaryIO | None = None, content: bytes | None = None):
+        """Generate an instance from a MessagePack keyed chain representation.
+
+        Can provide either a filepath/filelike as `file`, or msgpack content via `content`.
+
+        Parameters
+        ----------
+        file : BinaryIO | PathLike | None
+            A filepath or filelike object to read msgpack data from.
+        content : bytes
+            Bytes to read msgpack data from.
+
+        See Also
+        --------
+        to_msgpack
+        """
+
+        if content is not None and file is not None:
+            raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
+        elif content is None and file is None:
+            raise ValueError("Must specify either `content` and `file` for MessagePack input")
+
+        if content is not None:
+            keyed_chain = unpackb(content)
+        else:
+            from gufe.utils import ensure_filelike
+
+            with ensure_filelike(file, mode="rb") as f:
+                keyed_chain = unpackb(f.read())
+
+        return cls.from_keyed_chain(keyed_chain=keyed_chain)
 
 
 class GufeKey(str):
