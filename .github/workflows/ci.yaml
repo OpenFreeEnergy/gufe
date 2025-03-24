@@ -23,7 +23,7 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}
-    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }}"
+    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }} 🧪${{ matrix.openmm-version}}"
     strategy:
       fail-fast: false
       matrix:
