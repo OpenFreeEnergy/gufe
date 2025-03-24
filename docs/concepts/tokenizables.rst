@@ -2,7 +2,7 @@
 Understanding GufeTokenizables
 ==============================
 
-Nearly all objects in gufe are subclasses of :class:`.GufeTokenizable`.
+Most objects in gufe are subclasses of :class:`.GufeTokenizable`.
 This base class enforces common behavior and sets requirements necessary
 to guarantee performance and reproducibility between all downstream packages that use gufe.
 
@@ -17,15 +17,17 @@ By definition, a ``GufeTokenizable`` must be:
 1. Immutability of GufeTokenizables
 -----------------------------------
 
-One important restriction on :class:`.GufeTokenizable` subclasses is that
-they must be functionally immutable. That is, they must have no mutable
-attributes that change their functionality. In most cases, this means that
-the object must be strictly immutable.
+One important restriction on :class:`.GufeTokenizable` subclasses is that they must be  immutable,
+meaning that none of its attributes change after initialization.
+In other words, all attributes should be set when you create an object, and never changed after that.
 
-When an object is immutable, that means that none of its attributes change
-after initialization. So all attributes should be set when you create an
-object, and never changed after that. If your object is immutable, then it
-is suitable to be a :class:`.GufeTokenizable`.
+For example, when we create a SmallMoleculeComponent representing [],
+that object is immutable:
+
+
+This means that if later we want to adjust a parameter of this SmallMoleculeComponent, we cannot mutate that object.
+Instead, we can use the `copy_with_replacements()` helper functionality to make a *new* object:
+
 
 .. TODO: add a small example here?
 .. TODO: talk about `copy_with_replacements`?
@@ -40,37 +42,37 @@ is suitable to be a :class:`.GufeTokenizable`.
 .. of the object, but again, this would not change the results that are
 .. returned. It would also be recommended that an attribute like a cache, which
 .. is only used internally, should be marked private with a leading underscore.
-
-On the other hand, a flag that changes code path in a way that might
-change the results of any operation would mean that the object cannot be a
-:class:`.GufeTokenizable`.
+.. On the other hand, a flag that changes code path in a way that might
+.. change the results of any operation would mean that the object cannot be a
+.. :class:`.GufeTokenizable`.
 
 .. _gufe_keys:
 
-2. Hashing GufeTokenizables: the gufe key
+1. Hashing GufeTokenizables: the gufe key
 -----------------------------------------
 
 .. TODO: code snippet showing key
+Every gufe object has a unique identifier, which we call its ``key``.
+The ``key`` is a string, typically in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``.
 
-One of the important concepts is that every gufe object has a unique
-identifier, which we call its ``key``. The ``key`` is a string, typically
-in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``, e.g.,
-``ProteinComponent-7338abda590510f1dae764e068a65fdc``. For most objects, the
-hexadecimal label is generated based on the contents of the class -- in
+For example:
+
+.. code snippet showing object instantiation and key
+.. maybe also show how we can manually create the key and it's just based on the filtered dict?
+
+For most objects, the hexadecimal label is generated based on the contents of the class -- in
 particular, it is based on contents of the ``_to_dict`` dictionary, filtered
 to remove anything that matches the ``_defaults`` dictionary.
 
-This gives the gufe key a number of important properties:
+This gives the gufe key the following important properties:
 
-* Because the key is based on a cryptographic hash, it is extremely unlikely
+* A key is based on a **cryptographic hash**, so it is extremely unlikely
   that two objects that are functionally different will have the same key.
-* Because the key is created deterministically, it is preserved across
-  different creation times, including across different hardware, across
-  different Python sessions, and even within the same Python session.
-* Because the key is based on the non-default attributes, it is preserved
-  across minor versions of the code (since we follow `SemVer
-  <https://semver.org>`_). The developer-provided ``_defaults`` method is
-  used here.
+* Key creation is **deterministic**, so that it is preserved across different creation times,
+  including across different hardware, across different Python sessions,
+  and even within the same Python session.
+* A key is based on the non-default attributes, it is preserved across minor versions of the code
+  (since we follow `SemVer<https://semver.org>`_). 
 
 These properties, in particular the stability across Python sessions,  make
 the gufe key a stable identifier for the object, which means that they can
@@ -143,10 +145,13 @@ inner GufeTokenizables; to get a list of all of them, use
 
 .. _serialization:
 
-3. Serialization
+1. Serialization
 ----------------
 
 Any GufeTokenizable can represented in the following ways:
+
+.. find nice simple but nested test data to demo this
+
 
 1. dict
 
