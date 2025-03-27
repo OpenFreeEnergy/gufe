@@ -27,6 +27,7 @@ from gufe.protocols import (
     ProtocolUnitFailureError,
     ProtocolUnitResult,
 )
+from gufe.protocols.errors import ProtocolValidationError
 from gufe.protocols.protocoldag import execute_DAG
 
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -255,6 +256,55 @@ class TestProtocol(GufeTokenizableTestsMixin):
             )
 
         return protocol, dag, dagfailure
+
+    def test_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
+        ligand = solvated_ligand.components["ligand"]
+        mapping = gufe.LigandAtomMapping(ligand, ligand, componentA_to_componentB={})
+
+        # Test good inputs
+        instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping)
+
+        # Test bad state input
+        with pytest.raises(
+            ProtocolValidationError, match="`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+        ):
+            instance.validate(stateA=solvated_ligand, stateB=None, mapping=mapping)  # type: ignore
+
+        # Test bad mappings
+        expected_msg = "a non-`ComponentMapping` object provided as a `mapping`"
+        with pytest.raises(ProtocolValidationError, match=expected_msg):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping")  # type: ignore
+
+        with pytest.raises(ProtocolValidationError, match=expected_msg):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping="Not a mapping".split(" "))  # type: ignore
+
+        # Test bad extends
+        with pytest.raises(ProtocolValidationError, match="a non-`ProtocolDAGResult` object provided as `extends`"):
+            instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
+
+    def test_author_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
+
+        error_msg = "An intentional exception from a very picky author"
+
+        # implement a _validate method that always errors
+        class NewProtocol(DummyProtocol):
+
+            def _validate(self, *, stateA, stateB, mapping, extends):
+                raise ProtocolValidationError(error_msg)
+
+        with pytest.raises(ProtocolValidationError, match=error_msg):
+            self.test_validation(NewProtocol(NewProtocol.default_settings()), solvated_ligand, vacuum_ligand)
+
+    def test_validation_deprecation_warning(self, instance, vacuum_ligand, solvated_ligand):
+        ligand = solvated_ligand.components["ligand"]
+        mapping = gufe.LigandAtomMapping(ligand, ligand, componentA_to_componentB={})
+
+        with pytest.warns(DeprecationWarning, match="mapping input as a dict is deprecated"):
+            instance.validate(
+                stateA=solvated_ligand,
+                stateB=vacuum_ligand,
+                mapping={"ligand": mapping},
+            )
 
     def test_dag_execute(self, protocol_dag):
         protocol, dag, dagresult = protocol_dag
