@@ -266,6 +266,21 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 conf.SetAtomPosition(atom_id, atom_pos)
             rd_mol.AddConformer(conf)
 
+        def _get_ion_charge(ion_key):
+            ion_key = atom_name
+            try:
+                return ions_dict[ion_key]
+            except KeyError:
+                pass
+            try:  # only match upper if the ion dict doesn't have both upper and lower variants (e.g. Cr and CR)
+                return ions_dict[ion_key.upper()]
+            except KeyError:
+                resn = a.GetMonomerInfo().GetResidueName()
+                resind = int(a.GetMonomerInfo().GetResidueNumber())
+                raise ValueError(
+                    f"Unknown ion: {atom_name} in residue {resn} at index {resind}. "
+                )
+
         # Add Additionals
         # Formal Charge
         netcharge = 0
@@ -277,20 +292,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions
-                ion_key = atom_name.strip().upper()
-                if ion_key in ions_dict:
-                    fc = ions_dict[ion_key]
-                else:
-                    resn = a.GetMonomerInfo().GetResidueName()
-                    resind = int(a.GetMonomerInfo().GetResidueNumber())
-                    raise ValueError(
-                        f"Unknown ion: {atom_name} in residue {resn} at index {resind}. "
-                        f"Check if it's in the ions_dict dictionary."
-                    )
-            elif default_valence > connectivity:
-                fc = -(default_valence - connectivity)  # negative charge
-            elif default_valence < connectivity:
-                fc = +(connectivity - default_valence)  # positive charge
+                fc = _get_ion_charge(atom_name)
+            elif default_valence > connectivity:  # negative charge
+                fc = -(default_valence - connectivity)
+            elif default_valence < connectivity:  # positive charge
+                fc = +(connectivity - default_valence)
             else:
                 fc = 0  # neutral
 

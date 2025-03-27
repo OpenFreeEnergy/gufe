@@ -328,7 +328,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_pdb_ion_parsing(self, custom_pdb_ion, ion_name, ion_charge):
         pdb_generator = custom_pdb_ion(ion_name)
         pc = self.cls.from_pdb_file(next(pdb_generator))
-        expected_total_charge = 8+ion_charge
+        expected_total_charge = 8 + ion_charge
         assert pc.total_charge == expected_total_charge
 
 def test_no_monomer_info_error(ethane):
