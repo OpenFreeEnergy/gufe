@@ -6,7 +6,7 @@ import json
 import string
 from collections import defaultdict
 from os import PathLike
-from typing import Optional, Union, TextIO
+from typing import Optional, TextIO, Union
 
 import numpy as np
 from openmm import app
@@ -277,9 +277,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             except KeyError:
                 resn = a.GetMonomerInfo().GetResidueName()
                 resind = int(a.GetMonomerInfo().GetResidueNumber())
-                raise ValueError(
-                    f"Unknown ion: {atom_name} in residue {resn} at index {resind}. "
-                )
+                raise ValueError(f"Unknown ion: {atom_name} in residue {resn} at index {resind}. ")
 
         # Add Additionals
         # Formal Charge
