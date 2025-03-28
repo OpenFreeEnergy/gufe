@@ -65,6 +65,7 @@ class PDBxFile:
         ## The Topology read from the PDBx/mmCIF file
         self.topology = top
         self._positions = []
+        PDBFile._loadNameReplacementTables()
 
         # Load the file.
 
@@ -160,7 +161,14 @@ class PDBxFile:
                     # The start of a new residue.
                     resId = None if resNumCol == -1 else row[resNumCol]
                     resIC = insertionCode
-                    res = top.addResidue(row[resNameCol], chain, resId, resIC)
+                    resName = row[resNameCol]
+                    if resName in PDBFile._residueNameReplacements:
+                        resName = PDBFile._residueNameReplacements[resName]
+                    res = top.addResidue(resName, chain, resId, resIC)
+                    if resName in PDBFile._atomNameReplacements:
+                        atomReplacements = PDBFile._atomNameReplacements[resName]
+                    else:
+                        atomReplacements = {}
                     lastResId = row[resNumCol]
                     lastInsertionCode = insertionCode
                     atomsInResidue.clear()
@@ -169,9 +177,12 @@ class PDBxFile:
                     element = elem.get_by_symbol(row[elementCol])
                 except KeyError:
                     pass
-                atom = top.addAtom(row[atomNameCol], element, res, row[atomIdCol])
+                atomName = row[atomNameCol]
+                if atomName in atomReplacements:
+                    atomName = atomReplacements[atomName]
+                atom = top.addAtom(atomName, element, res, row[atomIdCol])
                 atomTable[atomKey] = atom
-                atomsInResidue.add(row[atomNameCol])
+                atomsInResidue.add(atomName)
             else:
                 # This row defines coordinates for an existing atom in one of the later models.
 
@@ -277,8 +288,8 @@ class PDBxFile:
             The Topology defining the model to write
         positions : list
             The list of atomic positions to write
-        file : file=stdout
-            A file to write to
+        file : string or file
+            the name of the file to write.  Alternatively you can pass an open file object.
         keepIds : bool=False
             If True, keep the residue and chain IDs specified in the Topology
             rather than generating new ones.  Warning: It is up to the caller to
@@ -287,8 +298,12 @@ class PDBxFile:
         entry : str=None
             The entry ID to assign to the CIF file
         """
-        PDBxFile.writeHeader(topology, file, entry, keepIds)
-        PDBxFile.writeModel(topology, positions, file, keepIds=keepIds)
+        if isinstance(file, str):
+            with open(file, "w") as output:
+                PDBxFile.writeFile(topology, positions, output, keepIds, entry)
+        else:
+            PDBxFile.writeHeader(topology, file, entry, keepIds)
+            PDBxFile.writeModel(topology, positions, file, keepIds=keepIds)
 
     @staticmethod
     def writeHeader(topology, file=sys.stdout, entry=None, keepIds=False):
@@ -312,7 +327,7 @@ class PDBxFile:
             print("data_%s" % entry, file=file)
         else:
             print("data_cell", file=file)
-        print("# Created with OpenMM %s" % (str(date.today())), file=file)
+        print("# Created with OpenMM {}, {}".format(Platform.getOpenMMVersion(), str(date.today())), file=file)
         print("#", file=file)
         vectors = topology.getPeriodicBoxVectors()
         if vectors is not None:
