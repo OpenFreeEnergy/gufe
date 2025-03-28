@@ -114,13 +114,6 @@ def all_settings_path():
     with importlib.resources.path("gufe.tests.data", "all_settings.json") as f:
         yield str(f)
 
-
-@pytest.fixture
-def PDB_thrombin_path():
-    with importlib.resources.path("gufe.tests.data", "thrombin_protein.pdb") as f:
-        yield str(f)
-
-
 @pytest.fixture
 def PDBx_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.cif") as f:
