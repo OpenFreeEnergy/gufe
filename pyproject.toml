@@ -46,6 +46,7 @@ omit = [
     "*/_version.py",
     "*/tests/dev/*py",
     "gufe/tests/*",
+    "gufe/vendor/*",
 ]
 
 [tool.coverage.report]
