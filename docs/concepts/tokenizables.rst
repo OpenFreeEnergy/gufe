@@ -6,6 +6,19 @@ Most objects in gufe are subclasses of :class:`.GufeTokenizable`.
 This base class enforces common behavior and sets requirements necessary
 to guarantee performance and reproducibility between all downstream packages that use gufe.
 
+For example, when we create a ``SmallMoleculeComponent`` representing benzene, that object is also a ``GufeTokenizable``:
+
+.. code:: python
+
+    >>> import gufe
+    >>> benzene = gufe.SmallMoleculeComponent.from_sdf_file("benzene.sdf")
+    >>> type(Benzene)
+    gufe.components.smallmoleculecomponent.SmallMoleculeComponent
+
+    >>> from gufe.tokenization import GufeTokenizable
+    >>> isinstance(benzene, GufeTokenizable)
+    True
+
 By definition, a ``GufeTokenizable`` must be:
 
 1. :ref:`immutable <immutability>`
@@ -17,21 +30,29 @@ By definition, a ``GufeTokenizable`` must be:
 1. Immutability of GufeTokenizables
 -----------------------------------
 
-One important restriction on :class:`.GufeTokenizable` subclasses is that they must be  immutable,
+One important restriction on :class:`.GufeTokenizable` subclasses is that they must be immutable,
 meaning that none of its attributes change after initialization.
 In other words, all attributes should be set when you create an object, and never changed after that.
+If your object is immutable, then it is suitable to be a GufeTokenizable.
 
-For example, when we create a SmallMoleculeComponent representing [],
-that object is immutable:
+For example, once the benzene molecule from above is loaded, its attributes (such as ``name``) are immutable:
+
+.. code:: python
+
+    >>> benzene.name
+    'benzene'
+    >>> benzene.name = 'benzene_1'
+    AttributeError
+
+.. todo: note that no error is raised if we try to mutate the dict object, e.g. ``benzene.to_dict()['atoms'] = 1``?
+
+Immutability is critical to gufe's design, because it means that gufe can generate a deterministic unique identifier (the gufe key)
+based on the ``GufeTokenizable``'s properties.
 
 
-This means that if later we want to adjust a parameter of this SmallMoleculeComponent, we cannot mutate that object.
-Instead, we can use the `copy_with_replacements()` helper functionality to make a *new* object:
-
-
-.. TODO: add a small example here?
 .. TODO: talk about `copy_with_replacements`?
 
+.. TODO: how to actually implement a mutable attribute? isn't this enforced, or does this just mean using the unfreeze functionality?
 .. There is a special case of mutability that is also allowed, which is if the
 .. object is functionally immutable.  As an example, consider a flag to turn on
 .. or off usage of a cache of input-output pairs for some deterministic method.
@@ -48,21 +69,27 @@ Instead, we can use the `copy_with_replacements()` helper functionality to make 
 
 .. _gufe_keys:
 
-1. Hashing GufeTokenizables: the gufe key
+2. Hashing GufeTokenizables: the gufe key
 -----------------------------------------
 
 .. TODO: code snippet showing key
-Every gufe object has a unique identifier, which we call its ``key``.
+
+Because gufe objects are immutable, each object has a unique identifier, which we call its ``key``.
 The ``key`` is a string, typically in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``.
 
-For example:
+For our benzene ``SmallMoleculeComponent``, the key is ``'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795``:
+
+.. code:: python
+
+    >>> benzene.key
+    'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795'
 
 .. code snippet showing object instantiation and key
 .. maybe also show how we can manually create the key and it's just based on the filtered dict?
 
 For most objects, the hexadecimal label is generated based on the contents of the class -- in
-particular, it is based on contents of the ``_to_dict`` dictionary, filtered
-to remove anything that matches the ``_defaults`` dictionary.
+particular, it is based on contents of the ``_to_dict()`` dictionary, filtered
+to remove anything that matches the ``_defaults()`` dictionary.
 
 This gives the gufe key the following important properties:
 
@@ -72,11 +99,10 @@ This gives the gufe key the following important properties:
   including across different hardware, across different Python sessions,
   and even within the same Python session.
 * A key is based on the non-default attributes, it is preserved across minor versions of the code
-  (since we follow `SemVer<https://semver.org>`_). 
+  (since we follow `SemVer <https://semver.org>`_).
 
-These properties, in particular the stability across Python sessions,  make
-the gufe key a stable identifier for the object, which means that they can
-be used for store-by-reference.
+These properties, in particular the stability across Python sessions,  make the gufe key a stable identifier for the object.
+This stability means that they can be used for store-by-reference, and therefore deduplicated to optimize memory and performance.
 
 Deduplication of GufeTokenizables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -145,7 +171,7 @@ inner GufeTokenizables; to get a list of all of them, use
 
 .. _serialization:
 
-1. Serialization
+3. Serialization
 ----------------
 
 Any GufeTokenizable can represented in the following ways:
@@ -161,7 +187,7 @@ Any GufeTokenizable can represented in the following ways:
 
 2. shallow_dict
 
-  - only one level is 'unpacked', anything deeper is stored by GufeTokenizable 
+  - only one level is 'unpacked', anything deeper is stored by GufeTokenizable
   - (QUESTION: where/how does this happen?, `to_shallow_dict` is just calling to_dict?)
   - most useful for iterating through a gufe tokenizable layer-by-layer
 
