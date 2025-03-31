@@ -27,8 +27,8 @@ By definition, a ``GufeTokenizable`` must be:
 
 .. _immutability:
 
-1. Immutability of GufeTokenizables
------------------------------------
+1. Immutability of ``GufeTokenizables``
+---------------------------------------
 
 One important restriction on :class:`.GufeTokenizable` subclasses is that they must be immutable,
 meaning that none of its attributes change after initialization.
@@ -44,7 +44,7 @@ For example, once the benzene molecule from above is loaded, its attributes (suc
     >>> benzene.name = 'benzene_1'
     AttributeError
 
-.. todo: note that no error is raised if we try to mutate the dict object, e.g. ``benzene.to_dict()['atoms'] = 1``?
+.. TODO: note that no error is raised if we try to mutate the dict object, e.g. ``benzene.to_dict()['atoms'] = 1``?
 
 Immutability is critical to gufe's design, because it means that gufe can generate a deterministic unique identifier (the gufe key)
 based on the ``GufeTokenizable``'s properties.
@@ -53,6 +53,7 @@ based on the ``GufeTokenizable``'s properties.
 .. TODO: talk about `copy_with_replacements`?
 
 .. TODO: how to actually implement a mutable attribute? isn't this enforced, or does this just mean using the unfreeze functionality?
+
 .. There is a special case of mutability that is also allowed, which is if the
 .. object is functionally immutable.  As an example, consider a flag to turn on
 .. or off usage of a cache of input-output pairs for some deterministic method.
@@ -69,10 +70,8 @@ based on the ``GufeTokenizable``'s properties.
 
 .. _gufe_keys:
 
-2. Hashing GufeTokenizables: the gufe key
------------------------------------------
-
-.. TODO: code snippet showing key
+2. Hashing ``GufeTokenizables``: the gufe key
+---------------------------------------------
 
 Because gufe objects are immutable, each object has a unique identifier, which we call its ``key``.
 The ``key`` is a string, typically in the format ``{CLASS_NAME}-{HEXADECIMAL_LABEL}``.
@@ -83,9 +82,6 @@ For our benzene ``SmallMoleculeComponent``, the key is ``'SmallMoleculeComponent
 
     >>> benzene.key
     'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795'
-
-.. code snippet showing object instantiation and key
-.. maybe also show how we can manually create the key and it's just based on the filtered dict?
 
 For most objects, the hexadecimal label is generated based on the contents of the class -- in
 particular, it is based on contents of the ``_to_dict()`` dictionary, filtered
@@ -98,8 +94,10 @@ This gives the gufe key the following important properties:
 * Key creation is **deterministic**, so that it is preserved across different creation times,
   including across different hardware, across different Python sessions,
   and even within the same Python session.
-* A key is based on the non-default attributes, it is preserved across minor versions of the code
-  (since we follow `SemVer <https://semver.org>`_).
+* A key is preserved across minor versions of the code, since it is dependent on non-default attributes and
+   we follow `SemVer <https://semver.org>`_.
+
+..  QUESTION: is this still true, or have we changed keys across minor versions?
 
 These properties, in particular the stability across Python sessions,  make the gufe key a stable identifier for the object.
 This stability means that they can be used for store-by-reference, and therefore deduplicated to optimize memory and performance.
@@ -107,10 +105,9 @@ This stability means that they can be used for store-by-reference, and therefore
 Deduplication of GufeTokenizables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-There are two types of deduplication of GufeTokenizables. Objects can be
-deduplicated on storage to disk because we store by reference to the gufe
-key. Additionally, objects are deduplicated in memory because we keep a
-registry of all instantiated GufeTokenizables.
+There are two types of deduplication of GufeTokenizables.
+Objects are deduplicated in memory because gufe keeps a registry of all instantiated GufeTokenizables.
+Objects can be deduplicated on storage to disk because we store by reference to the gufe key. 
 
 .. _gufe-memory-deduplication:
 
@@ -118,9 +115,9 @@ Deduplication in memory (flyweight pattern)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Memory deduplication means that only one object with a given gufe ``key``
-will exist in any single Python session. We ensure this by maintaining a
-registry of all GufeTokenizables that gets updated any time a
-GufeTokenizable is created. (This is a mapping to weak references, which
+will exist in any single Python session. 
+We ensure this by maintaining a registry of all GufeTokenizables that gets updated any time a
+GufeTokenizable is created. (The registry is a mapping to weak references, which
 allows Python's garbage collection to clean up GufeTokenizables that are no
 longer needed.) This is essentially an implementation of the `flyweight
 pattern <https://en.wikipedia.org/wiki/Flyweight_pattern>`_.
@@ -132,6 +129,7 @@ behavior; for example, using the ``Foo`` class defined above:
 
 .. code::
 
+    # here Foo is a GufeTokenizable:
     >>> a = Foo(0)
     >>> b = Foo(0)
     >>> a is b
@@ -150,16 +148,14 @@ Deduplication on disk
 ~~~~~~~~~~~~~~~~~~~~~
 
 Deduplication in disk storage is fundamentally the responsibility of the
-specific storage system, which falls outside the scope of ``gufe``. However,
-``gufe`` provides some tools to facilitate implementation of a storage
+specific storage system, which falls outside the scope of ``gufe``.
+However, ``gufe`` provides some tools to facilitate implementation of a storage
 system.
 
-The main idea is again to use the ``key`` to ensure uniqueness, and to use
-it as a label for the object's serialized representation.  Additionally, the
-``key``, as a simple string, can be used as a stand-in for the object, so
-when an outer GufeTokenizable contains an inner GufeTokenizable, the
-outer can store the key in place of the inner object.  That is, we can store
-by reference to the key.
+The main idea is to use the ``key`` to ensure uniqueness, and to use it as a label for the object's serialized representation.
+Additionally, the ``key``, which is simply a string, can be used as a stand-in for the object.
+When an outer GufeTokenizable contains an inner GufeTokenizable, the outer can store the key in place of the inner object.
+That is, we can store by reference to the key.
 
 To convert a GufeTokenizable ``obj`` into a dictionary that references inner
 GufeTokenizables by key, use ``obj.to_keyed_dict()``. That method replaces
@@ -168,38 +164,68 @@ to the key of the object. Of course, you'll also need to do the same for all
 inner GufeTokenizables; to get a list of all of them, use
 :func:`.get_all_gufe_objs` on the outermost ``obj``.
 
+.. TODO: add a tutorial for this
+
 
 .. _serialization:
 
-3. Serialization
-----------------
+3. Serialization (and deserialized representations)
+---------------------------------------------------
 
 Any GufeTokenizable can represented in the following ways:
 
 .. find nice simple but nested test data to demo this
 
 
-1. dict
+a) dictionary
+^^^^^^^^^^^^^
 
-  - this is the most explicit way to represent a GufeTokenizable
-  - unpacks all levels to their dict representation
-  - complete but not space efficient
+The ``to_dict()`` method is the most explicit way to represent a GufeTokenizable. 
+This method recursively unpacks any inner GufeTokenizables that an
+outer GufeTokenizable contains to their full dict representation.
+Although this method is best way to see all information stored in a GufeTokenizable,
+it is also the least space-efficient.
 
-2. shallow_dict
+.. TODO: show this method
+.. TODO: diagram
 
-  - only one level is 'unpacked', anything deeper is stored by GufeTokenizable
-  - (QUESTION: where/how does this happen?, `to_shallow_dict` is just calling to_dict?)
-  - most useful for iterating through a gufe tokenizable layer-by-layer
+b) shallow dictionary
+^^^^^^^^^^^^^^^^^^^^^
 
-3. keyed_dict
+The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks a tokenizable into a ``dict`` format,
+but a shallow dict is *not recursive* and only unpacks the top level of the GufeTokenizable. Anything nested deeper is represented by
+the inner objects' GufeTokenizable.
 
-  - similar to shallow_dict, only one level is unpacked, anything deeper is represented as
-    {':gufe-key:': 'ChemicalSystem-96f686efdc070e01b74888cbb830f720'},
-  - most compact representation of the object, but does not have the complete representation for serialization, sending information
+.. TODO: show this method
+.. TODO: diagram
 
-4. keyed_chain
 
-  - uses keyed_dict to create a DAG for efficient reconstruction without duplication
-  - explain with a diagram here?
+This method is most useful for iterating through the hierarchy of a GufeTokenizable one layer at a time.
 
-See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
+
+c) keyed dictionary
+^^^^^^^^^^^^^^^^^^^
+
+The ``to_keyed_dict()`` method is similar to ``to_shallow_dict`` in that it only unpacks the first layer of a GufeTokenizable.
+However, a keyed dict represents the next layer as its gufe key, e.g. ``{':gufe-key:': 'ChemicalSystem-96f686efdc070e01b74888cbb830f720'},``
+  
+A keyed dict is the most compact representation of a GufeTokenizable and can be useful for understanding its contents,
+but it does not have the complete representation for reconstruction or sending information (for this, see the next section, :ref:`keyed chain <keyed_chain>`)
+
+.. TODO: show this method
+.. TODO: diagram
+
+.. _keyed_chain:
+
+d) keyed chain
+^^^^^^^^^^^^^^
+
+The ``keyed_chain()`` method is a powerful representation of a GufeTokenizable that enables efficient reconstruction of an object without duplication.
+It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) layer up, effectively constructing a DAG
+(`directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_) where re-used GufeTokenizables are deduplicated.
+
+.. TODO: maybe show output, maybe abbreviated?
+.. TODO: diagram (especially this one!!)
+
+.. NOTE::
+  See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
