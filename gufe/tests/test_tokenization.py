@@ -161,6 +161,13 @@ class GufeTokenizableTestsMixin(abc.ABC):
         assert instance == deser
         assert instance is deser
 
+    def test_to_keyed_chain_roundtrip(self, instance):
+        ser = instance.to_keyed_chain()
+        deser = self.cls.from_keyed_chain(ser)
+
+        assert instance == deser
+        assert instance is deser
+
     def test_key_stable(self, instance):
         """Check that generating the instance from a dict representation yields
         the same key (and the same instance).
