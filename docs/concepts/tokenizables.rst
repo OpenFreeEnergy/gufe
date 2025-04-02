@@ -87,6 +87,51 @@ For most objects, the hexadecimal label is generated based on the contents of th
 particular, it is based on contents of the ``_to_dict()`` dictionary, filtered
 to remove anything that matches the ``_defaults()`` dictionary.
 
+For our benzene object, that means that its key is directly determined from all items in it's ``to_dict()``
+representation, except for ``:version:``, since that is a default parameter:
+
+.. _benzene_to_dict:
+
+.. code:: python
+
+    >>> benzene.defaults()
+    {'name': '', ':version:': 1}
+
+    >>> benzene.to_dict()
+    {'atoms': [(6, 0, 0, True, 0, 0, {}, 3),
+    (6, 0, 0, True, 0, 0, {}, 3),
+    (6, 0, 0, True, 0, 0, {}, 3),
+    (6, 0, 0, True, 0, 0, {}, 3),
+    (6, 0, 0, True, 0, 0, {}, 3),
+    (6, 0, 0, True, 0, 0, {}, 3),
+    (1, 0, 0, False, 0, 0, {}, 1),
+    (1, 0, 0, False, 0, 0, {}, 1),
+    (1, 0, 0, False, 0, 0, {}, 1),
+    (1, 0, 0, False, 0, 0, {}, 1),
+    (1, 0, 0, False, 0, 0, {}, 1),
+    (1, 0, 0, False, 0, 0, {}, 1)],
+    'bonds': [(0, 1, 12, 0, {}),
+    (0, 5, 12, 0, {}),
+    (0, 6, 1, 0, {}),
+    (1, 2, 12, 0, {}),
+    (1, 7, 1, 0, {}),
+    (2, 3, 12, 0, {}),
+    (2, 8, 1, 0, {}),
+    (3, 4, 12, 0, {}),
+    (3, 9, 1, 0, {}),
+    (4, 5, 12, 0, {}),
+    (4, 10, 1, 0, {}),
+    (5, 11, 1, 0, {})],
+    'conformer': ("\x93NUMPY\x01\x00v\x00{'descr': '<f8', 'fortran_order': False, 'shape': (12, 3), }                                                         \nî|?5^ú9@\x02+\x87\x16ÙN\x15@\x04V\x0e-²\x1d\x13@\x85ëQ¸\x1ee:@²\x9dï§ÆK\x14@Ë¡E¶óý\x0b@×£p=\nW;@q=\n×£p\x17@\x9eï§ÆK7\x07@\x83ÀÊ¡EÖ;@Év¾\x9f\x1a¯\x1b@Zd;ßO\x8d\x0c@ìQ¸\x1e\x85k;@b\x10X9´È\x1c@\x06\x81\x95C\x8bl\x13@sh\x91í|\x7f:@j¼t\x93\x18\x84\x19@ÇK7\x89Aà\x15@í\x9e<,Ô:9@<NÑ\x91\\¾\x12@\x97ÿ\x90~ûú\x14@\x0f\x9c3¢´÷9@\x8d(í\r¾ð\x10@ð\x16HPü\x98\x07@ªñÒMb°;@¼\x05\x12\x14?\x86\x16@Ãdª`TRþ?¦\x9bÄ °\x92<@Ý$\x06\x81\x95C\x1e@Kê\x044\x11¶\x08@RI\x9d\x80&Ò;@\x02\x9a\x08\x1b\x9e\x1e @zÇ):\x92\x8b\x15@9EGrù/:@}?5^ºI\x1a@]mÅþ²û\x19@",
+    {}),
+    'molprops': {'ofe-name': 'benzene'},
+    '__qualname__': 'SmallMoleculeComponent',
+    '__module__': 'gufe.components.smallmoleculecomponent',
+    ':version:': 1}
+
+
+ 
+
 This gives the gufe key the following important properties:
 
 * A key is based on a **cryptographic hash**, so it is extremely unlikely
@@ -94,8 +139,7 @@ This gives the gufe key the following important properties:
 * Key creation is **deterministic**, so that it is preserved across different creation times,
   including across different hardware, across different Python sessions,
   and even within the same Python session.
-* A key is preserved across minor versions of the code, since it is dependent on non-default attributes and
-   we follow `SemVer <https://semver.org>`_.
+* A key is preserved across minor versions of the code, since it is dependent on non-default attributes and we follow `SemVer <https://semver.org>`_.
 
 ..  QUESTION: is this still true, or have we changed keys across minor versions?
 
@@ -127,7 +171,7 @@ which is typically used in deserialization. It will always use the first
 object in memory with that ``key``. This can lead to some unexpected
 behavior; for example, using the ``Foo`` class defined above:
 
-.. code::
+.. code:: python
 
     # here Foo is a GufeTokenizable:
     >>> a = Foo(0)
@@ -169,8 +213,8 @@ inner GufeTokenizables; to get a list of all of them, use
 
 .. _serialization:
 
-3. Serialization (and deserialized representations)
----------------------------------------------------
+3. Serialization (and deserialized representations) of ``GufeTokenizables``
+---------------------------------------------------------------------------
 
 Any GufeTokenizable can represented in the following ways:
 
@@ -186,6 +230,10 @@ outer GufeTokenizable contains to their full dict representation.
 Although this method is best way to see all information stored in a GufeTokenizable,
 it is also the least space-efficient.
 
+For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for 
+a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_dict()`` representation is neither easily readable by humans or computationally memory-efficient.
+
+ 
 .. TODO: show this method
 .. TODO: diagram
 
@@ -196,7 +244,27 @@ The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks 
 but a shallow dict is *not recursive* and only unpacks the top level of the GufeTokenizable. Anything nested deeper is represented by
 the inner objects' GufeTokenizable.
 
-.. TODO: show this method
+.. code:: python
+
+    >>> alchemical_network.to_shallow_dict()
+    {
+    'nodes': [
+        ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}),
+        ChemicalSystem(name=toluene-solvent, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}),
+        ChemicalSystem(name=styrene-solvent, components={'ligand': SmallMoleculeComponent(name=styrene), 'solvent': SolventComponent(name=O, K+, Cl-)}),
+        ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)})
+        ],
+    'edges': [
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=toluene-solvent, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=styrene-solvent, components={'ligand': SmallMoleculeComponent(name=styrene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)
+        ],
+    'name': None,
+    '__qualname__': 'AlchemicalNetwork',
+    '__module__': 'gufe.network',
+    ':version:': 1
+    }
+
 .. TODO: diagram
 
 
@@ -212,7 +280,28 @@ However, a keyed dict represents the next layer as its gufe key, e.g. ``{':gufe-
 A keyed dict is the most compact representation of a GufeTokenizable and can be useful for understanding its contents,
 but it does not have the complete representation for reconstruction or sending information (for this, see the next section, :ref:`keyed chain <keyed_chain>`)
 
-.. TODO: show this method
+.. code:: python
+
+    >>> alchemical_network.to_keyed_dict()
+    {
+    'nodes': [
+        {':gufe-key:': 'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755'},
+        {':gufe-key:': 'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e'},
+        {':gufe-key:': 'ChemicalSystem-6a13159b10c95cb05f542de64ec91fe7'},
+        {':gufe-key:': 'ChemicalSystem-ba83a53f18700b3738680da051ff35f3'}
+        ],
+    'edges': [
+        {':gufe-key:': 'Transformation-4d0f802817071c8d14b37efd35187318'},
+        {':gufe-key:': 'Transformation-7e7433a86239a41490da52222bf6f78f'},
+        {':gufe-key:': 'Transformation-e8d1ccf53116e210d1ccbc3870007271'}
+        ],
+    'name': None,
+    '__qualname__': 'AlchemicalNetwork',
+    '__module__': 'gufe.network',
+    ':version:': 1
+    }
+
+
 .. TODO: diagram
 
 .. _keyed_chain:
@@ -221,8 +310,14 @@ d) keyed chain
 ^^^^^^^^^^^^^^
 
 The ``keyed_chain()`` method is a powerful representation of a GufeTokenizable that enables efficient reconstruction of an object without duplication.
-It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) layer up, effectively constructing a DAG
+It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) layer up into a flat list, effectively constructing a DAG
 (`directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_) where re-used GufeTokenizables are deduplicated.
+
+.. code:: python
+
+    >>> alchemical_network.to_keyed_chain()
+    
+
 
 .. TODO: maybe show output, maybe abbreviated?
 .. TODO: diagram (especially this one!!)
