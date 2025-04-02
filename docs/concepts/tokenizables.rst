@@ -8,8 +8,9 @@ to guarantee performance and reproducibility between all downstream packages tha
 
 For example, when we create a ``SmallMoleculeComponent`` representing benzene, that object is also a ``GufeTokenizable``:
 
-.. code:: python
+.. code-block:: python
 
+    #
     >>> import gufe
     >>> benzene = gufe.SmallMoleculeComponent.from_sdf_file("benzene.sdf")
     >>> type(Benzene)
@@ -37,8 +38,9 @@ If your object is immutable, then it is suitable to be a GufeTokenizable.
 
 For example, once the benzene molecule from above is loaded, its attributes (such as ``name``) are immutable:
 
-.. code:: python
+.. code-block:: python
 
+    #
     >>> benzene.name
     'benzene'
     >>> benzene.name = 'benzene_1'
@@ -78,8 +80,9 @@ The ``key`` is a string, typically in the format ``{CLASS_NAME}-{HEXADECIMAL_LAB
 
 For our benzene ``SmallMoleculeComponent``, the key is ``'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795``:
 
-.. code:: python
+.. code-block:: python
 
+    #
     >>> benzene.key
     'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795'
 
@@ -92,8 +95,9 @@ representation, except for ``:version:``, since that is a default parameter:
 
 .. _benzene_to_dict:
 
-.. code:: python
+.. code-block:: python
 
+    #
     >>> benzene.defaults()
     {'name': '', ':version:': 1}
 
@@ -171,7 +175,7 @@ which is typically used in deserialization. It will always use the first
 object in memory with that ``key``. This can lead to some unexpected
 behavior; for example, using the ``Foo`` class defined above:
 
-.. code:: python
+.. code-block:: python
 
     # here Foo is a GufeTokenizable:
     >>> a = Foo(0)
@@ -247,8 +251,9 @@ The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks 
 but a shallow dict is *not recursive* and only unpacks the top level of the GufeTokenizable. Anything nested deeper is represented by
 the inner objects' GufeTokenizable.
 
-.. code:: python
+.. code-block:: python
 
+    #
     >>> alchemical_network.to_shallow_dict()
     {
     'nodes': [
@@ -283,8 +288,9 @@ However, a keyed dict represents the next layer as its gufe key, e.g. ``{':gufe-
 A keyed dict is the most compact representation of a GufeTokenizable and can be useful for understanding its contents,
 but it does not have the complete representation for reconstruction or sending information (for this, see the next section, :ref:`keyed chain <keyed_chain>`)
 
-.. code:: python
+.. code-block:: python
 
+    #
     >>> alchemical_network.to_keyed_dict()
     {
     'nodes': [
@@ -319,9 +325,10 @@ It uses ``to_keyed_dict()`` to unpack a GufeTokenizable from the bottom (innermo
 
 As an exercise with our example alchemical network, we can look at the first element of each tuple in the keyed dict to see which gufe keys are contained in the alchemical network:
 
-.. code:: python
+.. code-block:: python
 
-    >>> [x[0] for x in alchemical_network.to_keyed_chain()()]
+    #
+    >>> [x[0] for x in alchemical_network.to_keyed_chain()]
     [
     'SolventComponent-e0e47f56b43717156128ad4ae2d49897',
     'SmallMoleculeComponent-3b51f5f92521c712049da092ab061930',
@@ -360,7 +367,7 @@ For keyed chains, the order of the elements in this list matters! When deseriali
         AlchemicalNetwork-f8bf --> ChemicalSystem-ba83
         AlchemicalNetwork-f8bf --> Transformation-4d0f
         AlchemicalNetwork-f8bf --> Transformation-e8d1
-        
+
 
 .. "SolventComponent-e0e4"
 .. "SmallMoleculeComponent-3b51"
