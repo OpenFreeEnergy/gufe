@@ -217,7 +217,7 @@ inner GufeTokenizables; to get a list of all of them, use
 
 .. _serialization:
 
-1. Serialized Representations of ``GufeTokenizables``
+3. Serialized Representations of ``GufeTokenizables``
 -----------------------------------------------------
 
 - each subclass's implementation of `to_dict()` defines what information gufe will serialize. all other
