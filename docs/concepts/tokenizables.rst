@@ -130,7 +130,7 @@ representation, except for ``:version:``, since that is a default parameter:
     ':version:': 1}
 
 
- 
+
 
 This gives the gufe key the following important properties:
 
@@ -151,7 +151,7 @@ Deduplication of GufeTokenizables
 
 There are two types of deduplication of GufeTokenizables.
 Objects are deduplicated in memory because gufe keeps a registry of all instantiated GufeTokenizables.
-Objects can be deduplicated on storage to disk because we store by reference to the gufe key. 
+Objects can be deduplicated on storage to disk because we store by reference to the gufe key.
 
 .. _gufe-memory-deduplication:
 
@@ -159,7 +159,7 @@ Deduplication in memory (flyweight pattern)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Memory deduplication means that only one object with a given gufe ``key``
-will exist in any single Python session. 
+will exist in any single Python session.
 We ensure this by maintaining a registry of all GufeTokenizables that gets updated any time a
 GufeTokenizable is created. (The registry is a mapping to weak references, which
 allows Python's garbage collection to clean up GufeTokenizables that are no
@@ -213,32 +213,35 @@ inner GufeTokenizables; to get a list of all of them, use
 
 .. _serialization:
 
-3. Serialization (and deserialized representations) of ``GufeTokenizables``
----------------------------------------------------------------------------
+1. Serialized Representations of ``GufeTokenizables``
+-----------------------------------------------------
 
-Any GufeTokenizable can represented in the following ways:
+- each subclass's implementation of `to_dict()` defines what information gufe will serialize. all other
 
-.. find nice simple but nested test data to demo this
 
+ Representations
+^^^^^^^^^^^^^^^^^
+
+Any GufeTokenizable can be deserialized and
 
 a) dictionary
-^^^^^^^^^^^^^
+~~~~~~~~~~~~~
 
-The ``to_dict()`` method is the most explicit way to represent a GufeTokenizable. 
+The ``to_dict()`` method is the most explicit way to represent a GufeTokenizable.
 This method recursively unpacks any inner GufeTokenizables that an
 outer GufeTokenizable contains to their full dict representation.
 Although this method is best way to see all information stored in a GufeTokenizable,
 it is also the least space-efficient.
 
-For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for 
+For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for
 a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_dict()`` representation is neither easily readable by humans or computationally memory-efficient.
 
- 
+
 .. TODO: show this method
 .. TODO: diagram
 
 b) shallow dictionary
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks a tokenizable into a ``dict`` format,
 but a shallow dict is *not recursive* and only unpacks the top level of the GufeTokenizable. Anything nested deeper is represented by
@@ -272,11 +275,11 @@ This method is most useful for iterating through the hierarchy of a GufeTokeniza
 
 
 c) keyed dictionary
-^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~
 
 The ``to_keyed_dict()`` method is similar to ``to_shallow_dict`` in that it only unpacks the first layer of a GufeTokenizable.
 However, a keyed dict represents the next layer as its gufe key, e.g. ``{':gufe-key:': 'ChemicalSystem-96f686efdc070e01b74888cbb830f720'},``
-  
+
 A keyed dict is the most compact representation of a GufeTokenizable and can be useful for understanding its contents,
 but it does not have the complete representation for reconstruction or sending information (for this, see the next section, :ref:`keyed chain <keyed_chain>`)
 
@@ -307,7 +310,7 @@ but it does not have the complete representation for reconstruction or sending i
 .. _keyed_chain:
 
 d) keyed chain
-^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~
 
 The ``keyed_chain()`` method is a powerful representation of a GufeTokenizable that enables efficient reconstruction of an object without duplication.
 It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) layer up into a flat list, effectively constructing a DAG
@@ -316,6 +319,17 @@ It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) l
 
 .. TODO: maybe show output, maybe abbreviated?
 .. TODO: diagram (especially this one!!)
+
+
+
+Serialization Methods
+^^^^^^^^^^^^^^^^^^^^^
+
+.. TODO explain custom serialization schemes?
+
+- helper methods `to_json` and `to_msgpack` are available, but are simply wrappers around
+
+.. find nice simple but nested test data to demo this
 
 .. NOTE::
   See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
