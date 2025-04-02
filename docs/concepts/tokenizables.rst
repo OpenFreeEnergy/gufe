@@ -336,7 +336,7 @@ As an exercise with our example alchemical network, we can look at the first ele
     'AlchemicalNetwork-f8bfd63bc848672aa52b081b4d68fadf'
     ]
 
-For keyed chains, the order of the elements in this list matters! When deserializing the 
+For keyed chains, the order of the elements in this list matters! When deserializing the keyed chain back into a gufe object, this list is iterated through in order, meaning that each gufe object can only reference gufe keys that come *before* it in this list.
 
 .. mermaid::
 
