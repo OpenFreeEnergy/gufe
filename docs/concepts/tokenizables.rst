@@ -313,11 +313,6 @@ The ``keyed_chain()`` method is a powerful representation of a GufeTokenizable t
 It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) layer up into a flat list, effectively constructing a DAG
 (`directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_) where re-used GufeTokenizables are deduplicated.
 
-.. code:: python
-
-    >>> alchemical_network.to_keyed_chain()
-    
-
 
 .. TODO: maybe show output, maybe abbreviated?
 .. TODO: diagram (especially this one!!)
