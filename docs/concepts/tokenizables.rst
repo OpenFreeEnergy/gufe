@@ -258,9 +258,9 @@ the inner objects' GufeTokenizable.
         ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)})
         ],
     'edges': [
-        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=toluene-solvent, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
-        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=styrene-solvent, components={'ligand': SmallMoleculeComponent(name=styrene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
-        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=toluene-solvent, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=styrene-solvent, components={'ligand': SmallMoleculeComponent(name=styrene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)
         ],
     'name': None,
     '__qualname__': 'AlchemicalNetwork',
@@ -327,7 +327,7 @@ As an exercise with our example alchemical network, we can look at the first ele
     'SmallMoleculeComponent-3b51f5f92521c712049da092ab061930',
     'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795',
     'SmallMoleculeComponent-8225dfb11f2e8157a3fcdcd673d3d40e',
-    'DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa',
+    'Protocol-d01baed9cf2500c393bd6ddb35ee38aa',
     'ChemicalSystem-ba83a53f18700b3738680da051ff35f3',
     'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755',
     'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e',
@@ -341,18 +341,32 @@ For keyed chains, the order of the elements in this list matters! When deseriali
 .. mermaid::
 
     flowchart TD
-        SolventComponent-e0e4
-        SmallMoleculeComponent-3
-        SmallMoleculeComponent-e
-        SmallMoleculeComponent-8
+        ChemicalSystem-ba83 --> SolventComponent-e0e4
+        ChemicalSystem-ba83 --> SmallMoleculeComponent-3
+        ChemicalSystem-3c64 --> SolventComponent-e0e4
+        ChemicalSystem-3c64 --> SmallMoleculeComponent-e
+        ChemicalSystem-655f --> SolventComponent-e0e4
+        ChemicalSystem-655f --> SmallMoleculeComponent-8
+        Transformation-e8d1 --> ChemicalSystem-3c64
+        Transformation-e8d1 --> ChemicalSystem-ba83
+        Transformation-e8d1 --> Protocol-d01b
 
+        Transformation-4d0f --> ChemicalSystem-3c64
+        Transformation-4d0f --> ChemicalSystem-655f
+        Transformation-4d0f --> Protocol-d01b
+
+        AlchemicalNetwork-f8bf --> ChemicalSystem-3c64
+        AlchemicalNetwork-f8bf --> ChemicalSystem-655f
+        AlchemicalNetwork-f8bf --> ChemicalSystem-ba83
+        AlchemicalNetwork-f8bf --> Transformation-4d0f
+        AlchemicalNetwork-f8bf --> Transformation-e8d1
         
 
 .. "SolventComponent-e0e4"
 .. "SmallMoleculeComponent-3b51"
 .. "SmallMoleculeComponent-ec3c"
 .. "SmallMoleculeComponent-8225"
-.. "DummyProtocol-d01b"
+.. "Protocol-d01b"
 .. "ChemicalSystem-ba83"
 .. "ChemicalSystem-3c64"
 .. "ChemicalSystem-655f"
