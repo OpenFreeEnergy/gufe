@@ -272,7 +272,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 return ions_dict[ion_key]
             except KeyError:
                 pass
-            try:  # only match upper if the ion dict doesn't have both upper and lower variants (e.g. Cr and CR)
+            try:  # only match upper if the ion dict doesn't have a lower variant (e.g. Cr and CR)
                 return ions_dict[ion_key.upper()]
             except KeyError:
                 resn = a.GetMonomerInfo().GetResidueName()
