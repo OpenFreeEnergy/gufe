@@ -219,8 +219,8 @@ inner GufeTokenizables; to get a list of all of them, use
 - each subclass's implementation of `to_dict()` defines what information gufe will serialize. all other
 
 
- Representations
-^^^^^^^^^^^^^^^^^
+Representations
+^^^^^^^^^^^^^^^
 
 Any GufeTokenizable can be deserialized and
 
@@ -312,11 +312,53 @@ but it does not have the complete representation for reconstruction or sending i
 d) keyed chain
 ~~~~~~~~~~~~~~
 
-The ``keyed_chain()`` method is a powerful representation of a GufeTokenizable that enables efficient reconstruction of an object without duplication.
-It uses ``keyed_dict`` to unpack a GufeTokenizable from the bottom (innermost) layer up into a flat list, effectively constructing a DAG
+The ``to_keyed_chain()`` method is a powerful representation of a GufeTokenizable that enables efficient reconstruction of an object without duplication.
+It uses ``to_keyed_dict()`` to unpack a GufeTokenizable from the bottom (innermost) layer up into a flat list of tuples, in the form ``[(gufe_key, keyed_dict)]``. The length of this list is equal to the number of unique GufeTokenizables required to represent the object. This bottom-up deduplication strategy effectively constructs a DAG
 (`directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_) where re-used GufeTokenizables are deduplicated.
 
 
+As an exercise with our example alchemical network, we can look at the first element of each tuple in the keyed dict to see which gufe keys are contained in the alchemical network:
+
+.. code:: python
+
+    >>> [x[0] for x in alchemical_network.to_keyed_chain()()]
+    [
+    'SolventComponent-e0e47f56b43717156128ad4ae2d49897',
+    'SmallMoleculeComponent-3b51f5f92521c712049da092ab061930',
+    'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795',
+    'SmallMoleculeComponent-8225dfb11f2e8157a3fcdcd673d3d40e',
+    'DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa',
+    'ChemicalSystem-ba83a53f18700b3738680da051ff35f3',
+    'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755',
+    'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e',
+    'Transformation-e8d1ccf53116e210d1ccbc3870007271',
+    'Transformation-4d0f802817071c8d14b37efd35187318',
+    'AlchemicalNetwork-f8bfd63bc848672aa52b081b4d68fadf'
+    ]
+
+For keyed chains, the order of the elements in this list matters! When deserializing the 
+
+.. mermaid::
+
+    flowchart TD
+        SolventComponent-e0e4
+        SmallMoleculeComponent-3
+        SmallMoleculeComponent-e
+        SmallMoleculeComponent-8
+
+        
+
+.. "SolventComponent-e0e4"
+.. "SmallMoleculeComponent-3b51"
+.. "SmallMoleculeComponent-ec3c"
+.. "SmallMoleculeComponent-8225"
+.. "DummyProtocol-d01b"
+.. "ChemicalSystem-ba83"
+.. "ChemicalSystem-3c64"
+.. "ChemicalSystem-655f"
+.. "Transformation-e8d1"
+.. "Transformation-4d0f"
+.. "AlchemicalNetwork-f8bf"
 .. TODO: maybe show output, maybe abbreviated?
 .. TODO: diagram (especially this one!!)
 
@@ -329,7 +371,6 @@ Serialization Methods
 
 - helper methods `to_json` and `to_msgpack` are available, but are simply wrappers around
 
-.. find nice simple but nested test data to demo this
 
 .. NOTE::
   See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
