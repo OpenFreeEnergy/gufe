@@ -32,8 +32,8 @@ By definition, a ``GufeTokenizable`` must be:
 ---------------------------------------
 
 One important restriction on :class:`.GufeTokenizable` subclasses is that they must be immutable,
-meaning that none of its attributes change after initialization.
-In other words, all attributes should be set when you create an object, and never changed after that.
+meaning that its attributes do not change after initialization.
+In other words, all attributes will be fixed when you create an object.
 If your object is immutable, then it is suitable to be a GufeTokenizable.
 
 For example, once the benzene molecule from above is loaded, its attributes (such as ``name``) are immutable:
@@ -247,7 +247,7 @@ the inner objects' GufeTokenizable.
 
 .. code-block:: python
 
-    #
+    # shallow dict representation of an alchemical network
     >>> alchemical_network.to_shallow_dict()
     {
     'nodes': [
@@ -284,7 +284,7 @@ but it does not have the complete representation for reconstruction or sending i
 
 .. code-block:: python
 
-    #
+    # keyed dict representation of an alchemical network
     >>> alchemical_network.to_keyed_dict()
     {
     'nodes': [
@@ -317,24 +317,57 @@ It uses ``to_keyed_dict()`` to unpack a GufeTokenizable from the bottom (innermo
 (`directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_) where re-used GufeTokenizables are deduplicated.
 
 
-As an exercise with our example alchemical network, we can look at the first element of each tuple in the keyed dict to see which gufe keys are contained in the alchemical network:
+To show the structure of a keyed chain, below we have redacted all information except the gufe keys from the output:
 
 .. code-block:: python
 
-    #
-    >>> [x[0] for x in alchemical_network.to_keyed_chain()]
+    # keyed chain representation ('...' indicates hidden output)
+    >>> alchemical_network.to_keyed_chain()
     [
-    'SolventComponent-e0e47f56b43717156128ad4ae2d49897',
-    'SmallMoleculeComponent-3b51f5f92521c712049da092ab061930',
-    'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795',
-    'SmallMoleculeComponent-8225dfb11f2e8157a3fcdcd673d3d40e',
-    'Protocol-d01baed9cf2500c393bd6ddb35ee38aa',
-    'ChemicalSystem-ba83a53f18700b3738680da051ff35f3',
-    'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755',
-    'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e',
-    'Transformation-e8d1ccf53116e210d1ccbc3870007271',
-    'Transformation-4d0f802817071c8d14b37efd35187318',
-    'AlchemicalNetwork-f8bfd63bc848672aa52b081b4d68fadf'
+    ('SolventComponent-e0e47f56b43717156128ad4ae2d49897',{...}),
+    ('SmallMoleculeComponent-3b51f5f92521c712049da092ab061930', {...}),
+    ('SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795', {...}),
+    ('SmallMoleculeComponent-8225dfb11f2e8157a3fcdcd673d3d40e', {...}),
+    ('Protocol-d01baed9cf2500c393bd6ddb35ee38aa', {...}),
+    ('ChemicalSystem-ba83a53f18700b3738680da051ff35f3', {
+        'components': {
+            'ligand': {':gufe-key:': 'SmallMoleculeComponent-3b51f5f92521c712049da092ab061930'},
+            'solvent': {':gufe-key:': 'SolventComponent-e0e47f56b43717156128ad4ae2d49897'}
+            },
+        ...}),
+    ('ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755', {
+        'components': {
+            'ligand': {':gufe-key:': 'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795'},
+            'solvent': {':gufe-key:': 'SolventComponent-e0e47f56b43717156128ad4ae2d49897'},
+            },
+        ...}),
+    ('ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e', {
+        'components': {
+            'ligand': {':gufe-key:': 'SmallMoleculeComponent-8225dfb11f2e8157a3fcdcd673d3d40e'},
+            'solvent': {':gufe-key:': 'SolventComponent-e0e47f56b43717156128ad4ae2d49897'}
+            },
+        ...}),
+    ('Transformation-e8d1ccf53116e210d1ccbc3870007271', {
+        'stateA': {':gufe-key:': 'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755'},
+        'stateB': {':gufe-key:': 'ChemicalSystem-ba83a53f18700b3738680da051ff35f3'},
+        'protocol': {':gufe-key:': 'DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa'},
+        ...}),
+    ('Transformation-4d0f802817071c8d14b37efd35187318', {
+        'stateA': {':gufe-key:': 'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755'},
+        'stateB': {':gufe-key:': 'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e'},
+        'protocol': {':gufe-key:': 'DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa'},
+        ...}),
+    ('AlchemicalNetwork-f8bfd63bc848672aa52b081b4d68fadf', {
+        'nodes': [
+            {':gufe-key:': 'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755'},
+            {':gufe-key:': 'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e'},
+            {':gufe-key:': 'ChemicalSystem-ba83a53f18700b3738680da051ff35f3'}
+            ],
+        'edges': [
+            {':gufe-key:': 'Transformation-4d0f802817071c8d14b37efd35187318'},
+            {':gufe-key:': 'Transformation-e8d1ccf53116e210d1ccbc3870007271'},
+            ],
+        ...}),
     ]
 
 For keyed chains, the order of the elements in this list matters! When deserializing the keyed chain back into a gufe object, this list is iterated through in order, meaning that each gufe object can only reference gufe keys that come *before* it in this list.
