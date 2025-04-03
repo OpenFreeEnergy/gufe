@@ -71,9 +71,7 @@ ions_dict = {
     "SR": 2,
     "BA": 2,
     "Ra": 2,
-    # Transition metals
-    "CE": 3,
-    "Ce": 4,
+    # Transition/Post-Transition metals
     "CR": 3,
     "Cr": 2,
     "MN": 2,
@@ -93,10 +91,18 @@ ions_dict = {
     "AL": 3,
     "IN": 3,
     "TL": 1,
+    "Tl": 3,
     "SN": 2,
     "Sn": 2,
     "PB": 2,
     "PR": 3,
+    "V2+": 2,
+    "Y": 3,
+    # Lanthanides
+    "LA": 3,
+    "CE": 3,
+    "Ce": 4,
+    "Nd": 3,
     "ND": 3,
     "SM": 3,
     "Sm": 2,
@@ -108,6 +114,7 @@ ions_dict = {
     "Er": 3,
     "Tm": 3,
     "YB2": 2,
+    "LU": 3,
     # Actinides
     "Th": 4,
     "U4+": 4,
