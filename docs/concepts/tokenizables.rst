@@ -10,7 +10,7 @@ For example, when we create a ``SmallMoleculeComponent`` representing benzene, t
 
 .. code-block:: python
 
-    #
+    # load benzene as a gufe SmallMoleculeComponent
     >>> import gufe
     >>> benzene = gufe.SmallMoleculeComponent.from_sdf_file("benzene.sdf")
     >>> type(Benzene)
@@ -46,11 +46,26 @@ For example, once the benzene molecule from above is loaded, its attributes (suc
     >>> benzene.name = 'benzene_1'
     AttributeError
 
-Immutability is critical to gufe's design, because it means that gufe can generate a deterministic unique identifier (the gufe key)
-based on the ``GufeTokenizable``'s properties.
+While we cannot mutate `benzene` itself, we can create a new object based on a mutated copy of its contents.
+.. TODO: add link to copy_with_replacements api documentation
+Every ``GufeTokenizable`` has the ``copy_with_replacements()`` method, which is a convenience method around the following approach:
+
+.. code-block:: python
+
+    # get the contents of benzene as a dict
+    >>> dct = benzene.to_dict()
+
+    # now we can mutate any property in this dict
+    >>> dct['molprops']['ofe-name'] = 'benzene1'
+
+    # create a new gufe object based on the mutated dict
+    >>> benzene1 = gufe.SmallMoleculeComponent.from_dict(dct)
+    >>> benzene1.name
+    'benzene1'
 
 
-.. TODO: talk about `copy_with_replacements` - show mutating the _to_dict()
+Immutability is critical to gufe's design, because it means that gufe can generate a deterministic unique identifier (the gufe key) based on the ``GufeTokenizable``'s properties.
+
 
 .. _gufe_keys:
 
@@ -64,7 +79,7 @@ For our benzene ``SmallMoleculeComponent``, the key is ``'SmallMoleculeComponent
 
 .. code-block:: python
 
-    #
+    # get the key of the benzene GufeTokenizable
     >>> benzene.key
     'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795'
 
@@ -79,10 +94,11 @@ representation, except for ``:version:``, since that is a default parameter:
 
 .. code-block:: python
 
-    #
+    # these defaults are not used to determine the gufe key
     >>> benzene.defaults()
     {'name': '', ':version:': 1}
-
+   
+    # these contents except for `version` (a default) are used to determine the gufe key
     >>> benzene.to_dict()
     {'atoms': [(6, 0, 0, True, 0, 0, {}, 3),
     (6, 0, 0, True, 0, 0, {}, 3),
@@ -121,8 +137,6 @@ This gives the gufe key the following important properties:
 * A key is based on a **cryptographic hash**, so it is extremely unlikely
   that two objects that are functionally different will have the same key.
 * Key creation is **deterministic**, so that it is preserved for a given python environment across processes on the same hardware.
-  
-..  QUESTION: is this still true, or have we changed keys across minor versions?
 
 These properties, in particular the stability across Python sessions,  make the gufe key a stable identifier for the object.
 This stability means that they can be used for store-by-reference, and therefore deduplicated to optimize memory and performance.
@@ -192,7 +206,7 @@ to the key of the object. Of course, you'll also need to do the same for all
 inner GufeTokenizables; to get a list of all of them, use
 :func:`.get_all_gufe_objs` on the outermost ``obj``.
 
-.. TODO: add a tutorial for this
+.. TODO: add a tutorial for this?
 
 
 .. _serialization:
