@@ -46,29 +46,11 @@ For example, once the benzene molecule from above is loaded, its attributes (suc
     >>> benzene.name = 'benzene_1'
     AttributeError
 
-.. TODO: note that no error is raised if we try to mutate the dict object, e.g. ``benzene.to_dict()['atoms'] = 1``?
-
 Immutability is critical to gufe's design, because it means that gufe can generate a deterministic unique identifier (the gufe key)
 based on the ``GufeTokenizable``'s properties.
 
 
-.. TODO: talk about `copy_with_replacements`?
-
-.. TODO: how to actually implement a mutable attribute? isn't this enforced, or does this just mean using the unfreeze functionality?
-
-.. There is a special case of mutability that is also allowed, which is if the
-.. object is functionally immutable.  As an example, consider a flag to turn on
-.. or off usage of a cache of input-output pairs for some deterministic method.
-.. If the cache is turned on, you first try to return the value from it, and
-.. only perform the calculation if the inputs don't have a cached output
-.. associated. In this case, the flag is mutable, but this has no effect on the
-.. results. Indeed, the cache itself may be implemented as a mutable attribute
-.. of the object, but again, this would not change the results that are
-.. returned. It would also be recommended that an attribute like a cache, which
-.. is only used internally, should be marked private with a leading underscore.
-.. On the other hand, a flag that changes code path in a way that might
-.. change the results of any operation would mean that the object cannot be a
-.. :class:`.GufeTokenizable`.
+.. TODO: talk about `copy_with_replacements` - show mutating the _to_dict()
 
 .. _gufe_keys:
 
@@ -134,21 +116,19 @@ representation, except for ``:version:``, since that is a default parameter:
     ':version:': 1}
 
 
-
-
 This gives the gufe key the following important properties:
 
 * A key is based on a **cryptographic hash**, so it is extremely unlikely
   that two objects that are functionally different will have the same key.
-* Key creation is **deterministic**, so that it is preserved across different creation times,
-  including across different hardware, across different Python sessions,
-  and even within the same Python session.
-* A key is preserved across minor versions of the code, since it is dependent on non-default attributes and we follow `SemVer <https://semver.org>`_.
-
+* Key creation is **deterministic**, so that it is preserved for a given python environment across processes on the same hardware.
+  
 ..  QUESTION: is this still true, or have we changed keys across minor versions?
 
 These properties, in particular the stability across Python sessions,  make the gufe key a stable identifier for the object.
 This stability means that they can be used for store-by-reference, and therefore deduplicated to optimize memory and performance.
+
+.. note::
+    Keys are not guaranteed to be stable across different python environments or hardware.
 
 Deduplication of GufeTokenizables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -217,8 +197,8 @@ inner GufeTokenizables; to get a list of all of them, use
 
 .. _serialization:
 
-3. Serialized Representations of ``GufeTokenizables``
------------------------------------------------------
+3. Serializable Representations of ``GufeTokenizables``
+-------------------------------------------------------
 
 - each subclass's implementation of `to_dict()` defines what information gufe will serialize. all other
 
@@ -345,53 +325,17 @@ As an exercise with our example alchemical network, we can look at the first ele
 
 For keyed chains, the order of the elements in this list matters! When deserializing the keyed chain back into a gufe object, this list is iterated through in order, meaning that each gufe object can only reference gufe keys that come *before* it in this list.
 
-.. mermaid::
-
-    flowchart TD
-        ChemicalSystem-ba83 --> SolventComponent-e0e4
-        ChemicalSystem-ba83 --> SmallMoleculeComponent-3
-        ChemicalSystem-3c64 --> SolventComponent-e0e4
-        ChemicalSystem-3c64 --> SmallMoleculeComponent-e
-        ChemicalSystem-655f --> SolventComponent-e0e4
-        ChemicalSystem-655f --> SmallMoleculeComponent-8
-        Transformation-e8d1 --> ChemicalSystem-3c64
-        Transformation-e8d1 --> ChemicalSystem-ba83
-        Transformation-e8d1 --> Protocol-d01b
-
-        Transformation-4d0f --> ChemicalSystem-3c64
-        Transformation-4d0f --> ChemicalSystem-655f
-        Transformation-4d0f --> Protocol-d01b
-
-        AlchemicalNetwork-f8bf --> ChemicalSystem-3c64
-        AlchemicalNetwork-f8bf --> ChemicalSystem-655f
-        AlchemicalNetwork-f8bf --> ChemicalSystem-ba83
-        AlchemicalNetwork-f8bf --> Transformation-4d0f
-        AlchemicalNetwork-f8bf --> Transformation-e8d1
-
-
-.. "SolventComponent-e0e4"
-.. "SmallMoleculeComponent-3b51"
-.. "SmallMoleculeComponent-ec3c"
-.. "SmallMoleculeComponent-8225"
-.. "Protocol-d01b"
-.. "ChemicalSystem-ba83"
-.. "ChemicalSystem-3c64"
-.. "ChemicalSystem-655f"
-.. "Transformation-e8d1"
-.. "Transformation-4d0f"
-.. "AlchemicalNetwork-f8bf"
-.. TODO: maybe show output, maybe abbreviated?
-.. TODO: diagram (especially this one!!)
-
+.. TODO: add animated diagram
 
 
 Serialization Methods
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. TODO explain custom serialization schemes?
+All ``GufeTokenizables`` can be serialized as either JSON (``to_json()``) or `MessagePack <https://msgpack.org/index.html>`_ (``to_msgpack()``).
+JSON is preferable for human-readability, archival, and interoperability with other tools that do not use **gufe**.
+MessagePack is a more efficient format and ideal for passing information, but it is not human-readable and requires **gufe** for extracting any data.
 
-- helper methods `to_json` and `to_msgpack` are available, but are simply wrappers around
 
+.. note::
+    See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
 
-.. NOTE::
-  See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
