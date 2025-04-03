@@ -40,7 +40,7 @@ For example, once the benzene molecule from above is loaded, its attributes (suc
 
 .. code-block:: python
 
-    #
+    # benzene is a GufeTokenizable, and therefore immutable:
     >>> benzene.name
     'benzene'
     >>> benzene.name = 'benzene_1'
@@ -206,7 +206,7 @@ to the key of the object. Of course, you'll also need to do the same for all
 inner GufeTokenizables; to get a list of all of them, use
 :func:`.get_all_gufe_objs` on the outermost ``obj``.
 
-.. TODO: add a tutorial for this?
+.. TODO: add a tutorial for this in the tutorials section?
 
 
 .. _serialization:
@@ -214,13 +214,12 @@ inner GufeTokenizables; to get a list of all of them, use
 3. Serializable Representations of ``GufeTokenizables``
 -------------------------------------------------------
 
-- each subclass's implementation of `to_dict()` defines what information gufe will serialize. all other
-
+.. TODO: add an intro here?
 
 Representations
 ^^^^^^^^^^^^^^^
 
-Any GufeTokenizable can be deserialized and
+Each subclass's implementation of ``to_dict()`` defines what information a ``GufeTokenizable`` will serialize, and all other representations (``to_shallow_dict``, ``to_keyed_dict``, ``to_keyed_chain``) behavior are determined by this basic ``to_dict()`` definition.
 
 a) dictionary
 ~~~~~~~~~~~~~
