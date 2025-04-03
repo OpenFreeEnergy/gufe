@@ -246,4 +246,3 @@ to be reused outside the context of the ``parent``.
 .. TODO: DWHS wants to write something here that describes how to use the
    codecs in your own non-JSON storage scheme. But this is complicated
    enough that it will take significant time
-

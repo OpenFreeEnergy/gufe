@@ -97,7 +97,7 @@ representation, except for ``:version:``, since that is a default parameter:
     # these defaults are not used to determine the gufe key
     >>> benzene.defaults()
     {'name': '', ':version:': 1}
-   
+
     # these contents except for `version` (a default) are used to determine the gufe key
     >>> benzene.to_dict()
     {'atoms': [(6, 0, 0, True, 0, 0, {}, 3),
@@ -384,4 +384,3 @@ MessagePack is a more efficient format and ideal for passing information, but it
 
 .. note::
     See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.
-

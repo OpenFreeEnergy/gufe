@@ -8,10 +8,7 @@ utilize gufe APIs.
 
 .. toctree::
    :maxdepth: 1
-   
+
    tokenizables
    core_models
-   
-
-
 
