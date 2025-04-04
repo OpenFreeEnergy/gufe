@@ -371,8 +371,12 @@ To show the structure of a keyed chain, below we have redacted all information e
 
 For keyed chains, the order of the elements in this list matters! When deserializing the keyed chain back into a gufe object, this list is iterated through in order, meaning that each gufe object can only reference gufe keys that come *before* it in this list.
 
-.. TODO: add animated diagram
 
+Below is a diagram of how a nested ``GufeTokenziable`` (in this case an alchemical network) can be represented as a keyed chain, with the first elements in the keyed chain at the bottom of the graph. Note that this graphical representation is a Directed Acyclic Graph (DAG):
+
+.. image:: ../_static/alchemical_network_diagram.svg
+    :width: 600
+    :alt: Diagram of a keyed chain representation of an alchemical network.
 
 Serialization Methods
 ^^^^^^^^^^^^^^^^^^^^^
