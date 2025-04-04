@@ -34,7 +34,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.autodoc_pydantic",
     "sphinx.ext.intersphinx",
-    "sphinxcontrib.mermaid",
 ]
 
 autoclass_content = "both"
