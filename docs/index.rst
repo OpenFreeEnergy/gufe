@@ -38,7 +38,6 @@ Contents
    installation
    concepts/index
    how-tos/index
-   guides/index
 
 Reference
 ---------
