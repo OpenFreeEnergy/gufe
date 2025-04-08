@@ -55,6 +55,8 @@ _CHIRALITY_RDKIT_TO_STR = {
 _CHIRALITY_STR_TO_RDKIT = {v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()}
 
 
+# ions and charges pulled from amber:
+# https://github.com/Amber-MD/AmberClassic/blob/42e88bf9a2214ba008140280713a430f3ecd4a90/dat/leap/lib/atomic_ions.lib#L1C1-L68C6
 ions_dict = {
     "AG": 1,
     "Ag": 2,
