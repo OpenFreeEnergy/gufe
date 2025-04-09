@@ -1,9 +1,9 @@
 Core Concepts
 =============
 
-gufe exists to define interoperable APIs for free energy calculations.
+**gufe** exists to define interoperable APIs for free energy calculations.
 It only provides the underlying infrastructure; the real science is done in packages that
-utilize gufe APIs.
+utilize **gufe** APIs.
 
 
 .. toctree::
