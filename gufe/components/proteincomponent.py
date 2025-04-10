@@ -266,7 +266,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             rd_mol.AddConformer(conf)
 
         def _get_ion_charge(ion_key):
-            ik = atom_name.strip()
+            ik = atom_name.strip()  # strip b/c we never want whitespace
 
             for ion_key in [ik, ik.upper(), ik.strip(digits), ik.strip(digits).upper(), ik.strip(digits).title()]:
                 try:
