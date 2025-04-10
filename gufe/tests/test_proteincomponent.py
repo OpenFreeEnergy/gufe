@@ -325,7 +325,20 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         assert m1.total_charge == 6
 
     # these whitespaces in the ion names are intentional to fit pdb formatting
-    @pytest.mark.parametrize("ion_name,ion_charge", [("SM  ", 3), ("Sm  ", 2), ("BR  ", -1), ("EU3 ", 3), (" U4+", 4), ("rb  ", 1), ("rb2 ", 1), ("Hf3 ", 4), ("HF  ", 4)])
+    @pytest.mark.parametrize(
+        "ion_name,ion_charge",
+        [
+            ("SM  ", 3),
+            ("Sm  ", 2),
+            ("BR  ", -1),
+            ("EU3 ", 3),
+            (" U4+", 4),
+            ("rb  ", 1),
+            ("rb2 ", 1),
+            ("Hf3 ", 4),
+            ("HF  ", 4),
+        ],
+    )
     def test_pdb_ion_parsing(self, custom_pdb_ion, ion_name, ion_charge):
         pdb_generator = custom_pdb_ion(ion_name)
         pc = self.cls.from_pdb_file(next(pdb_generator))
@@ -335,7 +348,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_pdb_ion_invalid(self, custom_pdb_ion):
         ion_name = "ab7 "
         pdb_generator = custom_pdb_ion(ion_name)
-        with pytest.raises(ValueError, match='ab7 in residue CL at index 173.'):
+        with pytest.raises(ValueError, match="ab7 in residue CL at index 173."):
             self.cls.from_pdb_file(next(pdb_generator))
 
 

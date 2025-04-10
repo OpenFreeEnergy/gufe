@@ -3,9 +3,9 @@
 import ast
 import io
 import json
-from string import digits 
 from collections import defaultdict
 from os import PathLike
+from string import digits
 from typing import Optional, TextIO, Union
 
 import numpy as np
