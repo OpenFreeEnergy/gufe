@@ -266,7 +266,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             rd_mol.AddConformer(conf)
 
         def _get_ion_charge(ion_key):
-            ik = atom_name.strip()  # strip b/c we never want whitespace
+            ik = ion_key.strip()  # strip b/c we never want whitespace
 
             if charge := ions_dict.get(ik):
                 return charge
@@ -282,7 +282,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             # raise an error if we can't find a match
             res_n = a.GetMonomerInfo().GetResidueName()
             res_ind = int(a.GetMonomerInfo().GetResidueNumber())
-            raise ValueError(f"Unknown ion: {atom_name} in residue {res_n} at index {res_ind}.")
+            raise ValueError(f"Unknown ion: {ion_key} in residue {res_n} at index {res_ind}.")
 
         # Add Additionals
         # Formal Charge
