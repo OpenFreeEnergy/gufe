@@ -3,7 +3,7 @@
 import ast
 import io
 import json
-import string
+from string import digits 
 from collections import defaultdict
 from os import PathLike
 from typing import Optional, TextIO, Union
@@ -266,17 +266,18 @@ class ProteinComponent(ExplicitMoleculeComponent):
             rd_mol.AddConformer(conf)
 
         def _get_ion_charge(ion_key):
-            ion_key = atom_name
-            try:
-                return ions_dict[ion_key]
-            except KeyError:
-                pass
-            try:  # only match upper if the ion dict doesn't have a lower variant (e.g. Cr and CR)
-                return ions_dict[ion_key.upper()]
-            except KeyError:
-                resn = a.GetMonomerInfo().GetResidueName()
-                resind = int(a.GetMonomerInfo().GetResidueNumber())
-                raise ValueError(f"Unknown ion: {atom_name} in residue {resn} at index {resind}. ")
+            ik = atom_name.strip()
+
+            for ion_key in [ik, ik.upper(), ik.strip(digits), ik.strip(digits).upper(), ik.strip(digits).title()]:
+                try:
+                    return ions_dict[ion_key]
+                except KeyError:
+                    continue
+
+            # raise an error if we can't find a match
+            res_n = a.GetMonomerInfo().GetResidueName()
+            res_ind = int(a.GetMonomerInfo().GetResidueNumber())
+            raise ValueError(f"Unknown ion: {atom_name} in residue {res_n} at index {res_ind}.")
 
         # Add Additionals
         # Formal Charge
