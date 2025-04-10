@@ -268,11 +268,16 @@ class ProteinComponent(ExplicitMoleculeComponent):
         def _get_ion_charge(ion_key):
             ik = atom_name.strip()  # strip b/c we never want whitespace
 
-            for ion_key in [ik, ik.upper(), ik.strip(digits), ik.strip(digits).upper(), ik.strip(digits).title()]:
-                try:
-                    return ions_dict[ion_key]
-                except KeyError:
-                    continue
+            if charge := ions_dict.get(ik):
+                return charge
+            elif charge := ions_dict.get(ik.upper()):
+                return charge
+            elif charge := ions_dict.get(ik.strip(digits)):
+                return charge
+            elif charge := ions_dict.get(ik.strip(digits).upper()):
+                return charge
+            elif charge := ions_dict.get(ik.strip(digits).title()):
+                return charge
 
             # raise an error if we can't find a match
             res_n = a.GetMonomerInfo().GetResidueName()
