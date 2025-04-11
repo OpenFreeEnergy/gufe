@@ -3,10 +3,10 @@
 import ast
 import io
 import json
-import string
 from collections import defaultdict
 from os import PathLike
-from typing import Optional, Union
+from string import digits
+from typing import Optional, TextIO, Union
 
 import numpy as np
 from openmm import app
@@ -55,23 +55,77 @@ _CHIRALITY_RDKIT_TO_STR = {
 _CHIRALITY_STR_TO_RDKIT = {v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()}
 
 
-negative_ions = ["F", "CL", "BR", "I"]
-positive_ions = [
-    # +1
-    "LI",
-    "NA",
-    "K",
-    "RB",
-    "CS",
-    # +2
-    "BE",
-    "MG",
-    "CA",
-    "SR",
-    "BA",
-    "RA",
-    "ZN",
-]
+# ions and charges pulled from amber:
+# https://github.com/Amber-MD/AmberClassic/blob/42e88bf9a2214ba008140280713a430f3ecd4a90/dat/leap/lib/atomic_ions.lib#L1C1-L68C6
+ions_dict = {
+    "AG": 1,
+    "Ag": 2,
+    "AL": 3,
+    "BA": 2,
+    "Be": 2,
+    "BR": -1,
+    "CA": 2,
+    "CD": 2,
+    "CE": 3,
+    "Ce": 4,
+    "Cl-": -1,
+    "CL": -1,
+    "CO": 2,
+    "Cr": 2,
+    "CR": 3,
+    "CS": 1,
+    "CU": 2,
+    "CU1": 1,
+    "Dy": 3,
+    "Er": 3,
+    "EU": 2,
+    "EU3": 3,
+    "F": -1,
+    "FE": 3,
+    "FE2": 2,
+    "GD3": 3,
+    "H3O+": 1,
+    "HE+": 1,
+    "Hf": 4,
+    "HG": 2,
+    "HZ+": 1,
+    "IN": 3,
+    "IOD": -1,
+    "K": 1,
+    "K+": 1,
+    "LA": 3,
+    "LI": 1,
+    "LU": 3,
+    "MG": 2,
+    "MN": 2,
+    "NA": 1,
+    "Na+": 1,
+    "Nd": 3,
+    "NH4": 1,
+    "NI": 2,
+    "PB": 2,
+    "PD": 2,
+    "PR": 3,
+    "PT": 2,
+    "Pu": 4,
+    "Ra": 2,
+    "RB": 1,
+    "Sm": 2,
+    "SM": 3,
+    "Sn": 2,
+    "SR": 2,
+    "TB": 3,
+    "Th": 4,
+    "TL": 1,
+    "Tl": 3,
+    "Tm": 3,
+    "U4+": 4,
+    "V2+": 2,
+    "Y": 3,
+    "YB2": 2,
+    "ZN": 2,
+    "Zr": 4,
+}
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
@@ -108,14 +162,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
     # FROM
     @classmethod
-    def from_pdb_file(cls, pdb_file: str, name: str = ""):
+    def from_pdb_file(cls, pdb_file: PathLike | TextIO, name: str = ""):
         """
         Create ``ProteinComponent`` from PDB-formatted file.
 
         Parameters
         ----------
-        pdb_file : str
-            path to the pdb file.
+        pdb_file : str or file
+            path to the pdb file or filelike object
         name : str, optional
             name of the input protein, by default ""
 
@@ -211,34 +265,41 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 conf.SetAtomPosition(atom_id, atom_pos)
             rd_mol.AddConformer(conf)
 
+        def _get_ion_charge(ion_key):
+            ik = ion_key.strip()  # strip b/c we never want whitespace
+
+            if charge := ions_dict.get(ik):
+                return charge
+            elif charge := ions_dict.get(ik.upper()):
+                return charge
+            elif charge := ions_dict.get(ik.strip(digits)):
+                return charge
+            elif charge := ions_dict.get(ik.strip(digits).upper()):
+                return charge
+            elif charge := ions_dict.get(ik.strip(digits).title()):
+                return charge
+
+            # raise an error if we can't find a match
+            res_n = a.GetMonomerInfo().GetResidueName()
+            res_ind = int(a.GetMonomerInfo().GetResidueNumber())
+            raise ValueError(f"Unknown ion: {ion_key} in residue {res_n} at index {res_ind}.")
+
         # Add Additionals
         # Formal Charge
         netcharge = 0
         for a in rd_mol.GetAtoms():
+            atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
-            atom_name = a.GetMonomerInfo().GetName()
 
             connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
-            if connectivity == 0:  # ions:
-                # strip catches cases like 'CL1' as name
-                if atom_name.strip(string.digits).upper() in positive_ions:
-                    fc = default_valence  # e.g. Sodium ions
-                elif atom_name.strip(string.digits).upper() in negative_ions:
-                    fc = -default_valence  # e.g. Chlorine ions
-                else:  # -no-cov-
-                    resn = a.GetMonomerInfo().GetResidueName()
-                    resind = int(a.GetMonomerInfo().GetResidueNumber())
-                    raise ValueError(
-                        "I don't know this Ion or something really went "
-                        f"wrong! \t{atom_name}\t{resn}\t-{resind}\t"
-                        f"connectivity{connectivity}"
-                    )
-            elif default_valence > connectivity:
-                fc = -(default_valence - connectivity)  # negative charge
-            elif default_valence < connectivity:
-                fc = +(connectivity - default_valence)  # positive charge
+            if connectivity == 0:  # ions
+                fc = _get_ion_charge(atom_name)
+            elif default_valence > connectivity:  # negative charge
+                fc = -(default_valence - connectivity)
+            elif default_valence < connectivity:  # positive charge
+                fc = +(connectivity - default_valence)
             else:
                 fc = 0  # neutral
 
