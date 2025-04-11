@@ -198,7 +198,7 @@ Of course, you'll also need to do the same for all inner ``GufeTokenizables``; t
 1. Serializable Representations of ``GufeTokenizable``\s
 --------------------------------------------------------
 
-.. TODO: add an intro here?
+``GufeTokenizable``\s are also designed to be easily serializable, allowing them to be reliably passed between processes on the same or different machines, written to disk, stored in databases, etc. There are multiple *serialization* methods available, and a variety of *representations* ``GufeTokenizable``\s can take on, to meet different use cases.
 
 Representations
 ^^^^^^^^^^^^^^^
@@ -249,7 +249,8 @@ Anything nested deeper is represented by the inner objects' GufeTokenizable.
 .. TODO: diagram
 
 
-This method is most useful for iterating through the hierarchy of a GufeTokenizable one layer at a time.
+This representation is most useful for iterating through the hierarchy of a ``GufeTokenizable`` one layer at a time.
+Because it leaves nested ``GufeTokenizable``\s untouched, it is generally unsuitable for serialization.
 
 
 c) keyed dictionary
