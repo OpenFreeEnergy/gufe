@@ -3,8 +3,7 @@ Understanding ``GufeTokenizables``\s
 ====================================
 
 Most objects in **gufe** are subclasses of :class:`.GufeTokenizable`.
-This base class enforces common behavior and sets requirements necessary
-to guarantee performance and reproducibility between all downstream packages that use **gufe**.
+This base class enforces common behavior and sets requirements necessaryto guarantee performance and reproducibility between all downstream packages that use **gufe**.
 
 For example, when we create a ``SmallMoleculeComponent`` representing benzene, that object is also a ``GufeTokenizable``:
 
@@ -13,7 +12,7 @@ For example, when we create a ``SmallMoleculeComponent`` representing benzene, t
     # load benzene as a gufe SmallMoleculeComponent
     >>> import gufe
     >>> benzene = gufe.SmallMoleculeComponent.from_sdf_file("benzene.sdf")
-    >>> type(Benzene)
+    >>> type(benzene)
     gufe.components.smallmoleculecomponent.SmallMoleculeComponent
 
     >>> from gufe.tokenization import GufeTokenizable
@@ -31,8 +30,7 @@ By definition, a ``GufeTokenizable`` must be:
 1. Immutability of ``GufeTokenizable``\s
 ----------------------------------------
 
-One important restriction on :class:`.GufeTokenizable` subclasses is that they must be immutable,
-meaning that its attributes do not change after initialization.
+One important restriction on :class:`.GufeTokenizable` subclasses is that they must be immutable, meaning that its attributes do not change after initialization.
 In other words, all attributes will be fixed when you create an object.
 If your object is immutable, then it is suitable to be a ``GufeTokenizable``.
 
@@ -47,8 +45,7 @@ For example, once the benzene molecule from above is loaded, its attributes (suc
     AttributeError
 
 While we cannot mutate ``benzene`` itself, we can create a new object based on a mutated copy of its contents.
-Every ``GufeTokenizable`` has the :meth:`~.GufeTokenizable.copy_with_replacements` method,
-which is a convenience method around the following approach:
+Every ``GufeTokenizable`` has the :meth:`~.GufeTokenizable.copy_with_replacements` method, which is a convenience method around the following approach:
 
 .. code-block:: python
 
@@ -83,12 +80,9 @@ For our benzene ``SmallMoleculeComponent``, the key is ``'SmallMoleculeComponent
     >>> benzene.key
     'SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795'
 
-For most objects, the hexadecimal label is generated based on the contents of the class -- in
-particular, it is based on contents of the ``_to_dict()`` dictionary, filtered
-to remove anything that matches the ``_defaults()`` dictionary.
+For most objects, the hexadecimal label is generated based on the contents of the class -- in particular, it is based on contents of the ``_to_dict()`` dictionary, filtered to remove anything that matches the ``_defaults()`` dictionary.
 
-For our benzene object, that means that its ``GufeKey`` is directly determined from all items in its ``to_dict()``
-representation, except for ``:version:``, since that is a default parameter:
+For our benzene object, that means that its ``GufeKey`` is directly determined from all items in its ``to_dict()`` representation, except for ``:version:``, since that is a default parameter:
 
 .. _benzene_to_dict:
 
@@ -134,10 +128,8 @@ representation, except for ``:version:``, since that is a default parameter:
 
 This gives the ``GufeKey`` the following important properties:
 
-* A ``GufeKey`` is based on a **cryptographic hash**, so it is extremely unlikely
-  that two objects that are functionally different will have the same key.
-* ``GufeKey`` creation is **deterministic**, so that it is preserved for a
-  given Python environment across processes on the same hardware.
+* A ``GufeKey`` is based on a **cryptographic hash**, so it is extremely unlikely that two objects that are functionally different will have the same key.
+* ``GufeKey`` creation is **deterministic**, so that it is preserved for a given Python environment across processes on the same hardware.
 
 These properties, in particular the stability across Python sessions, make the ``GufeKey`` a stable identifier for the object.
 This stability means that they can be used for store-by-reference, and therefore deduplicated to optimize memory and performance.
@@ -157,18 +149,14 @@ There are two types of deduplication of ``GufeTokenizable``\s:
 Deduplication in memory (flyweight pattern)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Memory deduplication means that only one object with a given ``GufeKey``
-will exist in any single Python session.
-We ensure this by maintaining a registry of all ``GufeTokenizable``\s that gets updated any time a
-``GufeTokenizable`` is created. (The registry is a mapping to weak references, which
-allows Python's garbage collection to clean up ``GufeTokenizable``\s that are no
-longer needed.) This is essentially an implementation of the `flyweight
-pattern <https://en.wikipedia.org/wiki/Flyweight_pattern>`_.
+Memory deduplication means that only one object with a given ``GufeKey`` will exist in any single Python session.
+We ensure this by maintaining a registry of all ``GufeTokenizable``\s that gets updated any time a ``GufeTokenizable`` is created.
+(The registry is a mapping to weak references, which allows Python's garbage collection to clean up ``GufeTokenizable``\s that are no longer needed.)
+This is essentially an implementation of the `flyweight pattern <https://en.wikipedia.org/wiki/Flyweight_pattern>`_.
 
-This memory deduplication is ensured by the ``GufeTokenizable.from_dict``,
-which is typically used in deserialization. It will always use the first
-object in memory with that ``GufeKey``. This can lead to some unexpected
-behavior; for example, using the ``Foo`` class defined above:
+This memory deduplication is ensured by the ``GufeTokenizable.from_dict``, which is typically used in deserialization.
+It will always use the first object in memory with that ``GufeKey``.
+This can lead to some unexpected behavior; for example, using the ``Foo`` class defined above:
 
 .. code-block:: python
 
@@ -190,10 +178,8 @@ behavior; for example, using the ``Foo`` class defined above:
 Deduplication on disk
 ~~~~~~~~~~~~~~~~~~~~~
 
-Deduplication on disk storage is fundamentally the responsibility of the
-specific storage system, which falls outside the scope of **gufe**.
-However, **gufe** provides some tools to facilitate implementation of a storage
-system.
+Deduplication on disk storage is fundamentally the responsibility of the specific storage system, which falls outside the scope of **gufe**.
+However, **gufe** provides some tools to facilitate implementation of a storage system.
 
 The main idea is to use the ``GufeKey`` to ensure uniqueness, and to use it as a label for the object's serialized representation.
 Additionally, the ``GufeKey``, which is simply a string, can be used as a stand-in for the object.
@@ -201,17 +187,15 @@ When an outer ``GufeTokenizable`` contains an inner ``GufeTokenizable``, the out
 That is, we can store by reference to the ``GufeKey``.
 
 To convert a ``GufeTokenizable`` ``obj`` into a dictionary that references inner ``GufeTokenizable``\s by ``GufeKey``, use ``obj.to_keyed_dict()``.
-That method replaces each ``GufeTokenizable`` by a ``dict`` with a single key, ``':gufe-key:'``,
-mapping to the ``GufeKey`` of the object.
-Of course, you'll also need to do the same for all inner ``GufeTokenizables``;
-to get a list of all of them, use :func:`.get_all_gufe_objs` on the outermost ``obj``.
+That method replaces each ``GufeTokenizable`` by a ``dict`` with a single key, ``':gufe-key:'``, mapping to the ``GufeKey`` of the object.
+Of course, you'll also need to do the same for all inner ``GufeTokenizables``; to get a list of all of them, use :func:`.get_all_gufe_objs` on the outermost ``obj``.
 
 .. TODO: add a tutorial for this in the tutorials section?
 
 
 .. _serialization:
 
-3. Serializable Representations of ``GufeTokenizable``\s
+1. Serializable Representations of ``GufeTokenizable``\s
 --------------------------------------------------------
 
 .. TODO: add an intro here?
@@ -225,13 +209,10 @@ a) dictionary
 ~~~~~~~~~~~~~
 
 The ``to_dict()`` method is the most explicit way to represent a ``GufeTokenizable``.
-This method recursively unpacks any inner ``GufeTokenizable``\s that an
-outer ``GufeTokenizable`` contains to their full ``dict`` representation.
-Although this method is best way to see all information stored in a ``GufeTokenizable``,
-it is also the least space-efficient.
+This method recursively unpacks any inner ``GufeTokenizable``\s that an outer ``GufeTokenizable`` contains to their full ``dict`` representation.
+Although this method is best way to see all information stored in a ``GufeTokenizable``, it is also the least space-efficient.
 
-For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for
-a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_dict()`` representation is neither easily readable by humans or computationally memory-efficient.
+For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_dict()`` representation is neither easily readable by humans or computationally memory-efficient.
 
 
 .. TODO: show this method
@@ -240,8 +221,7 @@ a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_di
 b) shallow dictionary
 ~~~~~~~~~~~~~~~~~~~~~
 
-The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks a tokenizable into a ``dict`` format,
-but a shallow dict is *not recursive* and only unpacks the top level of the ``GufeTokenizable``.
+The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks a tokenizable into a ``dict`` format, but a shallow dict is *not recursive* and only unpacks the top level of the ``GufeTokenizable``.
 Anything nested deeper is represented by the inner objects' GufeTokenizable.
 
 .. code-block:: python
@@ -276,10 +256,9 @@ c) keyed dictionary
 ~~~~~~~~~~~~~~~~~~~
 
 The ``to_keyed_dict()`` method is similar to ``to_shallow_dict`` in that it only unpacks the first layer of a ``GufeTokenizable``.
-However, a keyed dict represents the next layer as its ``GufeKey``, e.g. ``{':gufe-key:': 'ChemicalSystem-96f686efdc070e01b74888cbb830f720'},``
+However, a keyed dict represents the next layer as its ``GufeKey``, e.g. ``{':gufe-key:': 'ChemicalSystem-96f686efdc070e01b74888cbb830f720'}``.
 
-A keyed dict is the most compact representation of a ``GufeTokenizable`` and can be useful for understanding its contents,
-but it does not have the complete representation for reconstruction or sending information (for this, see the next section, :ref:`keyed chain <keyed_chain>`)
+A keyed dict is the most compact representation of a ``GufeTokenizable`` and can be useful for understanding its contents, but it does not have the complete representation for reconstruction or sending information (for this, see the next section, :ref:`keyed chain <keyed_chain>`)
 
 .. code-block:: python
 
@@ -370,7 +349,8 @@ To show the structure of a keyed chain, below we have redacted all information e
         ...}),
     ]
 
-For keyed chains, the order of the elements in this list matters! When deserializing the keyed chain back into a ``GufeTokenizable``, this list is iterated through in order, meaning that each object can only reference ``GufeKey``\s that come *before* it in this list.
+For keyed chains, the order of the elements in this list matters!
+When deserializing the keyed chain back into a ``GufeTokenizable``, this list is iterated through in order, meaning that each object can only reference ``GufeKey``\s that come *before* it in this list.
 
 Below is a diagram of how a nested ``GufeTokenizable`` (in this case an ``AlchemicalNetwork``) can be represented as a keyed chain, with the first elements in the keyed chain at the bottom of the graph.
 Note that this graphical representation is a Directed Acyclic Graph (DAG):
