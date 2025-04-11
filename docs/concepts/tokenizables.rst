@@ -151,7 +151,7 @@ Deduplication in memory (flyweight pattern)
 
 Memory deduplication means that only one object with a given ``GufeKey`` will exist in any single Python session.
 We ensure this by maintaining a registry of all ``GufeTokenizable``\s that gets updated any time a ``GufeTokenizable`` is created.
-(The registry is a mapping to weak references, which allows Python's garbage collection to clean up ``GufeTokenizable``\s that are no longer needed.)
+The registry is a mapping to weak references, which allows Python's garbage collection to clean up ``GufeTokenizable``\s that are no longer needed.
 This is essentially an implementation of the `flyweight pattern <https://en.wikipedia.org/wiki/Flyweight_pattern>`_.
 
 This memory deduplication is ensured by the ``GufeTokenizable.from_dict``, which is typically used in deserialization.
@@ -212,7 +212,8 @@ The ``to_dict()`` method is the most explicit way to represent a ``GufeTokenizab
 This method recursively unpacks any inner ``GufeTokenizable``\s that an outer ``GufeTokenizable`` contains to their full ``dict`` representation.
 Although this method is best way to see all information stored in a ``GufeTokenizable``, it is also the least space-efficient.
 
-For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_dict()`` representation is neither easily readable by humans or computationally memory-efficient.
+For example, we can easily comprehend the ``to_dict()`` representation of benzene :ref:`as shown above <benzene_to_dict>`, but for a larger and deeply nested object, such as an ``AlchemicalNetwork``, the ``to_dict()`` representation is neither easily readable by humans or memory-efficient.
+``GufeTokenizable``\s referenced multiple times among the nested objects are duplicated in this representation.
 
 
 .. TODO: show this method
@@ -222,7 +223,7 @@ b) shallow dictionary
 ~~~~~~~~~~~~~~~~~~~~~
 
 The ``to_shallow_dict()`` method is similar to ``to_dict()`` in that it unpacks a tokenizable into a ``dict`` format, but a shallow dict is *not recursive* and only unpacks the top level of the ``GufeTokenizable``.
-Anything nested deeper is represented by the inner objects' GufeTokenizable.
+Any nested ``GufeTokenizable``\s are left as-is.
 
 .. code-block:: python
 
