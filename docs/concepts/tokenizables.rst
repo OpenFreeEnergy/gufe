@@ -3,7 +3,7 @@ Understanding ``GufeTokenizables``\s
 ====================================
 
 Most objects in **gufe** are subclasses of :class:`.GufeTokenizable`.
-This base class enforces common behavior and sets requirements necessaryto guarantee performance and reproducibility between all downstream packages that use **gufe**.
+This base class enforces common behavior and sets requirements necessary to guarantee performance and reproducibility between all downstream packages that use **gufe**.
 
 For example, when we create a ``SmallMoleculeComponent`` representing benzene, that object is also a ``GufeTokenizable``:
 
@@ -195,7 +195,7 @@ Of course, you'll also need to do the same for all inner ``GufeTokenizables``; t
 
 .. _serialization:
 
-1. Serializable Representations of ``GufeTokenizable``\s
+3. Serializable Representations of ``GufeTokenizable``\s
 --------------------------------------------------------
 
 ``GufeTokenizable``\s are also designed to be easily serializable, allowing them to be reliably passed between processes on the same or different machines, written to disk, stored in databases, etc. There are multiple *serialization* methods available, and a variety of *representations* ``GufeTokenizable``\s can take on, to meet different use cases.
