@@ -320,10 +320,10 @@ def nested_key_moved(dct, old_name, new_name):
 
 
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
-    """Base class for all tokenizeable gufe objects.
+    """Base class for all tokenizable gufe objects.
 
     Subclassing from this provides sorting, equality and hashing operators,
-    provided that the class implements the `_to_dict` and `_from_dict` method.
+    provided that the class implements the ``_to_dict()`` and ``_from_dict()`` methods.
 
     This extra work in serializing is important for hashes that are stable
     *across different Python sessions*.

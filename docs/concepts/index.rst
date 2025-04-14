@@ -1,6 +1,13 @@
 Core Concepts
 =============
 
-.. toctree::
+**gufe** exists to define interoperable APIs for free energy calculations.
+It only provides the underlying infrastructure; the real science is done in packages that
+utilize **gufe** APIs.
 
-    core_concepts
+
+.. toctree::
+   :maxdepth: 1
+
+   tokenizables
+   core_models
