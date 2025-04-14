@@ -171,6 +171,8 @@ In practice, that leads to the following behavior, where ``Foo()`` is representa
     >>> c = Foo.from_dict(foo_as_dict)
     >>> c is a
     True
+    >>> c is b
+    True
 
 
 Deduplication on disk
