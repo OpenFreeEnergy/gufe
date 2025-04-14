@@ -156,7 +156,7 @@ This is essentially an implementation of the `flyweight pattern <https://en.wiki
 
 This memory deduplication is ensured by the ``GufeTokenizable.from_dict``, which is typically used in deserialization.
 It will always use the first object in memory with that ``GufeKey``.
-This can lead to some unexpected behavior; for example, using the ``Foo`` class defined above:
+In practice, that leads to the following behavior, where ``Foo()`` is representative of any ``GufeTokenizable``:
 
 .. code-block:: python
 
@@ -164,14 +164,12 @@ This can lead to some unexpected behavior; for example, using the ``Foo`` class 
     >>> a = Foo(0)
     >>> b = Foo(0)
     >>> a is b
-    False
-    >>> c = Foo.from_dict(a.to_dict())
-    >>> c is a  # surprise!
     True
-    >>> d = Foo.from_dict(b.to_dict())
-    >>> d is b
-    False
-    >>> d is a  # this is because `a` has the spot in the registry
+    # deserialize Foo() to a pure dict representation
+    >>> foo_as_dict = a.to_dict()
+    # re-serialize as a GufeTokenizable
+    >>> c = Foo.from_dict(foo_as_dict)
+    >>> c is a
     True
 
 
