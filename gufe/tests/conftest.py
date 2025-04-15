@@ -273,7 +273,7 @@ def benzene_variants_star_map_transformations(
 
     for ligand in variants:
         solvated_ligands[ligand.name] = gufe.ChemicalSystem(
-            {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvnet"
+            {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvent"
         )
         solvated_ligand_transformations[("benzene", ligand.name)] = gufe.Transformation(
             solvated_ligands["benzene"],
