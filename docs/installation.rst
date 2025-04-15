@@ -3,6 +3,9 @@ Installation
 
 .. toctree::
 
+Installation with mamba
+-----------------------
+
 **gufe** is available through conda-forge and can be installed with mamba (or conda):
 
 .. code-block:: bash
@@ -10,9 +13,12 @@ Installation
     $ mamba install -c conda-forge gufe
 
 
-If you're a developer, you will want to build an editable install:
+Developer Installation
+----------------------
 
-Clone the repository:
+If you're a developer, you will want to build a local editable installation.
+
+1. clone the repository:
 
 .. code-block:: bash
 
@@ -20,16 +26,14 @@ Clone the repository:
     $ cd gufe
 
 
-Create and activate a new environment:
-
-.. TODO: use mamba update -f environment.yaml if they need to build in an existing environment?
+2. create and activate a new environment:
 
 .. code-block:: bash
 
     $ mamba create -f environment.yml
     $ mamba activate gufe
 
-Build an editable installation:
+3. build an editable installation:
 
 .. code-block:: bash
 
