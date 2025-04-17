@@ -18,6 +18,7 @@ from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from ..vendor.pdb_file.topology import Aromatic, Double, Single, Topology, Triple
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
@@ -27,10 +28,10 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
     None: BondType.UNSPECIFIED,
 }
 _BONDTYPES_OPENMM_TO_RDKIT = {
-    app.Single: BondType.SINGLE,
-    app.Double: BondType.DOUBLE,
-    app.Triple: BondType.TRIPLE,
-    app.Aromatic: BondType.AROMATIC,
+    Single: BondType.SINGLE,
+    Double: BondType.DOUBLE,
+    Triple: BondType.TRIPLE,
+    Aromatic: BondType.AROMATIC,
     None: BondType.UNSPECIFIED,
 }
 _BONDORDERS_RDKIT_TO_OPENMM = {v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()}
@@ -371,7 +372,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return cls(rdkit=rd_mol, name=name)
 
-    def to_openmm_topology(self) -> app.Topology:
+    def to_openmm_topology(self) -> Topology:
         """Convert to an openmm Topology object
 
         Returns
@@ -412,9 +413,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
         r = None  # current residue
 
         atom_lookup = {}  # maps rdkit indices to openmm Atoms
-
-        # top = app.Topology()
-        from gufe.vendor.pdb_file.topology import Topology
 
         top = Topology()
         for atom in self._rdkit.GetAtoms():
