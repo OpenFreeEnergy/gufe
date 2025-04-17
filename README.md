@@ -5,9 +5,9 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/OpenFreeEnergy/gufe/main.svg)](https://results.pre-commit.ci/latest/github/OpenFreeEnergy/gufe/main)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14624350.svg)](https://doi.org/10.5281/zenodo.14624350)
 
-# gufe - Grand Unified Free Energy
+# gufe
 
-GUFE is a toolkit for developers of software related to alchemical free energy calculations,
+gufe is a toolkit for developers of software related to alchemical free energy calculations,
 containing data models and abstract base classes.
 
 Looking to run a free energy calculation? You're probably looking for [openfe](https://github.com/OpenFreeEnergy/openfe)
