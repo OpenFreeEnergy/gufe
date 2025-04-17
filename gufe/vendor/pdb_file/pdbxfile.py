@@ -37,6 +37,7 @@ import sys
 from datetime import date
 
 import numpy as np
+from openmm import Platform
 from openmm.unit import Quantity, angstroms, is_quantity, nanometers, norm
 
 from . import element as elem
