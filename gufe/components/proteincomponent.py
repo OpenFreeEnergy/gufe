@@ -413,7 +413,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         atom_lookup = {}  # maps rdkit indices to openmm Atoms
 
-        top = app.Topology()
+        # top = app.Topology()
+        from gufe.vendor.pdb_file.topology import Topology
+
+        top = Topology()
         for atom in self._rdkit.GetAtoms():
             mi = atom.GetMonomerInfo()
             if (new_chainid := chainkey(mi)) != current_chainid:
