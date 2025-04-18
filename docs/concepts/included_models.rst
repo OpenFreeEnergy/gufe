@@ -41,13 +41,22 @@ For details on how to create your own :class:`.Component` classes, see :ref:`how
 ``ChemicalSystem``
 ------------------
 
-A :class:`.ChemicalSystem` represents a complete system of molecules, and is often composed of multiple :ref:`Components <component>`.
+A :class:`.ChemicalSystem` represents a complete system of molecules,
+and is often composed of multiple :ref:`Components <component>`.
+
+These are most often used as nodes of an :ref:`alchemicalnetwork`, with pairs of ``ChemicalSystem``\s connected by :ref:`Transformations <transformation>`.
+Because a ``ChemicalSystem`` functions as a kind of container of :ref:`Components <component>`, more than one ``ChemicalSystem`` can feature the same ``Component``\s.
+This allows even very large ``AlchemicalNetwork``\s to be relatively small in memory, as only a few large ``Component``\s like :class:`.ProteinComponent`\s may be shared among hundreds of ``ChemicalSystem``\s.
 
 
 .. _transformation:
 
 ``Transformation``
 ------------------
+
+A :class:`.Transformration` represents an alchemical transformation between two :ref:`ChemicalSystems <chemicalsystem>`.
+
+
 
 
 .. _protocol:
@@ -78,47 +87,3 @@ A :class:`.ChemicalSystem` represents a complete system of molecules, and is oft
 
 
 
-Ligand network setup
---------------------
-
-Gufe defines a basic API for the common case of performing alchemical
-transformations between small molecules, either for relative binding free
-energies of relative hydration free energies. This handles how mappings
-between different molecules are defined for alchemical transformations,
-by defining both the :class:`.LigandAtomMapping` object that contains the
-details of a specific mapping, and the :class:`.AtomMapper` abstract API for
-an object that creates the mappings.
-
-
-Simulation settings
--------------------
-
-In order to facilitate comparisons of different approaches, **gufe** defines a
-hierarchy of simulation settings. This allows certain settings (such as
-temperature and pressure) to be consistent across different simulation
-tools, while allowing additional custom settings specific to a given tool to
-be defined.
-
-Protocols
----------
-
-The actual simulation of a free energy calculation is defined by a **gufe**
-:class:`.Protocol`. The :class:`.Protocol` is described as a set of tasks,
-each a :class:`.ProtocolUnit`, which may depend on other tasks. As such,
-they form a directed acyclic graph.
-
-Gufe does not implement any free energy protocols, but by providing the
-abstract API, allows protocol authors to create new simulation protocols
-without needing to focus on the details of execution or storage.
-
-Executors
----------
-
-Executors actually run the simulations described by the :class:`.Protocol`.
-**gufe** does not define an executor API, although it includes the very simple
-serial executor in :func:`.execute_DAG`.
-
-The responsibilities of an executor include running the tasks (units) for a
-:class:`.Protocol` and managing storage of output. Gufe contains some tools
-to facilitate that, particularly around storage, but it is up to the
-executor to determine how to/whether to use those.
