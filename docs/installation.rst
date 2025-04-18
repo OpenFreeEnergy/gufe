@@ -6,7 +6,7 @@ Installation
 Installation with mamba
 -----------------------
 
-**gufe** is available through conda-forge and can be installed with mamba (or conda):
+**gufe** is available through *conda-forge* and can be installed with mamba (or conda):
 
 .. code-block:: bash
 
@@ -16,7 +16,7 @@ Installation with mamba
 Developer Installation
 ----------------------
 
-If you're a developer, you will want to build a local editable installation.
+If you're a developer, you will likely want to create a local editable installation.
 
 1. clone the repository:
 
