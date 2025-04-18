@@ -54,8 +54,19 @@ This allows even very large ``AlchemicalNetwork``\s to be relatively small in me
 ``Transformation``
 ------------------
 
-A :class:`.Transformration` represents an alchemical transformation between two :ref:`ChemicalSystems <chemicalsystem>`.
+A :class:`.Transformation` represents an alchemical transformation between two :ref:`ChemicalSystems <chemicalsystem>`.
 
+In addition to referencing the ``ChemicalSystem``\s it spans,
+a ``Transformation`` also includes the :ref:`protocol` used to actually perform the alchemical transformation,
+as well as an :ref:`atommapper` specifying what portions of the :ref:`Components <component>` are being transformed across the ``ChemicalSystem``\s.
+
+``Transformation`` objects are often used as the edges of an :ref:`alchemicalnetwork`.
+
+
+.. _nontransformation:
+
+``NonTransformation``
+------------------
 
 
 
