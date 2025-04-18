@@ -58,7 +58,7 @@ A :class:`.Transformation` represents an alchemical transformation between two :
 
 In addition to referencing the ``ChemicalSystem``\s it spans,
 a ``Transformation`` also includes the :ref:`protocol` used to actually perform the alchemical transformation,
-as well as an :ref:`atommapper` specifying what portions of the :ref:`Components <component>` are being transformed across the ``ChemicalSystem``\s.
+as well as an :ref:`componentmapping` specifying what portions of the :ref:`Components <component>` are being transformed across the ``ChemicalSystem``\s.
 
 ``Transformation`` objects are often used as the edges of an :ref:`alchemicalnetwork`.
 
@@ -66,7 +66,7 @@ as well as an :ref:`atommapper` specifying what portions of the :ref:`Components
 .. _nontransformation:
 
 ``NonTransformation``
-------------------
+---------------------
 
 
 
@@ -76,12 +76,19 @@ as well as an :ref:`atommapper` specifying what portions of the :ref:`Components
 ------------
 
 
+The :class:`.Protocol` is an *extensible point* of the library,
+and is intended to be subclassed to enable new applications.
+For details on how to create your own :class:`.Protocol` classes, see :ref:`howto-protocol`.
 
-.. _atommapper:
 
-``AtomMapper``
---------------
+.. _componentmapping:
 
+``ComponentMapping``
+--------------------
+
+The :class:`.ComponentMapping` is an *extensible point* of the library,
+and is intended to be subclassed to enable new applications.
+For details on how to create your own :class:`.ComponentMapping` classes, see :ref:`howto-componentmapping`.
 
 
 .. _ligandnetwork:

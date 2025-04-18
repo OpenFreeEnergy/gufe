@@ -5,3 +5,5 @@ How-To Guides
 
    serialization
    component
+   componentmapping
+   protocol
