@@ -15,7 +15,7 @@ from numpy import testing as npt
 from openff.units import unit
 
 from gufe import tokenization
-from gufe.custom_codecs import (
+from gufe.serialization.json.custom_codecs import (
     BYTES_CODEC,
     NPY_DTYPE_CODEC,
     NUMPY_CODEC,
@@ -25,7 +25,7 @@ from gufe.custom_codecs import (
     SETTINGS_CODEC,
     UUID_CODEC,
 )
-from gufe.custom_json import JSONCodec, JSONSerializerDeserializer, custom_json_factory
+from gufe.serialization.json.custom_json import JSONCodec, JSONSerializerDeserializer, custom_json_factory
 from gufe.settings import models
 
 

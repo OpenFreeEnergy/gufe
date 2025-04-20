@@ -20,7 +20,7 @@ from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
 import networkx as nx
 from typing_extensions import Self
 
-from gufe.custom_codecs import (
+from gufe.serialization.json.custom_codecs import (
     BYTES_CODEC,
     DATETIME_CODEC,
     NPY_DTYPE_CODEC,
@@ -31,7 +31,7 @@ from gufe.custom_codecs import (
     SETTINGS_CODEC,
     UUID_CODEC,
 )
-from gufe.custom_json import JSONSerializerDeserializer
+from gufe.serialization.json.custom_json import JSONSerializerDeserializer
 from gufe.serialization.msgpack import packb, unpackb
 
 _default_json_codecs = [
