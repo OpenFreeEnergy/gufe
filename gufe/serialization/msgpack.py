@@ -16,7 +16,7 @@ from gufe.settings import SettingsBaseModel
 # When adding a new type, manually assign the next available number (do not use auto()).
 # If you need to remove a type, avoid reusing its value in the future (preferably comment out the line).
 class MPEXT(IntEnum):
-    """Emumeration of custom extension types for MessagePack serialization."""
+    """Enumeration of custom extension types for MessagePack serialization."""
 
     LARGEINT = 0
     PATH = 1
@@ -29,6 +29,10 @@ class MPEXT(IntEnum):
 
 
 def pack_largeint(large_int: int) -> bytes:
+    """Serialize an integer larger than 64 bits by string conversion.
+
+    This is a limitation of the MessagePack format.
+    """
     return msgpack.packb(str(large_int))
 
 
@@ -120,7 +124,7 @@ def ext_hook_default(code: int, data: bytes):
 def packb(obj) -> bytes:
     """Serialize an object with MessagePack serialization.
 
-    Paramters
+    Parameters
     ---------
     obj
         The object to be serialized.
