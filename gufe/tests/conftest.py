@@ -68,13 +68,7 @@ PDB_BENCHMARK_LOADERS = {
 }
 
 PDB_FILE_LOADERS = {
-    name: lambda: get_test_filename(name)
-    for name in [
-        "181l.pdb",
-    ]
-}
-PDB_FILE_LOADERS = {
-    name: lambda: get_test_filename(name)
+    name: (lambda name=name: get_test_filename(name))
     for name in [
         "181l.pdb",
         "cmet_protein.pdb",
