@@ -211,23 +211,6 @@ class JSONSerializerDeserializer:
         return self._deserializer(string)
 
 
-# This code is part of OpenFE and is licensed under the MIT license.
-# For details, see https://github.com/OpenFreeEnergy/gufe
-# custom_codecs.py: A place to keep various custom JSONCodec instances
-
-import datetime
-import functools
-import pathlib
-from uuid import UUID
-
-import numpy as np
-from openff.units import DEFAULT_UNIT_REGISTRY
-
-import gufe
-from gufe.compression import zst_compress, zst_decompress
-from gufe.settings.models import SettingsBaseModel
-
-
 def default_from_dict(dct):
     dct = dict(dct)  # make a copy
     module = dct.pop("__module__")
