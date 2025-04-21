@@ -16,6 +16,8 @@ from gufe.settings import SettingsBaseModel
 # When adding a new type, manually assign the next available number (do not use auto()).
 # If you need to remove a type, avoid reusing its value in the future (preferably comment out the line).
 class MPEXT(IntEnum):
+    """Emumeration of custom extension types for MessagePack serialization."""
+
     LARGEINT = 0
     PATH = 1
     UNIT = 2
