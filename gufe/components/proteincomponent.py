@@ -432,6 +432,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
                 id=str(mi.GetSerialNumber()),
+                formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
             )
 
             atom_lookup[atom.GetIdx()] = a
