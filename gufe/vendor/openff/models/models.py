@@ -1,9 +1,10 @@
 from collections.abc import Callable
 from typing import Any
 
-from openff.models.types import custom_quantity_encoder, json_loader
 from openff.units import Quantity
 from pydantic.v1 import BaseModel
+
+from .types import custom_quantity_encoder, json_loader
 
 
 class DefaultModel(BaseModel):
