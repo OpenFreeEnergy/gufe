@@ -8,9 +8,10 @@ import abc
 import pprint
 from typing import Optional, Union
 
-from openff.models.models import DefaultModel
-from openff.models.types import FloatQuantity
 from openff.units import unit
+
+from gufe.vendor.openff.models.models import DefaultModel
+from gufe.vendor.openff.models.types import FloatQuantity
 
 try:
     from pydantic.v1 import Extra, Field, PositiveFloat, PrivateAttr, validator
