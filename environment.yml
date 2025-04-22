@@ -8,9 +8,9 @@ dependencies:
   - msgpack-python
   - networkx
   - numpy
+  - openff-toolkit >=0.15.1
   - openff-units >=0.3.0
   - openmm >=8.2
-  - openff-toolkit >=0.15.1
   - pint
   - pip
   - pydantic >1
