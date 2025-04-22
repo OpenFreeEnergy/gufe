@@ -287,27 +287,29 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Add Additionals
         # Formal Charge
-        netcharge = 0
-        for a in rd_mol.GetAtoms():
-            atom_name = a.GetMonomerInfo().GetName().strip()
-            atomic_num = a.GetAtomicNum()
-
-            connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
-            default_valence = periodicTable.GetDefaultValence(atomic_num)
-
-            if connectivity == 0:  # ions
-                fc = _get_ion_charge(atom_name)
-            elif default_valence > connectivity:  # negative charge
-                fc = -(default_valence - connectivity)
-            elif default_valence < connectivity:  # positive charge
-                fc = +(connectivity - default_valence)
+        for omm_atom, rd_atom in zip(mol_topology.atoms(), rd_mol.GetAtoms()):
+            if omm_atom.formalCharge != None:
+                fc = omm_atom.formalCharge
+                rd_atom.SetFormalCharge(fc)
+                rd_atom.UpdatePropertyCache(strict=True)
             else:
-                fc = 0  # neutral
+                atom_name = rd_atom.GetMonomerInfo().GetName().strip()
+                atomic_num = rd_atom.GetAtomicNum()
 
-            a.SetFormalCharge(fc)
-            a.UpdatePropertyCache(strict=True)
+                connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in rd_atom.GetBonds())
+                default_valence = periodicTable.GetDefaultValence(atomic_num)
 
-            netcharge += fc
+                if connectivity == 0:  # ions
+                    fc = _get_ion_charge(atom_name)
+                elif default_valence > connectivity:  # negative charge
+                    fc = -(default_valence - connectivity)
+                elif default_valence < connectivity:  # positive charge
+                    fc = +(connectivity - default_valence)
+                else:
+                    fc = 0  # neutral
+
+                rd_atom.SetFormalCharge(fc)
+                rd_atom.UpdatePropertyCache(strict=True)
 
         return cls(rdkit=rd_mol, name=name)
 
