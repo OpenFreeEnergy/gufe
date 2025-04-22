@@ -56,7 +56,7 @@ _benchmark_pdb_names = [
     "tnsk2_protein",
     "tyk2_protein",
 ]
-_benchmark_pdb_names = []
+
 
 _pl_benchmark_url_pattern = (
     "https://github.com/OpenFreeEnergy/openfe-benchmarks/blob/main/openfe_benchmarks/data/{name}.pdb?raw=true"
@@ -71,15 +71,6 @@ PDB_FILE_LOADERS = {
     name: (lambda name=name: get_test_filename(name))
     for name in [
         "181l.pdb",
-        "cmet_protein.pdb",
-        "hif2a_protein.pdb",
-        "mcl1_protein.pdb",
-        "p38_protein.pdb",
-        "ptp1b_protein.pdb",
-        "syk_protein.pdb",
-        "thrombin_protein.pdb",
-        "tnsk2_protein.pdb",
-        "tyk2_protein.pdb",
     ]
 }
 
