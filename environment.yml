@@ -7,7 +7,7 @@ dependencies:
   - coverage
   - msgpack-python
   - networkx
-  - numpy =2
+  - numpy
   - openff-models >=0.0.5
   - openff-toolkit >=0.15.1
   - openff-units >=0.3.0
