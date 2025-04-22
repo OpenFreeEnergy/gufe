@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-from openff.units import unit
-from pint import Quantity
+from openff.units import unit, Quantity
 
 from .component import Component
 
