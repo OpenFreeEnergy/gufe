@@ -23,7 +23,7 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}
-    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }} 🧪${{ matrix.openmm-version}}"
+    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }}"
     strategy:
       fail-fast: false
       matrix:
@@ -33,9 +33,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-        openmm-version:
-          - "8.2.0"
-          - "8.1.2"
         include:
             # Note: we still need to add support for macos-13
             # see https://github.com/OpenFreeEnergy/openfe/issues/842
@@ -61,7 +58,6 @@ jobs:
           cache-downloads: true
           create-args: >-
             python=${{ matrix.python-version }}
-            openmm=${{ matrix.openmm-version }}
           init-shell: bash
 
       - name: "Install"
