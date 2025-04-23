@@ -172,7 +172,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff: FloatQuantity["nanometer"] = Quantity(1.0, "nanometer")
+    nonbonded_cutoff: FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
