@@ -9,7 +9,6 @@ dependencies:
   - openff-toolkit >=0.15.1
   - openff-units >=0.3.0
   - pint
-  - openff-models >=0.0.5
   - pip
   - pydantic >1
   - zstandard
