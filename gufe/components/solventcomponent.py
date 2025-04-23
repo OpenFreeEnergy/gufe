@@ -2,11 +2,14 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, TYPE_CHECKING
 
 from openff.units import unit
 
 from .component import Component
+
+if TYPE_CHECKING:
+    from openff.units import Quantity
 
 _CATIONS = {"Cs", "K", "Li", "Na", "Rb"}
 _ANIONS = {"Cl", "Br", "F", "I"}
@@ -27,7 +30,7 @@ class SolventComponent(Component):
     _positive_ion: str | None
     _negative_ion: str | None
     _neutralize: bool
-    _ion_concentration: unit.Quantity
+    _ion_concentration: Quantity
 
     def __init__(
         self,
@@ -36,7 +39,7 @@ class SolventComponent(Component):
         positive_ion: str = "Na+",
         negative_ion: str = "Cl-",
         neutralize: bool = True,
-        ion_concentration: unit.Quantity = 0.15 * unit.molar,
+        ion_concentration: Quantity = 0.15 * unit.molar,
     ):
         """
         Parameters
@@ -76,7 +79,7 @@ class SolventComponent(Component):
 
         self._neutralize = neutralize
 
-        if not isinstance(ion_concentration, unit.Quantity) or not ion_concentration.is_compatible_with(unit.molar):
+        if not isinstance(ion_concentration, Quantity) or not ion_concentration.is_compatible_with(unit.molar):
             raise ValueError(f"ion_concentration must be given in units of" f" concentration, got: {ion_concentration}")
         if ion_concentration.m < 0:
             raise ValueError(f"ion_concentration must be positive, " f"got: {ion_concentration}")
@@ -108,7 +111,7 @@ class SolventComponent(Component):
         return self._neutralize
 
     @property
-    def ion_concentration(self) -> unit.Quantity:
+    def ion_concentration(self) -> Quantity:
         """Concentration of ions in the solvent state"""
         return self._ion_concentration
 
