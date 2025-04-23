@@ -8,7 +8,7 @@ import abc
 import pprint
 from typing import Optional, Union
 
-from openff.units import unit, Quantity
+from openff.units import unit
 
 from gufe.vendor.openff.models.models import DefaultModel
 from gufe.vendor.openff.models.types import FloatQuantity

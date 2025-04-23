@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from __future__ import annotations
 
-from typing import Optional, Tuple, TYPE_CHECKING
+from typing import Optional, Tuple
 
 from openff.units import unit, Quantity
 
@@ -50,7 +50,7 @@ class SolventComponent(Component):
         neutralize : bool, optional
           if the net charge on the chemical state is neutralized by the ions in
           this solvent component.  Default `True`
-        ion_concentration : openff-units.units.Quantity, optional
+        ion_concentration : openff.units.unit.Quantity, optional
           ionic concentration required, default 0.15 * unit.molar
           this must be supplied with units, e.g. "1.5 * unit.molar"
 
