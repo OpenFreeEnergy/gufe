@@ -1,7 +1,7 @@
 """Custom models for dealing with unit-bearing quantities in a Pydantic-compatible manner."""
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy
 from openff.units import Quantity, Unit
@@ -13,63 +13,70 @@ from .exceptions import (
     UnsupportedExportError,
 )
 
+if TYPE_CHECKING:
+    import openmm.unit
+
 
 class _FloatQuantityMeta(type):
     def __getitem__(self, t):
         return type("FloatQuantity", (FloatQuantity,), {"__unit__": t})
 
 
-class FloatQuantity(float, metaclass=_FloatQuantityMeta):
-    """A model for unit-bearing floats."""
+if TYPE_CHECKING:
+    FloatQuantity = Quantity
+else:
 
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate_type
+    class FloatQuantity(float, metaclass=_FloatQuantityMeta):
+        """A model for unit-bearing floats."""
 
-    @classmethod
-    def validate_type(cls, val):
-        """Process a value tagged with units into one tagged with "OpenFF" style units."""
-        unit_ = getattr(cls, "__unit__", Any)
-        if unit_ is Any:
-            if isinstance(val, (float, int)):
-                # TODO: Can this exception be raised with knowledge of the field it's in?
-                raise MissingUnitError(f"Value {val} needs to be tagged with a unit")
-            elif isinstance(val, Quantity):
-                return Quantity(val)
-            elif _is_openmm_quantity(val):
-                return _from_omm_quantity(val)
+        @classmethod
+        def __get_validators__(cls):
+            yield cls.validate_type
+
+        @classmethod
+        def validate_type(cls, val):
+            """Process a value tagged with units into one tagged with "OpenFF" style units."""
+            unit_ = getattr(cls, "__unit__", Any)
+            if unit_ is Any:
+                if isinstance(val, (float, int)):
+                    # TODO: Can this exception be raised with knowledge of the field it's in?
+                    raise MissingUnitError(f"Value {val} needs to be tagged with a unit")
+                elif isinstance(val, Quantity):
+                    return Quantity(val)
+                elif _is_openmm_quantity(val):
+                    return _from_omm_quantity(val)
+                else:
+                    raise UnitValidationError(f"Could not validate data of type {type(val)}")
             else:
+                unit_ = Unit(unit_)
+                if isinstance(val, Quantity):
+                    # some custom behavior could go here
+                    assert unit_.dimensionality == val.dimensionality
+                    # return through converting to some intended default units (taken from the class)
+                    val._magnitude = float(val.m)
+                    return val.to(unit_)
+
+                if _is_openmm_quantity(val):
+                    return _from_omm_quantity(val).to(unit_)
+                if isinstance(val, int) and not isinstance(val, bool):
+                    # coerce ints into floats for a FloatQuantity
+                    return float(val) * unit_
+                if isinstance(val, float):
+                    return val * unit_
+                if isinstance(val, str):
+                    # could do custom deserialization here?
+                    val = Quantity(val).to(unit_)
+                    val._magnitude = float(val._magnitude)
+                    return val
+                if "unyt" in str(val.__class__):
+                    if val.value.shape == ():
+                        # this is a scalar force into an array by unyt's design
+                        if "float" in str(val.value.dtype):
+                            return float(val.value) * unit_
+                        elif "int" in str(val.value.dtype):
+                            return int(val.value) * unit_
+
                 raise UnitValidationError(f"Could not validate data of type {type(val)}")
-        else:
-            unit_ = Unit(unit_)
-            if isinstance(val, Quantity):
-                # some custom behavior could go here
-                assert unit_.dimensionality == val.dimensionality
-                # return through converting to some intended default units (taken from the class)
-                val._magnitude = float(val.m)
-                return val.to(unit_)
-
-            if _is_openmm_quantity(val):
-                return _from_omm_quantity(val).to(unit_)
-            if isinstance(val, int) and not isinstance(val, bool):
-                # coerce ints into floats for a FloatQuantity
-                return float(val) * unit_
-            if isinstance(val, float):
-                return val * unit_
-            if isinstance(val, str):
-                # could do custom deserialization here?
-                val = Quantity(val).to(unit_)
-                val._magnitude = float(val._magnitude)
-                return val
-            if "unyt" in str(val.__class__):
-                if val.value.shape == ():
-                    # this is a scalar force into an array by unyt's design
-                    if "float" in str(val.value.dtype):
-                        return float(val.value) * unit_
-                    elif "int" in str(val.value.dtype):
-                        return int(val.value) * unit_
-
-            raise UnitValidationError(f"Could not validate data of type {type(val)}")
 
 
 def _is_openmm_quantity(obj: object) -> bool:
@@ -157,64 +164,68 @@ class _ArrayQuantityMeta(type):
         return type("ArrayQuantity", (ArrayQuantity,), {"__unit__": t})
 
 
-class ArrayQuantity(float, metaclass=_ArrayQuantityMeta):
-    """A model for unit-bearing arrays."""
+if TYPE_CHECKING:
+    ArrayQuantity = Quantity
+else:
 
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate_type
+    class ArrayQuantity(float, metaclass=_ArrayQuantityMeta):
+        """A model for unit-bearing arrays."""
 
-    @classmethod
-    def validate_type(cls, val):
-        """Process an array tagged with units into one tagged with "OpenFF" style units."""
-        unit_ = getattr(cls, "__unit__", Any)
-        if unit_ is Any:
-            if isinstance(val, (list, numpy.ndarray)):
-                # Work around a special case in which val might be list[openmm.unit.Quantity]
-                if isinstance(val, list) and {type(element).__module__ for element in val} == {
-                    "openmm.unit.quantity"
-                }:
-                    unit_ = _from_omm_quantity(val[-1]).units
-                    return Quantity(
-                        [_from_omm_quantity(element).m for element in val],
-                        units=unit_,
-                    )
+        @classmethod
+        def __get_validators__(cls):
+            yield cls.validate_type
 
-                # TODO: Can this exception be raised with knowledge of the field it's in?
-                raise MissingUnitError(f"Value {val} needs to be tagged with a unit")
+        @classmethod
+        def validate_type(cls, val):
+            """Process an array tagged with units into one tagged with "OpenFF" style units."""
+            unit_ = getattr(cls, "__unit__", Any)
+            if unit_ is Any:
+                if isinstance(val, (list, numpy.ndarray)):
+                    # Work around a special case in which val might be list[openmm.unit.Quantity]
+                    if isinstance(val, list) and {type(element).__module__ for element in val} == {
+                        "openmm.unit.quantity"
+                    }:
+                        unit_ = _from_omm_quantity(val[-1]).units
+                        return Quantity(
+                            [_from_omm_quantity(element).m for element in val],
+                            units=unit_,
+                        )
 
-            elif isinstance(val, Quantity):
-                # TODO: This might be a redundant cast causing wasted CPU time.
-                #       But maybe it handles pint vs openff.units.unit?
-                return Quantity(val)
-            elif _is_openmm_quantity(val):
-                return _from_omm_quantity(val)
+                    # TODO: Can this exception be raised with knowledge of the field it's in?
+                    raise MissingUnitError(f"Value {val} needs to be tagged with a unit")
+
+                elif isinstance(val, Quantity):
+                    # TODO: This might be a redundant cast causing wasted CPU time.
+                    #       But maybe it handles pint vs openff.units.unit?
+                    return Quantity(val)
+                elif _is_openmm_quantity(val):
+                    return _from_omm_quantity(val)
+                else:
+                    raise UnitValidationError(f"Could not validate data of type {type(val)}")
             else:
+                unit_ = Unit(unit_)
+                if isinstance(val, Quantity):
+                    assert unit_.dimensionality == val.dimensionality
+                    return val.to(unit_)
+                if _is_openmm_quantity(val):
+                    return _from_omm_quantity(val).to(unit_)
+                if isinstance(val, (numpy.ndarray, list)):
+                    if "unyt" in str(val.__class__):
+                        val = val.to_ndarray()
+                    try:
+                        return val * unit_
+                    except RuntimeError as error:
+                        # unyt subclasses ndarray but doesn't __mult__ with
+                        # pint.Unit objects
+                        if val.__class__.__module__.startswith("unyt"):
+                            return val.to_ndarray() * unit_
+                        else:
+                            raise error
+                if isinstance(val, bytes):
+                    # Define outside loop
+                    dt = numpy.dtype(int).newbyteorder("<")
+                    return numpy.frombuffer(val, dtype=dt) * unit_
+                if isinstance(val, str):
+                    # could do custom deserialization here?
+                    raise NotImplementedError
                 raise UnitValidationError(f"Could not validate data of type {type(val)}")
-        else:
-            unit_ = Unit(unit_)
-            if isinstance(val, Quantity):
-                assert unit_.dimensionality == val.dimensionality
-                return val.to(unit_)
-            if _is_openmm_quantity(val):
-                return _from_omm_quantity(val).to(unit_)
-            if isinstance(val, (numpy.ndarray, list)):
-                if "unyt" in str(val.__class__):
-                    val = val.to_ndarray()
-                try:
-                    return val * unit_
-                except RuntimeError as error:
-                    # unyt subclasses ndarray but doesn't __mult__ with
-                    # pint.Unit objects
-                    if val.__class__.__module__.startswith("unyt"):
-                        return val.to_ndarray() * unit_
-                    else:
-                        raise error
-            if isinstance(val, bytes):
-                # Define outside loop
-                dt = numpy.dtype(int).newbyteorder("<")
-                return numpy.frombuffer(val, dtype=dt) * unit_
-            if isinstance(val, str):
-                # could do custom deserialization here?
-                raise NotImplementedError
-            raise UnitValidationError(f"Could not validate data of type {type(val)}")
