@@ -5,7 +5,7 @@ from pathlib import Path
 
 import msgpack
 import numpy as np
-from pint import Quantity
+from openff.units import Quantity
 
 import gufe
 from gufe.settings import SettingsBaseModel

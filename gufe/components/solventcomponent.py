@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from typing import Optional, Tuple, TYPE_CHECKING
 
-from openff.units import unit
+from openff.units import unit, Quantity
 
 from .component import Component
-
-if TYPE_CHECKING:
-    from openff.units import Quantity
 
 _CATIONS = {"Cs", "K", "Li", "Na", "Rb"}
 _ANIONS = {"Cl", "Br", "F", "I"}

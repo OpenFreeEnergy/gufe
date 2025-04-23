@@ -8,7 +8,7 @@ import abc
 import pprint
 from typing import Optional, Union
 
-from openff.units import unit
+from openff.units import unit, Quantity
 
 from gufe.vendor.openff.models.models import DefaultModel
 from gufe.vendor.openff.models.types import FloatQuantity
@@ -172,7 +172,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff: FloatQuantity["nanometer"] = 1.0 * unit.nanometer
+    nonbonded_cutoff: FloatQuantity["nanometer"] = Quantity(1.0, "nanometer")
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
