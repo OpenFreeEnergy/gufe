@@ -5,7 +5,7 @@ dependencies:
   - coverage
   - networkx
   - numpy
-  - openmm <8.2
+  - openmm ==8.2
   - openff-toolkit >=0.15.1
   - openff-units >=0.3.0
   - pint
