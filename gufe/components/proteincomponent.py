@@ -290,26 +290,31 @@ class ProteinComponent(ExplicitMoleculeComponent):
         for omm_atom, rd_atom in zip(mol_topology.atoms(), rd_mol.GetAtoms()):
             if omm_atom.formalCharge != None:
                 fc = omm_atom.formalCharge
+                # print(rd_atom.GetFormalCharge())
                 rd_atom.SetFormalCharge(fc)
                 rd_atom.UpdatePropertyCache(strict=True)
+                # print(rd_atom.GetFormalCharge())
+                # print(rd_atom.GetIdx())
+        for omm_atom, rd_atom in zip(mol_topology.atoms(), rd_mol.GetAtoms()):
+            atom_name = rd_atom.GetMonomerInfo().GetName().strip()
+            atomic_num = rd_atom.GetAtomicNum()
+
+            connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in rd_atom.GetBonds())
+            default_valence = periodicTable.GetDefaultValence(atomic_num)
+            # Now we need to into account it might be bonded to an atom that is charged
+            for bond in rd_atom.GetBonds():
+                pass
+            if connectivity == 0:  # ions
+                fc = _get_ion_charge(atom_name)
+            elif default_valence > connectivity:  # negative charge
+                fc = -(default_valence - connectivity)
+            elif default_valence < connectivity:  # positive charge
+                fc = +(connectivity - default_valence)
             else:
-                atom_name = rd_atom.GetMonomerInfo().GetName().strip()
-                atomic_num = rd_atom.GetAtomicNum()
+                fc = 0  # neutral
 
-                connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in rd_atom.GetBonds())
-                default_valence = periodicTable.GetDefaultValence(atomic_num)
-
-                if connectivity == 0:  # ions
-                    fc = _get_ion_charge(atom_name)
-                elif default_valence > connectivity:  # negative charge
-                    fc = -(default_valence - connectivity)
-                elif default_valence < connectivity:  # positive charge
-                    fc = +(connectivity - default_valence)
-                else:
-                    fc = 0  # neutral
-
-                rd_atom.SetFormalCharge(fc)
-                rd_atom.UpdatePropertyCache(strict=True)
+            rd_atom.SetFormalCharge(fc)
+            rd_atom.UpdatePropertyCache(strict=True)
 
         return cls(rdkit=rd_mol, name=name)
 
