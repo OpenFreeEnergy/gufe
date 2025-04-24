@@ -4,7 +4,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import numpy
-from openff.units import Quantity, Unit
+from openff.units import Quantity, Unit, unit
 from openff.utilities import has_package, requires_package
 
 from .exceptions import (
@@ -23,7 +23,7 @@ class _FloatQuantityMeta(type):
 
 
 if TYPE_CHECKING:
-    FloatQuantity = Quantity
+    FloatQuantity = unit.Quantity
 else:
 
     class FloatQuantity(float, metaclass=_FloatQuantityMeta):
@@ -165,7 +165,7 @@ class _ArrayQuantityMeta(type):
 
 
 if TYPE_CHECKING:
-    ArrayQuantity = Quantity
+    ArrayQuantity = unit.Quantity
 else:
 
     class ArrayQuantity(float, metaclass=_ArrayQuantityMeta):
