@@ -5,8 +5,7 @@ from pathlib import Path
 
 import msgpack
 import numpy as np
-import pint
-from openff.units import DEFAULT_UNIT_REGISTRY
+from openff.units import Quantity
 
 import gufe
 from gufe.settings import SettingsBaseModel
@@ -52,7 +51,7 @@ def pack_default(obj) -> msgpack.ExtType:
         case Path():
             return msgpack.ExtType(MPEXT.PATH, msgpack.packb(str(obj)))
 
-        case pint.registry.UnitRegistry.Quantity():
+        case Quantity():
             unit_data: list = [obj.m, str(obj.u), "openff_units"]
             unit_payload: bytes = msgpack.packb(unit_data, default=pack_default)
             return msgpack.ExtType(
@@ -100,7 +99,7 @@ def ext_hook_default(code: int, data: bytes):
             return Path(string_rep_data)
         case MPEXT.UNIT:
             magnitude, unit, _ = msgpack.unpackb(data, ext_hook=ext_hook_default)
-            return magnitude * DEFAULT_UNIT_REGISTRY.Quantity(unit)
+            return magnitude * Quantity(unit)
         case MPEXT.NDARRAY:
             _dtype, _shape, _bytes = msgpack.unpackb(data)
             return np.frombuffer(_bytes, dtype=np.dtype(_dtype)).reshape(_shape)
