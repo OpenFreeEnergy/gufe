@@ -4,6 +4,30 @@ CHANGELOG
 
 .. current developments
 
+v1.4.0
+====================
+
+**Added:**
+
+* ``GufeTokenizable`` objects now have the ``to_msgpack`` and ``from_msgpack`` methods for MessagePack serialization and deserialization.
+* ``Protocol`` objects now have the ``_validate`` abstract method and ``validate`` method. If ``_validate`` is implemented by a ``Protocol`` author, calls to ``validate`` will validate the inputs provided without needing to create a ``ProtocolDAG``.
+
+**Changed:**
+
+* `ProteinComponent.to_openmm_topology` now also adds some OpenMM bond type information as objects, if detected. (#501)
+* An expanded set of ions has been added to ``components/proteincomponent.py`` based on amber (https://github.com/Amber-MD/AmberClassic/blob/42e88bf9a2214ba008140280713a430f3ecd4a90/dat/leap/lib/atomic_ions.lib#L1C1-L68C6).
+  ``ions_dict`` provides names and charges. Now, net charges for ions are taken from it,
+  instead of ``GetDefaultValence()`` from ``rdkit.Chem.GetPeriodicTable()`` function.
+* ``openff.models`` is no longer supported, so we now vendor it.
+  This will not require any changes in user code.
+  See `issue #397 <https://github.com/OpenFreeEnergy/openfe/issues/397>`_ and `PR #535 <https://github.com/OpenFreeEnergy/openfe/pull/535>`_ for more details.
+
+**Fixed:**
+
+* Fixed behavior of `ProteinComponent.to_openmm_topology` to correctly assign `int` or `None` types to bond order for OpenMM, instead of objects. (#501)
+
+
+
 v1.3.0
 ====================
 
