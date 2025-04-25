@@ -431,6 +431,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                 residue=r,
                 id=str(mi.GetSerialNumber()),
+                formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
             )
 
             atom_lookup[atom.GetIdx()] = a
@@ -497,7 +498,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         except AttributeError:
             out_path = "<unknown>"
 
-        PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
+        app.PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
 
         if must_close:
             # we only close the file if we had to open it
