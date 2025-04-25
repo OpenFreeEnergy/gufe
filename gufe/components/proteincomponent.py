@@ -425,15 +425,24 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 _, resname, resnum, icode = new_resid
                 r = top.addResidue(name=resname, chain=c, id=str(resnum), insertionCode=icode)
                 current_resid = new_resid
-
-            a = top.addAtom(
-                name=mi.GetName(),
-                element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
-                residue=r,
-                id=str(mi.GetSerialNumber()),
-                formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
-            )
-
+            # openMM <=8.2
+            try:
+                a = top.addAtom(
+                    name=mi.GetName(),
+                    element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
+                    residue=r,
+                    id=str(mi.GetSerialNumber()),
+                    formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
+                )
+            # openmm >= 8.1.2
+            # doesn't have formalCharge as an atomm attr
+            except TypeError:
+                a = top.addAtom(
+                    name=mi.GetName(),
+                    element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
+                    residue=r,
+                    id=str(mi.GetSerialNumber()),
+                )
             atom_lookup[atom.GetIdx()] = a
 
         for bond in self._rdkit.GetBonds():
