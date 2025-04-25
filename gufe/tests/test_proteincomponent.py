@@ -35,7 +35,7 @@ def custom_pdb_ion(PDB_181L_path):
         with open(PDB_181L_path, "r") as f:
             orig_pdb = f.read()
 
-        str_to_replace = "HETATM 2614 CL  "  #  CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
+        str_to_replace = "HETATM 2615 CL  "  #  CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
 
         new_str = str_to_replace.replace("CL  ", new_ion)
 
@@ -348,7 +348,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_pdb_ion_invalid(self, custom_pdb_ion):
         ion_name = "ab7 "
         pdb_generator = custom_pdb_ion(ion_name)
-        with pytest.raises(ValueError, match="ab7 in residue CL at index 173."):
+        with pytest.raises(ValueError, match="ab7 in residue CL at index 1."):
             self.cls.from_pdb_file(next(pdb_generator))
 
 
