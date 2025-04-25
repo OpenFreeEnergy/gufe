@@ -98,12 +98,6 @@ def PDB_181L_path():
 
 
 @pytest.fixture
-def PDB_181L_OpenMMClean_path():
-    with importlib.resources.path("gufe.tests.data", "181l_openmmClean.pdb") as f:
-        yield str(f)
-
-
-@pytest.fixture
 def offxml_settings_path():
     with importlib.resources.path("gufe.tests.data", "offxml_settings.json") as f:
         yield str(f)

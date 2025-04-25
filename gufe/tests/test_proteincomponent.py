@@ -176,11 +176,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         )
 
     @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
-    def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path, input_type):
-        p = self.cls.from_pdb_file(str(PDB_181L_OpenMMClean_path), name="Bob")
+    def test_to_pdb_input_types(self, PDB_181L_path, tmp_path, input_type):
+        p = self.cls.from_pdb_file(str(PDB_181L_path), name="Bob")
 
         self._test_file_output(
-            input_path=PDB_181L_OpenMMClean_path,
+            input_path=PDB_181L_path,
             output_path=tmp_path / "tmp_181L.pdb",
             input_type=input_type,
             output_func=p.to_pdb_file,
@@ -206,17 +206,17 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
         assert_same_pdb_lines(in_file_path=str(out_ref_file), out_file_path=out_file)
 
-    def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
-        out_file_name = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
+    def test_io_pdb_comparison(self, PDB_181L_path, tmp_path):
+        out_file_name = "tmp_" + os.path.basename(PDB_181L_path)
         out_file = tmp_path / out_file_name
 
-        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
+        p = self.cls.from_pdb_file(PDB_181L_path, name="Bob")
         _ = p.to_pdb_file(str(out_file))
 
-        assert_same_pdb_lines(PDB_181L_OpenMMClean_path, str(out_file))
+        assert_same_pdb_lines(PDB_181L_path, str(out_file))
 
-    def test_dummy_from_dict(self, PDB_181L_OpenMMClean_path):
-        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
+    def test_dummy_from_dict(self, PDB_181L_path):
+        p = self.cls.from_pdb_file(PDB_181L_path, name="Bob")
         gufe_dict = p.to_dict()
         p2 = self.cls.from_dict(gufe_dict)
 
