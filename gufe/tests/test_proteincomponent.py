@@ -6,15 +6,18 @@ import os
 
 import pytest
 from numpy.testing import assert_almost_equal
-from openmm import unit
-from openmm.app import pdbfile
+from packaging.version import Version
 from rdkit import Chem
 
 from gufe import ProteinComponent
 
-from .conftest import ALL_PDB_LOADERS
+from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
+
+if OPENMM_VERSION:
+    from openmm import unit
+    from openmm.app import pdbfile
 
 
 @pytest.fixture
@@ -176,6 +179,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         )
 
     @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
+    @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
+    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_pdb_input_types(self, PDB_181L_path, tmp_path, input_type):
         p = self.cls.from_pdb_file(str(PDB_181L_path), name="Bob")
 
@@ -187,6 +192,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         )
 
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
@@ -206,6 +212,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
         assert_same_pdb_lines(in_file_path=str(out_ref_file), out_file_path=out_file)
 
+    @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
     def test_io_pdb_comparison(self, PDB_181L_path, tmp_path):
         out_file_name = "tmp_" + os.path.basename(PDB_181L_path)
         out_file = tmp_path / out_file_name
@@ -224,6 +231,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
     # parametrize
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_openmm_positions(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
@@ -241,6 +249,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
     # parametrize
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_openmm_topology(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
