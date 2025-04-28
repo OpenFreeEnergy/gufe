@@ -12,3 +12,5 @@ except ImportError:
 We are going to just use from `pydantic.v1 import BaseModel` directly since we depend on the pydantic 1.x version where that was added.
 
 Then for `types.py`, `models.py`, and `exceptions.py` I ran our formatting hooks + pyupgrade --py310-plus.
+
+I've included the LICENSE from the openff repo for good measure.
