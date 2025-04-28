@@ -434,7 +434,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     id=str(mi.GetSerialNumber()),
                     formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
                 )
-            # openmm >= 8.1.2
+            # openmm <= 8.1.2
             # doesn't have formalCharge as an atomm attr
             except TypeError:
                 a = top.addAtom(
