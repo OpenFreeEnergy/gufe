@@ -9,8 +9,7 @@ dependencies:
   - numpy
   - openff-toolkit >=0.15.1
   - openff-units >=0.3.0
-  - openmm
-  - packaging
+  - openmm >=8.2
   - pint
   - pip
   - pydantic >1
