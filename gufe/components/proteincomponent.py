@@ -425,7 +425,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 _, resname, resnum, icode = new_resid
                 r = top.addResidue(name=resname, chain=c, id=str(resnum), insertionCode=icode)
                 current_resid = new_resid
-            # openMM <=8.2
+            # openMM >=8.2
             try:
                 a = top.addAtom(
                     name=mi.GetName(),
