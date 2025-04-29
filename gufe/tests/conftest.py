@@ -9,6 +9,7 @@ from urllib.error import URLError
 
 import pytest
 from openff.units import unit
+from packaging.version import Version
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
@@ -21,6 +22,14 @@ except URLError:
     HAS_INTERNET = False
 else:
     HAS_INTERNET = True
+
+try:
+    from openmm import Platform
+
+    OPENMM_VERSION = Version(Platform.getOpenMMVersion())
+# Support OpenMM as a soft dep
+except ModuleNotFoundError:
+    OPENMM_VERSION = None
 
 
 class URLFileLike:
@@ -94,12 +103,6 @@ def multi_molecule_sdf():
 @pytest.fixture
 def PDB_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.pdb") as f:
-        yield str(f)
-
-
-@pytest.fixture
-def PDB_181L_OpenMMClean_path():
-    with importlib.resources.path("gufe.tests.data", "181l_openmmClean.pdb") as f:
         yield str(f)
 
 

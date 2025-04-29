@@ -425,14 +425,24 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 _, resname, resnum, icode = new_resid
                 r = top.addResidue(name=resname, chain=c, id=str(resnum), insertionCode=icode)
                 current_resid = new_resid
-
-            a = top.addAtom(
-                name=mi.GetName(),
-                element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
-                residue=r,
-                id=str(mi.GetSerialNumber()),
-            )
-
+            # openMM >=8.2
+            try:
+                a = top.addAtom(
+                    name=mi.GetName(),
+                    element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
+                    residue=r,
+                    id=str(mi.GetSerialNumber()),
+                    formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
+                )
+            # openmm <= 8.1.2
+            # doesn't have formalCharge as an atomm attr
+            except TypeError:
+                a = top.addAtom(
+                    name=mi.GetName(),
+                    element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
+                    residue=r,
+                    id=str(mi.GetSerialNumber()),
+                )
             atom_lookup[atom.GetIdx()] = a
 
         for bond in self._rdkit.GetBonds():
@@ -497,7 +507,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         except AttributeError:
             out_path = "<unknown>"
 
-        PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
+        app.PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
 
         if must_close:
             # we only close the file if we had to open it
