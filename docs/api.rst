@@ -13,8 +13,7 @@ API
    gufe.transformations
    gufe.visualization
    gufe.chemicalsystem
-   gufe.custom_codecs
-   gufe.custom_json
+   gufe.serialization
    gufe.custom_typing
    gufe.ligandnetwork
    gufe.molhashing

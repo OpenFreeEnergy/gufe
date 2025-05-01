@@ -41,7 +41,11 @@ autoclass_content = "both"
 autodoc_default_options = {
     "members": True,
     "member-order": "bysource",
-    "inherited-members": "GufeTokenizable",
+    # Need to stop at ints to avoid docs breaking:
+    # https://stackoverflow.com/questions/77914856/
+    # this originates from the docstrings of to_bytes
+    # and from_bytes in cpython.
+    "inherited-members": "GufeTokenizable, int",
     "undoc-members": True,
 }
 
