@@ -1,6 +1,7 @@
 name: gufe
 channels:
   - conda-forge
+  - conda-forge/label/openmm_rc
 dependencies:
   - ambertools >=22.0  # why were we getting old ones?
   - coverage
@@ -9,7 +10,7 @@ dependencies:
   - numpy
   - openff-toolkit >=0.15.1
   - openff-units >=0.3.0
-  - openmm >=8.2
+  - openmm >=8.3.0beta
   - pint
   - pip
   - pydantic >1
