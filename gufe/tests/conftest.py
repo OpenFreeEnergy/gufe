@@ -67,9 +67,7 @@ _benchmark_pdb_names = [
 ]
 
 
-_pl_benchmark_url_pattern = (
-    "https://github.com/OpenFreeEnergy/openfe-benchmarks/blob/main/openfe_benchmarks/data/{name}.pdb?raw=true"
-)
+_pl_benchmark_url_pattern = "https://github.com/OpenFreeEnergy/openfe-benchmarks/tree/f577a88d94b6deae1c0de7eb926edf48dd42b72d/openfe_benchmarks/data/{name}.pdb?raw=true"
 
 
 PDB_BENCHMARK_LOADERS = {
