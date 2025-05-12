@@ -27,10 +27,11 @@ else:
 try:
     from openmm import Platform
 
-    OPENMM_VERSION: Version | None = Version(Platform.getOpenMMVersion())
+    OPENMM_VERSION = Version(Platform.getOpenMMVersion())
 # Support OpenMM as a soft dep
+# Set it to version 0.0.0 if it isn't installed
 except ModuleNotFoundError:
-    OPENMM_VERSION = None
+    OPENMM_VERSION = Version("0.0.0")
 
 
 class URLFileLike:
