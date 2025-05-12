@@ -7,6 +7,7 @@ import io
 import urllib.request
 from urllib.error import URLError
 
+import pooch
 import pytest
 from openff.units import unit
 from packaging.version import Version
@@ -70,13 +71,48 @@ _benchmark_pdb_names = [
 _pl_benchmark_url_pattern = "https://github.com/OpenFreeEnergy/openfe-benchmarks/tree/f577a88d94b6deae1c0de7eb926edf48dd42b72d/openfe_benchmarks/data/{name}.pdb?raw=true"
 
 
-PDB_BENCHMARK_LOADERS = {
-    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name)) for name in _benchmark_pdb_names
-}
+# This will duplcate the PDB_BENCHMARK_LOADERS
+# We can keep PDB_BENCHMARK_LOADERS arround just in case we want to use it again someday
+POOCH_CACHE = pooch.os_cache("gufe")
+PDB_FILE = pooch.create(
+    path=POOCH_CACHE,
+    base_url="doi:10.5281/zenodo.15376306",
+    registry={
+        "hif2a_protein.pdb": "md5:158711011c6b85b1d55ad68a559ca07b",
+        "cmet_protein.pdb": "md5:0a38968fe9c09a49da2f1c57e84196f0",
+        "mcl1_protein.pdb": "md5:a2e57c14a925ee0dd9f158eb7ad5f413",
+        "p38_protein.pdb": "md5:52e1ba80c73c7f710219580bddb71de3",
+        "ptp1b_protein.pdb": "md5:f754c3aa3ea1617d99a4dd21fb158967",
+        "syk_protein.pdb": "md5:0c631f4b88ed7bbd35ee660214426cd2",
+        "thrombin_protein.pdb": "md5:261b8f040b389188e8c0cf14fbab5775",
+        "tnsk2_protein.pdb": "md5:aa13bef540d061ed66ef4240886a39ec",
+        "tyk2_protein.pdb": "md5:48d447290ee637ce8e3255cfa572297a",
+    },
+    retry_if_failed=10,
+)
+
+
+# TODO We can either fixtureize this or make it lazy to speed things up
+class PoochFileLike:
+    """Wrapper so we can use the calls that exist to PDB_BENCHMARK_LOADERS"""
+
+    def __init__(self, name):
+        self.name = name
+
+    def __call__(self):
+        return PDB_FILE.fetch(f"{self.name}.pdb")
+
+
+PDB_ZENODO_LOADERS = {name: PoochFileLike(name) for name in _benchmark_pdb_names}
+
+
+# PDB_BENCHMARK_LOADERS = {
+#    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name)) for name in _benchmark_pdb_names
+# }
 
 PDB_FILE_LOADERS = {name: lambda: get_test_filename(name) for name in ["181l.pdb"]}
 
-ALL_PDB_LOADERS = dict(**PDB_BENCHMARK_LOADERS, **PDB_FILE_LOADERS)
+ALL_PDB_LOADERS = dict(**PDB_ZENODO_LOADERS, **PDB_FILE_LOADERS)
 
 
 @pytest.fixture
