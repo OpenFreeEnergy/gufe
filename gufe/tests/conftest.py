@@ -27,7 +27,7 @@ else:
 try:
     from openmm import Platform
 
-    OPENMM_VERSION = Version(Platform.getOpenMMVersion())
+    OPENMM_VERSION: Version | None = Version(Platform.getOpenMMVersion())
 # Support OpenMM as a soft dep
 except ModuleNotFoundError:
     OPENMM_VERSION = None
