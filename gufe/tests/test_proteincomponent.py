@@ -180,7 +180,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
     @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
     @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
-    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
+    @pytest.mark.skipif(OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed")
     def test_to_pdb_input_types(self, PDB_181L_path, tmp_path, input_type):
         p = self.cls.from_pdb_file(str(PDB_181L_path), name="Bob")
 
@@ -192,7 +192,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         )
 
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
-    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
+    @pytest.mark.skipif(OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed")
     def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
