@@ -17,38 +17,14 @@ from rdkit.Chem import AllChem
 import gufe
 from gufe.tests.test_protocol import DummyProtocol
 
-try:
-    urllib.request.urlopen("https://google.com")
-except URLError:
-    HAS_INTERNET = False
-else:
-    HAS_INTERNET = True
-
+# Support OpenMM as a soft dep
+# Set it to version 0.0.0 if it isn't installed
 try:
     from openmm import Platform
 
     OPENMM_VERSION = Version(Platform.getOpenMMVersion())
-# Support OpenMM as a soft dep
-# Set it to version 0.0.0 if it isn't installed
 except ModuleNotFoundError:
     OPENMM_VERSION = Version("0.0.0")
-
-
-class URLFileLike:
-    def __init__(self, url, encoding="utf-8"):
-        self.url = url
-        self.encoding = encoding
-        self.data = None
-
-    def __call__(self):
-        if not HAS_INTERNET:  # pragma: no-cover
-            pytest.skip("Skipping because internet seems faulty")
-
-        if self.data is None:
-            req = urllib.request.urlopen(self.url)
-            self.data = req.read().decode(self.encoding)
-
-        return io.StringIO(self.data)
 
 
 def get_test_filename(filename):
@@ -56,24 +32,6 @@ def get_test_filename(filename):
         return str(file)
 
 
-_benchmark_pdb_names = [
-    "cmet_protein",
-    "hif2a_protein",
-    "mcl1_protein",
-    "p38_protein",
-    "ptp1b_protein",
-    "syk_protein",
-    "thrombin_protein",
-    "tnsk2_protein",
-    "tyk2_protein",
-]
-
-
-_pl_benchmark_url_pattern = "https://github.com/OpenFreeEnergy/openfe-benchmarks/tree/f577a88d94b6deae1c0de7eb926edf48dd42b72d/openfe_benchmarks/data/{name}.pdb?raw=true"
-
-
-# This will duplcate the PDB_BENCHMARK_LOADERS
-# We can keep PDB_BENCHMARK_LOADERS arround just in case we want to use it again someday
 POOCH_CACHE = pooch.os_cache("gufe")
 PDB_FILE = pooch.create(
     path=POOCH_CACHE,
@@ -89,11 +47,13 @@ PDB_FILE = pooch.create(
         "tnsk2_protein.pdb": "md5:aa13bef540d061ed66ef4240886a39ec",
         "tyk2_protein.pdb": "md5:48d447290ee637ce8e3255cfa572297a",
     },
-    retry_if_failed=10,
+    retry_if_failed=10,  # Set to 10 since tests might try and download the same file at the same time
 )
 
 
-# TODO We can either fixtureize this or make it lazy to speed things up
+# TODO Add some logic so that if two instances try and __call__ the same file, one waits instead of both
+# trying to download the file, since this can happen often with many pytest-xdist threads, we need to use
+# "retry_if_failed=10" in our pooch registry
 class PoochFileLike:
     """Wrapper so we can use the calls that exist to PDB_BENCHMARK_LOADERS"""
 
@@ -104,15 +64,20 @@ class PoochFileLike:
         return PDB_FILE.fetch(f"{self.name}.pdb")
 
 
+_benchmark_pdb_names = [
+    "cmet_protein",
+    "hif2a_protein",
+    "mcl1_protein",
+    "p38_protein",
+    "ptp1b_protein",
+    "syk_protein",
+    "thrombin_protein",
+    "tnsk2_protein",
+    "tyk2_protein",
+]
+
 PDB_ZENODO_LOADERS = {name: PoochFileLike(name) for name in _benchmark_pdb_names}
-
-
-# PDB_BENCHMARK_LOADERS = {
-#    name: URLFileLike(url=_pl_benchmark_url_pattern.format(name=name)) for name in _benchmark_pdb_names
-# }
-
 PDB_FILE_LOADERS = {name: lambda: get_test_filename(name) for name in ["181l.pdb"]}
-
 ALL_PDB_LOADERS = dict(**PDB_ZENODO_LOADERS, **PDB_FILE_LOADERS)
 
 
