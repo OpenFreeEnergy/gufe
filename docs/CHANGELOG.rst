@@ -4,6 +4,15 @@ CHANGELOG
 
 .. current developments
 
+v1.4.1
+====================
+
+**Fixed:**
+
+* Fixed a typo in the gufe 2D visualization code which affected bond highlighting (`PR #545 <https://github.com/OpenFreeEnergy/gufe/pull/545>`_)
+
+
+
 v1.4.0
 ====================
 

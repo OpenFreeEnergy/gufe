@@ -9,10 +9,11 @@ dependencies:
   - networkx
   - numpy
   - openff-toolkit >=0.15.1
-  - openff-units >=0.3.0
   - openmm >=8.3.0beta
+  - openff-units >=0.3.1
   - pint
   - pip
+  - pooch
   - pydantic >1
   - pytest
   - pytest-cov
