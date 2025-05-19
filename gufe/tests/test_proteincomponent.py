@@ -6,15 +6,18 @@ import os
 
 import pytest
 from numpy.testing import assert_almost_equal
-from openmm import unit
-from openmm.app import pdbfile
+from packaging.version import Version
 from rdkit import Chem
 
 from gufe import ProteinComponent
 
-from .conftest import ALL_PDB_LOADERS
+from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
+
+if OPENMM_VERSION:
+    from openmm import unit
+    from openmm.app import pdbfile
 
 
 @pytest.fixture
@@ -35,7 +38,7 @@ def custom_pdb_ion(PDB_181L_path):
         with open(PDB_181L_path, "r") as f:
             orig_pdb = f.read()
 
-        str_to_replace = "HETATM 2614 CL  "  #  CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
+        str_to_replace = "HETATM 2615 CL  "  #  CL S 173      43.141  16.447   1.769  1.00  0.00          CL"
 
         new_str = str_to_replace.replace("CL  ", new_ion)
 
@@ -179,17 +182,20 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         )
 
     @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
-    def test_to_pdb_input_types(self, PDB_181L_OpenMMClean_path, tmp_path, input_type):
-        p = self.cls.from_pdb_file(str(PDB_181L_OpenMMClean_path), name="Bob")
+    @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
+    @pytest.mark.skipif(OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed")
+    def test_to_pdb_input_types(self, PDB_181L_path, tmp_path, input_type):
+        p = self.cls.from_pdb_file(str(PDB_181L_path), name="Bob")
 
         self._test_file_output(
-            input_path=PDB_181L_OpenMMClean_path,
+            input_path=PDB_181L_path,
             output_path=tmp_path / "tmp_181L.pdb",
             input_type=input_type,
             output_func=p.to_pdb_file,
         )
 
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    @pytest.mark.skipif(OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed")
     def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
@@ -209,17 +215,18 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
         assert_same_pdb_lines(in_file_path=str(out_ref_file), out_file_path=out_file)
 
-    def test_io_pdb_comparison(self, PDB_181L_OpenMMClean_path, tmp_path):
-        out_file_name = "tmp_" + os.path.basename(PDB_181L_OpenMMClean_path)
+    @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
+    def test_io_pdb_comparison(self, PDB_181L_path, tmp_path):
+        out_file_name = "tmp_" + os.path.basename(PDB_181L_path)
         out_file = tmp_path / out_file_name
 
-        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
+        p = self.cls.from_pdb_file(PDB_181L_path, name="Bob")
         _ = p.to_pdb_file(str(out_file))
 
-        assert_same_pdb_lines(PDB_181L_OpenMMClean_path, str(out_file))
+        assert_same_pdb_lines(PDB_181L_path, str(out_file))
 
-    def test_dummy_from_dict(self, PDB_181L_OpenMMClean_path):
-        p = self.cls.from_pdb_file(PDB_181L_OpenMMClean_path, name="Bob")
+    def test_dummy_from_dict(self, PDB_181L_path):
+        p = self.cls.from_pdb_file(PDB_181L_path, name="Bob")
         gufe_dict = p.to_dict()
         p2 = self.cls.from_dict(gufe_dict)
 
@@ -227,6 +234,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
     # parametrize
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_openmm_positions(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
@@ -244,6 +252,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
     # parametrize
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_openmm_topology(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
         ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
@@ -351,7 +360,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_pdb_ion_invalid(self, custom_pdb_ion):
         ion_name = "ab7 "
         pdb_generator = custom_pdb_ion(ion_name)
-        with pytest.raises(ValueError, match="ab7 in residue CL at index 173."):
+        with pytest.raises(ValueError, match="ab7 in residue CL at index 1."):
             self.cls.from_pdb_file(next(pdb_generator))
 
 
