@@ -18,8 +18,8 @@ This provides a shared language that tools in the ecosystem use.
     1. :ref:`Component <component>` : :ref:`howto-component`
     2. :ref:`Protocol <protocol>` : :ref:`howto-protocol`
     3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
-    3. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
-    4. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
+    4. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
+    5. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
 
 
 .. _component:
