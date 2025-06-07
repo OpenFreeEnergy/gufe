@@ -6,4 +6,5 @@ How-To Guides
    serialization
    component
    componentmapping
+   atommapper
    protocol
