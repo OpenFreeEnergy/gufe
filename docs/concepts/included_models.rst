@@ -95,6 +95,10 @@ A :class:`.Protocol` represents the specific sampling approach used to transform
 ``Protocol`` objects are often used as part of a ``Transformation``, although they can be used on their own alongside ``ChemicalSystem``\s and ``ComponentMapping``\s (when needed) to obtain free energy difference estimates.
 Individual ``Protocol`` subclasses obtain these estimates in a wide variety of ways, with varying domains of applicability and effectiveness.
 
+The :meth:`.Protocol.create` method is used to generate :ref:`ProtocolDAGs <protocoldag>` that can be executed to produce :ref:`ProtocolDAGResults <protocoldagresult>`.
+The :meth:`.Protocol.gather` method is used in turn to aggregate the contents of many :ref:`ProtocolDAGResults <protocoldagresult>` into a :ref:`ProtocolResult <protocolresult>`.
+
+
 .. note::
     The :class:`.Protocol` is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
@@ -119,16 +123,20 @@ The ``ProtocolUnit``\s of this ``ProtocolDAG`` can be executed in dependency-ord
 ``ProtocolUnit``
 ^^^^^^^^^^^^^^^
 
-A :class:`.ProtocolUnit` is the unit of execution of a :ref:`ProtocolDAG <protocoldag>`, functioning as a node with dependency relationships in the DAG.
+A :class:`.ProtocolUnit` is the unit of execution of a :ref:`ProtocolDAG <protocoldag>`, functioning as a node with dependency relationships within the `directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_ (DAG).
 
-A ``ProtocolUnit`` 
+A ``ProtocolUnit`` retains as attributes all of its inputs, including any ``ProtocolUnit``\s present among those inputs.
+An execution engine performing the ``ProtocolUnit`` feeds the :ref:`ProtocolUnitResults <protocolunitresult>` corresponding to its dependencies to its
+:meth:`.ProtocolUnit.execute` method, returning its own :ref:`ProtocolUnitResult <protocolunitresult>` upon success.
+If the ``ProtocolUnit`` fails to execute, a :ref:`ProtocolUnitFailure <protocolunitfailure>` is returned instead.
 
+Because ``ProtocolUnit``\s are only a function of their inputs and dependencies, they can be executed and retried by an execution engine in a variety of ways, in different processes, on different machines, etc.
+Their outputs can also be preserved to allow for partial execution and a form of checkpointing for :ref:`ProtocolDAGs <protocoldag>`.
 
 .. note::
-    The :class:`.Protocol` is an *extensible point* of the library,
+    The :class:`.ProtocolUnit` is an *extensible point* of the library alongside :class:`.Protocol`,
     and is intended to be subclassed to enable new applications.
-    For details on how to create your own :class:`.Protocol` classes, see :ref:`howto-protocol`.
-
+    For details on how to create your own :class:`.ProtocolUnit` classes, see :ref:`howto-protocol`.
 
 
 .. _protocolunitresult:
@@ -136,7 +144,11 @@ A ``ProtocolUnit``
 ``ProtocolUnitResult``
 ^^^^^^^^^^^^^^^^^^^^^^
 
-A :class:`.ProtocolUnitResult` is created by a :ref
+A :class:`.ProtocolUnitResult` retains the results from successful execution of a :ref:`ProtocolUnit <protocolunit>`.
+
+A ``ProtocolUnitResult`` retains as attributes all of its inputs, including any ``ProtocolUnitResult``\s present among those inputs.
+It is returned by a successful call to its corresponding :meth:`.ProtocolUnit.execute` method, and retains all outputs from execution.
+It also retains its start and end ``datetime``, and potentially other provenance information.
 
 
 .. _protocolunitfailure:
@@ -144,7 +156,11 @@ A :class:`.ProtocolUnitResult` is created by a :ref
 ``ProtocolUnitFailure``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-A :class:`.ProtocolUnitFailure` is created by a :ref
+A :class:`.ProtocolUnitFailure` retains the results from failed execution of a :ref:`ProtocolUnit <protocolunit>`.
+
+A ``ProtocolUnitFailure`` retains the same information as a ``ProtocolUnitResult``,
+but because it is returned by a failed call to its corresponding :meth:`.ProtocolUnit.execute` method, it has not outputs to retain.
+It does, however, retain the :class:`Exception` and traceback of the error.
 
 
 .. _protocoldagresult:
@@ -154,9 +170,10 @@ A :class:`.ProtocolUnitFailure` is created by a :ref
 
 A :class:`.ProtocolDAGResult` retains the results from executing a :ref:`ProtocolDAG <protocoldag>`.
 
-A ``ProtocolDAGResult`` contains the same information as a ``ProtocolDAG`` (including ``ProtocolUnit``\s and their dependency relationships), while also featuring the set of :ref:`ProtocolUnitResults <protocolunitresult>` that resulted from each.
-``ProtocolDAGResult``\s form the smallest 
+A ``ProtocolDAGResult`` contains the same information as a ``ProtocolDAG`` (including ``ProtocolUnit``\s and their dependency relationships), while also featuring the set of :ref:`ProtocolUnitResults <protocolunitresult>` (and :ref:`ProtocolUnitFailures <protocolunitfailure>`, if present) that resulted from each.
+Each individual ``ProtocolDAGResult`` always contains enough information to obtain a free energy difference estimate, though perhaps undersampled and unconverged.
 
+Multiple ``ProtocolDAGResult``\s can be aggregated together via :meth:`.Protocol.gather` to yield a :ref:`ProtocolResult <protocolresult>`, giving the best estimate for the free energy difference possible given the data presented among the ``ProtocolDAGResult``\s.
 
 .. _protocolresult:
 
@@ -165,11 +182,10 @@ A ``ProtocolDAGResult`` contains the same information as a ``ProtocolDAG`` (incl
 
 A :class:`.ProtocolResult` aggregates the results from one or more :ref:`ProtocolDAGResults <protocoldagresult>` to yield a free energy difference estimate.
 
-``ProtocolResult`` are created from :meth:`.Protocol.gather`, and feature the ``Protocol``-specific methods necessary to obtain actual free energy difference estimates from a set of ``ProtocolDAGResult``\s, namely:
+``ProtocolResult`` objects are created from :meth:`.Protocol.gather`, and feature the ``Protocol``-specific methods necessary to obtain actual free energy difference estimates from a set of ``ProtocolDAGResult``\s, namely:
 
 * :meth:`.ProtocolResult.get_estimate`
 * :meth:`.ProtocolResult.get_uncertainty`
-
 
 .. note::
     The :class:`.ProtocolResult` is an *extensible point* of the library alongside :class:`Protocol`,
@@ -177,11 +193,12 @@ A :class:`.ProtocolResult` aggregates the results from one or more :ref:`Protoco
     For details on how to create your own :class:`.ProtocolResult` classes, see :ref:`howto-protocol`.
 
 
-
 .. _componentmapping:
 
 ``ComponentMapping``
 --------------------
+
+A :class:`.ComponentMapping`
 
 .. note::
     The :class:`.ComponentMapping` is an *extensible point* of the library,
@@ -194,12 +211,15 @@ A :class:`.ProtocolResult` aggregates the results from one or more :ref:`Protoco
 ``LigandNetwork``
 -----------------
 
+A :class:`.LigandNetwork`
 
 
 .. _alchemicalnetwork:
 
 ``AlchemicalNetwork``
 ---------------------
+
+A :class:`.AlchemicalNetwork`
 
 
 
