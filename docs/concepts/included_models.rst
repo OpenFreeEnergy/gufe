@@ -122,7 +122,7 @@ The ``ProtocolUnit``\s of this ``ProtocolDAG`` can be executed in dependency-ord
 .. _protocolunit:
 
 ``ProtocolUnit``
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 
 A :class:`.ProtocolUnit` is the unit of execution of a :ref:`ProtocolDAG <protocoldag>`, functioning as a node with dependency relationships within the `directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_ (DAG).
 
