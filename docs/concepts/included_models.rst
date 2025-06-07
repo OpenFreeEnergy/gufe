@@ -18,6 +18,7 @@ This provides a shared language that tools in the ecosystem use.
     1. :ref:`Component <component>` : :ref:`howto-component`
     2. :ref:`Protocol <protocol>` : :ref:`howto-protocol`
     3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
+    3. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
     4. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
 
 
@@ -207,6 +208,19 @@ A :class:`.ComponentMapping`
     For details on how to create your own :class:`.ComponentMapping` classes, see :ref:`howto-componentmapping`.
 
 
+.. _atommapping:
+
+``AtomMapping``
+^^^^^^^^^^^^^^^
+
+An :class:`.AtomMapping` 
+
+.. note::
+    The :class:`.AtomMapping` is an *extensible point* of the library,
+    and is intended to be subclassed to enable new applications.
+    For details on how to create your own :class:`.AtomMapping` classes, see :ref:`howto-atommapping`.
+
+
 .. _atommapper:
 
 ``AtomMapper``
@@ -215,9 +229,9 @@ A :class:`.ComponentMapping`
 An :class:`.AtomMapper` 
 
 .. note::
-    The :class:`.ComponentMapping` is an *extensible point* of the library,
+    The :class:`.AtomMapper` is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
-    For details on how to create your own :class:`.ComponentMapping` classes, see :ref:`howto-componentmapping`.
+    For details on how to create your own :class:`.AtomMapper` classes, see :ref:`howto-atommapper`.
 
 
 .. _ligandnetwork:
