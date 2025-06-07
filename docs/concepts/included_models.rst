@@ -18,6 +18,7 @@ This provides a shared language that tools in the ecosystem use.
     1. :ref:`Component <component>` : :ref:`howto-component`
     2. :ref:`Protocol <protocol>` : :ref:`howto-protocol`
     3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
+    4. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
 
 
 .. _component:
@@ -198,7 +199,20 @@ A :class:`.ProtocolResult` aggregates the results from one or more :ref:`Protoco
 ``ComponentMapping``
 --------------------
 
-A :class:`.ComponentMapping`
+A :class:`.ComponentMapping` 
+
+.. note::
+    The :class:`.ComponentMapping` is an *extensible point* of the library,
+    and is intended to be subclassed to enable new applications.
+    For details on how to create your own :class:`.ComponentMapping` classes, see :ref:`howto-componentmapping`.
+
+
+.. _atommapper:
+
+``AtomMapper``
+^^^^^^^^^^^^^^
+
+An :class:`.AtomMapper` 
 
 .. note::
     The :class:`.ComponentMapping` is an *extensible point* of the library,
@@ -219,7 +233,10 @@ A :class:`.LigandNetwork`
 ``AlchemicalNetwork``
 ---------------------
 
-A :class:`.AlchemicalNetwork`
+An :class:`.AlchemicalNetwork` is a set of :ref:`ChemicalSystems <chemicalsystem>`, :ref:`Transformations <transformation>`, and :ref:`NonTransformations <nontransformation>`, fully representing a set of alchemical and non-alchemical calculations to be performed.
 
+An ``AlchemicalNetwork`` functions as a single container for a collection of (often related) ``Transformation``\s and their ``ChemicalSystem``\s.
+It is simply a grouping of these objects, optionally with a ``name`` attached.
+For ``Transformation``\s that feature many ``ChemicalSystem``\s in common, these objects effectively encode these relationships.
 
-
+Some execution engines, such as `alchemiscale <https://alchemiscale.org>`_, ingest ``AlchemicalNetwork``\s as their primary unit of input.
