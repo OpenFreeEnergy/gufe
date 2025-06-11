@@ -9,6 +9,15 @@ In order to ensure interoperability,
 including molecules, chemical systems, and alchemical transformations.
 This provides a shared language that tools in the ecosystem use.
 
+You will learn below how the various pieces of **gufe** fit together.
+Generally speaking, :ref:`ChemicalSystems <chemicalsystem>` can be thought of as the *what* or the *nouns* that we are simulating,
+:ref:`Transformations <transformation>` are the *how* or the *verbs* that encode how we are simulating these objects and moving between them,
+and an :ref:`alchemicalnetwork` groups all of these together.
+
+.. image:: ../_static/alchemical_network_diagram.svg
+    :width: 600
+    :alt: Diagram of a keyed chain representation of an alchemical network.
+
 
 .. note::
 
@@ -20,6 +29,7 @@ This provides a shared language that tools in the ecosystem use.
     3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
     4. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
     5. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
+
 
 
 .. _component:
@@ -80,7 +90,7 @@ A ``Transformation`` functions as a container for all the information needed to 
 
 A :class:`.NonTransformation` represents non-alchemical sampling of a single :ref:`ChemicalSystem <chemicalsystem>`.
 
-In the context of an :ref:`alchemicalnetwork`, a ``NonTransformation`` is effectively a self-loop, featuring the same ``ChemicalSystem`` at either end..
+In the context of an :ref:`alchemicalnetwork`, a ``NonTransformation`` is effectively a self-loop, featuring the same ``ChemicalSystem`` at either end.
 Similar to a :ref:`Transformation <transformation>`, it features a :ref:`protocol` used to perform sampling on its ``ChemicalSystem``, but does not feature a :ref:`componentmapping` since none is required for this.
 An example of a ``Protocol`` that would be appropriate for a ``NonTransformation`` is one that performs equilibrium molecular dynamics of the ``ChemicalSystem``.
 
@@ -111,7 +121,7 @@ The :meth:`.Protocol.gather` method is used in turn to aggregate the contents of
 ``ProtocolDAG``
 ^^^^^^^^^^^^^^^
 
-A :class:`.ProtocolDAG` is an executable artifact that performs a :ref:`Protocol <protocol>`.
+A :class:`.ProtocolDAG` is an executable object that performs a :ref:`Protocol <protocol>`.
 
 A ``ProtocolDAG`` is created via :meth:`.Protocol.create` in combination with :ref:`ChemicalSystem(s) <chemicalsystem>` and a :ref:`ComponentMapping <componentmapping>` (when needed). 
 It is a `directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_ (DAG) of :ref:`ProtocolUnits <protocolunit>` and their dependency relationships.
