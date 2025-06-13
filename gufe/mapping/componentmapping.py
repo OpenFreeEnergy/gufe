@@ -21,3 +21,13 @@ class ComponentMapping(GufeTokenizable, abc.ABC):
 
     def __contains__(self, item: gufe.Component):
         return item == self._componentA or item == self._componentB
+
+    @property
+    def componentA(self) -> gufe.Component:
+        """A copy of the first Component in the mapping"""
+        return self._componentA
+
+    @property
+    def componentB(self) -> gufe.Component:
+        """A copy of the second Component in the mapping"""
+        return self._componentB
