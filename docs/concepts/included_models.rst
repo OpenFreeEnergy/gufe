@@ -210,11 +210,11 @@ A :class:`.ProtocolResult` aggregates the results from one or more :ref:`Protoco
 ``ComponentMapping``
 --------------------
 
-A :class:`.ComponentMapping` stores two :class:`.Component`/s, establishing that they are related in some way.
+A :class:`.ComponentMapping` stores two :class:`.Component`\s, establishing that they are related in some way.
 
-A ``ComponentMapping`` is the most minimal extensible point for relating two ``Components`` to each other, as it does not _require_ that the any details of the relationship are defined as a `Mapping`.
+A ``ComponentMapping`` is the most minimal extensible point for relating two ``Component``\s to each other, as it does not *require* that the any details of the relationship are defined as a ``Mapping``.
 
-See :ref:`AtomMapping <atommapping>` for an extensible point that is more specific to atom-based ``Component``/s.
+See :ref:`AtomMapping <atommapping>` for an extensible point that is more specific to atom-based ``Component``\s.
 
 .. note::
     The :class:`.ComponentMapping` is an *extensible point* of the library,
@@ -227,9 +227,9 @@ See :ref:`AtomMapping <atommapping>` for an extensible point that is more specif
 ``AtomMapping``
 ^^^^^^^^^^^^^^^
 
-An :class:`.AtomMapping` stores two :class:`.Component`/s and defines their relationship via a `Mapping<https://docs.python.org/3/glossary.html#term-mapping>_`.
+An :class:`.AtomMapping` stores two :class:`.Component`\s and defines their relationship via a `Mapping <https://docs.python.org/3/glossary.html#term-mapping>`_.
 
-``AtomMapping``s describe the relationship between ``componentA`` and ``componentB`` in terms of their atoms' indices with the methods:
+``AtomMapping``\s describe the relationship between ``componentA`` and ``componentB`` in terms of their atoms' indices with the methods:
 
 * :meth:`.AtomMapping.componentA_to_componentB`
 * :meth:`.AtomMapping.componentB_to_componentA`
@@ -249,7 +249,7 @@ A specialized example of an ``AtomMapping`` is a ``LigandAtomMapping``, which is
 ``AtomMapper``
 ^^^^^^^^^^^^^^
 
-An :class:`.AtomMapper` generates an iterable of :ref:`AtomMapping <atommapping>`/s, given two :class:`Component`/s via the :meth:`.AtomMapper.suggest_mappings` method.
+An :class:`.AtomMapper` generates an iterable of :ref:`AtomMapping <atommapping>`\s, given two :class:`Component`\s via the :meth:`.AtomMapper.suggest_mappings` method.
 As with an ``AtomMapping``, it is assumed that the relationship between the ``Components`` can be described in terms of the atoms' indices.
 
 .. note::
