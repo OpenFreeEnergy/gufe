@@ -1,3 +1,8 @@
+# This file was originally part of OpenPathSampling/SimStore, which is
+# distributed under the MIT license.
+# Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
+# Permissions are the same as those listed in the gufe LICENSE
+
 import datetime
 import functools
 import json
