@@ -15,8 +15,7 @@ Generally speaking, :ref:`ChemicalSystems <chemicalsystem>` can be thought of as
 and an :ref:`alchemicalnetwork` groups all of these together.
 
 .. image:: ../_static/alchemical_network_diagram.svg
-    :width: 600
-    :alt: Diagram of a keyed chain representation of an alchemical network.
+    :alt: The ``GufeTokenizable`` representation of an ``AlchemicalNetwork``.
 
 
 .. note::
@@ -29,7 +28,6 @@ and an :ref:`alchemicalnetwork` groups all of these together.
     3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
     4. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
     5. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
-
 
 
 .. _component:
@@ -115,6 +113,11 @@ The :meth:`.Protocol.gather` method is used in turn to aggregate the contents of
     The :class:`.Protocol` is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
     For details on how to create your own :class:`.Protocol` classes, see :ref:`howto-protocol`.
+
+
+.. image:: ../_static/gufe_protocol_diagram.svg
+    :alt: The ``gufe`` protocol system.
+
 
 .. _protocoldag:
 
