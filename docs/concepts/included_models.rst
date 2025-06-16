@@ -265,7 +265,7 @@ As with an ``AtomMapping``, it is assumed that the relationship between the ``Co
 
 A :class:`.LigandNetwork` is a set of :class:`.SmallMoleculeComponent` and :class:`.LigandAtomMapping` organized into a directed network.
 
-A ``LigandNetwork`` is a ``GufeTokenizable``, but can also be represented as a networkx object using the :meth:`.LigandNetwork.graph` property.
+A ``LigandNetwork`` is a ``GufeTokenizable``, but can also be represented as a `networkx graph <https://networkx.org/documentation/stable/reference/classes/multidigraph.html#networkx.MultiDiGraph>`_ using the :meth:`.LigandNetwork.graph` property.
 
 
 
