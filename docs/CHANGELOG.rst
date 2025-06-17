@@ -4,6 +4,15 @@ CHANGELOG
 
 .. current developments
 
+v1.5.0
+====================
+
+**Added:**
+
+* Added support OpenMM 8.2 (PR `#539 <https://github.com/OpenFreeEnergy/gufe/pull/539>`_)
+
+
+
 v1.4.1
 ====================
 
