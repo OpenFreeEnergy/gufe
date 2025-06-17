@@ -1,7 +1,10 @@
-# This file was originally part of OpenPathSampling/SimStore, which is
+# Parts of this file were originally part of OpenPathSampling/SimStore, which is
 # distributed under the MIT license.
 # Portions Copyright (c) 2014-2022 the contributors to OpenPathSampling
 # Permissions are the same as those listed in the gufe LICENSE
+
+# This code is part of gufe and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 
 import datetime
 import functools
