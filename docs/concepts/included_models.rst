@@ -213,9 +213,9 @@ A :class:`.ProtocolResult` aggregates the results from one or more :ref:`Protoco
 ``ComponentMapping``
 --------------------
 
-A :class:`.ComponentMapping` stores two :class:`.Component`\s, establishing that they are related in some way.
+A :class:`.ComponentMapping` expresses that two :class:`.Component`\s are related to each other via some kind of mapping.
 
-A ``ComponentMapping`` is the most minimal extensible point for relating two ``Component``\s to each other, as it does not *require* that the any details of the relationship are defined as a ``Mapping``.
+A ``ComponentMapping`` is the most minimal extensible point for relating two ``Component``\s to each other, as it does not *require* that the any details of the relationship are defined as a mapping.
 
 See :ref:`AtomMapping <atommapping>` for an extensible point that is more specific to atom-based ``Component``\s.
 
@@ -230,7 +230,7 @@ See :ref:`AtomMapping <atommapping>` for an extensible point that is more specif
 ``AtomMapping``
 ^^^^^^^^^^^^^^^
 
-An :class:`.AtomMapping` stores two :class:`.Component`\s and defines their relationship via a `Mapping <https://docs.python.org/3/glossary.html#term-mapping>`_.
+An :class:`.AtomMapping` expresses that two :class:`.Component`\s are related to each other via a `mapping <https://docs.python.org/3/glossary.html#term-mapping>`_ between their atoms.
 
 ``AtomMapping``\s describe the relationship between ``componentA`` and ``componentB`` in terms of their atoms' indices with the methods:
 
@@ -266,7 +266,7 @@ As with an ``AtomMapping``, it is assumed that the relationship between the ``Co
 ``LigandNetwork``
 -----------------
 
-A :class:`.LigandNetwork` is a set of :class:`.SmallMoleculeComponent` and :class:`.LigandAtomMapping` organized into a directed network.
+A :class:`.LigandNetwork` is a set of :class:`.SmallMoleculeComponent`\s and :class:`.LigandAtomMapping`\s organized into a directed network.
 
 A ``LigandNetwork`` is a ``GufeTokenizable``, but can also be represented as a `networkx graph <https://networkx.org/documentation/stable/reference/classes/multidigraph.html#networkx.MultiDiGraph>`_ using the :meth:`.LigandNetwork.graph` property.
 
