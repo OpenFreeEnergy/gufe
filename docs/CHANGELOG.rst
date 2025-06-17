@@ -4,6 +4,15 @@ CHANGELOG
 
 .. current developments
 
+v1.5.0
+====================
+
+**Changed:**
+
+* Support OpenMM 8.2 (#539)
+
+
+
 v1.4.1
 ====================
 
