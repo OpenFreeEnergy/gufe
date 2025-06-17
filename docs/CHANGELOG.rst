@@ -7,9 +7,9 @@ CHANGELOG
 v1.5.0
 ====================
 
-**Changed:**
+**Added:**
 
-* Support OpenMM 8.2 (#539)
+* Added support OpenMM 8.2 (PR `#539 <https://github.com/OpenFreeEnergy/gufe/pull/539>`_)
 
 
 
