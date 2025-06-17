@@ -22,7 +22,7 @@ and an :ref:`alchemicalnetwork` groups all of these together.
 
     Some of these classes are designed to be subclassed, and constitute the *extensible points* of the library.
     These include the following; see the **How-To Guide** for more information on how to extend from each:
-    
+
     1. :ref:`Component <component>` : :ref:`howto-component`
     2. :ref:`Protocol <protocol>` : :ref:`howto-protocol`
     3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
@@ -126,7 +126,7 @@ The :meth:`.Protocol.gather` method is used in turn to aggregate the contents of
 
 A :class:`.ProtocolDAG` is an executable object that performs a :ref:`Protocol <protocol>`.
 
-A ``ProtocolDAG`` is created via :meth:`.Protocol.create` in combination with :ref:`ChemicalSystem(s) <chemicalsystem>` and a :ref:`ComponentMapping <componentmapping>` (when needed). 
+A ``ProtocolDAG`` is created via :meth:`.Protocol.create` in combination with :ref:`ChemicalSystem(s) <chemicalsystem>` and a :ref:`ComponentMapping <componentmapping>` (when needed).
 It is a `directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_ (DAG) of :ref:`ProtocolUnits <protocolunit>` and their dependency relationships.
 The ``ProtocolUnit``\s of this ``ProtocolDAG`` can be executed in dependency-order to yield information needed for a free energy difference estimate.
 
