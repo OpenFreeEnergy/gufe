@@ -26,6 +26,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
 
     steps:
       - name: setup micromamba
@@ -45,7 +46,7 @@ jobs:
 
       - name: install gufe and deps
         run: |
-          micromamba install gufe pytest pytest-xdist pip -c conda-forge
+          micromamba install gufe pooch pytest pytest-xdist pip -c conda-forge
           python -m pip install PyGithub
 
       - id: run-tests
