@@ -275,6 +275,11 @@ A ``LigandNetwork`` is a ``GufeTokenizable``, but can also be represented as a `
 
 An :ref:`AlchemicalNetwork <alchemicalnetwork>` for a relative binding free energy calculation can be created from a ``LigandNetwork``, using the :meth:`LigandNetwork` convenience method. This uses the ``LigandNetwork`` along with user-defined ``SolventComponent``, ``ProteinComponent``, and ``Protocol`` to create the ``Transformation``/s edges and ``ChemicalSystem`` nodes constitute an ``AlchemicalNetwork``.
 
+.. image:: ../_static/ligand_network_diagram.svg
+    :alt: The ``GufeTokenizable`` representation of a ``LigandNetwork``.
+
+.. TODO: show graph representation as well? might be useful, since LigandNetworks can have cycles, even though their gufe representation is a DAG?
+
 
 .. _alchemicalnetwork:
 
