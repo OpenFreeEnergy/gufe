@@ -256,7 +256,7 @@ As with an ``AtomMapping``, it is assumed that the relationship between the ``Co
 
 A specialized example of an ``AtomMapper`` is a ``LigandAtomMapper``, which generates ``LigandAtomMapping``/s.
 
-.. TODO: Show an example implementation, like lomap atom mapper but maybe friendlier? 
+.. TODO: Show an example implementation, like lomap atom mapper but maybe friendlier?
 
 .. note::
     The :class:`.AtomMapper` is an *extensible point* of the library,
