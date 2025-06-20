@@ -273,7 +273,7 @@ A :class:`.LigandNetwork` is a set of :class:`.SmallMoleculeComponent`\s and :cl
 
 A ``LigandNetwork`` is a ``GufeTokenizable``, but can also be represented as a `networkx graph <https://networkx.org/documentation/stable/reference/classes/multidigraph.html#networkx.MultiDiGraph>`_ using the :meth:`.LigandNetwork.graph` property.
 
-An :ref:`AlchemicalNetwork <alchemical_network>` for a relative binding free energy calculation can be created from a ``LigandNetwork``, using the :meth:`LigandNetwork` convenience method. This uses the ``LigandNetwork`` along with user-defined ``SolventComponent``, ``ProteinComponent``, and ``Protocol`` to create the ``Transformation``/s edges and ``ChemicalSystem`` nodes constitute an ``AlchemicalNetwork``.
+An :ref:`AlchemicalNetwork <alchemicalnetwork>` for a relative binding free energy calculation can be created from a ``LigandNetwork``, using the :meth:`LigandNetwork` convenience method. This uses the ``LigandNetwork`` along with user-defined ``SolventComponent``, ``ProteinComponent``, and ``Protocol`` to create the ``Transformation``/s edges and ``ChemicalSystem`` nodes constitute an ``AlchemicalNetwork``.
 
 
 .. _alchemicalnetwork:
