@@ -10,4 +10,4 @@ utilize **gufe** APIs.
    :maxdepth: 1
 
    tokenizables
-   core_models
+   included_models
