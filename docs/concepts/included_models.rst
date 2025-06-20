@@ -4,15 +4,15 @@ Data models included in **gufe**
 The core of the **gufe** data model is the :class:`.GufeTokenizable` class,
 but **gufe** features more than just this base data structure.
 
-In order to ensure interoperability,
+To ensure interoperability,
 **gufe** also defines classes of objects that represent the core chemistry and alchemistry of a free energy pipeline,
 including molecules, chemical systems, and alchemical transformations.
 This provides a shared language that tools in the ecosystem use.
 
-You will learn below how the various pieces of **gufe** fit together.
+Below, you will learn how the various pieces of **gufe** fit together.
 Generally speaking, :ref:`ChemicalSystems <chemicalsystem>` can be thought of as the *what* or the *nouns* that we are simulating,
 :ref:`Transformations <transformation>` are the *how* or the *verbs* that encode how we are simulating these objects and moving between them,
-and an :ref:`alchemicalnetwork` groups all of these together.
+and an :ref:`alchemicalnetwork` is like a sentence that groups all of these together.
 
 .. image:: ../_static/alchemical_network_diagram.svg
     :alt: The ``GufeTokenizable`` representation of an ``AlchemicalNetwork``.
@@ -41,7 +41,7 @@ with a single ``Component`` capable of representing anything from an individual 
 These are often used to define the *components* of a :ref:`chemicalsystem`, which form the nodes of an :ref:`alchemicalnetwork`.
 The same ``Component`` may be present within multiple ``ChemicalSystem``\s, such as a :class:`.ProteinComponent` in an ``AlchemicalNetwork`` featuring relative binding transformations between ligands.
 
-As another distinct example: the :class:`.SmallMoleculeComponent` class is used to form the nodes of a :ref:`ligandnetwork`.
+As another distinct example: the :class:`.SmallMoleculeComponent` class (which is a subclass of :class:`.Component`) is used to form the nodes of a :ref:`ligandnetwork`.
 This is useful for representing relative transformations between a series of small molecules without invoking the additional complexity of an :ref:`alchemicalnetwork`.
 
 .. note::
@@ -55,12 +55,12 @@ This is useful for representing relative transformations between a series of sma
 ``ChemicalSystem``
 ------------------
 
-A :class:`.ChemicalSystem` represents a complete system of molecules,
-and is often composed of multiple :ref:`Components <component>`.
+A :class:`.ChemicalSystem` represents a complete system of molecules and is often composed of multiple :ref:`Components <component>`.
 
-These are most often used as nodes of an :ref:`alchemicalnetwork`, with pairs of ``ChemicalSystem``\s connected by :ref:`Transformations <transformation>`.
-Because a ``ChemicalSystem`` functions as a kind of container of :ref:`Components <component>`, more than one ``ChemicalSystem`` can feature the same ``Component``\s.
+These are most often used as nodes of an :ref:`alchemicalnetwork`, with pairs of :ref:`ChemicalSystems <chemicalsystem>` connected by :ref:`Transformations <transformation>`.
+Because a ``ChemicalSystem`` functions as a kind of container of :ref:`Components <component>`, more than one ``ChemicalSystem`` can feature the same ``Component``.
 This allows even very large ``AlchemicalNetwork``\s to be relatively small in memory, as only a few large ``Component``\s like :class:`.ProteinComponent`\s may be shared among hundreds of ``ChemicalSystem``\s.
+See :ref:`gufe-memory-deduplication` for more details about this memory optimization.
 
 When used as inputs to a ``Transformation``, ``ChemicalSystem``\s represent the set of ``Component``\s for which a free energy difference will be estimated.
 Alchemical methods performing free energy perturbation (FEP) between the two ``ChemicalSystem``\s of a ``Transformation`` will simulate these ``Component``\s using some sampling approach, obtaining enough information to derive a free energy difference estimate.
@@ -106,7 +106,7 @@ A :class:`.Protocol` represents the specific sampling approach used to transform
 Individual ``Protocol`` subclasses obtain these estimates in a wide variety of ways, with varying domains of applicability and effectiveness.
 
 The :meth:`.Protocol.create` method is used to generate :ref:`ProtocolDAGs <protocoldag>` that can be executed to produce :ref:`ProtocolDAGResults <protocoldagresult>`.
-The :meth:`.Protocol.gather` method is used in turn to aggregate the contents of many :ref:`ProtocolDAGResults <protocoldagresult>` into a :ref:`ProtocolResult <protocolresult>`.
+The :meth:`.Protocol.gather` method is then used to aggregate the contents of many :ref:`ProtocolDAGResults <protocoldagresult>` into a :ref:`ProtocolResult <protocolresult>`.
 
 
 .. note::
@@ -140,7 +140,7 @@ The ``ProtocolUnit``\s of this ``ProtocolDAG`` can be executed in dependency-ord
 
 A :class:`.ProtocolUnit` is the unit of execution of a :ref:`ProtocolDAG <protocoldag>`, functioning as a node with dependency relationships within the `directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_ (DAG).
 
-A ``ProtocolUnit`` retains as attributes all of its inputs, including any ``ProtocolUnit``\s present among those inputs.
+A ``ProtocolUnit`` retains all of its inputs as attributes, including any ``ProtocolUnit``\s present among those inputs.
 An execution engine performing the ``ProtocolUnit`` feeds the :ref:`ProtocolUnitResults <protocolunitresult>` corresponding to its dependencies to its
 :meth:`.ProtocolUnit.execute` method, returning its own :ref:`ProtocolUnitResult <protocolunitresult>` upon success.
 If the ``ProtocolUnit`` fails to execute, a :ref:`ProtocolUnitFailure <protocolunitfailure>` is returned instead.
@@ -232,10 +232,8 @@ See :ref:`AtomMapping <atommapping>` for an extensible point that is more specif
 
 An :class:`.AtomMapping` expresses that two :class:`.Component`\s are related to each other via a `mapping <https://docs.python.org/3/glossary.html#term-mapping>`_ between their atoms.
 
-``AtomMapping``\s describe the relationship between ``componentA`` and ``componentB`` in terms of their atoms' indices with the methods:
-
-* :meth:`.AtomMapping.componentA_to_componentB`
-* :meth:`.AtomMapping.componentB_to_componentA`
+``AtomMapping``\s describe the relationship between ``componentA`` and ``componentB`` in terms of their atoms' indices with the methods :meth:`.AtomMapping.componentA_to_componentB`
+and :meth:`.AtomMapping.componentB_to_componentA`.
 
 An ``AtomMapping`` is typically generated by an :ref:`AtomMapper <atommapper>`, as described below.
 
@@ -253,7 +251,12 @@ A specialized example of an ``AtomMapping`` is a ``LigandAtomMapping``, which is
 ^^^^^^^^^^^^^^
 
 An :class:`.AtomMapper` generates an iterable of :ref:`AtomMapping <atommapping>`\s, given two :class:`Component`\s via the :meth:`.AtomMapper.suggest_mappings` method.
+
 As with an ``AtomMapping``, it is assumed that the relationship between the ``Components`` can be described in terms of the atoms' indices.
+
+A specialized example of an ``AtomMapper`` is a ``LigandAtomMapper``, which generates ``LigandAtomMapping``/s.
+
+.. TODO: Show an example implementation, like lomap atom mapper but maybe friendlier? 
 
 .. note::
     The :class:`.AtomMapper` is an *extensible point* of the library,
@@ -270,6 +273,7 @@ A :class:`.LigandNetwork` is a set of :class:`.SmallMoleculeComponent`\s and :cl
 
 A ``LigandNetwork`` is a ``GufeTokenizable``, but can also be represented as a `networkx graph <https://networkx.org/documentation/stable/reference/classes/multidigraph.html#networkx.MultiDiGraph>`_ using the :meth:`.LigandNetwork.graph` property.
 
+An :ref:`AlchemicalNetwork <alchemical_network>` for a relative binding free energy calculation can be created from a ``LigandNetwork``, using the :meth:`LigandNetwork` convenience method. This uses the ``LigandNetwork`` along with user-defined ``SolventComponent``, ``ProteinComponent``, and ``Protocol`` to create the ``Transformation``/s edges and ``ChemicalSystem`` nodes constitute an ``AlchemicalNetwork``.
 
 
 .. _alchemicalnetwork:
