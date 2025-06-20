@@ -1034,8 +1034,8 @@ def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
     try:
         result = importlib.import_module(modname)
     except ModuleNotFoundError as e:
-        if modname == 'pathlib._local':
-            result = importlib.import_module('pathlib')
+        if modname == "pathlib._local":
+            result = importlib.import_module("pathlib")
             # TODO: raise a warning
         else:
             raise e
