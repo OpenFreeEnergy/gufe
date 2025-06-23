@@ -7,7 +7,7 @@ but **gufe** features more than just this base data structure.
 To ensure interoperability,
 **gufe** also defines classes of objects that represent the core chemistry and alchemistry of a free energy pipeline,
 including molecules, chemical systems, and alchemical transformations.
-This provides a shared language that tools in the ecosystem use.
+In other words, **gufe** provides a shared language used by tools across the OpenFE ecosystem.
 
 Below, you will learn how the various pieces of **gufe** fit together.
 Generally speaking, :ref:`ChemicalSystems <chemicalsystem>` can be thought of as the *what* or the *nouns* that we are simulating,
@@ -38,7 +38,7 @@ and an :ref:`alchemicalnetwork` is like a sentence that groups all of these toge
 The :class:`.Component` class represents a portion of a system of molecules,
 with a single ``Component`` capable of representing anything from an individual drug-like molecule, an entire protein, or (even the concept of) a solvent with ions.
 
-These are often used to define the *components* of a :ref:`chemicalsystem`, which form the nodes of an :ref:`alchemicalnetwork`.
+``Components`` are often used as the building blocks of a :ref:`chemicalsystem`, which form the nodes of an :ref:`alchemicalnetwork`.
 The same ``Component`` may be present within multiple ``ChemicalSystem``\s, such as a :class:`.ProteinComponent` in an ``AlchemicalNetwork`` featuring relative binding transformations between ligands.
 
 As another distinct example: the :class:`.SmallMoleculeComponent` class (which is a subclass of :class:`.Component`) is used to form the nodes of a :ref:`ligandnetwork`.
@@ -74,7 +74,7 @@ Alchemical methods performing free energy perturbation (FEP) between the two ``C
 A :class:`.Transformation` represents an alchemical transformation between two :ref:`ChemicalSystems <chemicalsystem>`.
 
 ``Transformation`` objects are often used as the edges of an :ref:`alchemicalnetwork`.
-In addition to referencing the ``ChemicalSystem``\s it spans,
+In addition to referencing the two ``ChemicalSystem``\s it spans,
 a ``Transformation`` also includes the :ref:`protocol` used to actually perform the alchemical transformation,
 as well as an :ref:`componentmapping` specifying what portions of the :ref:`Components <component>` are being transformed across the ``ChemicalSystem``\s.
 
@@ -89,7 +89,7 @@ A ``Transformation`` functions as a container for all the information needed to 
 A :class:`.NonTransformation` represents non-alchemical sampling of a single :ref:`ChemicalSystem <chemicalsystem>`.
 
 In the context of an :ref:`alchemicalnetwork`, a ``NonTransformation`` is effectively a self-loop, featuring the same ``ChemicalSystem`` at either end.
-Similar to a :ref:`Transformation <transformation>`, it features a :ref:`protocol` used to perform sampling on its ``ChemicalSystem``, but does not feature a :ref:`componentmapping` since none is required for this.
+Similar to a :ref:`Transformation <transformation>`, it features a :ref:`protocol` used to perform sampling on its ``ChemicalSystem``, but does not feature a :ref:`componentmapping` since there is no second ``ChemicalSystem``.
 An example of a ``Protocol`` that would be appropriate for a ``NonTransformation`` is one that performs equilibrium molecular dynamics of the ``ChemicalSystem``.
 
 A ``NonTransformation`` cannot be used to obtain a free energy difference estimate, since by definition transforming the ``ChemicalSystem`` to itself should give exactly ``0``.
