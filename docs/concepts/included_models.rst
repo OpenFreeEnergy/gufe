@@ -36,7 +36,7 @@ and an :ref:`alchemicalnetwork` is like a sentence that groups all of these toge
 -------------
 
 The :class:`.Component` class represents a portion of a system of molecules,
-with a single ``Component`` capable of representing anything from an individual drug-like molecule, an entire protein, or (even the concept of) a solvent with ions.
+where a single ``Component`` is capable of representing anything from an individual drug-like molecule, to an entire protein, to a solvent with ions.
 
 ``Components`` are often used as the building blocks of a :ref:`chemicalsystem`, which form the nodes of an :ref:`alchemicalnetwork`.
 The same ``Component`` may be present within multiple ``ChemicalSystem``\s, such as a :class:`.ProteinComponent` in an ``AlchemicalNetwork`` featuring relative binding transformations between ligands.
