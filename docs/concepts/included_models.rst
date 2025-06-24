@@ -10,6 +10,8 @@ Below, you will learn how the various pieces of **gufe** fit together.
 Generally speaking, :ref:`ChemicalSystems <chemicalsystem>` can be thought of as the *what* or the *nouns* that we are simulating,
 :ref:`Transformations <transformation>` are the *how* or the *verbs* that encode how we are simulating these objects and moving between them, and an :ref:`alchemicalnetwork` is like a sentence that groups all of these together.
 
+.. _alchemical_network_diagram:
+
 .. image:: ../_static/alchemical_network_diagram.svg
     :alt: The ``GufeTokenizable`` representation of an ``AlchemicalNetwork``.
 
@@ -85,7 +87,7 @@ In the context of an :ref:`alchemicalnetwork`, a ``NonTransformation`` is effect
 Similar to a :ref:`Transformation <transformation>`, it features a :ref:`protocol` used to perform sampling on its ``ChemicalSystem``, but does not feature a :ref:`componentmapping` since there is no second ``ChemicalSystem``.
 An example of a ``Protocol`` that would be appropriate for a ``NonTransformation`` is one that performs equilibrium molecular dynamics of the ``ChemicalSystem``.
 
-A ``NonTransformation`` cannot be used to obtain a free energy difference estimate, since by definition transforming the ``ChemicalSystem`` to itself should give exactly ``0``.
+A ``NonTransformation`` cannot be used to obtain a free energy difference estimate, since by definition transforming the ``ChemicalSystem`` to itself should be exactly 0.
 
 
 .. _protocol:
@@ -134,8 +136,7 @@ The ``ProtocolUnit``\s of this ``ProtocolDAG`` can be executed in dependency-ord
 A :class:`.ProtocolUnit` is the unit of execution of a :ref:`ProtocolDAG <protocoldag>`, functioning as a node with dependency relationships within the `directed acyclic graph <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`_ (DAG).
 
 A ``ProtocolUnit`` retains all of its inputs as attributes, including any ``ProtocolUnit``\s present among those inputs.
-An execution engine performing the ``ProtocolUnit`` feeds the :ref:`ProtocolUnitResults <protocolunitresult>` corresponding to its dependencies to its
-:meth:`.ProtocolUnit.execute` method, returning its own :ref:`ProtocolUnitResult <protocolunitresult>` upon success.
+An execution engine performing the ``ProtocolUnit`` feeds the :ref:`ProtocolUnitResults <protocolunitresult>` corresponding to its dependencies to its :meth:`.ProtocolUnit.execute` method, returning its own :ref:`ProtocolUnitResult <protocolunitresult>` upon success.
 If the ``ProtocolUnit`` fails to execute, a :ref:`ProtocolUnitFailure <protocolunitfailure>` is returned instead.
 
 Because ``ProtocolUnit``\s are only a function of their inputs and dependencies, they can be executed and retried by an execution engine in a variety of ways, in different processes, on different machines, etc.
@@ -206,7 +207,7 @@ A :class:`.ProtocolResult` aggregates the results from one or more :ref:`Protoco
 ``ComponentMapping``
 --------------------
 
-A :class:`.ComponentMapping` expresses that two :class:`.Component`\s are related to each other via some kind of mapping.
+A :class:`.ComponentMapping` expresses that two :ref:`Components <component>` are related to each other via some kind of mapping.
 
 A ``ComponentMapping`` is the most minimal extensible point for relating two ``Component``\s to each other, as it does not *require* that the any details of the relationship are defined as a mapping.
 
@@ -223,7 +224,7 @@ See :ref:`AtomMapping <atommapping>` for an extensible point that is more specif
 ``AtomMapping``
 ^^^^^^^^^^^^^^^
 
-An :class:`.AtomMapping` expresses that two :class:`.Component`\s are related to each other via a `mapping <https://docs.python.org/3/glossary.html#term-mapping>`_ between their atoms.
+An :class:`.AtomMapping` expresses that two :ref:`Components <component>` are related to each other via a `mapping <https://docs.python.org/3/glossary.html#term-mapping>`_ between their atoms.
 
 ``AtomMapping``\s describe the relationship between ``componentA`` and ``componentB`` in terms of their atoms' indices with the methods :meth:`.AtomMapping.componentA_to_componentB` and :meth:`.AtomMapping.componentB_to_componentA`.
 
@@ -242,11 +243,11 @@ A specialized example of an ``AtomMapping`` is a ``LigandAtomMapping``, which is
 ``AtomMapper``
 ^^^^^^^^^^^^^^
 
-An :class:`.AtomMapper` generates an iterable of :ref:`AtomMapping <atommapping>`\s, given two :class:`Component`\s via the :meth:`.AtomMapper.suggest_mappings` method.
+An :class:`.AtomMapper` generates an iterable of :ref:`AtomMapping <atommapping>`\s, given two :ref:`Components <component>` via the :meth:`.AtomMapper.suggest_mappings` method.
 
 As with an ``AtomMapping``, it is assumed that the relationship between the ``Components`` can be described in terms of the atoms' indices.
 
-A specialized example of an ``AtomMapper`` is a ``LigandAtomMapper``, which generates ``LigandAtomMapping``/s.
+A specialized example of an :class:`AtomMapper` is a :class:`LigandAtomMapper`, which generates :class:`LigandAtomMapping`/s.
 
 .. TODO: Show an example implementation, like lomap atom mapper but maybe friendlier?
 
@@ -285,3 +286,5 @@ It is simply a grouping of these objects, optionally with a ``name`` attached.
 For ``Transformation``\s that feature many ``ChemicalSystem``\s in common, these objects effectively encode these relationships.
 
 Some execution engines, such as `alchemiscale <https://alchemiscale.org>`_, ingest ``AlchemicalNetwork``\s as their primary unit of input.
+
+See :ref:`the diagram at the top of this page <alchemical_network_diagram>` for a graphical depiction of an ``AlchemicalNetwork``.
