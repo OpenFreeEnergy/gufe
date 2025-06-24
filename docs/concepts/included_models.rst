@@ -1,7 +1,7 @@
 Data models included in **gufe**
 ================================
 
-The core of the **gufe** data model is the :class:`.GufeTokenizable` class,
+The core of the **gufe** data model is the :ref:`GufeTokenizable <understanding_gufetokenizables>`  class,
 but **gufe** features more than just this base data structure.
 
 To ensure interoperability,
@@ -21,7 +21,7 @@ and an :ref:`alchemicalnetwork` is like a sentence that groups all of these toge
 .. note::
 
     Some of these classes are designed to be subclassed, and constitute the *extensible points* of the library.
-    These include the following; see the **How-To Guide** for more information on how to extend from each:
+    These include the following; see the :ref:`howto-guides` for more information on how to extend from each:
 
     1. :ref:`Component <component>` : :ref:`howto-component`
     2. :ref:`Protocol <protocol>` : :ref:`howto-protocol`
@@ -45,7 +45,7 @@ As another distinct example: the :class:`.SmallMoleculeComponent` class (which i
 This is useful for representing relative transformations between a series of small molecules without invoking the additional complexity of an :ref:`alchemicalnetwork`.
 
 .. note::
-    The :class:`.Component` is an *extensible point* of the library,
+    The :class:`.Component` class is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
     For details on how to create your own :class:`.Component` classes, see :ref:`howto-component`.
 
@@ -57,9 +57,9 @@ This is useful for representing relative transformations between a series of sma
 
 A :class:`.ChemicalSystem` represents a complete system of molecules and is often composed of multiple :ref:`Components <component>`.
 
-These are most often used as nodes of an :ref:`alchemicalnetwork`, with pairs of :ref:`ChemicalSystems <chemicalsystem>` connected by :ref:`Transformations <transformation>`.
+These are most often used as nodes of an :ref:`alchemicalnetwork`, with pairs of ``ChemicalSystems`` connected by :ref:`Transformations <transformation>`.
 Because a ``ChemicalSystem`` functions as a kind of container of :ref:`Components <component>`, more than one ``ChemicalSystem`` can feature the same ``Component``.
-This allows even very large ``AlchemicalNetwork``\s to be relatively small in memory, as only a few large ``Component``\s like :class:`.ProteinComponent`\s may be shared among hundreds of ``ChemicalSystem``\s.
+This allows even very large ``AlchemicalNetwork``\s to be relatively small in memory, as only a few large ``Component``\s, like :class:`.ProteinComponent`\s, may be shared among hundreds of ``ChemicalSystem``\s.
 See :ref:`gufe-memory-deduplication` for more details about this memory optimization.
 
 When used as inputs to a ``Transformation``, ``ChemicalSystem``\s represent the set of ``Component``\s for which a free energy difference will be estimated.
