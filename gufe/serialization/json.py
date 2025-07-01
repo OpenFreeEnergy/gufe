@@ -256,6 +256,7 @@ def is_openff_quantity_dict(dct):
     is_custom = all(exp in dct for exp in expected)
     return is_custom and dct["pint_unit_registry"] == "openff_units"
 
+
 def is_legacy_path_dict(dct: dict) -> bool:
     """This supports the case where python 3.12 needs to load python 3.13
     TODO: remove when 3.12 support is dropped
