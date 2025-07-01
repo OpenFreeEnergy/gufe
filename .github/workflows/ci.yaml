@@ -105,7 +105,7 @@ jobs:
           cache-environment: true
           cache-downloads: true
           create-args: >-
-            python=${{ matrix.python-version }}
+            python=3.12
           init-shell: bash
 
       - name: "install extra deps"
