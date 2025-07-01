@@ -223,7 +223,7 @@ def test_path_codec_loads_python_3_13_and_py_3_12():
     py313_str = '{"__class__": "PosixPath", "__module__": "pathlib._local", ":is_custom:": true, "path": "foo/bar"}'
 
     for py_str in [py312_str, py313_str]:
-        obj_loaded = json.loads(py313_str, cls=tokenization.JSON_HANDLER.decoder)
+        obj_loaded = json.loads(py_str, cls=tokenization.JSON_HANDLER.decoder)
         assert obj_loaded == obj
 
 

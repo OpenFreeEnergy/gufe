@@ -1031,6 +1031,8 @@ def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
 
     if (modname, qualname) in remappings:
         modname, qualname = remappings[(modname, qualname)]
+    # This try/except supports the case where python 3.12 needs to load python 3.13
+    # TODO: remove when 3.12 support is dropped
     try:
         result = importlib.import_module(modname)
     except ModuleNotFoundError as e:
