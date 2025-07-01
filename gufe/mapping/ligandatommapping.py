@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+from rdkit import Chem
 
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
@@ -222,3 +223,24 @@ class LigandAtomMapping(AtomMapping):
             dists.append(dA.Distance(dB))
 
         return np.array(dists)
+
+    def get_alchemical_charge_difference(self) -> int:
+        """
+        Return the difference in formal charge between stateA and stateB defined as (formal charge A - formal charge B)
+
+        Parameters
+        ----------
+        mapping: LigandAtomMapping
+            The mapping between the end states A and B.
+
+        Returns
+        -------
+        int:
+            The difference in formal charge between the end states.
+        """
+        molA = self.componentA.to_rdkit()
+        molB = self.componentB.to_rdkit()
+
+        charge_a = Chem.rdmolops.GetFormalCharge(molA)
+        charge_b = Chem.rdmolops.GetFormalCharge(molB)
+        return charge_a - charge_b
