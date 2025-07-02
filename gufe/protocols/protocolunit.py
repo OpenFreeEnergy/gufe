@@ -33,6 +33,8 @@ class Context:
 
     scratch: PathLike
     shared: PathLike
+    stderr: PathLike
+    stdout: PathLike
 
 
 def _list_dependencies(inputs, cls):
@@ -63,6 +65,8 @@ class ProtocolUnitResult(GufeTokenizable):
         source_key: GufeKey,
         inputs: dict[str, Any],
         outputs: dict[str, Any],
+        stderr: dict = {},
+        stdout: dict = {},
         start_time: datetime.datetime | None = None,
         end_time: datetime.datetime | None = None,
     ):
@@ -80,6 +84,14 @@ class ProtocolUnitResult(GufeTokenizable):
         outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
+        stderr : dict[str, bytes]
+            stderr output captured during execution of the `ProtocolUnit`.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
+        stdout : dict[str, bytes]
+            stdout output captured during execution of the `ProtocolUnit`.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
         start_time, end_time: datetime.datetime
             The start and end time for executing this Unit
         """
@@ -87,6 +99,8 @@ class ProtocolUnitResult(GufeTokenizable):
         self._source_key = source_key
         self._inputs = inputs
         self._outputs = outputs
+        self._stderr = stderr
+        self._stdout = stdout
         self._start_time = start_time
         self._end_time = end_time
 
@@ -111,6 +125,8 @@ class ProtocolUnitResult(GufeTokenizable):
             "source_key": self.source_key,
             "inputs": self.inputs,
             "outputs": self.outputs,
+            "stderr": self.stderr,
+            "stdout": self.stdout,
             "start_time": self.start_time,
             "end_time": self.end_time,
         }
@@ -137,6 +153,14 @@ class ProtocolUnitResult(GufeTokenizable):
     @property
     def outputs(self):
         return self._outputs
+
+    @property
+    def stderr(self):
+        return self._stderr
+
+    @property
+    def stdout(self):
+        return self._stdout
 
     @property
     def dependencies(self) -> list[ProtocolUnitResult]:
@@ -320,11 +344,30 @@ class ProtocolUnit(GufeTokenizable):
 
         try:
             outputs = self._execute(context, **inputs)
+
+            def extract_bytes(context_dir):
+                """Iterate over directory of files (depth 1) and create
+                dictionary containing their contents.
+                """
+                record_dict = {}
+                if context_dir:
+                    for entry in context_dir.iterdir():
+                        if not entry.is_file():
+                            continue
+                        with entry.open() as f:
+                            record_dict[entry.name] = f.read()
+                return record_dict
+
+            stderr = extract_bytes(context.stderr)
+            stdout = extract_bytes(context.stdout)
+
             result = ProtocolUnitResult(
                 name=self.name,
                 source_key=self.key,
                 inputs=inputs,
                 outputs=outputs,
+                stderr=stderr,
+                stdout=stdout,
                 start_time=start,
                 end_time=datetime.datetime.now(),
             )
