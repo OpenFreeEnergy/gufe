@@ -257,10 +257,24 @@ def is_openff_quantity_dict(dct):
     return is_custom and dct["pint_unit_registry"] == "openff_units"
 
 
+def is_legacy_path_dict(dct: dict) -> bool:
+    """This supports the case where python 3.12 needs to load python 3.13
+    TODO: remove when 3.12 support is dropped
+    """
+    expected = ["__class__", "__module__", ":is_custom:", "path"]
+    is_custom = all(exp in dct for exp in expected)
+    return (
+        is_custom
+        and dct["__class__"] == "PosixPath"  # type: ignore [union-attr]
+        and dct["__module__"] in ("pathlib", "pathlib._local")
+    )
+
+
 PATH_CODEC = JSONCodec(
     cls=pathlib.PosixPath,
     to_dict=lambda p: {"path": str(p)},
     from_dict=lambda dct: pathlib.PosixPath(dct["path"]),
+    is_my_dict=is_legacy_path_dict,
 )
 
 
