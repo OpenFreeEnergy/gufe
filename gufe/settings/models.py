@@ -13,16 +13,7 @@ from openff.units import unit
 from gufe.vendor.openff.models.models import DefaultModel
 from gufe.vendor.openff.models.types import FloatQuantity
 
-try:
-    from pydantic.v1 import Extra, Field, PositiveFloat, PrivateAttr, validator
-except ImportError:
-    from pydantic import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
+from pydantic import Extra, Field, PositiveFloat, PrivateAttr, validator
 
 import pydantic
 
