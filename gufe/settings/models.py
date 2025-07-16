@@ -150,7 +150,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method: Literal["PME", "NoCutoff"] = "PME"
+    nonbonded_method: Literal["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"] = "PME"
     """
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
