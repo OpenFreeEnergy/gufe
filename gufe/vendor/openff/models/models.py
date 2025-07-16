@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Any
 
 from openff.units import Quantity
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 from .types import custom_quantity_encoder, json_loader
 
