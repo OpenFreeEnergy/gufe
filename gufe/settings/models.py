@@ -30,7 +30,6 @@ class SettingsBaseModel(DefaultModel):
 
         extra = "forbid"
         arbitrary_types_allowed = False
-        smart_union = True
 
     def _ipython_display_(self):
         pprint.pprint(self.dict())
