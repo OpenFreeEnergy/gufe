@@ -2,9 +2,9 @@ from collections.abc import Callable
 from typing import Any
 
 from openff.units import Quantity
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
-from .types import custom_quantity_encoder, json_loader
+from .types import custom_quantity_encoder
 
 
 class DefaultModel(BaseModel):
@@ -16,6 +16,5 @@ class DefaultModel(BaseModel):
         json_encoders: dict[Any, Callable] = {
             Quantity: custom_quantity_encoder,
         }
-        json_loads: Callable = json_loader
         validate_assignment: bool = True
         arbitrary_types_allowed: bool = True
