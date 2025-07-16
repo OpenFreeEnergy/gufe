@@ -6,11 +6,11 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Optional, Union
+from typing import Literal
 
 import pydantic
 from openff.units import unit
-from pydantic import Extra, Field, PositiveFloat, PrivateAttr, validator
+from pydantic import Field, PositiveFloat, PrivateAttr, validator
 
 from gufe.vendor.openff.models.models import DefaultModel
 from gufe.vendor.openff.models.types import FloatQuantity
@@ -150,7 +150,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method: str = "PME"
+    nonbonded_method: Literal["PME", "NoCutoff"] = "PME"
     """
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
