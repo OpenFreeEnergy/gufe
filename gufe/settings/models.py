@@ -8,14 +8,12 @@ import abc
 import pprint
 from typing import Optional, Union
 
+import pydantic
 from openff.units import unit
+from pydantic import Extra, Field, PositiveFloat, PrivateAttr, validator
 
 from gufe.vendor.openff.models.models import DefaultModel
 from gufe.vendor.openff.models.types import FloatQuantity
-
-from pydantic import Extra, Field, PositiveFloat, PrivateAttr, validator
-
-import pydantic
 
 
 class SettingsBaseModel(DefaultModel):
