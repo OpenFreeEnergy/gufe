@@ -214,7 +214,6 @@ class PdbxReader:
             # Process a loop_ declaration and associated data -
             #
             elif state == "ST_TABLE":
-
                 # The category name in the next curCatName,curAttName pair
                 #    defines the name of the category container.
                 curCatName, curAttName, curQuotedString, curWord = next(tokenizer)

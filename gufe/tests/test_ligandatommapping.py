@@ -232,7 +232,6 @@ def test_draw_mapping_svg(tmpdir, other_mapping):
 
 class TestLigandAtomMappingSerialization:
     def test_deserialize_roundtrip(self, benzene_phenol_mapping, benzene_anisole_mapping):
-
         roundtrip = LigandAtomMapping.from_dict(benzene_phenol_mapping.to_dict())
 
         assert roundtrip == benzene_phenol_mapping

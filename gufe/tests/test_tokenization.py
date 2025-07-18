@@ -90,7 +90,6 @@ class Container(GufeTokenizable):
 
 
 class GufeTokenizableTestsMixin(abc.ABC):
-
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
     repr: str | None
@@ -187,7 +186,6 @@ class GufeTokenizableTestsMixin(abc.ABC):
 
 
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
-
     cls = Container
     repr = "Container(Leaf(Leaf(foo, 2), 2), [Leaf(foo, 2), 0], {'leaf': Leaf(foo, 2), 'a': 'b'})"
 
@@ -568,7 +566,6 @@ def test_gufe_objects_from_shallow_dict(solvated_complex):
 
 
 class TestKeyedChain:
-
     def test_from_gufe(self, benzene_variants_star_map):
         contained_objects = list(get_all_gufe_objs(benzene_variants_star_map))
         expected_len = len(contained_objects)
