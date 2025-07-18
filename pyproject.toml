@@ -83,15 +83,15 @@ select = [
     "W",  # pycodestyle warnings
     # "E",  # pycodestyle errors
     # "C901"  # mccabe complexity  TODO: add this back in
-    # "UP",
+    # "UP", # TODO: add this in
 ]
 ignore = [
     "E402",  # module-level import not at top (conflicts w/ isort)
     "E501",  # line-length violations (black enforces these)
     "E731",  # lambda expressions (TODO: we should fix these)
     "E722",  # bare excepts (TODO: we should fix these in a follow-up PR)
-    "F401",  # unused imports
-    "UP03",  # pyupgrade linting
+    "F401",  # unused imports (TODO: we should fix these)
+    "UP03",  # pyupgrade linting (TODO: we should fix these)
     ]
 
 [tool.ruff.lint.isort]
