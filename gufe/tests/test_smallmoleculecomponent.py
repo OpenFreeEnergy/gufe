@@ -76,9 +76,7 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
     assert rdkit.GetProp("ofe-name") == out_name
 
 
-class TestSmallMoleculeComponent(
-    GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin
-):
+class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
 
     cls = SmallMoleculeComponent
     repr = "SmallMoleculeComponent(name=ethane)"
@@ -263,12 +261,8 @@ class TestSmallMoleculeComponentPartialCharges:
             SmallMoleculeComponent.from_openff(charged_off_ethane)
 
     @pytest.mark.parametrize("wrong_charge_val", [-1, 1])
-    def test_partial_charges_not_formal_error(
-        self, charged_off_ethane, wrong_charge_val
-    ):
-        charged_off_ethane.partial_charges[:] = (
-            wrong_charge_val * unit.elementary_charge
-        )
+    def test_partial_charges_not_formal_error(self, charged_off_ethane, wrong_charge_val):
+        charged_off_ethane.partial_charges[:] = wrong_charge_val * unit.elementary_charge
         with pytest.raises(ValueError, match="Sum of partial charges"):
             SmallMoleculeComponent.from_openff(charged_off_ethane)
 
@@ -371,20 +365,14 @@ class TestSmallMoleculeSerialization:
         new_atoms = []
         for atom in phenol_dict["atoms"]:
             # remove the hybridization atomic info which should be at index 7
-            new_atoms.append(
-                tuple([atom_info for i, atom_info in enumerate(atom) if i != 7])
-            )
+            new_atoms.append(tuple([atom_info for i, atom_info in enumerate(atom) if i != 7]))
         phenol_dict["atoms"] = new_atoms
-        with pytest.warns(
-            match="The atom hybridization data was not found and has been set to unspecified."
-        ):
+        with pytest.warns(match="The atom hybridization data was not found and has been set to unspecified."):
             new_phenol = SmallMoleculeComponent.from_dict(phenol_dict)
         # they should be different objects due to the missing hybridization info
         assert new_phenol != phenol
         # make sure the rdkit objects are different
-        for atom_hybrid, atom_no_hybrid in zip(
-            phenol.to_rdkit().GetAtoms(), new_phenol.to_rdkit().GetAtoms()
-        ):
+        for atom_hybrid, atom_no_hybrid in zip(phenol.to_rdkit().GetAtoms(), new_phenol.to_rdkit().GetAtoms()):
             assert atom_hybrid.GetHybridization() != atom_no_hybrid.GetHybridization()
 
     @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")

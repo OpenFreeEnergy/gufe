@@ -133,8 +133,7 @@ class ContainerBase:
 
     def printIt(self, fh=sys.stdout, type="brief"):
         fh.write(
-            "+ %s container: %30s contains %4d categories\n"
-            % (self.getType(), self.getName(), len(self.__objNameList))
+            "+ %s container: %30s contains %4d categories\n" % (self.getType(), self.getName(), len(self.__objNameList))
         )
         for nm in self.__objNameList:
             fh.write("--------------------------------------------\n")
@@ -187,10 +186,7 @@ class DefinitionContainer(ContainerBase):
         return False
 
     def printIt(self, fh=sys.stdout, type="brief"):
-        fh.write(
-            "Definition container: %30s contains %4d categories\n"
-            % (self.getName(), len(self.getObjNameList()))
-        )
+        fh.write("Definition container: %30s contains %4d categories\n" % (self.getName(), len(self.getObjNameList())))
         if self.isCategory():
             fh.write("Definition type: category\n")
         elif self.isAttribute():
@@ -301,9 +297,7 @@ class DataCategory(DataCategoryBase):
         self.__dqWsRe = re.compile(r'("\s)|(\s")')
         #
         self.__intRe = re.compile(r"^[0-9]+$")
-        self.__floatRe = re.compile(
-            r"^-?(([0-9]+)[.]?|([0-9]*[.][0-9]+))([(][0-9]+[)])?([eE][+-]?[0-9]+)?$"
-        )
+        self.__floatRe = re.compile(r"^-?(([0-9]+)[.]?|([0-9]*[.][0-9]+))([(][0-9]+[)])?([eE][+-]?[0-9]+)?$")
         #
         self.__dataTypeList = [
             "DT_NULL_VALUE",
@@ -586,10 +580,7 @@ class DataCategory(DataCategoryBase):
 
     def printIt(self, fh=sys.stdout):
         fh.write("--------------------------------------------\n")
-        fh.write(
-            "  Category: %s attribute list length: %d\n"
-            % (self._name, len(self._attributeNameList))
-        )
+        fh.write("  Category: %s attribute list length: %d\n" % (self._name, len(self._attributeNameList)))
         for at in self._attributeNameList:
             fh.write(f"  Category: {self._name} attribute: {at}\n")
 
@@ -599,10 +590,7 @@ class DataCategory(DataCategoryBase):
             #
             if len(row) == len(self._attributeNameList):
                 for ii, v in enumerate(row):
-                    fh.write(
-                        "        %30s: %s ...\n"
-                        % (self._attributeNameList[ii], str(v)[:30])
-                    )
+                    fh.write("        %30s: %s ...\n" % (self._attributeNameList[ii], str(v)[:30]))
             else:
                 fh.write(
                     "+WARNING - %s data length %d attribute name length %s mismatched\n"
@@ -611,10 +599,7 @@ class DataCategory(DataCategoryBase):
 
     def dumpIt(self, fh=sys.stdout):
         fh.write("--------------------------------------------\n")
-        fh.write(
-            "  Category: %s attribute list length: %d\n"
-            % (self._name, len(self._attributeNameList))
-        )
+        fh.write("  Category: %s attribute list length: %d\n" % (self._name, len(self._attributeNameList)))
         for at in self._attributeNameList:
             fh.write(f"  Category: {self._name} attribute: {at}\n")
 
@@ -656,16 +641,12 @@ class DataCategory(DataCategoryBase):
                 else:
                     if self.__avoidEmbeddedQuoting:
                         # change priority to choose double quoting where possible.
-                        if not self.__dqRe.search(inp) and not self.__sqWsRe.search(
-                            inp
-                        ):
+                        if not self.__dqRe.search(inp) and not self.__sqWsRe.search(inp):
                             return (
                                 self.__doubleQuotedList(inp),
                                 "DT_DOUBLE_QUOTED_STRING",
                             )
-                        elif not self.__sqRe.search(inp) and not self.__dqWsRe.search(
-                            inp
-                        ):
+                        elif not self.__sqRe.search(inp) and not self.__dqWsRe.search(inp):
                             return (
                                 self.__singleQuotedList(inp),
                                 "DT_SINGLE_QUOTED_STRING",
@@ -785,14 +766,10 @@ class DataCategory(DataCategoryBase):
 
         if isinstance(attribute, str) and isinstance(rowI, int):
             try:
-                list, type = self.__formatPdbx(
-                    self._rowList[rowI][self._attributeNameList.index(attribute)]
-                )
+                list, type = self.__formatPdbx(self._rowList[rowI][self._attributeNameList.index(attribute)])
                 return "".join(list)
             except IndexError:
-                self.__lfh.write(
-                    f"attributeName {attributeName} rowI {rowI!r} rowdata {self._rowList[rowI]!r}\n"
-                )
+                self.__lfh.write(f"attributeName {attributeName} rowI {rowI!r} rowdata {self._rowList[rowI]!r}\n")
                 raise IndexError
         raise TypeError(attribute)
 
@@ -813,9 +790,7 @@ class DataCategory(DataCategoryBase):
 
     def getFormatTypeList(self, steps=1):
         try:
-            curDataTypeList = [
-                "DT_NULL_VALUE" for i in range(len(self._attributeNameList))
-            ]
+            curDataTypeList = ["DT_NULL_VALUE" for i in range(len(self._attributeNameList))]
             for row in self._rowList[::steps]:
                 for indx in range(len(self._attributeNameList)):
                     val = row[indx]
@@ -835,10 +810,7 @@ class DataCategory(DataCategoryBase):
                 ii = self.__dataTypeList.index(dt)
                 curFormatTypeList.append(self.__formatTypeList[ii])
         except:
-            self.__lfh.write(
-                "PdbxDataCategory(getFormatTypeList) ++Index error at index %d in row %r\n"
-                % (indx, row)
-            )
+            self.__lfh.write("PdbxDataCategory(getFormatTypeList) ++Index error at index %d in row %r\n" % (indx, row))
 
         return curFormatTypeList, curDataTypeList
 

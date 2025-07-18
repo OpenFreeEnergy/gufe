@@ -112,9 +112,7 @@ class CustomJSONCodingTest(abc.ABC):
             from_dict=lambda dct: dct["latin-1"].encode("latin-1"),
         )
 
-        required_codecs = [
-            codec for codec in self.required_codecs if not codec is BYTES_CODEC
-        ]
+        required_codecs = [codec for codec in self.required_codecs if not codec is BYTES_CODEC]
 
         legacy_encoder, _ = custom_json_factory([legacy_bytes_codec, *required_codecs])
         _, decoder = custom_json_factory([BYTES_CODEC, *required_codecs])

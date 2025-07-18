@@ -90,9 +90,7 @@ class TransformationBase(GufeTokenizable):
         """
         return self._protocol
 
-    def gather(
-        self, protocol_dag_results: Iterable[ProtocolDAGResult]
-    ) -> ProtocolResult:
+    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
         r"""Gather multiple :class:`.ProtocolDAGResult` \s into a single
         :class:`.ProtocolResult`.
 
@@ -161,12 +159,7 @@ class Transformation(TransformationBase):
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
         protocol: Protocol,
-        mapping: (
-            ComponentMapping
-            | list[ComponentMapping]
-            | dict[str, ComponentMapping]
-            | None
-        ) = None,
+        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None = None,
         name: str | None = None,
         validate: bool = False,
     ):
@@ -201,9 +194,7 @@ class Transformation(TransformationBase):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                (
-                    "mapping input as a dict is deprecated; instead use either a single Mapping or list"
-                ),
+                ("mapping input as a dict is deprecated; instead use either a single Mapping or list"),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
