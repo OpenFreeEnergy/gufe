@@ -260,7 +260,6 @@ def benzene_variants_star_map_transformations(
     prot_comp,
     solv_comp,
 ):
-
     variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde, styrene]
 
     # define the solvent chemical systems and transformations between

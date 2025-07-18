@@ -593,7 +593,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ]
 
         conformers = [
-            serialize_numpy(conf.GetPositions()) for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
+            serialize_numpy(conf.GetPositions())
+            for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
         ]
 
         # Result
