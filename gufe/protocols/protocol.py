@@ -36,7 +36,9 @@ class ProtocolResult(GufeTokenizable):
         self._data = data
 
         if not n_protocol_dag_results >= 0:
-            raise ValueError("`n_protocol_dag_results` must be an integer greater than or equal to zero")
+            raise ValueError(
+                "`n_protocol_dag_results` must be an integer greater than or equal to zero"
+            )
 
         self._n_protocol_dag_results = n_protocol_dag_results
 
@@ -45,7 +47,10 @@ class ProtocolResult(GufeTokenizable):
         return {}
 
     def _to_dict(self):
-        return {"n_protocol_dag_results": self.n_protocol_dag_results, "data": self.data}
+        return {
+            "n_protocol_dag_results": self.n_protocol_dag_results,
+            "data": self.data,
+        }
 
     @classmethod
     def _from_dict(cls, dct: dict):
@@ -207,7 +212,12 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None,
+        mapping: (
+            ComponentMapping
+            | list[ComponentMapping]
+            | dict[str, ComponentMapping]
+            | None
+        ),
         extends: ProtocolDAGResult | None = None,
         name: str | None = None,
         transformation_key: GufeKey | None = None,
@@ -252,7 +262,10 @@ class Protocol(GufeTokenizable):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
+                (
+                    "mapping input as a dict is deprecated, "
+                    "instead use either a single Mapping or list"
+                ),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
@@ -280,7 +293,9 @@ class Protocol(GufeTokenizable):
         r"""The default validation run for all ``Protocol.validate`` calls."""
         for cs in [stateA, stateB]:
             if not isinstance(cs, ChemicalSystem):
-                raise ProtocolValidationError("`stateA` and `stateB` must be instances of a `ChemicalSystem`")
+                raise ProtocolValidationError(
+                    "`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+                )
 
         if mapping:
             if not isinstance(mapping, list):
@@ -288,11 +303,15 @@ class Protocol(GufeTokenizable):
 
             for element in mapping:
                 if not isinstance(element, ComponentMapping):
-                    raise ProtocolValidationError("a non-`ComponentMapping` object provided as a `mapping`")
+                    raise ProtocolValidationError(
+                        "a non-`ComponentMapping` object provided as a `mapping`"
+                    )
 
         if extends:
             if not isinstance(extends, ProtocolDAGResult):
-                raise ProtocolValidationError("a non-`ProtocolDAGResult` object provided as `extends`")
+                raise ProtocolValidationError(
+                    "a non-`ProtocolDAGResult` object provided as `extends`"
+                )
 
     def _validate(
         self,
@@ -325,7 +344,12 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None,
+        mapping: (
+            ComponentMapping
+            | list[ComponentMapping]
+            | dict[str, ComponentMapping]
+            | None
+        ),
         extends: ProtocolDAGResult | None = None,
     ):
         r"""Validate the inputs to be used in creating a :class:`ProtocolDAG`.
@@ -368,15 +392,21 @@ class Protocol(GufeTokenizable):
             mapping = list(mapping.values())
 
         # run default validation for inputs
-        self._default_validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+        self._default_validate(
+            stateA=stateA, stateB=stateB, mapping=mapping, extends=extends
+        )
 
         # run protocol author defined validations if they exist
         try:
-            self._validate(stateA=stateA, stateB=stateB, mapping=mapping, extends=extends)
+            self._validate(
+                stateA=stateA, stateB=stateB, mapping=mapping, extends=extends
+            )
         except NotImplementedError:
             pass
 
-    def gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> ProtocolResult:
+    def gather(
+        self, protocol_dag_results: Iterable[ProtocolDAGResult]
+    ) -> ProtocolResult:
         """Gather multiple ProtocolDAGResults into a single ProtocolResult.
 
         Parameters
@@ -396,10 +426,15 @@ class Protocol(GufeTokenizable):
         # Sized type
         if not isinstance(protocol_dag_results, Sized):
             raise ValueError("`protocol_dag_results` must implement `__len__`")
-        return self.result_cls(n_protocol_dag_results=len(protocol_dag_results), **self._gather(protocol_dag_results))
+        return self.result_cls(
+            n_protocol_dag_results=len(protocol_dag_results),
+            **self._gather(protocol_dag_results),
+        )
 
     @abc.abstractmethod
-    def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
+    def _gather(
+        self, protocol_dag_results: Iterable[ProtocolDAGResult]
+    ) -> dict[str, Any]:
         """Method to override in custom Protocol subclasses.
 
         This method should take any number of ``ProtocolDAGResult``s produced

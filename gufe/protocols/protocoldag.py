@@ -46,7 +46,9 @@ class DAGMixin:
 
     @staticmethod
     def _iterate_dag_order(graph):
-        return reversed(list(nx.lexicographical_topological_sort(graph, key=lambda pu: pu.key)))
+        return reversed(
+            list(nx.lexicographical_topological_sort(graph, key=lambda pu: pu.key))
+        )
 
     @property
     def name(self) -> str | None:
@@ -120,7 +122,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
 
-        self._transformation_key = GufeKey(transformation_key) if transformation_key is not None else None
+        self._transformation_key = (
+            GufeKey(transformation_key) if transformation_key is not None else None
+        )
         self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units
@@ -220,15 +224,21 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         try:
             units = self._unit_result_mapping[protocol_unit]
         except KeyError:
-            raise MissingUnitResultError(f"No such `protocol_unit`:{protocol_unit} present")
+            raise MissingUnitResultError(
+                f"No such `protocol_unit`:{protocol_unit} present"
+            )
         else:
             for u in units:
                 if u.ok():
                     return u
             else:
-                raise ProtocolUnitFailureError(f"No success for `protocol_unit`:{protocol_unit} found")
+                raise ProtocolUnitFailureError(
+                    f"No success for `protocol_unit`:{protocol_unit} found"
+                )
 
-    def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
+    def unit_to_all_results(
+        self, protocol_unit: ProtocolUnit
+    ) -> list[ProtocolUnitResult]:
         """Return all results (success and failure) for a given Unit.
 
         Returns
@@ -244,17 +254,24 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         try:
             return self._unit_result_mapping[protocol_unit]
         except KeyError:
-            raise MissingUnitResultError(f"No such `protocol_unit`:{protocol_unit} present")
+            raise MissingUnitResultError(
+                f"No such `protocol_unit`:{protocol_unit} present"
+            )
 
     def result_to_unit(self, protocol_unit_result: ProtocolUnitResult) -> ProtocolUnit:
         try:
             return self._result_unit_mapping[protocol_unit_result]
         except KeyError:
-            raise MissingUnitResultError(f"No such `protocol_unit_result`:{protocol_unit_result} present")
+            raise MissingUnitResultError(
+                f"No such `protocol_unit_result`:{protocol_unit_result} present"
+            )
 
     def ok(self) -> bool:
         # ensure that for every protocol unit, there is an OK result object
-        return all(any(pur.ok() for pur in self._unit_result_mapping[pu]) for pu in self._protocol_units)
+        return all(
+            any(pur.ok() for pur in self._unit_result_mapping[pu])
+            for pu in self._protocol_units
+        )
 
     @property
     def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
@@ -266,7 +283,11 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
           All ProtocolUnitResults which do not have a ProtocolUnitResult that
           follows on (depends) on them.
         """
-        return [u for u in self._protocol_unit_results if not nx.ancestors(self._result_graph, u)]
+        return [
+            u
+            for u in self._protocol_unit_results
+            if not nx.ancestors(self._result_graph, u)
+        ]
 
 
 class ProtocolDAG(GufeTokenizable, DAGMixin):
@@ -324,7 +345,9 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self._name = name
         self._protocol_units = protocol_units
 
-        self._transformation_key = GufeKey(transformation_key) if transformation_key is not None else None
+        self._transformation_key = (
+            GufeKey(transformation_key) if transformation_key is not None else None
+        )
         self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units

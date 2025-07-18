@@ -61,7 +61,9 @@ class TestTransformation(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult = execute_DAG(
+                protocoldag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -90,7 +92,8 @@ class TestTransformation(GufeTokenizableTestsMixin):
         )
 
         with pytest.raises(
-            ProtocolValidationError, match="`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+            ProtocolValidationError,
+            match="`stateA` and `stateB` must be instances of a `ChemicalSystem`",
         ):
             tf = Transformation(
                 solvated_ligand,
@@ -113,10 +116,14 @@ class TestTransformation(GufeTokenizableTestsMixin):
             scratch.mkdir(parents=True)
 
             protocoldag = tnf.create()
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult = execute_DAG(
+                protocoldag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
             protocoldag2 = tnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult2 = execute_DAG(
+                protocoldag2, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -152,19 +159,29 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
     def test_dump_load_roundtrip(self, absolute_transformation):
         string = io.StringIO()
-        with pytest.warns(DeprecationWarning, match="use of this method is deprecated; instead use `to_json`"):
+        with pytest.warns(
+            DeprecationWarning,
+            match="use of this method is deprecated; instead use `to_json`",
+        ):
             absolute_transformation.dump(string)
         string.seek(0)
-        with pytest.warns(DeprecationWarning, match="use of this method is deprecated; instead use `from_json`"):
+        with pytest.warns(
+            DeprecationWarning,
+            match="use of this method is deprecated; instead use `from_json`",
+        ):
             recreated = Transformation.load(string)
         assert absolute_transformation == recreated
 
-    def test_deprecation_warning_on_dict_mapping(self, solvated_ligand, solvated_complex):
+    def test_deprecation_warning_on_dict_mapping(
+        self, solvated_ligand, solvated_complex
+    ):
         lig = solvated_complex.components["ligand"]
         # this mapping makes no sense, but it'll trigger the dep warning we want
         mapping = gufe.LigandAtomMapping(lig, lig, componentA_to_componentB={})
 
-        with pytest.warns(DeprecationWarning, match="mapping input as a dict is deprecated"):
+        with pytest.warns(
+            DeprecationWarning, match="mapping input as a dict is deprecated"
+        ):
             Transformation(
                 solvated_complex,
                 solvated_ligand,
@@ -202,7 +219,9 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult = execute_DAG(
+                protocoldag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         protocolresult = ntnf.gather([protocoldagresult])
 
@@ -226,7 +245,8 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         )
 
         with pytest.raises(
-            ProtocolValidationError, match="`stateA` and `stateB` must be instances of a `ChemicalSystem`"
+            ProtocolValidationError,
+            match="`stateA` and `stateB` must be instances of a `ChemicalSystem`",
         ):
             ntf = NonTransformation(
                 None,
@@ -247,10 +267,14 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             scratch.mkdir(parents=True)
 
             protocoldag = ntnf.create()
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult = execute_DAG(
+                protocoldag, shared_basedir=shared, scratch_basedir=scratch
+            )
 
             protocoldag2 = ntnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult2 = execute_DAG(
+                protocoldag2, shared_basedir=shared, scratch_basedir=scratch
+            )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -261,7 +285,9 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
     def test_equality(self, complex_equilibrium, solvated_ligand, solvated_complex):
         s = DummyProtocol.default_settings()
         s.n_repeats = 4031
-        different_protocol_settings = NonTransformation(solvated_complex, protocol=DummyProtocol(settings=s))
+        different_protocol_settings = NonTransformation(
+            solvated_complex, protocol=DummyProtocol(settings=s)
+        )
         assert complex_equilibrium != different_protocol_settings
 
         identical = NonTransformation(

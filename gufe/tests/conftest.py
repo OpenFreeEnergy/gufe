@@ -196,7 +196,9 @@ def prot_comp(PDB_181L_path):
 
 @pytest.fixture
 def solv_comp():
-    yield gufe.SolventComponent(positive_ion="K", negative_ion="Cl", ion_concentration=0.0 * unit.molar)
+    yield gufe.SolventComponent(
+        positive_ion="K", negative_ion="Cl", ion_concentration=0.0 * unit.molar
+    )
 
 
 @pytest.fixture
@@ -268,7 +270,9 @@ def benzene_variants_star_map_transformations(
     solvated_ligands = {}
     solvated_ligand_transformations = {}
 
-    solvated_ligands["benzene"] = gufe.ChemicalSystem({"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent")
+    solvated_ligands["benzene"] = gufe.ChemicalSystem(
+        {"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent"
+    )
 
     for ligand in variants:
         solvated_ligands[ligand.name] = gufe.ChemicalSystem(
@@ -296,20 +300,28 @@ def benzene_variants_star_map_transformations(
             {"protein": prot_comp, "solvent": solv_comp, "ligand": ligand},
             name=f"{ligand.name}-complex",
         )
-        solvated_complex_transformations[("benzene", ligand.name)] = gufe.Transformation(
-            solvated_complexes["benzene"],
-            solvated_complexes[ligand.name],
-            protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
-            mapping=None,
+        solvated_complex_transformations[("benzene", ligand.name)] = (
+            gufe.Transformation(
+                solvated_complexes["benzene"],
+                solvated_complexes[ligand.name],
+                protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+                mapping=None,
+            )
         )
 
-    return list(solvated_ligand_transformations.values()), list(solvated_complex_transformations.values())
+    return list(solvated_ligand_transformations.values()), list(
+        solvated_complex_transformations.values()
+    )
 
 
 @pytest.fixture
 def benzene_variants_star_map(benzene_variants_star_map_transformations):
-    solvated_ligand_transformations, solvated_complex_transformations = benzene_variants_star_map_transformations
-    return gufe.AlchemicalNetwork(solvated_ligand_transformations + solvated_complex_transformations)
+    solvated_ligand_transformations, solvated_complex_transformations = (
+        benzene_variants_star_map_transformations
+    )
+    return gufe.AlchemicalNetwork(
+        solvated_ligand_transformations + solvated_complex_transformations
+    )
 
 
 @pytest.fixture

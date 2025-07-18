@@ -144,7 +144,9 @@ class PDBxFile:
                     insertionCode = row[resInsertionCol]
                 if insertionCode in (".", "?"):
                     insertionCode = ""
-                if lastChainId != row[chainIdCol] or (altChainIdCol != -1 and lastAltChainId != row[altChainIdCol]):
+                if lastChainId != row[chainIdCol] or (
+                    altChainIdCol != -1 and lastAltChainId != row[altChainIdCol]
+                ):
                     # The start of a new chain.
                     chain = top.addChain(row[chainIdCol])
                     lastChainId = row[chainIdCol]
@@ -187,7 +189,9 @@ class PDBxFile:
                         "Atom %s for model %s does not match the order of atoms for model %s"
                         % (row[atomIdCol], model, models[0])
                     )
-            self._positions[modelIndex].append(np.array([float(row[xCol]), float(row[yCol]), float(row[zCol])]) * 0.1)
+            self._positions[modelIndex].append(
+                np.array([float(row[xCol]), float(row[yCol]), float(row[zCol])]) * 0.1
+            )
         for i in range(len(self._positions)):
             self._positions[i] = self._positions[i] * nanometers
         ## The atom positions read from the PDBx/mmCIF file.  If the file contains multiple frames, these are the positions in the first frame.
@@ -208,7 +212,9 @@ class PDBxFile:
                 float(row[cell.getAttributeIndex(attribute)]) * math.pi / 180.0
                 for attribute in ("angle_alpha", "angle_beta", "angle_gamma")
             )
-            self.topology.setPeriodicBoxVectors(computePeriodicBoxVectors(a, b, c, alpha, beta, gamma))
+            self.topology.setPeriodicBoxVectors(
+                computePeriodicBoxVectors(a, b, c, alpha, beta, gamma)
+            )
 
         # Add bonds based on struct_conn records.
 
@@ -233,7 +239,10 @@ class PDBxFile:
                 # Only add bonds that don't already exist.
                 existingBonds = set(top.bonds())
                 for bond in connectBonds:
-                    if bond not in existingBonds and (bond[1], bond[0]) not in existingBonds:
+                    if (
+                        bond not in existingBonds
+                        and (bond[1], bond[0]) not in existingBonds
+                    ):
                         top.addBond(bond[0], bond[1])
                         existingBonds.add(bond)
 

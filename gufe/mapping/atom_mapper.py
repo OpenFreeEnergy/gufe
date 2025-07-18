@@ -19,7 +19,9 @@ class AtomMapper(GufeTokenizable):
     """
 
     @abc.abstractmethod
-    def suggest_mappings(self, A: gufe.Component, B: gufe.Component) -> Iterator[AtomMapping]:
+    def suggest_mappings(
+        self, A: gufe.Component, B: gufe.Component
+    ) -> Iterator[AtomMapping]:
         """Suggests possible mappings between two Components
 
         Suggests zero or more :class:`.AtomMapping` objects, which are possible

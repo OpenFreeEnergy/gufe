@@ -231,7 +231,9 @@ def test_draw_mapping_svg(tmpdir, other_mapping):
 
 
 class TestLigandAtomMappingSerialization:
-    def test_deserialize_roundtrip(self, benzene_phenol_mapping, benzene_anisole_mapping):
+    def test_deserialize_roundtrip(
+        self, benzene_phenol_mapping, benzene_anisole_mapping
+    ):
 
         roundtrip = LigandAtomMapping.from_dict(benzene_phenol_mapping.to_dict())
 
@@ -297,19 +299,27 @@ class TestLigandAtomMappingBoundsChecks:
 
     def test_too_large_A(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentA"):
-            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={9: 5})
+            LigandAtomMapping(
+                componentA=molA, componentB=molB, componentA_to_componentB={9: 5}
+            )
 
     def test_too_small_A(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentA"):
-            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={-2: 5})
+            LigandAtomMapping(
+                componentA=molA, componentB=molB, componentA_to_componentB={-2: 5}
+            )
 
     def test_too_large_B(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentB"):
-            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={5: 11})
+            LigandAtomMapping(
+                componentA=molA, componentB=molB, componentA_to_componentB={5: 11}
+            )
 
     def test_too_small_B(self, molA, molB):
         with pytest.raises(ValueError, match="invalid index for ComponentB"):
-            LigandAtomMapping(componentA=molA, componentB=molB, componentA_to_componentB={5: -1})
+            LigandAtomMapping(
+                componentA=molA, componentB=molB, componentA_to_componentB={5: -1}
+            )
 
 
 class TestLigandAtomMapping(GufeTokenizableTestsMixin):

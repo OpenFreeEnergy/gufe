@@ -40,11 +40,15 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         self._name = name
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(name={self.name}, components={self.components})"
+        return (
+            f"{self.__class__.__name__}(name={self.name}, components={self.components})"
+        )
 
     def _to_dict(self):
         return {
-            "components": {key: value for key, value in sorted(self.components.items())},
+            "components": {
+                key: value for key, value in sorted(self.components.items())
+            },
             "name": self.name,
         }
 
@@ -66,7 +70,9 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         """
         return dict(self._components)
 
-    def component_diff(self, other) -> tuple[tuple[Component, ...], tuple[Component, ...]]:
+    def component_diff(
+        self, other
+    ) -> tuple[tuple[Component, ...], tuple[Component, ...]]:
         """Compare the Components of this ChemicalSystem with the Components of another ChemicalSystem.
 
         Parameters

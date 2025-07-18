@@ -40,13 +40,17 @@ else:
             if unit_ is Any:
                 if isinstance(val, (float, int)):
                     # TODO: Can this exception be raised with knowledge of the field it's in?
-                    raise MissingUnitError(f"Value {val} needs to be tagged with a unit")
+                    raise MissingUnitError(
+                        f"Value {val} needs to be tagged with a unit"
+                    )
                 elif isinstance(val, Quantity):
                     return Quantity(val)
                 elif _is_openmm_quantity(val):
                     return _from_omm_quantity(val)
                 else:
-                    raise UnitValidationError(f"Could not validate data of type {type(val)}")
+                    raise UnitValidationError(
+                        f"Could not validate data of type {type(val)}"
+                    )
             else:
                 unit_ = Unit(unit_)
                 if isinstance(val, Quantity):
@@ -76,7 +80,9 @@ else:
                         elif "int" in str(val.value.dtype):
                             return int(val.value) * unit_
 
-                raise UnitValidationError(f"Could not validate data of type {type(val)}")
+                raise UnitValidationError(
+                    f"Could not validate data of type {type(val)}"
+                )
 
 
 def _is_openmm_quantity(obj: object) -> bool:
@@ -100,7 +106,9 @@ def _from_omm_quantity(val: "openmm.unit.Quantity") -> Quantity:
         unit_ = val.unit
         return float(val_) * Unit(str(unit_))
     # Here is where the toolkit's ValidatedList could go, if present in the environment
-    elif (type(val_) in {tuple, list, numpy.ndarray}) or (type(val_).__module__ == "openmm.vec3"):
+    elif (type(val_) in {tuple, list, numpy.ndarray}) or (
+        type(val_).__module__ == "openmm.vec3"
+    ):
         array = numpy.asarray(val_)
         return array * Unit(str(unit_))
     elif isinstance(val_, (float, int)) and type(val_).__module__ == "numpy":
@@ -128,7 +136,9 @@ class QuantityEncoder(json.JSONEncoder):
             else:
                 # This shouldn't ever be hit if our object models
                 # behave in ways we expect?
-                raise UnsupportedExportError(f"trying to serialize unsupported type {type(obj.magnitude)}")
+                raise UnsupportedExportError(
+                    f"trying to serialize unsupported type {type(obj.magnitude)}"
+                )
             return {
                 "val": data,
                 "unit": str(obj.units),
@@ -182,9 +192,9 @@ else:
             if unit_ is Any:
                 if isinstance(val, (list, numpy.ndarray)):
                     # Work around a special case in which val might be list[openmm.unit.Quantity]
-                    if isinstance(val, list) and {type(element).__module__ for element in val} == {
-                        "openmm.unit.quantity"
-                    }:
+                    if isinstance(val, list) and {
+                        type(element).__module__ for element in val
+                    } == {"openmm.unit.quantity"}:
                         unit_ = _from_omm_quantity(val[-1]).units
                         return Quantity(
                             [_from_omm_quantity(element).m for element in val],
@@ -192,7 +202,9 @@ else:
                         )
 
                     # TODO: Can this exception be raised with knowledge of the field it's in?
-                    raise MissingUnitError(f"Value {val} needs to be tagged with a unit")
+                    raise MissingUnitError(
+                        f"Value {val} needs to be tagged with a unit"
+                    )
 
                 elif isinstance(val, Quantity):
                     # TODO: This might be a redundant cast causing wasted CPU time.
@@ -201,7 +213,9 @@ else:
                 elif _is_openmm_quantity(val):
                     return _from_omm_quantity(val)
                 else:
-                    raise UnitValidationError(f"Could not validate data of type {type(val)}")
+                    raise UnitValidationError(
+                        f"Could not validate data of type {type(val)}"
+                    )
             else:
                 unit_ = Unit(unit_)
                 if isinstance(val, Quantity):
@@ -228,4 +242,6 @@ else:
                 if isinstance(val, str):
                     # could do custom deserialization here?
                     raise NotImplementedError
-                raise UnitValidationError(f"Could not validate data of type {type(val)}")
+                raise UnitValidationError(
+                    f"Could not validate data of type {type(val)}"
+                )

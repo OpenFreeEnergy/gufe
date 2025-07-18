@@ -39,7 +39,9 @@ def _match_elements(mol1: Chem.Mol, idx1: int, mol2: Chem.Mol, idx2: int) -> boo
     return elem_mol1 == elem_mol2
 
 
-def _get_unique_bonds_and_atoms(mapping: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol) -> dict:
+def _get_unique_bonds_and_atoms(
+    mapping: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol
+) -> dict:
     """
     Given an input mapping, returns new atoms, element changes, and
     involved bonds.
@@ -154,7 +156,9 @@ def _draw_molecules(
 
     # mol alignments if atom_mapping present
     for (i, j), atomMap in atom_mapping.items():
-        AllChem.AlignMol(copies[j], copies[i], atomMap=[(k, v) for v, k in atomMap.items()])
+        AllChem.AlignMol(
+            copies[j], copies[i], atomMap=[(k, v) for v, k in atomMap.items()]
+        )
 
     # standard settings for our visualization
     d2d.drawOptions().useBWAtomPalette()
@@ -173,7 +177,9 @@ def _draw_molecules(
     return d2d.GetDrawingText()
 
 
-def draw_mapping(mol1_to_mol2: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol, d2d=None):
+def draw_mapping(
+    mol1_to_mol2: dict[int, int], mol1: Chem.Mol, mol2: Chem.Mol, d2d=None
+):
     """
     Method to visualise the atom map correspondence between two rdkit
     molecules given an input mapping.

@@ -9,7 +9,11 @@ import json
 import pytest
 from openff.units import unit
 
-from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
+from gufe.settings.models import (
+    OpenMMSystemGeneratorFFSettings,
+    Settings,
+    ThermoSettings,
+)
 
 
 def test_model_schema():

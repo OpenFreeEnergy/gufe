@@ -43,13 +43,17 @@ def test_neq():
 
 @pytest.mark.parametrize("conc", [0.0 * unit.molar, 1.75 * unit.molar])
 def test_from_dict(conc):
-    s1 = SolventComponent(positive_ion="Na", negative_ion="Cl", ion_concentration=conc, neutralize=False)
+    s1 = SolventComponent(
+        positive_ion="Na", negative_ion="Cl", ion_concentration=conc, neutralize=False
+    )
 
     assert SolventComponent.from_dict(s1.to_dict()) == s1
 
 
 def test_conc():
-    s = SolventComponent(positive_ion="Na", negative_ion="Cl", ion_concentration=1.75 * unit.molar)
+    s = SolventComponent(
+        positive_ion="Na", negative_ion="Cl", ion_concentration=1.75 * unit.molar
+    )
 
     assert s.ion_concentration == unit.Quantity("1.75 M")
 
@@ -64,11 +68,15 @@ def test_conc():
 )  # negative conc
 def test_bad_conc(conc):
     with pytest.raises(ValueError):
-        _ = SolventComponent(positive_ion="Na", negative_ion="Cl", ion_concentration=conc)
+        _ = SolventComponent(
+            positive_ion="Na", negative_ion="Cl", ion_concentration=conc
+        )
 
 
 def test_solvent_charge():
-    s = SolventComponent(positive_ion="Na", negative_ion="Cl", ion_concentration=1.75 * unit.molar)
+    s = SolventComponent(
+        positive_ion="Na", negative_ion="Cl", ion_concentration=1.75 * unit.molar
+    )
 
     assert s.total_charge is None
 

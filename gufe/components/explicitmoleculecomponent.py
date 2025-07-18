@@ -54,7 +54,10 @@ class ExplicitMoleculeComponent(Component):
 
         n_confs = len(conformers)
         if n_confs > 1:
-            warnings.warn(f"Molecule provided with {n_confs} conformers. " f"Only the first will be used.")
+            warnings.warn(
+                f"Molecule provided with {n_confs} conformers. "
+                f"Only the first will be used."
+            )
 
         if not any(atom.GetAtomicNum() == 1 for atom in rdkit.GetAtoms()):
             warnings.warn(
@@ -145,13 +148,15 @@ class ExplicitMoleculeComponent(Component):
 
         if len(p_chgs) != mol.GetNumAtoms():
             errmsg = (
-                f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
+                f"Incorrect number of partial charges: {len(p_chgs)} "
+                f" were provided for {mol.GetNumAtoms()} atoms"
             )
             raise ValueError(errmsg)
 
         if abs(sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
             errmsg = (
-                f"Sum of partial charges {sum(p_chgs)} differs from " f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
+                f"Sum of partial charges {sum(p_chgs)} differs from "
+                f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
             )
             raise ValueError(errmsg)
 

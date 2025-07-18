@@ -209,7 +209,9 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         """
         from openff.toolkit.topology import Molecule as OFFMolecule
 
-        m = OFFMolecule.from_rdkit(self._rdkit, allow_undefined_stereo=True, hydrogens_are_explicit=True)
+        m = OFFMolecule.from_rdkit(
+            self._rdkit, allow_undefined_stereo=True, hydrogens_are_explicit=True
+        )
         m.name = self.name
 
         return m

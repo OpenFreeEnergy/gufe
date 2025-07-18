@@ -70,8 +70,12 @@ def assert_same_pdb_lines(in_file_path, out_file_path):
     if must_close:
         out_file.close()
 
-    in_lines = [l for l in in_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
-    out_lines = [l for l in out_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))]
+    in_lines = [
+        l for l in in_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))
+    ]
+    out_lines = [
+        l for l in out_lines if not l.startswith(("REMARK", "CRYST", "# Created with"))
+    ]
 
     assert in_lines == out_lines
 
@@ -165,7 +169,9 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 
         assert_same_pdb_lines(in_file_path=str(input_path), out_file_path=output_path)
 
-    @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
+    @pytest.mark.parametrize(
+        "input_type", ["filename", "Path", "StringIO", "TextIOWrapper"]
+    )
     def test_to_pdbx_file(self, PDBx_181L_openMMClean_path, tmp_path, input_type):
         p = self.cls.from_pdbx_file(str(PDBx_181L_openMMClean_path), name="Bob")
         out_file_name = "tmp_181L_pdbx.cif"
@@ -178,9 +184,15 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
             output_func=p.to_pdbx_file,
         )
 
-    @pytest.mark.parametrize("input_type", ["filename", "Path", "StringIO", "TextIOWrapper"])
-    @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
-    @pytest.mark.skipif(OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed")
+    @pytest.mark.parametrize(
+        "input_type", ["filename", "Path", "StringIO", "TextIOWrapper"]
+    )
+    @pytest.mark.skipif(
+        OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old"
+    )
+    @pytest.mark.skipif(
+        OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed"
+    )
     def test_to_pdb_input_types(self, PDB_181L_path, tmp_path, input_type):
         p = self.cls.from_pdb_file(str(PDB_181L_path), name="Bob")
 
@@ -192,7 +204,9 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         )
 
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
-    @pytest.mark.skipif(OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed")
+    @pytest.mark.skipif(
+        OPENMM_VERSION == Version("0.0.0"), reason="OpenMM not installed"
+    )
     def test_to_pdb_round_trip(self, in_pdb_path, tmp_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
@@ -209,10 +223,14 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         out_ref_file_name = "tmp_" + in_pdb_path + "_openmm_ref.pdb"
         out_ref_file = tmp_path / out_ref_file_name
 
-        pdbfile.PDBFile.writeFile(openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w"))
+        pdbfile.PDBFile.writeFile(
+            openmm_pdb.topology, openmm_pdb.positions, file=open(str(out_ref_file), "w")
+        )
         assert_same_pdb_lines(in_file_path=str(out_ref_file), out_file_path=out_file)
 
-    @pytest.mark.skipif(OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old")
+    @pytest.mark.skipif(
+        OPENMM_VERSION < Version("8.2"), reason="OpenMM version too old"
+    )
     def test_io_pdb_comparison(self, PDB_181L_path, tmp_path):
         out_file_name = "tmp_" + os.path.basename(PDB_181L_path)
         out_file = tmp_path / out_file_name
@@ -267,7 +285,9 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         assert openmm_top.getNumResidues() == gufe_openmm_top.getNumResidues()
         assert openmm_top.getNumChains() == gufe_openmm_top.getNumChains()
         # Make sure bond.order is the expected type int or None
-        assert all(isinstance(bond.order, (int, type(None))) for bond in openmm_top.bonds())
+        assert all(
+            isinstance(bond.order, (int, type(None))) for bond in openmm_top.bonds()
+        )
 
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
     def test_protein_component_openmm_bond(self, in_pdb_path):

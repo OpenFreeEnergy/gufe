@@ -60,16 +60,25 @@ def pack_default(obj) -> msgpack.ExtType:
             )
 
         case np.ndarray():
-            npa_payload: bytes = msgpack.packb([str(obj.dtype), list(obj.shape), obj.tobytes()], default=pack_default)
+            npa_payload: bytes = msgpack.packb(
+                [str(obj.dtype), list(obj.shape), obj.tobytes()], default=pack_default
+            )
             return msgpack.ExtType(MPEXT.NDARRAY, npa_payload)
 
         case np.generic():
-            npg_payload: bytes = msgpack.packb([str(obj.dtype), obj.tobytes()], default=pack_default)
+            npg_payload: bytes = msgpack.packb(
+                [str(obj.dtype), obj.tobytes()], default=pack_default
+            )
             return msgpack.ExtType(MPEXT.NPGENERIC, npg_payload)
 
         case SettingsBaseModel():
             settings_data = {field: getattr(obj, field) for field in obj.__fields__}
-            settings_data.update({"__class__": obj.__class__.__qualname__, "__module__": obj.__class__.__module__})
+            settings_data.update(
+                {
+                    "__class__": obj.__class__.__qualname__,
+                    "__module__": obj.__class__.__module__,
+                }
+            )
             settings_payload: bytes = msgpack.packb(settings_data, default=pack_default)
             return msgpack.ExtType(MPEXT.SETTINGS, settings_payload)
 

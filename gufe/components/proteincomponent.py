@@ -257,7 +257,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         # Set Positions
         rd_mol = editable_rdmol.GetMol()
-        positions = np.array(openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3)
+        positions = np.array(
+            openmm_PDBFile.positions.value_in_unit(omm_unit.angstrom), ndmin=3
+        )
 
         for frame_id, frame in enumerate(positions):
             conf = Conformer(frame_id)
@@ -282,7 +284,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
             # raise an error if we can't find a match
             res_n = a.GetMonomerInfo().GetResidueName()
             res_ind = int(a.GetMonomerInfo().GetResidueNumber())
-            raise ValueError(f"Unknown ion: {ion_key} in residue {res_n} at index {res_ind}.")
+            raise ValueError(
+                f"Unknown ion: {ion_key} in residue {res_n} at index {res_ind}."
+            )
 
         # Add Additionals
         # Formal Charge
@@ -291,7 +295,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
             atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
 
-            connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
+            connectivity = sum(
+                _BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds()
+            )
             default_valence = periodicTable.GetDefaultValence(atomic_num)
 
             if connectivity == 0:  # ions
@@ -423,7 +429,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             if (new_resid := reskey(mi)) != current_resid:
                 _, resname, resnum, icode = new_resid
-                r = top.addResidue(name=resname, chain=c, id=str(resnum), insertionCode=icode)
+                r = top.addResidue(
+                    name=resname, chain=c, id=str(resnum), insertionCode=icode
+                )
                 current_resid = new_resid
             # openMM >=8.2
             try:
@@ -432,7 +440,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     element=app.Element.getByAtomicNumber(atom.GetAtomicNum()),
                     residue=r,
                     id=str(mi.GetSerialNumber()),
-                    formalCharge=None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge(),
+                    formalCharge=(
+                        None if atom.GetFormalCharge() == 0 else atom.GetFormalCharge()
+                    ),
                 )
             # openmm <= 8.1.2
             # doesn't have formalCharge as an atomm attr
@@ -473,7 +483,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return openmm_pos
 
-    def to_pdb_file(self, out_path: str | bytes | PathLike[str] | PathLike[bytes] | io.TextIOBase) -> str:
+    def to_pdb_file(
+        self, out_path: str | bytes | PathLike[str] | PathLike[bytes] | io.TextIOBase
+    ) -> str:
         """
         serialize protein to pdb file.
 
@@ -515,7 +527,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return out_path
 
-    def to_pdbx_file(self, out_path: str | bytes | PathLike[str] | PathLike[bytes] | io.TextIOBase) -> str:
+    def to_pdbx_file(
+        self, out_path: str | bytes | PathLike[str] | PathLike[bytes] | io.TextIOBase
+    ) -> str:
         """
         serialize protein to pdbx file.
 
@@ -593,7 +607,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ]
 
         conformers = [
-            serialize_numpy(conf.GetPositions()) for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
+            serialize_numpy(conf.GetPositions())
+            for conf in self._rdkit.GetConformers()  # .m_as(unit.angstrom)
         ]
 
         # Result

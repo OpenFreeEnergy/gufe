@@ -41,10 +41,18 @@ class ExampleMapping(AtomMapping):
         return {v: k for k, v in self._mapping}
 
     def componentA_unique(self):
-        return (i for i in range(self._molA.to_rdkit().GetNumAtoms()) if i not in self._mapping)
+        return (
+            i
+            for i in range(self._molA.to_rdkit().GetNumAtoms())
+            if i not in self._mapping
+        )
 
     def componentB_unique(self):
-        return (i for i in range(self._molB.to_rdkit().GetNumAtoms()) if i not in self._mapping.values())
+        return (
+            i
+            for i in range(self._molB.to_rdkit().GetNumAtoms())
+            if i not in self._mapping.values()
+        )
 
 
 class TestMappingAbstractClass(GufeTokenizableTestsMixin):

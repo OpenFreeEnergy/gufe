@@ -49,7 +49,9 @@ class FileStorage(ExternalStorage):
         if self.exists(location):
             path.unlink()
         else:
-            raise MissingExternalResourceError(f"Unable to delete '{str(path)}': File does not exist")
+            raise MissingExternalResourceError(
+                f"Unable to delete '{str(path)}': File does not exist"
+            )
 
     def _as_path(self, location):
         return self.root_dir / pathlib.Path(location)

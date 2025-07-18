@@ -175,7 +175,9 @@ class PdbxReader:
                     try:
                         curRow = curCategory[0]
                     except IndexError:
-                        self.__syntaxError("Internal index error accessing category data")
+                        self.__syntaxError(
+                            "Internal index error accessing category data"
+                        )
                         return
 
                 # Check for duplicate attributes and add attribute to table.
@@ -189,7 +191,9 @@ class PdbxReader:
                 tCat, tAtt, curQuotedString, curWord = next(tokenizer)
 
                 if tCat is not None or (curQuotedString is None and curWord is None):
-                    self.__syntaxError(f"Missing data for item _{curCatName}.{curAttName}")
+                    self.__syntaxError(
+                        f"Missing data for item _{curCatName}.{curAttName}"
+                    )
 
                 if curWord is not None:
                     #
@@ -197,7 +201,9 @@ class PdbxReader:
                     #
                     reservedWord, state = self.__getState(curWord)
                     if reservedWord is not None:
-                        self.__syntaxError("Unexpected reserved word: %s" % (reservedWord))
+                        self.__syntaxError(
+                            "Unexpected reserved word: %s" % (reservedWord)
+                        )
 
                     curRow.append(curWord)
 
@@ -233,7 +239,9 @@ class PdbxReader:
                 try:
                     curContainer.append(curCategory)
                 except AttributeError:
-                    self.__syntaxError("loop_ declaration outside of data_ block or save_ frame")
+                    self.__syntaxError(
+                        "loop_ declaration outside of data_ block or save_ frame"
+                    )
                     return
 
                 curCategory.appendAttribute(curAttName)
@@ -258,7 +266,10 @@ class PdbxReader:
                         if reservedWord == "stop":
                             return
                         else:
-                            self.__syntaxError("Unexpected reserved word after loop declaration: %s" % (reservedWord))
+                            self.__syntaxError(
+                                "Unexpected reserved word after loop declaration: %s"
+                                % (reservedWord)
+                            )
 
                 # Read the table of data for this loop_ -
                 while True:
@@ -271,7 +282,9 @@ class PdbxReader:
                         elif curQuotedString is not None:
                             curRow.append(curQuotedString)
 
-                        curCatName, curAttName, curQuotedString, curWord = next(tokenizer)
+                        curCatName, curAttName, curQuotedString, curWord = next(
+                            tokenizer
+                        )
 
                     # loop_ data processing ends if -
 

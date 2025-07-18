@@ -60,9 +60,13 @@ class LigandAtomMapping(AtomMapping):
         nB = self.componentB.to_rdkit().GetNumAtoms()
         for i, j in componentA_to_componentB.items():
             if not (0 <= i < nA):
-                raise ValueError(f"Got invalid index for ComponentA ({i}); " f"must be 0 <= n < {nA}")
+                raise ValueError(
+                    f"Got invalid index for ComponentA ({i}); " f"must be 0 <= n < {nA}"
+                )
             if not (0 <= j < nB):
-                raise ValueError(f"Got invalid index for ComponentB ({i}); " f"must be 0 <= n < {nB}")
+                raise ValueError(
+                    f"Got invalid index for ComponentB ({i}); " f"must be 0 <= n < {nB}"
+                )
 
         self._compA_to_compB = componentA_to_componentB
 
@@ -85,11 +89,19 @@ class LigandAtomMapping(AtomMapping):
 
     @property
     def componentA_unique(self):
-        return (i for i in range(self.componentA.to_rdkit().GetNumAtoms()) if i not in self._compA_to_compB)
+        return (
+            i
+            for i in range(self.componentA.to_rdkit().GetNumAtoms())
+            if i not in self._compA_to_compB
+        )
 
     @property
     def componentB_unique(self):
-        return (i for i in range(self.componentB.to_rdkit().GetNumAtoms()) if i not in self._compA_to_compB.values())
+        return (
+            i
+            for i in range(self.componentB.to_rdkit().GetNumAtoms())
+            if i not in self._compA_to_compB.values()
+        )
 
     @property
     def annotations(self):
@@ -106,7 +118,9 @@ class LigandAtomMapping(AtomMapping):
             "componentA": self.componentA,
             "componentB": self.componentB,
             "componentA_to_componentB": self._compA_to_compB,
-            "annotations": json.dumps(self._annotations, sort_keys=True, cls=JSON_HANDLER.encoder),
+            "annotations": json.dumps(
+                self._annotations, sort_keys=True, cls=JSON_HANDLER.encoder
+            ),
         }
 
     @classmethod
