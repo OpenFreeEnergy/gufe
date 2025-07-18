@@ -2,9 +2,7 @@ import pickle
 
 
 class ExplicitMoleculeComponentMixin:
-
     def test_pickle(self, instance):
-
         pickled = pickle.dumps(instance)
         unpickled = pickle.loads(pickled)
 

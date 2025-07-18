@@ -343,7 +343,6 @@ class PDBxFile:
             ):
                 bonds.append((atom1, atom2))
         if len(bonds) > 0:
-
             # Write the bond information.
 
             print("loop_", file=file)

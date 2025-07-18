@@ -72,17 +72,29 @@ method = "git"
 match = ["*"]
 default-tag = "0.0.0"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 120
-profile = "black"
-known_first_party = ["gufe"]
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = [
+    # "F",  # Pyflakes
+    "I",  # isort
+    "W",  # pycodestyle warnings
+    # "E",  # pycodestyle errors
+    # "C901"  # mccabe complexity  TODO: add this back in
+    # "UP", # TODO: add this in
+]
+ignore = [
+    "E402",  # module-level import not at top (conflicts w/ isort)
+    "E731",  # lambda expressions (TODO: we should fix these)
+    "E722",  # bare excepts (TODO: we should fix these in a follow-up PR)
+    "F401",  # unused imports (TODO: we should fix these)
+    "UP03",  # pyupgrade linting (TODO: we should fix these)
+    ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["gufe"]
 
 [tool.interrogate]
 fail-under = 0
