@@ -30,6 +30,7 @@ jobs:
           cache-downloads: true
           create-args: >-
             python=3.12
+            rdkit=2025.03.4
           init-shell: bash
 
       - name: "Install steps"
