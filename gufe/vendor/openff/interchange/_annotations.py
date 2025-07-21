@@ -112,16 +112,20 @@ def quantity_json_serializer(
     nxt,
 ) -> dict:
     """Serialize a Quantity to a JSON-compatible dictionary."""
-    import pdb;pdb.set_trace()
-    magnitude = quantity.m
-
+    # TODO: this None handling is a temporary workaround and should be fixed! 
+    if quantity is None:
+        magnitude = quantity
+        unit = ""
+    else:
+        magnitude = quantity.m
+        unit = str(quantity.units)
     if isinstance(magnitude, numpy.ndarray):
         # This could be something fancier, list a bytestring
         magnitude = magnitude.tolist()
 
     return {
         "val": magnitude,
-        "unit": str(quantity.units),
+        "unit": unit,
     }
 
 
