@@ -9,25 +9,20 @@ import pprint
 from typing import Literal
 
 import pydantic
+from pydantic import AfterValidator
 from openff.units import unit
-from pydantic import Field, PositiveFloat, PrivateAttr, validator
+from pydantic import Field, PositiveFloat, PrivateAttr, ConfigDict, validator
 
-from gufe.vendor.openff.models.models import DefaultModel
+from gufe.vendor.openff.interchange.pydantic import _BaseModel
+from gufe.vendor.openff.interchange._annotations import _Quantity
 from gufe.vendor.openff.models.types import FloatQuantity  # replace with _Quantity from interchange
 
 
-class SettingsBaseModel(DefaultModel):
+class SettingsBaseModel(_BaseModel):
     """Settings and modifications we want for all settings classes."""
 
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
-
-    class Config:
-        """
-        :noindex:
-        """
-
-        extra = "forbid"
-        arbitrary_types_allowed = False
+    model_config = ConfigDict(extra='forbid', arbitrary_types_allowed=False)
 
     def _ipython_display_(self):
         pprint.pprint(self.dict())
@@ -97,10 +92,10 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
-    pressure: FloatQuantity["standard_atmosphere"] = Field(
-        None, description="Simulation pressure, default units standard atmosphere (atm)"
-    )
+    temperature: _Quantity = None  # FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
+    pressure: _Quantity = None  # FloatQuantity["standard_atmosphere"] = Field(
+    #     None, description="Simulation pressure, default units standard atmosphere (atm)"
+    # )
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 
