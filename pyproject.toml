@@ -41,10 +41,10 @@ ignore_missing_imports = true
 module = "gufe.vendor.*"
 ignore_errors = true
 
-[[tool.mypy.overrides]]
-module = "rdkit.*"
-follow_imports = 'skip'
-follow_imports_for_stubs = true
+# [[tool.mypy.overrides]]
+# module = "rdkit.*"
+# follow_imports = 'skip'
+# follow_imports_for_stubs = true
 
 [tool.coverage.run]
 omit = [
