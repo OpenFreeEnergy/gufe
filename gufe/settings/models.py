@@ -13,7 +13,7 @@ from openff.units import unit
 from pydantic import Field, PositiveFloat, PrivateAttr, validator
 
 from gufe.vendor.openff.models.models import DefaultModel
-from gufe.vendor.openff.models.types import FloatQuantity
+from gufe.vendor.openff.models.types import FloatQuantity  # replace with _Quantity from interchange
 
 
 class SettingsBaseModel(DefaultModel):
