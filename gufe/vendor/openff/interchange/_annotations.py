@@ -112,6 +112,7 @@ def quantity_json_serializer(
     nxt,
 ) -> dict:
     """Serialize a Quantity to a JSON-compatible dictionary."""
+    import pdb;pdb.set_trace()
     magnitude = quantity.m
 
     if isinstance(magnitude, numpy.ndarray):

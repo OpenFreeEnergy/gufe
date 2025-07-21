@@ -8,21 +8,20 @@ import abc
 import pprint
 from typing import Literal
 
-import pydantic
 from pydantic import AfterValidator
 from openff.units import unit
 from pydantic import Field, PositiveFloat, PrivateAttr, ConfigDict, validator
 
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
-from gufe.vendor.openff.interchange._annotations import _Quantity
-from gufe.vendor.openff.models.types import FloatQuantity  # replace with _Quantity from interchange
-
+from gufe.vendor.openff.interchange._annotations import _Quantity, _TemperatureQuantity
 
 class SettingsBaseModel(_BaseModel):
     """Settings and modifications we want for all settings classes."""
 
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
-    model_config = ConfigDict(extra='forbid', arbitrary_types_allowed=False)
+    model_config = ConfigDict(extra='forbid',
+                              arbitrary_types_allowed=True  # TODO: this was historically False, try to change back
+                              )
 
     def _ipython_display_(self):
         pprint.pprint(self.dict())
@@ -92,10 +91,8 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: _Quantity = None  # FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
-    pressure: _Quantity = None  # FloatQuantity["standard_atmosphere"] = Field(
-    #     None, description="Simulation pressure, default units standard atmosphere (atm)"
-    # )
+    temperature: _TemperatureQuantity = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
+    pressure: _Quantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 
@@ -150,7 +147,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff: FloatQuantity["nanometer"] = 1.0 * unit.nanometer
+    nonbonded_cutoff:  _Quantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
