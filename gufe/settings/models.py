@@ -20,7 +20,7 @@ class SettingsBaseModel(_BaseModel):
 
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
     model_config = ConfigDict(extra='forbid',
-                              arbitrary_types_allowed=True  # TODO: this was historically False, try to change back
+                            #   arbitrary_types_allowed=True  # TODO: this was previously False, try to change back
                               )
 
     def _ipython_display_(self):
@@ -32,11 +32,11 @@ class SettingsBaseModel(_BaseModel):
         This is intended to be used by Protocols to make their stored Settings
         read-only
         """
-        copied = self.copy(deep=True)
+        copied = self.model_copy(deep=True)
 
         def freeze_model(model):
             submodels = (
-                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -53,11 +53,11 @@ class SettingsBaseModel(_BaseModel):
         Settings objects become frozen when within a Protocol.  If you *really*
         need to reverse this, this method is how.
         """
-        copied = self.copy(deep=True)
+        copied = self.model_copy(deep=True)
 
         def unfreeze_model(model):
             submodels = (
-                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
@@ -92,19 +92,13 @@ class ThermoSettings(SettingsBaseModel):
     """
 
     temperature: _TemperatureQuantity = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
-    pressure: _Quantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
-    ph: PositiveFloat | None = Field(None, description="Simulation pH")
-    redox_potential: float | None = Field(None, description="Simulation redox potential")
+    # pressure: _Quantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
+    # ph: PositiveFloat | None = Field(None, description="Simulation pH")
+    # redox_potential: float | None = Field(None, description="Simulation redox potential")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
-
-    class Config:
-        """:noindex:"""
-
-        pass
-
     ...
 
 
