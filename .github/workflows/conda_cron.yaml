@@ -23,13 +23,13 @@ jobs:
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
         python-version:
+          - "3.10"  # TODO: bump to 3.11-3.13 after v1.6.0 is released.
           - "3.11"
           - "3.12"
-          - "3.13"
 
     steps:
       - name: setup micromamba
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: gufe
           cache-environment: true
@@ -39,7 +39,6 @@ jobs:
             pip
           condarc: |
             channels:
-              - jaimergp/label/unsupported-cudatoolkit-shim
               - conda-forge
           init-shell: bash
 
