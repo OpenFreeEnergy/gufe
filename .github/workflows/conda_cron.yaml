@@ -36,20 +36,20 @@ jobs:
           cache-downloads: true
           create-args: >-
             python=${{ matrix.python-version }}
-            pip
+            gufe
+            pooch
+            pytest
+            pytest-xdist
           condarc: |
             channels:
               - conda-forge
           init-shell: bash
 
-      - name: install gufe and deps
-        run: |
-          micromamba install gufe pooch pytest pytest-xdist pip -c conda-forge
-          python -m pip install PyGithub
-
       - id: run-tests
         name: run tests
-        run: pytest -n auto --pyargs gufe
+        run: |
+          python -c 'import gufe;print(gufe.__version__)'
+          pytest -n auto --pyargs gufe
 
       - uses: actions/checkout@v4
         if: ${{ always() }}
