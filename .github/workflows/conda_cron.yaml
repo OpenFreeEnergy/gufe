@@ -70,6 +70,7 @@ jobs:
 
       - name: raise-or-close-issue
         if: ${{ always() }}
+        working-directory: gufe_repo
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"
