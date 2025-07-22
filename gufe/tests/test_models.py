@@ -66,7 +66,7 @@ def test_default_settings():
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
     my_settings.model_dump_json()
-    json.dumps(my_settings.model_json_schema(), indent=2)
+    json.dumps(my_settings.model_json_schema(mode='serialization'), indent=2)
 
 
 class TestSettingsValidation:
