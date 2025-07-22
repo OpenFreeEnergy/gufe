@@ -11,7 +11,7 @@ from typing import Literal
 from openff.units import unit
 from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, validator
 
-from gufe.vendor.openff.interchange._annotations import _Quantity, _TemperatureQuantity
+from gufe.vendor.openff.interchange._annotations import _Quantity, _DistanceQuantity, _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
 
@@ -93,7 +93,7 @@ class ThermoSettings(SettingsBaseModel):
 
     temperature: _TemperatureQuantity = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
     pressure: _Quantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
-    ph: PositiveFloat | None = Field(None, description="Simulation pH")
+    ph: PositiveFloat = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 
 
@@ -141,7 +141,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
     """
-    nonbonded_cutoff:  _Quantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
+    nonbonded_cutoff:  _DistanceQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
