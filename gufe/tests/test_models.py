@@ -86,23 +86,25 @@ def test_default_settings():
     my_settings.schema_json(indent=2)
 
 
-@pytest.mark.parametrize(
-    "value,good",
-    [
-        ("parsnips", False),  # shouldn't be allowed
-        ("hbonds", True),
-        ("hangles", True),
-        ("allbonds", True),  # allowed options
-        ("HBonds", True),  # check case insensitivity
-    ],
-)
-def test_invalid_constraint(value, good):
-    if good:
-        s = OpenMMSystemGeneratorFFSettings(constraints=value)
-        assert s
-    else:
-        with pytest.raises(ValueError):
-            _ = OpenMMSystemGeneratorFFSettings(constraints=value)
+class TestOpenMMSystemGeneratorFFSettings:
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            ("parsnips", False, None),  # shouldn't be allowed
+            ("hbonds", True, "hbonds"),
+            ("hangles", True, "hangles"),
+            ("allbonds", True, "allbonds"),  # allowed options
+            ("HBonds", True, "HBonds"),  # check case insensitivity TODO: cast this to lower?
+            (None, True, None),
+        ],
+    )
+    def test_constraints_validation(self, value, valid, expected):
+        if valid:
+            s = OpenMMSystemGeneratorFFSettings(constraints=value)
+            assert s.constraints == expected
+        else:
+            with pytest.raises(ValueError):
+                _ = OpenMMSystemGeneratorFFSettings(constraints=value)
 
 
 class TestFreezing:
@@ -114,7 +116,7 @@ class TestFreezing:
         s.thermo_settings.temperature = 199 * unit.kelvin
         assert s.thermo_settings.temperature == 199 * unit.kelvin
 
-    def test_freezing(self):
+    def test_default_frozen(self):
         s = Settings.get_defaults()
 
         s2 = s.frozen_copy()
