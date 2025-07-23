@@ -420,7 +420,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
                 if with_cofactor:
                     labels.add("cofactor")
             else:  # -no-cov-
-                raise RuntimeError("Something went weird in testing. Unable " f"to get leg for edge {edge}")
+                raise RuntimeError(f"Something went weird in testing. Unable to get leg for edge {edge}")
 
             assert set(compsA) == labels
             assert set(compsB) == labels
@@ -466,7 +466,6 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
 
     @pytest.mark.xfail  # method removed and on hold for now
     def test_to_rhfe_alchemical_network(self, real_molecules_network, solv_comp):
-
         others = {}
         protocol = DummyProtocol(DummyProtocol.default_settings())
         rhfe = real_molecules_network.to_rhfe_alchemical_network(solvent=solv_comp, protocol=protocol, **others)
@@ -492,7 +491,7 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             elif "solvent" in edge.name:
                 labels = {"ligand", "solvent"}
             else:  # -no-cov-
-                raise RuntimeError("Something went weird in testing. Unable " f"to get leg for edge {edge}")
+                raise RuntimeError(f"Something went weird in testing. Unable to get leg for edge {edge}")
 
             labels |= set(others)
 

@@ -59,7 +59,6 @@ class SimulationUnit(ProtocolUnit):
 class FinishUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx, *, simulations, **inputs):
-
         output = [s.outputs["log"] for s in simulations]
         output.append("assembling_results")
 
@@ -92,7 +91,6 @@ class DummyProtocolResult(ProtocolResult):
 
 
 class DummyProtocol(Protocol):
-
     result_cls = DummyProtocolResult
     _settings_cls = DummySpecificSettings
 
@@ -115,7 +113,6 @@ class DummyProtocol(Protocol):
         mapping: ComponentMapping | list[ComponentMapping] | None = None,
         extends: ProtocolDAGResult | None = None,
     ) -> list[ProtocolUnit]:
-
         # rip apart `extends` if needed to feed into `InitializeUnit`
         if extends is not None:
             # this is an example; wouldn't want to pass in whole ProtocolDAGResult into
@@ -149,7 +146,6 @@ class DummyProtocol(Protocol):
         return [alpha, *simulations, omega]
 
     def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
-
         outputs = defaultdict(list)
         for pdr in protocol_dag_results:
             for pur in pdr.terminal_protocol_unit_results:
@@ -174,7 +170,6 @@ class BrokenProtocol(DummyProtocol):
         mapping: ComponentMapping | list[ComponentMapping] | None = None,
         extends: ProtocolDAGResult | None = None,
     ) -> list[ProtocolUnit]:
-
         # convert protocol inputs into starting points for independent simulations
         alpha = InitializeUnit(
             settings=self.settings,
@@ -207,7 +202,6 @@ class BrokenProtocol(DummyProtocol):
 
 
 class TestProtocol(GufeTokenizableTestsMixin):
-
     cls = DummyProtocol
     repr = None
 
@@ -283,12 +277,10 @@ class TestProtocol(GufeTokenizableTestsMixin):
             instance.validate(stateA=solvated_ligand, stateB=vacuum_ligand, mapping=mapping, extends="No thank you")  # type: ignore
 
     def test_author_validation(self, instance: DummyProtocol, solvated_ligand, vacuum_ligand):
-
         error_msg = "An intentional exception from a very picky author"
 
         # implement a _validate method that always errors
         class NewProtocol(DummyProtocol):
-
             def _validate(self, *, stateA, stateB, mapping, extends):
                 raise ProtocolValidationError(error_msg)
 
@@ -432,7 +424,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
             )
 
     class ProtocolDAGTestsMixin(GufeTokenizableTestsMixin):
-
         def test_protocol_units(self, instance):
             # ensure that protocol units are given in-order based on DAG
             # dependencies
@@ -447,7 +438,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
             # walk the nodes, check dependencies as given by each node against
             # edges in the graph
             for node in instance.graph.nodes:
-
                 # check that each dep is represented by an edge
                 for dep in node.dependencies:
                     assert isinstance(instance.graph.edges[node, dep], dict)
@@ -494,7 +484,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
             # walk the nodes, check dependencies as given by each node against
             # edges in the graph
             for node in instance.result_graph.nodes:
-
                 # check that each dep is represented by an edge
                 for dep in node.dependencies:
                     assert isinstance(instance.result_graph.edges[node, dep], dict)
@@ -534,7 +523,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
         def test_protocol_unit_failures(self, instance: ProtocolDAGResult):
             # protocolunitfailures should have no dependents
             for puf in instance.protocol_unit_failures:
-
                 assert all([puf not in pu.dependencies for pu in instance.protocol_unit_results])
 
             for node in instance.result_graph.nodes:
@@ -555,7 +543,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         @pytest.fixture
         def instance(self, vacuum_ligand, solvated_ligand):
-
             # convert protocol inputs into starting points for independent simulations
             alpha = InitializeUnit(
                 name="the beginning",
@@ -869,10 +856,8 @@ def test_settings_readonly():
 
 
 class TestEnforcedProtocolSettings:
-
     # A boilerplate Protocol that does not define a _settings_cls
     class ProtocolMissingSettingsClass(Protocol):
-
         @classmethod
         def _defaults(cls):
             return {}
@@ -890,7 +875,6 @@ class TestEnforcedProtocolSettings:
             raise NotImplementedError
 
     def test_protocol_no_settings_class(self):
-
         with pytest.raises(
             NotImplementedError,
             match=f"class `{TestEnforcedProtocolSettings.ProtocolMissingSettingsClass.__qualname__}` must implement the `_settings_cls` attribute.",
@@ -900,14 +884,12 @@ class TestEnforcedProtocolSettings:
             )
 
     def test_protocol_wrong_settings(self):
-
         # Basic subclass of Settings
         class PhonySettings(settings.Settings):
             pass
 
         # Define a protocol that expects the above Settings
         class ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass):
-
             _settings_cls = PhonySettings
 
         with pytest.raises(

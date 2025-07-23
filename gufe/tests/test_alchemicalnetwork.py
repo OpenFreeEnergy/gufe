@@ -11,7 +11,6 @@ from .test_tokenization import GufeTokenizableTestsMixin
 
 
 class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
-
     cls = AlchemicalNetwork
     repr = None
 

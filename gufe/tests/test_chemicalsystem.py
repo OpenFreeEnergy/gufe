@@ -133,7 +133,6 @@ def test_sorting(solvated_complex, solvated_ligand):
 
 
 class TestChemicalSystem(GufeTokenizableTestsMixin):
-
     cls = ChemicalSystem
     repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
 

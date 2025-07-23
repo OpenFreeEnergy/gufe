@@ -11,7 +11,6 @@ from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 class DummyUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
-
         if an_input != 2:
             raise ValueError("`an_input` should always be 2(!!!)")
 
@@ -21,7 +20,6 @@ class DummyUnit(ProtocolUnit):
 class DummyKeyboardInterruptUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
-
         if an_input != 2:
             raise KeyboardInterrupt
 
@@ -31,7 +29,6 @@ class DummyKeyboardInterruptUnit(ProtocolUnit):
 class DummyExecutionInterruptUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
-
         if an_input != 2:
             raise ExecutionInterrupt
 
@@ -54,7 +51,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
     def test_execute(self, tmpdir):
         with tmpdir.as_cwd():
-
             unit = DummyUnit()
 
             shared = Path("shared") / str(unit.key)
@@ -84,7 +80,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
     def test_execute_ExecutionInterrupt(self, tmpdir):
         with tmpdir.as_cwd():
-
             unit = DummyExecutionInterruptUnit()
 
             shared = Path("shared") / str(unit.key)
@@ -104,7 +99,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
     def test_execute_KeyboardInterrupt(self, tmpdir):
         with tmpdir.as_cwd():
-
             unit = DummyKeyboardInterruptUnit()
 
             shared = Path("shared") / str(unit.key)
