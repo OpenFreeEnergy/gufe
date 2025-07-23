@@ -78,6 +78,7 @@ def test_json_round_trip(all_settings_path, tmp_path):
 
     assert settings == Settings.parse_raw(settings_from_file)
 
+
 def test_default_settings():
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
@@ -85,7 +86,7 @@ def test_default_settings():
     my_settings.schema_json(indent=2)
 
 
-class TestOpenMMSystemGeneratorFFSettings:
+class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
@@ -97,7 +98,7 @@ class TestOpenMMSystemGeneratorFFSettings:
             (None, True, None),
         ],
     )
-    def test_constraints_validation(self, value, valid, expected):
+    def test_openmmff_constraints(self, value, valid, expected):
         if valid:
             s = OpenMMSystemGeneratorFFSettings(constraints=value)
             assert s.constraints == expected
@@ -112,21 +113,91 @@ class TestOpenMMSystemGeneratorFFSettings:
             (1.0, True, 1.0 * unit.nanometer),  # should cast float to nanometer
             ("1.1 nm", True, 1.1 * unit.nanometer),
             ("1.1 ", False, None),
-            (0, True, 0*unit.nanometer),
-            (-1.0 *unit.nanometer, False, None),
+            (0, True, 0 * unit.nanometer),
+            (-1.0 * unit.nanometer, False, None),
             # (1.0 * unit.angstrom, True, 0.100 * unit.nanometer),  # TODO: why does this not work?
             (300 * unit.kelvin, False, None),
             (True, False, None),
+            (None, False, None),
             # ("one", False, None),  # TODO: more elegant error handling for this
         ],
     )
-    def test_nonbonded_cutoff_validation(self, value, valid, expected):
+    def test_openmmff_nonbonded_cutoff(self, value, valid, expected):
         if valid:
             s = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
             assert s.nonbonded_cutoff == expected
         else:
             with pytest.raises(ValueError):
                 _ = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            (298 * unit.kelvin, True, 298 * unit.kelvin),
+            (298, True, 298 * unit.kelvin),
+            (298.0, True, 298 * unit.kelvin),
+            ("298 kelvin", True, 298 * unit.kelvin),
+            ("298", False, None),
+            (298 * unit.angstrom, False, None),
+        ],
+    )
+    def test_thermo_temperature(self, value, valid, expected):
+        if valid:
+            s = ThermoSettings(temperature=value)
+            assert s.temperature == expected
+        else:
+            with pytest.raises(ValueError):
+                _ = ThermoSettings(temperature=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            (1.0 * unit.atm, True, 1.0 * unit.atm),
+            (1.0, True, 1.0 * unit.atm),
+            ("1 atm", True, 1.0 * unit.atm),
+            ("1.0", False, None),
+        ],
+    )
+    def test_thermo_pressure(self, value, valid, expected):
+        if valid:
+            s = ThermoSettings(pressure=value)
+            assert s.pressure == expected
+        else:
+            with pytest.raises(ValueError):
+                _ = ThermoSettings(pressure=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            (1.0, True, 1.0),
+            (1, True, 1.0),
+            ("1 ph", False, None),
+            (1.0 * unit.atm, False, None),
+        ],
+    )
+    def test_thermo_ph(self, value, valid, expected):
+        if valid:
+            s = ThermoSettings(ph=value)
+            assert s.ph == expected
+        else:
+            with pytest.raises(ValueError):
+                _ = ThermoSettings(ph=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            (1.0, True, 1.0),
+            (None, True, None),
+            ("1", True, 1.0),
+        ],
+    )
+    def test_thermo_redox(self, value, valid, expected):
+        if valid:
+            s = ThermoSettings(redox_potential=value)
+            assert s.redox_potential == expected
+        else:
+            with pytest.raises(ValueError):
+                _ = ThermoSettings(redox_potential=value)
 
 
 class TestFreezing:
