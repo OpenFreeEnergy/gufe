@@ -13,7 +13,7 @@ v1.6.0
 
 **Changed:**
 
-* Consolidated the contents of ``gufe.custom_codecs`` and ``gufe.custom_json`` into the ``gufe.serialization.json`` module
+* Consolidated the contents of ``gufe.custom_codecs`` and ``gufe.custom_json`` into the ``gufe.serialization.json`` module (`PR #532 <https://github.com/OpenFreeEnergy/gufe/pull/532>`_).
 
 
 
