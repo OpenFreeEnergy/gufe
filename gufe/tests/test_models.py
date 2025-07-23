@@ -78,7 +78,6 @@ def test_json_round_trip(all_settings_path, tmp_path):
 
     assert settings == Settings.parse_raw(settings_from_file)
 
-
 def test_default_settings():
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
@@ -105,6 +104,27 @@ class TestOpenMMSystemGeneratorFFSettings:
         else:
             with pytest.raises(ValueError):
                 _ = OpenMMSystemGeneratorFFSettings(constraints=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
+            (1.0, True, 1.0 * unit.nanometer),  # should cast float to nanometer
+            ("1.1 nm", True, 1.1 * unit.nanometer),
+            ("1.1 ", False, None),
+            # (1.0 * unit.angstrom, True, 0.100 * unit.nanometer),  # TODO: why does this not work?
+            (300 * unit.kelvin, False, None),
+            (True, False, None),
+            # ("one", False, None),  # TODO: more elegant error handling for this
+        ],
+    )
+    def test_nonbonded_cutoff_validation(self, value, valid, expected):
+        if valid:
+            s = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
+            assert s.nonbonded_cutoff == expected
+        else:
+            with pytest.raises(ValueError):
+                _ = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
 
 
 class TestFreezing:
