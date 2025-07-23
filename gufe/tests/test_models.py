@@ -12,11 +12,56 @@ from openff.units import unit
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
 
 
-def test_model_schema():
-    Settings.schema_json(indent=2)
+def test_settings_schema():
+    """Settings schema should be stable"""
+    expected_schema = {
+        "title": "Settings",
+        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
+        "type": "object",
+        "properties": {
+            "forcefield_settings": {"$ref": "#/definitions/BaseForceFieldSettings"},
+            "thermo_settings": {"$ref": "#/definitions/ThermoSettings"},
+        },
+        "required": ["forcefield_settings", "thermo_settings"],
+        "additionalProperties": False,
+        "definitions": {
+            "BaseForceFieldSettings": {
+                "title": "BaseForceFieldSettings",
+                "description": "Base class for ForceFieldSettings objects",
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            "ThermoSettings": {
+                "title": "ThermoSettings",
+                "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
+                "type": "object",
+                "properties": {
+                    "temperature": {
+                        "title": "Temperature",
+                        "description": "Simulation temperature, default units kelvin",
+                        "type": "number",
+                    },
+                    "pressure": {
+                        "title": "Pressure",
+                        "description": "Simulation pressure, default units standard atmosphere (atm)",
+                        "type": "number",
+                    },
+                    "ph": {"title": "Ph", "description": "Simulation pH", "exclusiveMinimum": 0, "type": "number"},
+                    "redox_potential": {
+                        "title": "Redox Potential",
+                        "description": "Simulation redox potential",
+                        "type": "number",
+                    },
+                },
+                "additionalProperties": False,
+            },
+        },
+    }
+    schema = Settings.schema()
+    assert schema == expected_schema
 
-
-@pytest.mark.xfail  # issue #125
+@pytest.mark.xfail  # issue #125  TODO: update this now that files are vendored
 def test_json_round_trip(all_settings_path, tmp_path):
     with open(all_settings_path) as fd:
         settings = Settings.parse_raw(fd.read())

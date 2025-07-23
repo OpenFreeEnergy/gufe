@@ -37,7 +37,7 @@ class SettingsBaseModel(DefaultModel):
         :noindex:
         """
 
-        extra = pydantic.Extra.forbid
+        extra = 'forbid'
         arbitrary_types_allowed = False
         smart_union = True
 
@@ -141,11 +141,6 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
-
-    class Config:
-        """:noindex:"""
-
-        pass
 
     constraints: str | None = "hbonds"
     """Constraints to be applied to system.
