@@ -183,7 +183,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     @validator("nonbonded_cutoff")
     def is_positive_distance(cls, v):
         # these are time units, not simulation steps
-        if not v.is_compatible_with(unit.nanometer):
+        if not v.is_compatible_with(unit.nanometer):  # TODO: invalid units get caught earlier and so this code is never executed
             raise ValueError("nonbonded_cutoff must be in distance units (i.e. nanometers)")
         if v < 0:
             errmsg = "nonbonded_cutoff must be a positive value"
