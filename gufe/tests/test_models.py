@@ -133,6 +133,23 @@ class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
+            ("pme", True, "pme"),
+            ("NOCUTOFF", True, "NOCUTOFF"),
+            ("no cutoff", False, None),
+            (1.0, False, None),
+        ],
+    )
+    def test_openmmff_nonbonded_method(self, value, valid, expected):
+        if valid:
+            s = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
+            assert s.nonbonded_method == expected
+        else:
+            with pytest.raises(ValueError, match="Only PME and NoCutoff are allowed"):
+                _ = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
             (298 * unit.kelvin, True, 298 * unit.kelvin),
             (298, True, 298 * unit.kelvin),
             (298.0, True, 298 * unit.kelvin),
