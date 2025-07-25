@@ -16,9 +16,9 @@ we will call out areas where you can iterate further on making your ``Protocol``
 Overview: What makes a ``Protocol``
 -----------------------------------
 
-A complete ``Protocol`` implementation requires several interconnected components:
+A complete ``Protocol`` implementation requires the following interconnected components:
 
-1. **Settings class**: A Pydantic model defining configuration parameters
+1. **Settings class**: A `Pydantic <https://docs.pydantic.dev/latest/>`_ model defining configuration parameters
 2. **Protocol class**: The main class that creates computational workflows
 3. **ProtocolUnit classes**: Individual computational steps in the workflow
 4. **ProtocolResult class**: Container for aggregated results from multiple runs
@@ -58,7 +58,7 @@ This defines all the configuration parameters your protocol needs:
 Step 2: Define your ProtocolResult
 ----------------------------------
 
-Create a result class that knows how to compute estimates and uncertainties from your protocol's outputs:
+Create a result class that inherits from :ref:`ProtocolResult <protocolresult>`and defines how to compute estimates and uncertainties from your protocol's outputs:
 
 .. code-block:: python
 
@@ -93,7 +93,7 @@ Step 3: Define your ProtocolUnits
 ----------------------------------
 
 Create the computational units that will perform the actual work.
-Each unit should inherit from :class:`.ProtocolUnit` and implement a ``_execute`` method.
+Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement an ``_execute`` method.
 
 .. important :: 
 
@@ -231,7 +231,7 @@ Each unit should inherit from :class:`.ProtocolUnit` and implement a ``_execute`
 Step 4: Implement your Protocol class
 -------------------------------------
 
-Now create your main ``Protocol`` class that ties everything together:
+Now create your main custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>` and ties everything together:
 
 .. code-block:: python
 
@@ -488,9 +488,9 @@ Best practices and tips
 3. **Use the context effectively**: The ``ctx`` parameter provides ``scratch`` (temporary, persists over execution of a single ``ProtocolUnit``) and ``shared`` (persists over execution of the ``ProtocolDAG``) directories.
    Use ``ctx.shared`` for large objects that need to pass between units; store file paths in return objects, not the objects themselves.
 
-4. **Test thoroughly**: Write unit tests for your ``ProtocolUnit`` classes independently.
+4. **Test thoroughly**: Write unit tests for your ``ProtocolUnit`` classes early in development.
 
-5. **Document your settings**: Use Pydantic's ``Field`` with descriptions to document what each setting does.
+5. **Document your settings**: Use Pydantic's `Field() function <https://docs.pydantic.dev/latest/concepts/fields/>`_ with descriptions to document what each setting does.
 
 6. **Consider serialization**: All your classes should be serializable - avoid complex objects that can't be serialized with ``GufeTokenizable.to_json``.
 
