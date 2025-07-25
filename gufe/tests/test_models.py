@@ -134,9 +134,8 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             (298 * unit.kelvin, True, 298 * unit.kelvin),
-            (298, True, 298 * unit.kelvin),
-            (298.0, True, 298 * unit.kelvin),
             ("298 kelvin", True, 298 * unit.kelvin),
+            (298, False, None),  # requires units
             ("298", False, None),
             (298 * unit.angstrom, False, None),
         ],
