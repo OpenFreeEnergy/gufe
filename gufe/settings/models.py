@@ -9,7 +9,7 @@ import pprint
 from typing import Literal
 
 from openff.units import unit
-from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, validator
+from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator, validator
 
 from gufe.vendor.openff.interchange._annotations import _DistanceQuantity, _Quantity, _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
@@ -138,8 +138,9 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
 
     nonbonded_method: Literal["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"] = "PME"
     """
-    Method for treating nonbonded interactions, currently only PME and
-    NoCutoff are allowed. Default PME.
+    Method for treating nonbonded interactions, options are currently
+    "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
+    Default PME.
     """
     nonbonded_cutoff:  _DistanceQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
@@ -147,21 +148,9 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Default 1.0 * unit.nanometer.
     """
 
-    @validator("nonbonded_method")
-    def allowed_nonbonded(cls, v):
-        if v.lower() not in ["pme", "nocutoff"]:
-            errmsg = "Only PME and NoCutoff are allowed nonbonded_methods"
-            raise ValueError(errmsg)
-        return v
-
-    @validator("nonbonded_cutoff")
+    @field_validator("nonbonded_cutoff", mode='after')
     def is_positive_distance(cls, v):
-        # these are time units, not simulation steps
-        if not v.is_compatible_with(
-            unit.nanometer
-        ):  # TODO: invalid units get caught earlier and so this code is never executed
-            raise ValueError("nonbonded_cutoff must be in distance units (i.e. nanometers)")
-        if v < 0:
+        if v < 0:  # TODO: make this an Annotated type with a helpful error message.
             errmsg = "nonbonded_cutoff must be a positive value"
             raise ValueError(errmsg)
         return v
