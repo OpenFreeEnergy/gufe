@@ -11,7 +11,7 @@ from typing import Literal
 from openff.units import unit
 from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator, validator
 
-from gufe.vendor.openff.interchange._annotations import _DistanceQuantity, _Quantity, _TemperatureQuantity
+from gufe.vendor.openff.interchange._annotations import _DistanceQuantity, _PressureQuantity, _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
 
@@ -92,7 +92,7 @@ class ThermoSettings(SettingsBaseModel):
     """
 
     temperature: _TemperatureQuantity = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
-    pressure: _Quantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
+    pressure: _PressureQuantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
     ph: PositiveFloat = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 

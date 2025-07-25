@@ -152,7 +152,7 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             (1.0 * unit.atm, True, 1.0 * unit.atm),
-            (1.0, True, 1.0 * unit.atm),
+            (1.0, False, None),  # require units
             ("1 atm", True, 1.0 * unit.atm),
             ("1.0", False, None),
         ],
