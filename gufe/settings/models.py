@@ -90,10 +90,10 @@ class ThermoSettings(SettingsBaseModel):
        No checking is done to ensure a valid thermodynamic ensemble is
        possible.
     """
-
-    temperature: _TemperatureQuantity = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
-    pressure: _PressureQuantity = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
-    ph: PositiveFloat = Field(None, description="Simulation pH")
+    # TODO: do we actually want None to be valid here?
+    temperature: _TemperatureQuantity | None = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
+    pressure: _PressureQuantity | None = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
+    ph: PositiveFloat | None = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 
 
