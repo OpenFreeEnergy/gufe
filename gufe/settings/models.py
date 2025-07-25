@@ -155,7 +155,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
             raise ValueError(errmsg)
         return v
 
-    @field_validator("constraints")
+    @validator("constraints")
     def constraint_check(cls, v):
         allowed = {"hbonds", "hangles", "allbonds"}
 
