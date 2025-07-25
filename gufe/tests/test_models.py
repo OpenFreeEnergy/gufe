@@ -58,7 +58,7 @@ def test_settings_schema():
             },
         },
     }
-    schema = Settings.schema()
+    schema = Settings.model_json_schema(mode='serialization')
     assert schema == expected_schema
 
 
