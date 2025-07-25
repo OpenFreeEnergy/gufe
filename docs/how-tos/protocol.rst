@@ -3,7 +3,7 @@
 How to define a new ``Protocol``
 ================================
 
-The **gufe** :ref:`Protocols <protocol>` system is designed as an *extensible point* of the library,
+The **gufe** :ref:`Protocol <protocol>` system is designed as an *extensible point* of the library,
 allowing developers to write their own methods for performing free energy calculations in a form that can take full advantage of the OpenFE ecosystem.
 
 Our recommendation in this how-to is to start simple;
@@ -18,13 +18,16 @@ Overview: What makes a ``Protocol``
 
 A complete ``Protocol`` implementation requires the following interconnected components:
 
-1. **Settings class**: A `Pydantic <https://docs.pydantic.dev/latest/>`_ model defining configuration parameters
-2. **Protocol class**: The main class that creates computational workflows
+1. **Protocol class**: The main class that creates computational workflows
+2. **Settings class**: A `Pydantic <https://docs.pydantic.dev/latest/>`_ model defining configuration parameters
 3. **ProtocolUnit classes**: Individual computational steps in the workflow
 4. **ProtocolResult class**: Container for aggregated results from multiple runs
 
 The ``Protocol`` creates a :ref:`ProtocolDAG <protocoldag>` (directed acyclic graph) of :ref:`ProtocolUnit <protocolunit>` objects that define the computational workflow.
 Multiple ``ProtocolDAG`` executions can be aggregated into a single :ref:`ProtocolResult <protocolresult>` to provide statistical estimates.
+
+If this is your first time writing a ``Protocol``, we recommend defining these components in the following step order.
+You can of course iterate on these components as you write each one, improving the implementation as you go.
 
 
 Step 1: Define your Settings
@@ -40,10 +43,12 @@ This defines all the configuration parameters your protocol needs:
     from openff.units import unit
 
     class MyProtocolSettings(Settings):
-        # Required: number of independent simulations
+        """Settings for an example Protocol.
+
+        """
+        # the number of independent simulations to perform
         n_repeats: int = 5
         
-        # Protocol-specific parameters
         simulation_length: pydantic.Field(
             default=10.0 * unit.nanosecond,
             description="Length of each simulation"
@@ -162,8 +167,8 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
                 coordinates = pickle.load(f)
             
             # Your simulation logic here...
-            # - Run equilibration
-            # - Run production simulation
+            # - Run equilibration for `settings.equilibration_length`
+            # - Run production simulation for `settings.simulation_length`
             # - Calculate free energy contribution
             dg_contribution = ...  # Your free energy calculation
             final_coords = ...     # Your final coordinates
