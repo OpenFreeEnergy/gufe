@@ -11,7 +11,7 @@ from typing import Literal
 from openff.units import unit
 from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, validator
 
-from gufe.vendor.openff.interchange._annotations import _Quantity, _DistanceQuantity, _TemperatureQuantity
+from gufe.vendor.openff.interchange._annotations import _DistanceQuantity, _Quantity, _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
 

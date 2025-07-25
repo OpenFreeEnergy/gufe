@@ -93,12 +93,12 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
-            (1.0, True, 1.0 * unit.nanometer),  # should cast float to nanometer
+            (0 * unit.nanometer, True, 0 * unit.nanometer),
+            (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
-            ("1.1 ", False, None),
-            (0, True, 0 * unit.nanometer),
+            ("1.1", False, None),
             (-1.0 * unit.nanometer, False, None),
-            # (1.0 * unit.angstrom, True, 0.100 * unit.nanometer),  # TODO: why does this not work?
+            (1.0 * unit.angstrom, True, 1.0 * unit.angstrom),  # TODO: should we convert this to nm?
             (300 * unit.kelvin, False, None),
             (True, False, None),
             (None, False, None),
