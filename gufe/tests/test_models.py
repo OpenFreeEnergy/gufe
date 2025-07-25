@@ -58,15 +58,15 @@ def test_settings_schema():
             },
         },
     }
-    schema = Settings.schema()
+    schema = Settings.model_json_schema(mode='serialization')
     assert schema == expected_schema
 
 
 def test_default_settings():
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
-    my_settings.json()
-    my_settings.schema_json(indent=2)
+    my_settings.model_dump_json()
+    json.dumps(my_settings.model_json_schema(mode='serialization'), indent=2)
 
 
 class TestSettingsValidation:
@@ -93,12 +93,12 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
-            (1.0, True, 1.0 * unit.nanometer),  # should cast float to nanometer
+            (0 * unit.nanometer, True, 0 * unit.nanometer),
+            (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
-            ("1.1 ", False, None),
-            (0, True, 0 * unit.nanometer),
+            ("1.1", False, None),
             (-1.0 * unit.nanometer, False, None),
-            # (1.0 * unit.angstrom, True, 0.100 * unit.nanometer),  # TODO: why does this not work?
+            (1.0 * unit.angstrom, True, 1.0 * unit.angstrom),  # TODO: should we convert this to nm?
             (300 * unit.kelvin, False, None),
             (True, False, None),
             (None, False, None),
@@ -116,8 +116,8 @@ class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            ("pme", True, "pme"),
-            ("NOCUTOFF", True, "NOCUTOFF"),
+            ("NoCutoff", True, "NoCutoff"),
+            ("NOCUTOFF", False, "NOCUTOFF"),
             ("no cutoff", False, None),
             (1.0, False, None),
         ],
@@ -127,16 +127,15 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
             assert s.nonbonded_method == expected
         else:
-            with pytest.raises(ValueError, match="Only PME and NoCutoff are allowed"):
+            with pytest.raises(ValueError):
                 _ = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
             (298 * unit.kelvin, True, 298 * unit.kelvin),
-            (298, True, 298 * unit.kelvin),
-            (298.0, True, 298 * unit.kelvin),
             ("298 kelvin", True, 298 * unit.kelvin),
+            (298, False, None),  # requires units
             ("298", False, None),
             (298 * unit.angstrom, False, None),
         ],
@@ -153,7 +152,7 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             (1.0 * unit.atm, True, 1.0 * unit.atm),
-            (1.0, True, 1.0 * unit.atm),
+            (1.0, False, None),  # require units
             ("1 atm", True, 1.0 * unit.atm),
             ("1.0", False, None),
         ],
