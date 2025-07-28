@@ -9,7 +9,7 @@ import pprint
 from typing import Literal
 
 from openff.units import unit
-from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator, validator
+from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator
 
 from gufe.vendor.openff.interchange._annotations import _DistanceQuantity, _PressureQuantity, _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
@@ -155,7 +155,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
             raise ValueError(errmsg)
         return v
 
-    @validator("constraints")
+    @field_validator("constraints")
     def constraint_check(cls, v):
         allowed = {"hbonds", "hangles", "allbonds"}
 

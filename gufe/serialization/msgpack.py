@@ -68,7 +68,7 @@ def pack_default(obj) -> msgpack.ExtType:
             return msgpack.ExtType(MPEXT.NPGENERIC, npg_payload)
 
         case SettingsBaseModel():
-            settings_data = {field: getattr(obj, field) for field in obj.__fields__}
+            settings_data = {field: getattr(obj, field) for field in obj.model_fields}
             settings_data.update({"__class__": obj.__class__.__qualname__, "__module__": obj.__class__.__module__})
             settings_payload: bytes = msgpack.packb(settings_data, default=pack_default)
             return msgpack.ExtType(MPEXT.SETTINGS, settings_payload)
