@@ -9,9 +9,9 @@ import pprint
 from typing import Literal
 
 from openff.units import unit
-from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator
+from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator,
 
-from gufe.vendor.openff.interchange._annotations import _DistanceQuantity, _PressureQuantity, _TemperatureQuantity
+from gufe.vendor.openff.interchange._annotations import _NanometerQuantity, _PressureQuantity, _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
 
@@ -20,7 +20,8 @@ class SettingsBaseModel(_BaseModel):
 
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
     model_config = ConfigDict(extra='forbid',
-                            #   arbitrary_types_allowed=True  # TODO: this was previously False, try to change back
+                            # TODO: needs to be True for current pydantic v2 implementation, try to change back
+                            #   arbitrary_types_allowed=False
                               )
 
     def _ipython_display_(self):
@@ -142,7 +143,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
     Default PME.
     """
-    nonbonded_cutoff:  _DistanceQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
+    nonbonded_cutoff:  _NanometerQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
