@@ -243,10 +243,11 @@ class TestFreezing:
         # the frozen-ness of Settings doesn't alter its contents
         # therefore a frozen/unfrozen Settings which are otherwise identical
         # should be considered equal
-        s = Settings.get_defaults()
-        s2 = s.frozen_copy()
+        s1 = Settings.get_defaults()
+        s2 = s1.frozen_copy()
 
-        assert s == s2
+        # TODO: equality checks have changed in v2 such that this is no longer true
+        assert s1 == s2
 
     def test_set_subsection(self):
         # check that attempting to set a subsection of settings still respects
