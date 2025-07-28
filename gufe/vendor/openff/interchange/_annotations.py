@@ -1,3 +1,6 @@
+# Vendored from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
+# (with some adjustments and additions)
+
 import functools
 from collections.abc import Callable
 from typing import Annotated, Any
@@ -65,6 +68,7 @@ def _unit_validator_factory(unit: str) -> Callable:
     _is_dimensionless,
     _is_kj_mol,
     _is_nanometer,
+    _is_angstrom,
     _is_degree,
     _is_elementary_charge,
 ) = (
@@ -73,6 +77,7 @@ def _unit_validator_factory(unit: str) -> Callable:
         "dimensionless",
         "kilojoule / mole",
         "nanometer",
+        "angstrom",
         "degree",
         "elementary_charge",
     ]
@@ -155,6 +160,19 @@ _DistanceQuantity = Annotated[
 
 _LengthQuantity = _DistanceQuantity
 
+_NanometerQuantity = Annotated[
+    Quantity,
+    WrapValidator(quantity_validator),
+    AfterValidator(_is_nanometer),
+    WrapSerializer(quantity_json_serializer),
+]
+
+_AngstromQuantity = Annotated[
+    Quantity,
+    WrapValidator(quantity_validator),
+    AfterValidator(_is_angstrom),
+    WrapSerializer(quantity_json_serializer),
+]
 _VelocityQuantity = Annotated[
     Quantity,
     WrapValidator(quantity_validator),

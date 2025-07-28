@@ -1,3 +1,4 @@
+# Vendored from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/pydantic.py
 """Pydantic base model with custom settings."""
 
 from typing import Any
