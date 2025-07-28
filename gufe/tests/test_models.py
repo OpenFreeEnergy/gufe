@@ -15,50 +15,58 @@ from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, Ther
 def test_settings_schema():
     """Settings schema should be stable"""
     expected_schema = {
-        "title": "Settings",
-        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
-        "type": "object",
-        "properties": {
-            "forcefield_settings": {"$ref": "#/definitions/BaseForceFieldSettings"},
-            "thermo_settings": {"$ref": "#/definitions/ThermoSettings"},
-        },
-        "required": ["forcefield_settings", "thermo_settings"],
-        "additionalProperties": False,
-        "definitions": {
+        "$defs": {
             "BaseForceFieldSettings": {
-                "title": "BaseForceFieldSettings",
-                "description": "Base class for ForceFieldSettings objects",
-                "type": "object",
-                "properties": {},
                 "additionalProperties": False,
+                "description": "Base class for ForceFieldSettings objects",
+                "properties": {},
+                "title": "BaseForceFieldSettings",
+                "type": "object",
             },
             "ThermoSettings": {
-                "title": "ThermoSettings",
+                "additionalProperties": False,
                 "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
-                "type": "object",
                 "properties": {
                     "temperature": {
-                        "title": "Temperature",
+                        "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
+                        "default": None,
                         "description": "Simulation temperature, default units kelvin",
-                        "type": "number",
+                        "title": "Temperature",
                     },
                     "pressure": {
-                        "title": "Pressure",
+                        "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
+                        "default": None,
                         "description": "Simulation pressure, default units standard atmosphere (atm)",
-                        "type": "number",
+                        "title": "Pressure",
                     },
-                    "ph": {"title": "Ph", "description": "Simulation pH", "exclusiveMinimum": 0, "type": "number"},
+                    "ph": {
+                        "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pH",
+                        "title": "Ph",
+                    },
                     "redox_potential": {
-                        "title": "Redox Potential",
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
                         "description": "Simulation redox potential",
-                        "type": "number",
+                        "title": "Redox Potential",
                     },
                 },
-                "additionalProperties": False,
+                "title": "ThermoSettings",
+                "type": "object",
             },
         },
+        "additionalProperties": False,
+        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
+        "properties": {
+            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings"},
+            "thermo_settings": {"$ref": "#/$defs/ThermoSettings"},
+        },
+        "required": ["forcefield_settings", "thermo_settings"],
+        "title": "Settings",
+        "type": "object",
     }
-    schema = Settings.model_json_schema(mode='serialization')
+    schema = Settings.model_json_schema(mode="serialization")
     assert schema == expected_schema
 
 
