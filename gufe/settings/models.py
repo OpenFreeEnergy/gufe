@@ -184,8 +184,8 @@ class Settings(SettingsBaseModel):
     Protocols can subclass this to extend this to cater for their additional settings.
     """
 
-    forcefield_settings: BaseForceFieldSettings
-    thermo_settings: ThermoSettings
+    forcefield_settings: InstanceOf[BaseForceFieldSettings]
+    thermo_settings: InstanceOf[ThermoSettings]
 
     @classmethod
     def get_defaults(cls):
