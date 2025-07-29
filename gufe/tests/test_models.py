@@ -85,7 +85,7 @@ class TestSettingsValidation:
             ("hbonds", True, "hbonds"),
             ("hangles", True, "hangles"),
             ("allbonds", True, "allbonds"),  # allowed options
-            ("HBonds", True, "HBonds"),  # check case insensitivity TODO: cast this to lower?
+            ("HBonds", True, "hbonds"),  # check case insensitivity
             (None, True, None),
         ],
     )

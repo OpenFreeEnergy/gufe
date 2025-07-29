@@ -13,7 +13,7 @@ from pydantic import ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, 
 
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
-from .annotations import AtmQuantity, KelvinQuantity, NanometerQuantity
+from .types import AtmQuantity, CaseInsensitiveStrEnum, KelvinQuantity, NanometerQuantity
 
 
 class SettingsBaseModel(_BaseModel):
@@ -111,6 +111,12 @@ class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
     ...
 
+class ConstraintEnum(CaseInsensitiveStrEnum):
+    hbonds = "hbonds"
+    allbonds = "allbonds"
+    hangles = "hangles"
+
+
 
 class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     """Parameters to set up the force field with OpenMM ForceFields
@@ -126,7 +132,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    constraints: str | None = "hbonds"
+    constraints: ConstraintEnum | None = ConstraintEnum.hbonds
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True
@@ -164,16 +170,6 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
             errmsg = "nonbonded_cutoff must be a positive value"
             raise ValueError(errmsg)
         return v
-
-    @field_validator("constraints")
-    def constraint_check(cls, v):
-        allowed = {"hbonds", "hangles", "allbonds"}
-
-        if not (v is None or v.lower() in allowed):
-            raise ValueError(f"Bad constraints value, use one of {allowed}")
-
-        return v
-
 
 class Settings(SettingsBaseModel):
     """

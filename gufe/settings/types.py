@@ -1,5 +1,6 @@
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 
+from enum import StrEnum
 from typing import Annotated
 
 from openff.toolkit import Quantity
@@ -43,3 +44,14 @@ KelvinQuantity = Annotated[
 #     AfterValidator(_is_angstrom),
 #     WrapSerializer(quantity_json_serializer),
 # ]
+
+
+class CaseInsensitiveStrEnum(StrEnum):
+    # SEE: https://docs.python.org/3/library/enum.html#enum.Enum._missing_
+    @classmethod
+    def _missing_(cls, value):
+        value = value.lower()
+        for member in cls:
+            if member.value == value:
+                return member
+        return None
