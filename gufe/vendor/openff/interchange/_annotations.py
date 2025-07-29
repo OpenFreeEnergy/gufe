@@ -1,6 +1,4 @@
 # Vendored from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
-# (with some adjustments and additions)
-
 import functools
 from collections.abc import Callable
 from typing import Annotated, Any
@@ -52,7 +50,6 @@ def _unit_validator_factory(unit: str) -> Callable:
     _is_velocity,
     _is_mass,
     _is_temperature,
-    _is_pressure,
 ) = (
     _dimensionality_validator_factory(unit=_unit)
     for _unit in [
@@ -60,7 +57,6 @@ def _unit_validator_factory(unit: str) -> Callable:
         "nanometer / picosecond",
         "unified_atomic_mass_unit",
         "kelvin",
-        "atm"
     ]
 )
 
@@ -68,7 +64,6 @@ def _unit_validator_factory(unit: str) -> Callable:
     _is_dimensionless,
     _is_kj_mol,
     _is_nanometer,
-    _is_angstrom,
     _is_degree,
     _is_elementary_charge,
 ) = (
@@ -77,7 +72,6 @@ def _unit_validator_factory(unit: str) -> Callable:
         "dimensionless",
         "kilojoule / mole",
         "nanometer",
-        "angstrom",
         "degree",
         "elementary_charge",
     ]
@@ -119,20 +113,15 @@ def quantity_json_serializer(
     nxt,
 ) -> dict:
     """Serialize a Quantity to a JSON-compatible dictionary."""
-    # TODO: this None handling is a temporary workaround and should be fixed! 
-    if quantity is None:
-        magnitude = quantity
-        unit = ""
-    else:
-        magnitude = quantity.m
-        unit = str(quantity.units)
+    magnitude = quantity.m
+
     if isinstance(magnitude, numpy.ndarray):
         # This could be something fancier, list a bytestring
         magnitude = magnitude.tolist()
 
     return {
         "val": magnitude,
-        "unit": unit,
+        "unit": str(quantity.units),
     }
 
 
@@ -160,19 +149,6 @@ _DistanceQuantity = Annotated[
 
 _LengthQuantity = _DistanceQuantity
 
-_NanometerQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_nanometer),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_AngstromQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_angstrom),
-    WrapSerializer(quantity_json_serializer),
-]
 _VelocityQuantity = Annotated[
     Quantity,
     WrapValidator(quantity_validator),
@@ -191,13 +167,6 @@ _TemperatureQuantity = Annotated[
     Quantity,
     WrapValidator(quantity_validator),
     AfterValidator(_is_temperature),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_PressureQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_pressure),
     WrapSerializer(quantity_json_serializer),
 ]
 
