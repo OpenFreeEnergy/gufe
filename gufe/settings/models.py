@@ -83,6 +83,14 @@ class SettingsBaseModel(_BaseModel):
             )
         return super().__setattr__(name, value)
 
+    def __eq__(self, other: Any) -> bool:
+        # reproduces pydantic v1 equality, since v2 checks for private attr equality,
+        # which results in frozen/unfrozen objects not being equal
+        # https://github.com/pydantic/pydantic/blob/2486e068e85c51728c9f2d344cfee2f7e11d555c/pydantic/v1/main.py#L911
+        if isinstance(other, BaseModel):
+            return self.model_dump() == other.model_dump()
+        else:
+            return self.model_dump() == other
 
 class ThermoSettings(SettingsBaseModel):
     """Settings for thermodynamic parameters.
