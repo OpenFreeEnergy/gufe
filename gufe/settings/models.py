@@ -6,10 +6,10 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from openff.units import unit
-from pydantic import ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
+from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
@@ -116,7 +116,12 @@ class ConstraintEnum(CaseInsensitiveStrEnum):
     allbonds = "allbonds"
     hangles = "hangles"
 
-
+def _to_lowercase(value: Any):
+    """make any string input lowercase"""
+    if isinstance(value, (str)):
+        return value.lower()
+    else:
+        return value
 
 class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     """Parameters to set up the force field with OpenMM ForceFields
@@ -132,7 +137,8 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    constraints: ConstraintEnum | None = ConstraintEnum.hbonds
+    # constraints: ConstraintEnum | None = ConstraintEnum.hbonds
+    constraints: Annotated[Literal['hbonds', 'allbonds', 'hangles'], BeforeValidator(_to_lowercase)] | None = 'hbonds'
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True
