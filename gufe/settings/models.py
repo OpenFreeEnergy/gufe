@@ -182,5 +182,5 @@ class Settings(SettingsBaseModel):
     def get_defaults(cls):
         return Settings(
             forcefield_settings=OpenMMSystemGeneratorFFSettings(),
-            thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),
+            thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),  # TODO: use InstanceOf for validation here?
         )
