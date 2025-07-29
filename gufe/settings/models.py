@@ -9,9 +9,9 @@ import pprint
 from typing import Literal, Any
 
 from openff.units import unit
-from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator
+from pydantic import AfterValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
-from .annotations import _NanometerQuantity, _PressureQuantity
+from .annotations import _NanometerQuantity, _AtmQuantity
 from gufe.vendor.openff.interchange._annotations import  _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
@@ -102,7 +102,7 @@ class ThermoSettings(SettingsBaseModel):
     """
     # TODO: do we actually want None to be valid here?
     temperature: _TemperatureQuantity | None = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
-    pressure: _PressureQuantity | None = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
+    pressure: _AtmQuantity | None = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 
