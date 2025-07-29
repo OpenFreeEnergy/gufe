@@ -6,14 +6,14 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Literal, Any
+from typing import Any, Literal
 
 from openff.units import unit
-from pydantic import AfterValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
+from pydantic import ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
-from .annotations import _NanometerQuantity, _AtmQuantity
-from gufe.vendor.openff.interchange._annotations import  _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
+
+from .annotations import AtmQuantity, KelvinQuantity, NanometerQuantity
 
 
 class SettingsBaseModel(_BaseModel):
@@ -101,8 +101,8 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
     # TODO: do we actually want None to be valid here?
-    temperature: _TemperatureQuantity | None = Field(None, description="Simulation temperature, default units kelvin")  # TODO: make type equiv of FloatQuantity["kelvin"] =
-    pressure: _AtmQuantity | None = Field(None, description="Simulation pressure, default units standard atmosphere (atm)")   # TODO: make type equiv FloatQuantity["standard_atmosphere"]
+    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
+    pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
     redox_potential: float | None = Field(None, description="Simulation redox potential")
 
@@ -152,7 +152,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
     Default PME.
     """
-    nonbonded_cutoff:  _NanometerQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
+    nonbonded_cutoff:  NanometerQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.

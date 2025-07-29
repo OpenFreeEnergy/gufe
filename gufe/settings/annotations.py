@@ -1,6 +1,5 @@
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 
-
 from typing import Annotated
 
 from openff.toolkit import Quantity
@@ -16,17 +15,24 @@ from gufe.vendor.openff.interchange._annotations import (
     quantity_validator,
 )
 
-_NanometerQuantity = Annotated[
+NanometerQuantity = Annotated[
     Quantity,
     WrapValidator(quantity_validator),
     AfterValidator(_unit_validator_factory("nanometer")),
     WrapSerializer(quantity_json_serializer),
 ]
 
-_AtmQuantity = Annotated[
+AtmQuantity = Annotated[
     Quantity,
     WrapValidator(quantity_validator),
     AfterValidator(_unit_validator_factory("atm")),
+    WrapSerializer(quantity_json_serializer),
+]
+
+KelvinQuantity = Annotated[
+    Quantity,
+    WrapValidator(quantity_validator),
+    AfterValidator(_unit_validator_factory("kelvin")),
     WrapSerializer(quantity_json_serializer),
 ]
 
