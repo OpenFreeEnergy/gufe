@@ -6,12 +6,13 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Literal
+from typing import Literal, Any
 
 from openff.units import unit
-from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator,
+from pydantic import AfterValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator
 
-from gufe.vendor.openff.interchange._annotations import _NanometerQuantity, _PressureQuantity, _TemperatureQuantity
+from .annotations import _NanometerQuantity, _PressureQuantity
+from gufe.vendor.openff.interchange._annotations import  _TemperatureQuantity
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
 
@@ -87,7 +88,7 @@ class SettingsBaseModel(_BaseModel):
         # reproduces pydantic v1 equality, since v2 checks for private attr equality,
         # which results in frozen/unfrozen objects not being equal
         # https://github.com/pydantic/pydantic/blob/2486e068e85c51728c9f2d344cfee2f7e11d555c/pydantic/v1/main.py#L911
-        if isinstance(other, BaseModel):
+        if isinstance(other, super):
             return self.model_dump() == other.model_dump()
         else:
             return self.model_dump() == other
