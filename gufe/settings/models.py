@@ -158,7 +158,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method: Literal["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"] = "PME"
+    nonbonded_method: str = "PME"
+    # TODO: using either of the following will break serialization, look into this.
+    # nonbonded_method: Annotated[Literal["cutoffnonperiodic", "cutoffperiodic", "ewald", "ljpme", "nocutoff", "pme"], BeforeValidator(_to_lowercase)] | None = "PME"
+    # nonbonded_method: CaseInsensitiveStrEnum("NonbondedMethod", ["CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"]) = "PME"
     """
     Method for treating nonbonded interactions, options are currently
     "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
@@ -169,6 +172,15 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
     """
+
+    @field_validator("nonbonded_method", mode='after')
+    def allowed_nonbonded(cls, v):
+        options = ["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"]
+        if v.lower() not in [x.lower() for x in options]:
+            errmsg = f"Only {options} are allowed nonbonded_methods"
+            raise ValueError(errmsg)
+        return v
+
 
 class Settings(SettingsBaseModel):
     """

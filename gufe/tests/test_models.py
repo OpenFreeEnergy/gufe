@@ -126,7 +126,7 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             ("NoCutoff", True, "NoCutoff"),
-            ("NOCUTOFF", False, "NOCUTOFF"),
+            ("NOCUTOFF", True, "NOCUTOFF"),
             ("no cutoff", False, None),
             (1.0, False, None),
         ],
