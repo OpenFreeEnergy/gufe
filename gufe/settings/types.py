@@ -46,12 +46,12 @@ KelvinQuantity = Annotated[
 # ]
 
 
-class CaseInsensitiveStrEnum(StrEnum):
-    # SEE: https://docs.python.org/3/library/enum.html#enum.Enum._missing_
-    @classmethod
-    def _missing_(cls, value):
-        value = value.lower()
-        for member in cls:
-            if member.value == value:
-                return member
-        return None
+# class CaseInsensitiveStrEnum(StrEnum):
+#     # SEE: https://docs.python.org/3/library/enum.html#enum.Enum._missing_
+#     @classmethod
+#     def _missing_(cls, value):
+#         value = value.lower()
+#         for member in cls:
+#             if member.value == value:
+#                 return member
+#         return None

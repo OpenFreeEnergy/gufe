@@ -12,9 +12,9 @@ from annotated_types import Ge
 from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
-from gufe.vendor.openff.interchange.pydantic import _BaseModel
+from ..vendor.openff.interchange.pydantic import _BaseModel
 
-from .types import AtmQuantity, CaseInsensitiveStrEnum, KelvinQuantity, NanometerQuantity
+from .types import AtmQuantity, KelvinQuantity, NanometerQuantity
 
 
 class SettingsBaseModel(_BaseModel):
