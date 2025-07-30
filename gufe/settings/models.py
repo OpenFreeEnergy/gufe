@@ -101,7 +101,6 @@ class ThermoSettings(SettingsBaseModel):
        No checking is done to ensure a valid thermodynamic ensemble is
        possible.
     """
-    # TODO: do we actually want None to be valid here?
     temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
     pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
@@ -187,5 +186,5 @@ class Settings(SettingsBaseModel):
     def get_defaults(cls):
         return Settings(
             forcefield_settings=OpenMMSystemGeneratorFFSettings(),
-            thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),  # TODO: use InstanceOf for validation here?
+            thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),
         )
