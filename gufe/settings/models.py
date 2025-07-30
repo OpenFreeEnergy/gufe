@@ -8,6 +8,7 @@ import abc
 import pprint
 from typing import Annotated, Any, Literal
 
+from annotated_types import Ge
 from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
@@ -164,18 +165,11 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
     Default PME.
     """
-    nonbonded_cutoff:  NanometerQuantity=1.0 * unit.nanometer #  FloatQuantity["nanometer"] = 1.0 * unit.nanometer
+    nonbonded_cutoff:  Annotated[NanometerQuantity, Ge(0)]=1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
     """
-
-    @field_validator("nonbonded_cutoff", mode='after')
-    def is_positive_distance(cls, v):
-        if v < 0:  # TODO: make this an Annotated type with a helpful error message.
-            errmsg = "nonbonded_cutoff must be a positive value"
-            raise ValueError(errmsg)
-        return v
 
 class Settings(SettingsBaseModel):
     """
