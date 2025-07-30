@@ -13,6 +13,7 @@ from pydantic import (
 
 from ..vendor.openff.interchange._annotations import _BoxQuantity as BoxQuantity
 from ..vendor.openff.interchange._annotations import (
+    _duck_to_nanometer,
     _unit_validator_factory,
     _unwrap_list_of_openmm_quantities,
     quantity_json_serializer,
@@ -117,6 +118,14 @@ ArrayQuantity = Annotated[
     WrapSerializer(quantity_json_serializer),
 ]
 
+NanometerArrayQuantity = Annotated[
+    Quantity,
+    WrapValidator(quantity_validator),
+    AfterValidator(_unit_validator_factory("nanometer")),
+    BeforeValidator(_duck_to_nanometer),
+    BeforeValidator(_unwrap_list_of_openmm_quantities),
+    WrapSerializer(quantity_json_serializer),
+]
 # class CaseInsensitiveStrEnum(StrEnum):
 #     # SEE: https://docs.python.org/3/library/enum.html#enum.Enum._missing_
 #     @classmethod
