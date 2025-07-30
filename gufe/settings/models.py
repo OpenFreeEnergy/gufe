@@ -10,7 +10,7 @@ from typing import Annotated, Any, Literal
 
 from annotated_types import Ge
 from openff.units import unit
-from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
+from pydantic import ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from gufe.vendor.openff.interchange.pydantic import _BaseModel
 
@@ -173,7 +173,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     Default 1.0 * unit.nanometer.
     """
 
-    @field_validator("nonbonded_method", mode='after')
+    @field_validator("nonbonded_method", mode="after")
     def allowed_nonbonded(cls, v):
         options = ["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"]
         if v.lower() not in [x.lower() for x in options]:
