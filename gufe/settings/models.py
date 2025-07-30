@@ -111,10 +111,10 @@ class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
     ...
 
-class ConstraintEnum(CaseInsensitiveStrEnum):
-    hbonds = "hbonds"
-    allbonds = "allbonds"
-    hangles = "hangles"
+# class ConstraintEnum(CaseInsensitiveStrEnum):
+#     hbonds = "hbonds"
+#     allbonds = "allbonds"
+#     hangles = "hangles"
 
 def _to_lowercase(value: Any):
     """make any string input lowercase"""
@@ -137,8 +137,8 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    # constraints: ConstraintEnum | None = ConstraintEnum.hbonds
-    constraints: Annotated[Literal['hbonds', 'allbonds', 'hangles'], BeforeValidator(_to_lowercase)] | None = 'hbonds'
+    constraints: CaseInsensitiveStrEnum('Constraints', ['hbonds', 'allbonds', 'hangles']) | None = 'hbonds'
+    # constraints: Annotated[Literal['hbonds', 'allbonds', 'hangles'], BeforeValidator(_to_lowercase)] | None = 'hbonds'
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True
