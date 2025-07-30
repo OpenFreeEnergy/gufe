@@ -10,7 +10,7 @@ from pydantic import (
     WrapValidator,
 )
 
-from gufe.vendor.openff.interchange._annotations import (
+from ..vendor.openff.interchange._annotations import (
     _unit_validator_factory,
     quantity_json_serializer,
     quantity_validator,
