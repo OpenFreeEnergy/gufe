@@ -24,6 +24,7 @@ class SettingsBaseModel(_BaseModel):
     model_config = ConfigDict(extra='forbid',
                             # TODO: needs to be True for current pydantic v2 implementation, try to change back
                             #   arbitrary_types_allowed=False
+                            use_enum_values=True,
                               )
 
     def _ipython_display_(self):
