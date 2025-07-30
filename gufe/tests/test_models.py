@@ -125,8 +125,8 @@ class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            ("NoCutoff", True, "nocutoff"),
-            ("NOCUTOFF", True, "nocutoff"),
+            ("NoCutoff", True, "NoCutoff"),
+            ("NOCUTOFF", False, "NOCUTOFF"),
             ("no cutoff", False, None),
             (1.0, False, None),
         ],
