@@ -13,7 +13,6 @@ from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-
 from .types import AtmQuantity, KelvinQuantity, NanometerQuantity
 
 
@@ -21,11 +20,12 @@ class SettingsBaseModel(_BaseModel):
     """Settings and modifications we want for all settings classes."""
 
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
-    model_config = ConfigDict(extra='forbid',
-                            # TODO: needs to be True for current pydantic v2 implementation, try to change back
-                            #   arbitrary_types_allowed=False
-                            use_enum_values=True,
-                              )
+    model_config = ConfigDict(
+        extra="forbid",
+        # TODO: needs to be True for current pydantic v2 implementation, try to change back
+        #   arbitrary_types_allowed=False
+        # use_enum_values=True,
+    )
 
     def _ipython_display_(self):
         pprint.pprint(self.dict())
@@ -95,6 +95,7 @@ class SettingsBaseModel(_BaseModel):
         else:
             return self.model_dump() == other
 
+
 class ThermoSettings(SettingsBaseModel):
     """Settings for thermodynamic parameters.
 
@@ -102,6 +103,7 @@ class ThermoSettings(SettingsBaseModel):
        No checking is done to ensure a valid thermodynamic ensemble is
        possible.
     """
+
     temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
     pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
@@ -110,12 +112,15 @@ class ThermoSettings(SettingsBaseModel):
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
+
     ...
+
 
 # class ConstraintEnum(CaseInsensitiveStrEnum):
 #     hbonds = "hbonds"
 #     allbonds = "allbonds"
 #     hangles = "hangles"
+
 
 def _to_lowercase(value: Any):
     """make any string input lowercase"""
@@ -123,6 +128,7 @@ def _to_lowercase(value: Any):
         return value.lower()
     else:
         return value
+
 
 class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     """Parameters to set up the force field with OpenMM ForceFields
@@ -139,7 +145,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     """
 
     # constraints: CaseInsensitiveStrEnum('Constraints', ['hbonds', 'allbonds', 'hangles']) | None = 'hbonds'
-    constraints: Annotated[Literal['hbonds', 'allbonds', 'hangles'], BeforeValidator(_to_lowercase)] | None = 'hbonds'
+    constraints: Annotated[Literal["hbonds", "allbonds", "hangles"], BeforeValidator(_to_lowercase)] | None = "hbonds"
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True
@@ -168,7 +174,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
     Default PME.
     """
-    nonbonded_cutoff:  Annotated[NanometerQuantity, Ge(0)]=1.0 * unit.nanometer
+    nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = 1.0 * unit.nanometer
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.

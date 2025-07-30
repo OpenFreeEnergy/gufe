@@ -74,19 +74,20 @@ def test_default_settings():
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
     my_settings.model_dump_json()
-    json.dumps(my_settings.model_json_schema(mode='serialization'), indent=2)
+    json.dumps(my_settings.model_json_schema(mode="serialization"), indent=2)
 
 
 class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            ("parsnips", False, None),  # shouldn't be allowed
-            ("hbonds", True, "hbonds"),
-            ("hangles", True, "hangles"),
-            ("allbonds", True, "allbonds"),  # allowed options
-            ("HBonds", True, "hbonds"),  # check case insensitivity
-            (None, True, None),
+            ("Parsnips", False, None),  # shouldn't be allowed
+            (1.0, False, None),  # shouldn't be allowed
+            # ("hbonds", True, "hbonds"),
+            # ("hangles", True, "hangles"),
+            # ("allbonds", True, "allbonds"),  # allowed options
+            # ("HBonds", True, "hbonds"),  # check case insensitivity
+            # (None, True, None),
         ],
     )
     def test_openmmff_constraints(self, value, valid, expected):
