@@ -5,7 +5,7 @@ channels:
 dependencies:
 - autodoc-pydantic >=2.0
 - openff-units
-- python=3.10
+- python=3.12
 - sphinx
 - openmm
 - networkx
