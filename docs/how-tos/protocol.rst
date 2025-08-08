@@ -63,7 +63,7 @@ This defines all the configuration parameters your protocol needs:
 Step 2: Define your ProtocolResult
 ----------------------------------
 
-Create a result class that inherits from :ref:`ProtocolResult <protocolresult>`and defines how to compute estimates and uncertainties from your protocol's outputs:
+Create a result class that inherits from :ref:`ProtocolResult <protocolresult>` and defines how to compute estimates and uncertainties from your protocol's outputs:
 
 .. code-block:: python
 
