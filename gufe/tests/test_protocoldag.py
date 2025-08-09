@@ -30,7 +30,6 @@ class WriterSettings(gufe.settings.Settings):
 
 
 class WriterProtocolResult(gufe.ProtocolResult):
-
     def get_estimate(self): ...
 
     def get_uncertainty(self): ...
@@ -72,7 +71,6 @@ def writefile_dag():
 @pytest.mark.parametrize("keep_shared", [False, True])
 @pytest.mark.parametrize("keep_scratch", [False, True])
 def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
-
     with tmpdir.as_cwd():
         shared = pathlib.Path("shared")
         shared.mkdir(parents=True)

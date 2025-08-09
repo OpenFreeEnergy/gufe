@@ -86,7 +86,6 @@ def test_bad_inputs(pos, neg):
 
 
 class TestSolventComponent(GufeTokenizableTestsMixin):
-
     cls = SolventComponent
     repr = "SolventComponent(name=O, Na+, Cl-)"
 

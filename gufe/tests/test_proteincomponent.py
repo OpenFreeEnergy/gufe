@@ -104,7 +104,6 @@ def assert_topology_equal(ref_top, top):
 
 
 class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
-
     cls = ProteinComponent
     repr = "ProteinComponent(name=Steve)"
 

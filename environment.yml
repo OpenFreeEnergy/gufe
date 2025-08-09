@@ -9,7 +9,7 @@ dependencies:
   - numpy
   - openff-toolkit >=0.15.1
   - openff-units >=0.3.1
-  - openmm >=8.2
+  - openmm
   - pint
   - pip
   - pooch

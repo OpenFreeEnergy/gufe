@@ -6,6 +6,7 @@
 import abc
 import json
 import pathlib
+import sys
 from uuid import uuid4
 
 import numpy as np
@@ -15,7 +16,7 @@ from numpy import testing as npt
 from openff.units import unit
 
 from gufe import tokenization
-from gufe.custom_codecs import (
+from gufe.serialization.json import (
     BYTES_CODEC,
     NPY_DTYPE_CODEC,
     NUMPY_CODEC,
@@ -24,8 +25,10 @@ from gufe.custom_codecs import (
     PATH_CODEC,
     SETTINGS_CODEC,
     UUID_CODEC,
+    JSONCodec,
+    JSONSerializerDeserializer,
+    custom_json_factory,
 )
-from gufe.custom_json import JSONCodec, JSONSerializerDeserializer, custom_json_factory
 from gufe.settings import models
 
 
@@ -212,6 +215,19 @@ class TestBytesCodec(CustomJSONCodingTest):
         ]
 
 
+def test_path_codec_loads_python_3_13_and_py_3_12():
+    obj = pathlib.PosixPath("foo/bar")
+
+    # we have to manually define the strings to mimic JSONs that were written by python 3.12 and 3.13,
+    # so that we can ensure proper loaded from both python versions by both python versions (CI runs on both 3.12 and 3.13)
+    py312_str = '{"__class__": "PosixPath", "__module__": "pathlib", ":is_custom:": true, "path": "foo/bar"}'
+    py313_str = '{"__class__": "PosixPath", "__module__": "pathlib._local", ":is_custom:": true, "path": "foo/bar"}'
+
+    for py_str in [py312_str, py313_str]:
+        obj_loaded = json.loads(py_str, cls=tokenization.JSON_HANDLER.decoder)
+        assert obj_loaded == obj
+
+
 class TestPathCodec(CustomJSONCodingTest):
     def setup_method(self):
         self.codec = PATH_CODEC
@@ -227,6 +243,8 @@ class TestPathCodec(CustomJSONCodingTest):
                 "path": "foo/bar",
             }
         ]
+        if sys.version_info[:2] >= (3, 13):
+            self.dcts[0]["__module__"] = "pathlib._local"
 
 
 class TestSettingsCodec(CustomJSONCodingTest):

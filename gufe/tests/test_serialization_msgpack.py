@@ -13,7 +13,6 @@ from gufe.settings import models
 
 
 class TestMessagePack:
-
     @staticmethod
     def test_unpack_unknown_extension():
         payload = bytes([0xD4, 0x7F, 0x00])
@@ -21,7 +20,6 @@ class TestMessagePack:
             unpackb(payload)
 
     class CustomMessagePackCodingTest(abc.ABC):
-
         @abc.abstractmethod
         def setup_method(self):
             return NotImplementedError
@@ -37,7 +35,6 @@ class TestMessagePack:
                 self._equality_check(obj, reconstructed)
 
     class TestNumpyCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [
                 np.array([[1.0, 0.0], [2.0, 3.2]]),
@@ -51,7 +48,6 @@ class TestMessagePack:
             assert original.dtype == reconstructed.dtype
 
     class TestLargeIntCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [
                 -1,
@@ -63,7 +59,6 @@ class TestMessagePack:
             ]
 
     class TestPathCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [
                 Path("/"),
@@ -74,7 +69,6 @@ class TestMessagePack:
             ]
 
     class TestNumpyGenericCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [
                 np.bool_(True),
@@ -86,7 +80,6 @@ class TestMessagePack:
             ]
 
     class TestUnitCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [
                 openff.units.DEFAULT_UNIT_REGISTRY("1.0 * kg meter per second squared"),
@@ -97,7 +90,6 @@ class TestMessagePack:
             ]
 
         def _equality_check(self, original, reconstructed):
-
             match original.m:
                 case np.ndarray():
                     npt.assert_array_equal(original, reconstructed)
@@ -106,18 +98,15 @@ class TestMessagePack:
                     assert original == reconstructed
 
     class TestSettingsCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [
                 models.Settings.get_defaults(),
             ]
 
     class TestTimeStampCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [datetime.now(timezone.utc), datetime.now()]
 
     class TestUUIDCoding(CustomMessagePackCodingTest):
-
         def setup_method(self):
             self.objs = [uuid.uuid4() for _ in range(3)]

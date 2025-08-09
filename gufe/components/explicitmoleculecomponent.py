@@ -27,7 +27,7 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
         pass
 
     if name and rdkit_name and rdkit_name != name:
-        warnings.warn(f"Component being renamed from {rdkit_name}" f"to {name}.")
+        warnings.warn(f"Component being renamed from {rdkit_name} to {name}.")
     elif name == "":
         name = rdkit_name
 
@@ -54,7 +54,7 @@ class ExplicitMoleculeComponent(Component):
 
         n_confs = len(conformers)
         if n_confs > 1:
-            warnings.warn(f"Molecule provided with {n_confs} conformers. " f"Only the first will be used.")
+            warnings.warn(f"Molecule provided with {n_confs} conformers. Only the first will be used.")
 
         if not any(atom.GetAtomicNum() == 1 for atom in rdkit.GetAtoms()):
             warnings.warn(
@@ -144,14 +144,12 @@ class ExplicitMoleculeComponent(Component):
         p_chgs = np.array(mol.GetProp("atom.dprop.PartialCharge").split(), dtype=float)
 
         if len(p_chgs) != mol.GetNumAtoms():
-            errmsg = (
-                f"Incorrect number of partial charges: {len(p_chgs)} " f" were provided for {mol.GetNumAtoms()} atoms"
-            )
+            errmsg = f"Incorrect number of partial charges: {len(p_chgs)}  were provided for {mol.GetNumAtoms()} atoms"
             raise ValueError(errmsg)
 
         if abs(sum(p_chgs) - Chem.GetFormalCharge(mol)) > 0.01:
             errmsg = (
-                f"Sum of partial charges {sum(p_chgs)} differs from " f"RDKit formal charge {Chem.GetFormalCharge(mol)}"
+                f"Sum of partial charges {sum(p_chgs)} differs from RDKit formal charge {Chem.GetFormalCharge(mol)}"
             )
             raise ValueError(errmsg)
 
@@ -164,8 +162,7 @@ class ExplicitMoleculeComponent(Component):
                 atom_charge = atom.GetDoubleProp("PartialCharge")
                 if not np.isclose(atom_charge, charge):
                     errmsg = (
-                        f"non-equivalent partial charges between atom and "
-                        f"molecule properties: {atom_charge} {charge}"
+                        f"non-equivalent partial charges between atom and molecule properties: {atom_charge} {charge}"
                     )
                     raise ValueError(errmsg)
 

@@ -268,7 +268,7 @@ class Protocol(GufeTokenizable):
         """
         if isinstance(mapping, dict):
             warnings.warn(
-                ("mapping input as a dict is deprecated, " "instead use either a single Mapping or list"),
+                ("mapping input as a dict is deprecated, instead use either a single Mapping or list"),
                 DeprecationWarning,
             )
             mapping = list(mapping.values())
