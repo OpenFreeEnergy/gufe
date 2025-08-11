@@ -411,7 +411,7 @@ def execute_DAG(
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
             scratch.mkdir()
 
-            context = Context(shared=shared, scratch=scratch)
+            context = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             # execute
             result = unit.execute(context=context, raise_error=raise_error, **inputs)

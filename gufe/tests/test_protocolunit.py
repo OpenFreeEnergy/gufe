@@ -59,7 +59,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
@@ -72,7 +72,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
@@ -88,7 +88,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             with pytest.raises(ExecutionInterrupt):
                 unit.execute(context=ctx, an_input=3)
@@ -107,7 +107,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             with pytest.raises(KeyboardInterrupt):
                 unit.execute(context=ctx, an_input=3)

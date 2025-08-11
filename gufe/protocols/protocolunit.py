@@ -34,8 +34,8 @@ class Context:
 
     scratch: PathLike
     shared: PathLike
-    stderr: PathLike
-    stdout: PathLike
+    stderr: PathLike | None
+    stdout: PathLike | None
 
 
 def _list_dependencies(inputs, cls):
@@ -195,6 +195,8 @@ class ProtocolUnitFailure(ProtocolUnitResult):
         source_key,
         inputs,
         outputs,
+        stderr: dict[str, bytes] | None = None,
+        stdout: dict[str, bytes] | None = None,
         _key=None,
         exception,
         traceback,
@@ -215,6 +217,14 @@ class ProtocolUnitFailure(ProtocolUnitResult):
         outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
+        stderr : dict[str, bytes] | None
+            stderr output captured during execution of the `ProtocolUnit`.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
+        stdout : dict[str, bytes] | None
+            stdout output captured during execution of the `ProtocolUnit`.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
         exception : Tuple[str, Tuple[Any, ...]]
             A tuple giving details on the exception raised during `ProtocolUnit`
             execution. The first element gives the type of exception raised; the
