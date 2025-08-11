@@ -30,12 +30,10 @@ jobs:
         os: ['ubuntu-latest', macos-latest]
         pydantic-version: [">1"]
         python-version:
-          - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         include:
-            # Note: we still need to add support for macos-13
-            # see https://github.com/OpenFreeEnergy/openfe/issues/842
           - os: "ubuntu-latest"
             python-version: "3.11"
             pydantic-version: "<2"
@@ -80,10 +78,10 @@ jobs:
       - name: codecov
         if: ${{ github.repository == 'OpenFreeEnergy/gufe'
                 && github.event != 'schedule' }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: coverage.xml
+          files: coverage.xml
           fail_ci_if_error: False
           verbose: True
 

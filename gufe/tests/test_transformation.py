@@ -125,7 +125,6 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert len(protocolresult.data) == 2
 
     def test_equality(self, absolute_transformation, solvated_ligand, solvated_complex):
-
         opposite = Transformation(
             solvated_complex,
             solvated_ligand,
@@ -174,7 +173,6 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
 
 class TestNonTransformation(GufeTokenizableTestsMixin):
-
     cls = NonTransformation
     repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)"
 
@@ -183,7 +181,6 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         return complex_equilibrium
 
     def test_init(self, complex_equilibrium, solvated_complex):
-
         ntnf = complex_equilibrium
 
         assert ntnf.system is solvated_complex

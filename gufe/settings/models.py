@@ -37,7 +37,7 @@ class SettingsBaseModel(DefaultModel):
         :noindex:
         """
 
-        extra = pydantic.Extra.forbid
+        extra = "forbid"
         arbitrary_types_allowed = False
         smart_union = True
 
@@ -142,11 +142,6 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    class Config:
-        """:noindex:"""
-
-        pass
-
     constraints: str | None = "hbonds"
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
@@ -167,7 +162,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method = "PME"
+    nonbonded_method: str = "PME"
     """
     Method for treating nonbonded interactions, currently only PME and
     NoCutoff are allowed. Default PME.
@@ -188,8 +183,10 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     @validator("nonbonded_cutoff")
     def is_positive_distance(cls, v):
         # these are time units, not simulation steps
-        if not v.is_compatible_with(unit.nanometer):
-            raise ValueError("nonbonded_cutoff must be in distance units " "(i.e. nanometers)")
+        if not v.is_compatible_with(
+            unit.nanometer
+        ):  # TODO: invalid units get caught earlier and so this code is never executed
+            raise ValueError("nonbonded_cutoff must be in distance units (i.e. nanometers)")
         if v < 0:
             errmsg = "nonbonded_cutoff must be a positive value"
             raise ValueError(errmsg)

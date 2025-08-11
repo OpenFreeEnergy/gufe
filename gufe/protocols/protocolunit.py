@@ -5,6 +5,7 @@
 part of a `ProtocolDAG`.
 
 """
+
 from __future__ import annotations
 
 import abc

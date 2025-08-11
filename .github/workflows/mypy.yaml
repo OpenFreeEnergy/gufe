@@ -22,21 +22,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: "Setup Micromamba"
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: environment.yml
           environment-name: gufe
           cache-environment: true
           cache-downloads: true
           create-args: >-
-            python=3.10
-            rdkit=2023.09.5
+            python=3.12
+            rdkit=2025.03.4
+            mypy
           init-shell: bash
-
-      - name: "Install steps"
-        run: |
-          python -m pip install mypy
-          python -m pip install --no-deps -e .
 
       - name: "Environment Information"
         run: |
@@ -44,4 +40,6 @@ jobs:
           micromamba list
 
       - name: "Lint with mypy"
-        run: mypy
+        run: |
+          mypy --version
+          mypy

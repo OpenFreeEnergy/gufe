@@ -55,7 +55,7 @@ class DAGMixin:
 
     @property
     def graph(self) -> nx.DiGraph:
-        """DAG of `ProtocolUnit` nodes with edges denoting dependencies."""
+        """DAG of ``ProtocolUnit`` nodes with edges denoting dependencies."""
         return self._graph
 
     @property
@@ -274,22 +274,22 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     An executable directed acyclic graph (DAG) of :class:`ProtocolUnit` objects.
 
     A ``ProtocolDAG`` is composed of :class:`ProtocolUnit` objects as well as
-    how they depend on each other. A single `ProtocolDAG` execution should
+    how they depend on each other. A single ``ProtocolDAG`` execution should
     yield sufficient information to calculate a free energy difference
     (though perhaps not converged) between two `ChemicalSystem` objects.
 
-    A `ProtocolDAG` yields a `ProtocolDAGResult` when executed.
+    A ``ProtocolDAG`` yields a ``ProtocolDAGResult`` when executed.
 
-    Attributes
+    Properties
     ----------
     name : str
-        Optional identifier for this `ProtocolDAGResult`.
+        Optional identifier for this ``ProtocolDAGResult``.
     protocol_units : list[ProtocolUnit]
-        `ProtocolUnit`s (given in DAG-dependency order) used to compute this
-        `ProtocolDAGResult`. Tasks are always listed after their dependencies.
+        ``ProtocolUnit`` s (given in DAG-dependency order) used to compute this
+        ``ProtocolDAGResult``. Tasks are always listed after their dependencies.
     graph : nx.DiGraph
-        Graph of `ProtocolUnit`s as nodes, with directed edges to each
-        `ProtocolUnit`'s dependencies.
+        Graph of ``ProtocolUnit`` s as nodes, with directed edges to each
+        ``ProtocolUnit``'s dependencies.
     """
 
     def __init__(
@@ -300,7 +300,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         extends_key: GufeKey | None = None,
         name: str | None = None,
     ):
-        """Create a new `ProtocolDAG`
+        """Create a new `ProtocolDAG``
 
         Parameters
         ----------
