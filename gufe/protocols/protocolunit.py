@@ -364,7 +364,7 @@ class ProtocolUnit(GufeTokenizable):
                 for entry in context_dir.iterdir():
                     if not entry.is_file():
                         continue
-                    with entry.open('rb') as f:
+                    with entry.open("rb") as f:
                         record_dict[entry.name] = f.read()
             return record_dict
 

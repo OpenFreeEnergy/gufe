@@ -231,7 +231,9 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stdout = pathlib.Path("stdout")
             stdout.mkdir(parents=True)
 
-            dagresult: ProtocolDAGResult = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            dagresult: ProtocolDAGResult = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
+            )
 
         return protocol, dag, dagresult
 
@@ -258,7 +260,12 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stdout.mkdir(parents=True)
 
             dagfailure: ProtocolDAGResult = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout, raise_error=False
+                dag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+                raise_error=False,
             )
 
         return protocol, dag, dagfailure
@@ -659,7 +666,9 @@ class TestNoDepProtocol:
             stdout = pathlib.Path("stdout")
             stdout.mkdir(parents=True)
 
-            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            dag_result = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
+            )
 
         assert dag_result.ok()
 
@@ -683,7 +692,9 @@ class TestNoDepProtocol:
             stdout.mkdir(parents=True)
 
             # we have no dependencies, so this should be all three Unit results
-            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            dag_result = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
+            )
 
         terminal_results = dag_result.terminal_protocol_unit_results
 

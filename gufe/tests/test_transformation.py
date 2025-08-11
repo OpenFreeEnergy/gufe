@@ -67,8 +67,13 @@ class TestTransformation(GufeTokenizableTestsMixin):
             stdout = pathlib.Path("stdout")
             stdout.mkdir(parents=True)
 
-
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -126,10 +131,22 @@ class TestTransformation(GufeTokenizableTestsMixin):
             stdout.mkdir(parents=True)
 
             protocoldag = tnf.create()
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
             protocoldag2 = tnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            protocoldagresult2 = execute_DAG(
+                protocoldag2,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -218,7 +235,13 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             stdout = pathlib.Path("stdout")
             stdout.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = ntnf.gather([protocoldagresult])
 
@@ -269,10 +292,22 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             stdout.mkdir(parents=True)
 
             protocoldag = ntnf.create()
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
             protocoldag2 = ntnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout)
+            protocoldagresult2 = execute_DAG(
+                protocoldag2,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
 

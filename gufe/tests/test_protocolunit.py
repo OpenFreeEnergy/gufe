@@ -11,13 +11,14 @@ from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 class DummyUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
-
         # Write mock subprocess stdout and stderr for multiple
         # "processes".  Do this before raising any exceptions to check
         # that the ProtocolUnitFailure can contain stderr or stdout.
-        for (output_type, output_dir) in [("stderr", ctx.stderr), ("stdout", ctx.stdout)]:
+        for output_type, output_dir in [("stderr", ctx.stderr), ("stdout", ctx.stdout)]:
+            if output_dir is None:
+                continue
             for process_number in range(1, 3):
-                filename = output_dir / f"dummy_execute_{output_type}_process_{process_number}"
+                filename = Path(output_dir) / f"dummy_execute_{output_type}_process_{process_number}"
                 output = f"Sample {output_type} from process {process_number}".encode()
                 with open(filename, "wb") as f:
                     f.write(output)
