@@ -239,6 +239,8 @@ class ProtocolUnitFailure(ProtocolUnitResult):
             source_key=source_key,
             inputs=inputs,
             outputs=outputs,
+            stderr=stderr or {},
+            stdout=stdout or {},
             start_time=start_time,
             end_time=end_time,
         )
@@ -353,21 +355,21 @@ class ProtocolUnit(GufeTokenizable):
         result: ProtocolUnitResult | ProtocolUnitFailure
         start = datetime.datetime.now()
 
+        def extract_bytes(context_dir):
+            """Iterate over directory of files (depth 1) and create
+            dictionary containing their contents.
+            """
+            record_dict = {}
+            if context_dir:
+                for entry in context_dir.iterdir():
+                    if not entry.is_file():
+                        continue
+                    with entry.open('rb') as f:
+                        record_dict[entry.name] = f.read()
+            return record_dict
+
         try:
             outputs = self._execute(context, **inputs)
-
-            def extract_bytes(context_dir):
-                """Iterate over directory of files (depth 1) and create
-                dictionary containing their contents.
-                """
-                record_dict = {}
-                if context_dir:
-                    for entry in context_dir.iterdir():
-                        if not entry.is_file():
-                            continue
-                        with entry.open() as f:
-                            record_dict[entry.name] = f.read()
-                return record_dict
 
             stderr = extract_bytes(context.stderr)
             stdout = extract_bytes(context.stdout)
@@ -389,11 +391,16 @@ class ProtocolUnit(GufeTokenizable):
             if raise_error:
                 raise
 
+            stderr = extract_bytes(context.stderr)
+            stdout = extract_bytes(context.stdout)
+
             result = ProtocolUnitFailure(
                 name=self._name,
                 source_key=self.key,
                 inputs=inputs,
                 outputs=dict(),
+                stderr=stderr,
+                stdout=stdout,
                 exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc(),
                 start_time=start,

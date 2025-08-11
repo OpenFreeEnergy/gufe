@@ -11,6 +11,17 @@ from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 class DummyUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
+
+        # Write mock subprocess stdout and stderr for multiple
+        # "processes".  Do this before raising any exceptions to check
+        # that the ProtocolUnitFailure can contain stderr or stdout.
+        for (output_type, output_dir) in [("stderr", ctx.stderr), ("stdout", ctx.stdout)]:
+            for process_number in range(1, 3):
+                filename = output_dir / f"dummy_execute_{output_type}_process_{process_number}"
+                output = f"Sample {output_type} from process {process_number}".encode()
+                with open(filename, "wb") as f:
+                    f.write(output)
+
         if an_input != 2:
             raise ValueError("`an_input` should always be 2(!!!)")
 
@@ -70,21 +81,12 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
 
-            unit = DummyUnit()
-
-            shared = Path("shared") / str(unit.key)
-            shared.mkdir(parents=True)
-
-            scratch = Path("scratch") / str(unit.key)
-            scratch.mkdir(parents=True)
-
-            stderr = Path("stderr") / str(unit.key)
-            stderr.mkdir()
-
-            stdout = Path("stdout") / str(unit.key)
-            stdout.mkdir()
-
-            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+            for output_type in ("stderr", "stdout"):
+                data = u.__getattribute__(output_type)
+                for process_number in range(1, 3):
+                    entry = f"dummy_execute_{output_type}_process_{process_number}"
+                    output = f"Sample {output_type} from process {process_number}".encode()
+                    assert data[entry] == output
 
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
