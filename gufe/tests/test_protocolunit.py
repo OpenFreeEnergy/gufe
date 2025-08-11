@@ -59,7 +59,13 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+            stderr = Path("stderr") / str(unit.key)
+            stderr.mkdir(parents=True)
+
+            stdout = Path("stdout") / str(unit.key)
+            stdout.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
@@ -72,7 +78,13 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+            stderr = Path("stderr") / str(unit.key)
+            stderr.mkdir()
+
+            stdout = Path("stdout") / str(unit.key)
+            stdout.mkdir()
+
+            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
@@ -88,7 +100,13 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+            stderr = Path("stderr") / str(unit.key)
+            stderr.mkdir(parents=True)
+
+            stdout = Path("stdout") / str(unit.key)
+            stdout.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
             with pytest.raises(ExecutionInterrupt):
                 unit.execute(context=ctx, an_input=3)
@@ -107,7 +125,13 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+            stderr = Path("stderr") / str(unit.key)
+            stderr.mkdir(parents=True)
+
+            stdout = Path("stdout") / str(unit.key)
+            stdout.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
             with pytest.raises(KeyboardInterrupt):
                 unit.execute(context=ctx, an_input=3)

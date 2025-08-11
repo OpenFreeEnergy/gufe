@@ -78,11 +78,19 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
         scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
 
+        stderr = pathlib.Path("stderr")
+        stderr.mkdir(parents=True)
+
+        stdout = pathlib.Path("stdout")
+        stdout.mkdir(parents=True)
+
         # run dag
         execute_DAG(
             writefile_dag,
             shared_basedir=shared,
             scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
             keep_shared=keep_shared,
             keep_scratch=keep_scratch,
         )
