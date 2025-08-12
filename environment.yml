@@ -13,7 +13,7 @@ dependencies:
   - pint
   - pip
   - pooch
-  - pydantic >=2.0
+  - pydantic >1
   - pytest
   - pytest-cov
   - pytest-xdist
@@ -25,4 +25,4 @@ dependencies:
   - sphinx-jsonschema==1.15
   - sphinx <7.1.2
   - pip:
-    - autodoc_pydantic>=2.0.0
+    - autodoc_pydantic<2.0.0
