@@ -126,6 +126,7 @@ NanometerArrayQuantity = Annotated[
     BeforeValidator(_unwrap_list_of_openmm_quantities),
     WrapSerializer(quantity_json_serializer),
 ]
+
 # class CaseInsensitiveStrEnum(StrEnum):
 #     # SEE: https://docs.python.org/3/library/enum.html#enum.Enum._missing_
 #     @classmethod

@@ -83,11 +83,11 @@ class TestSettingsValidation:
         [
             ("Parsnips", False, None),  # shouldn't be allowed
             (1.0, False, None),  # shouldn't be allowed
-            # ("hbonds", True, "hbonds"),
-            # ("hangles", True, "hangles"),
-            # ("allbonds", True, "allbonds"),  # allowed options
-            # ("HBonds", True, "hbonds"),  # check case insensitivity
-            # (None, True, None),
+            ("hbonds", True, "hbonds"),
+            ("hangles", True, "hangles"),
+            ("allbonds", True, "allbonds"),  # allowed options
+            ("HBonds", True, "hbonds"),  # check case insensitivity
+            (None, True, None),
         ],
     )
     def test_openmmff_constraints(self, value, valid, expected):
@@ -152,8 +152,8 @@ class TestSettingsValidation:
     )
     def test_thermo_temperature(self, value, valid, expected):
         if valid:
-            s = ThermoSettings(temperature=value)
-            assert s.temperature == expected
+            settings = ThermoSettings(temperature=value)
+            assert settings.temperature == expected
         else:
             with pytest.raises(ValueError):
                 _ = ThermoSettings(temperature=value)
