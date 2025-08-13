@@ -83,7 +83,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             assert u.exception[0] == "ValueError"
 
             for output_type in ("stderr", "stdout"):
-                data = u.__getattribute__(output_type)
+                data = getattr(u, output_type)
                 for process_number in range(1, 3):
                     entry = f"dummy_execute_{output_type}_process_{process_number}"
                     output = f"Sample {output_type} from process {process_number}".encode()
