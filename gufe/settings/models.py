@@ -22,7 +22,8 @@ class SettingsBaseModel(_BaseModel):
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
     model_config = ConfigDict(
         extra="forbid",
-        # TODO: needs to be True for current pydantic v2 implementation, try to change back
+# needed to parse custom types
+arbitrary_types_allowed=True
         #   arbitrary_types_allowed=False
         # use_enum_values=True,
     )
