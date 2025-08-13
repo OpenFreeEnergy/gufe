@@ -274,7 +274,6 @@ class LigandNetwork(GufeTokenizable):
         transformations = []
         for edge in self.edges:
             for leg_name, labels in leg_labels.items():
-
                 # define a helper func to avoid repeated code
                 def sys_from_dict(component):
                     """

@@ -3,6 +3,7 @@
 """
 The machinery for tokenizing gufe objects live in this module.
 """
+
 import abc
 import hashlib
 import importlib
@@ -20,7 +21,7 @@ from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
 import networkx as nx
 from typing_extensions import Self
 
-from gufe.custom_codecs import (
+from gufe.serialization.json import (
     BYTES_CODEC,
     DATETIME_CODEC,
     NPY_DTYPE_CODEC,
@@ -30,8 +31,8 @@ from gufe.custom_codecs import (
     PATH_CODEC,
     SETTINGS_CODEC,
     UUID_CODEC,
+    JSONSerializerDeserializer,
 )
-from gufe.custom_json import JSONSerializerDeserializer
 from gufe.serialization.msgpack import packb, unpackb
 
 _default_json_codecs = [
@@ -196,7 +197,7 @@ def old_key_removed(dct, old_key, should_warn):
         # TODO: this should be put elsewhere so that the warning can be more
         # meaningful (somewhere that knows what class we're recreating)
         warnings.warn(
-            f"Outdated serialization: '{old_key}', with value " f"'{dct[old_key]}' is no longer used in this object"
+            f"Outdated serialization: '{old_key}', with value '{dct[old_key]}' is no longer used in this object"
         )
 
     del dct[old_key]
@@ -619,7 +620,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         dct = self._to_dict()
         if invalid := set(replacements) - set(dct):
-            raise TypeError(f"Invalid replacement keys: {invalid}. " f"Allowed keys are: {set(dct)}")
+            raise TypeError(f"Invalid replacement keys: {invalid}. Allowed keys are: {set(dct)}")
 
         dct.update(replacements)
         return self._from_dict(dct)
@@ -1026,7 +1027,7 @@ def is_gufe_key_dict(dct: Any):
 def import_qualname(modname: str, qualname: str, remappings=REMAPPED_CLASSES):
     if (qualname is None) or (modname is None):
         raise ValueError(
-            "`__qualname__` or `__module__` cannot be None; " f"unable to identify object {modname}.{qualname}"
+            f"`__qualname__` or `__module__` cannot be None; unable to identify object {modname}.{qualname}"
         )
 
     if (modname, qualname) in remappings:

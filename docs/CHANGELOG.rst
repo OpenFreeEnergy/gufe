@@ -4,6 +4,28 @@ CHANGELOG
 
 .. current developments
 
+v1.6.0
+====================
+
+**Added:**
+
+* Added support for python 3.13, including support for serialization/deserialization between python 3.12 and 3.13 (`PR #577 <https://github.com/OpenFreeEnergy/gufe/pull/577>`_).
+
+**Changed:**
+
+* Consolidated the contents of ``gufe.custom_codecs`` and ``gufe.custom_json`` into the ``gufe.serialization.json`` module (`PR #532 <https://github.com/OpenFreeEnergy/gufe/pull/532>`_).
+
+
+
+v1.5.0
+====================
+
+**Added:**
+
+* Added support OpenMM 8.2 (PR `#539 <https://github.com/OpenFreeEnergy/gufe/pull/539>`_)
+
+
+
 v1.4.1
 ====================
 

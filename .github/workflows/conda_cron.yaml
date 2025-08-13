@@ -23,40 +23,54 @@ jobs:
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
         python-version:
-          - "3.10"
+          - "3.10"  # TODO: bump to 3.11-3.13 after v1.6.0 is released.
           - "3.11"
           - "3.12"
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: gufe_repo
+
+      - name: Get Latest Version
+        id: latest-version
+        working-directory: gufe_repo
+        run: |
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          # slice off the v, ie v0.7.2 -> 0.7.2
+          VERSION=${LATEST_TAG:1}
+          echo $VERSION
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
       - name: setup micromamba
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: gufe
           cache-environment: true
           cache-downloads: true
           create-args: >-
             python=${{ matrix.python-version }}
-            pip
+            gufe=${{ steps.latest-version.outputs.VERSION }}
+            pooch
+            pytest
+            pytest-xdist
+            pygithub
           condarc: |
             channels:
-              - jaimergp/label/unsupported-cudatoolkit-shim
               - conda-forge
           init-shell: bash
 
-      - name: install gufe and deps
-        run: |
-          micromamba install gufe pytest pytest-xdist pip -c conda-forge
-          python -m pip install PyGithub
-
       - id: run-tests
         name: run tests
-        run: pytest -n auto --pyargs gufe
-
-      - uses: actions/checkout@v4
-        if: ${{ always() }}
+        run: |
+          python -c 'import gufe;print(gufe.__version__)'
+          pytest -n auto --pyargs gufe
 
       - name: raise-or-close-issue
         if: ${{ always() }}
+        working-directory: gufe_repo
         env:
           CI_OUTCOME: ${{ steps.run-tests.outcome }}
           TITLE: "[CI] CONDA CRON FAILURE ${{ matrix.os }} python ${{ matrix.python-version }}"

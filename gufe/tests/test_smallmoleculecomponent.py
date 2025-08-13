@@ -77,7 +77,6 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 
 
 class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
-
     cls = SmallMoleculeComponent
     repr = "SmallMoleculeComponent(name=ethane)"
 
@@ -311,7 +310,7 @@ class TestSmallMoleculeComponentPartialCharges:
             atom.SetDoubleProp("PartialCharge", 0)
 
         # make sure the correct error is raised
-        msg = "non-equivalent partial charges between " "atom and molecule properties"
+        msg = "non-equivalent partial charges between atom and molecule properties"
         with pytest.raises(ValueError, match=msg):
             SmallMoleculeComponent.from_rdkit(mol)
 

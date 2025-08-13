@@ -77,9 +77,9 @@ class SolventComponent(Component):
         self._neutralize = neutralize
 
         if not isinstance(ion_concentration, Quantity) or not ion_concentration.is_compatible_with(unit.molar):
-            raise ValueError(f"ion_concentration must be given in units of" f" concentration, got: {ion_concentration}")
+            raise ValueError(f"ion_concentration must be given in units of concentration, got: {ion_concentration}")
         if ion_concentration.m < 0:
-            raise ValueError(f"ion_concentration must be positive, " f"got: {ion_concentration}")
+            raise ValueError(f"ion_concentration must be positive, got: {ion_concentration}")
 
         self._ion_concentration = ion_concentration
 

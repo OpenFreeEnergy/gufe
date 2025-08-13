@@ -1,6 +1,7 @@
+.. _understanding_gufetokenizables:
 
-Understanding ``GufeTokenizables``\s
-====================================
+Understanding ``GufeTokenizables``
+==================================
 
 Most objects in **gufe** are subclasses of :class:`.GufeTokenizable`.
 This base class enforces common behavior and sets requirements necessary to guarantee performance and reproducibility between all downstream packages that use **gufe**.

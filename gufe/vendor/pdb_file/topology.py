@@ -380,7 +380,6 @@ class Topology:
                         bond_order = bond[3]
 
                         if fromAtom in atomMaps[fromResidue] and toAtom in atomMaps[toResidue]:
-
                             # Histidine bond order correction depending on Protonation state of actual HIS
                             # HD1-ND1-CE1=ND2 <-> ND1=CE1-NE2-HE2 - avoid "charged" resonance structure
                             bond_atoms = (fromAtom, toAtom)

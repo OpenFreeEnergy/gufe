@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="377.616mm"
+   height="169.55034mm"
+   viewBox="0 0 377.61599 169.55034"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   sodipodi:docname="ligand_network_diagram.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.52"
+     inkscape:cx="502.88462"
+     inkscape:cy="642.30769"
+     inkscape:window-width="1824"
+     inkscape:window-height="999"
+     inkscape:window-x="96"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="ArrowWideRounded"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Wide, rounded arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid"
+       markerUnits="userSpaceOnUse">
+      <path
+         style="fill:none;stroke:context-stroke;stroke-width:1;stroke-linecap:round"
+         d="M 3,-3 0,0 3,3"
+         transform="rotate(180,0.125,0)"
+         sodipodi:nodetypes="ccc"
+         id="path2" />
+    </marker>
+    <linearGradient
+       id="swatch101"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#1793d0;stop-opacity:1;"
+         offset="0"
+         id="stop101" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-643.54272,68.377998)">
+    <rect
+       style="opacity:1;fill:#ffffff;fill-opacity:0.85;stroke:none;stroke-width:0.489086;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;paint-order:markers fill stroke"
+       id="rect100"
+       width="377.616"
+       height="169.55034"
+       x="643.54272"
+       y="-68.377998" />
+    <g
+       id="g2-4"
+       transform="translate(146.6756,-203.09704)">
+      <circle
+         style="fill:#f6f6f6;fill-opacity:1;stroke:#7a17d0;stroke-width:0.832787;stroke-dasharray:none;stroke-opacity:1"
+         id="path6074-3-4-1"
+         cx="676.01038"
+         cy="272.70941"
+         r="24.983595" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+         x="661.16083"
+         y="274.64401"
+         id="text11716-3"><tspan
+           sodipodi:role="line"
+           id="tspan11714-7"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;stroke-width:0.264583"
+           x="661.16083"
+           y="274.64401">ligand_b</tspan></text>
+    </g>
+    <ellipse
+       style="fill:#f6f6f6;fill-opacity:1;stroke:#008000;stroke-width:0.832787;stroke-dasharray:none;stroke-opacity:1"
+       id="path6074"
+       cx="822.93121"
+       cy="-30.757427"
+       rx="24.983999"
+       ry="24.983601" />
+    <circle
+       style="fill:#f6f6f6;fill-opacity:1;stroke:#ff6600;stroke-width:0.846667;stroke-dasharray:none;stroke-opacity:1"
+       id="path6074-4"
+       cx="749.0354"
+       cy="69.612373"
+       r="25.399998" />
+    <circle
+       style="fill:#f6f6f6;fill-opacity:1;stroke:#ff6600;stroke-width:0.846667;stroke-dasharray:none;stroke-opacity:1"
+       id="path6074-4-0"
+       cx="895.08539"
+       cy="69.612373"
+       r="25.399998" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="916.86322"
+       y="-15.799199"
+       id="text6243-9-6-0"><tspan
+         sodipodi:role="line"
+         id="tspan6241-2-6-4"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;fill:#7a17d0;fill-opacity:1;stroke-width:0.264583"
+         x="916.86322"
+         y="-15.799199">SmallMoleculeComponent</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;fill:#ff6600;stroke-width:0.264583"
+       x="916.58655"
+       y="-28.726566"
+       id="text6243-9-6-0-8"><tspan
+         sodipodi:role="line"
+         id="tspan6241-2-6-4-7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;fill:#ff6600;fill-opacity:1;stroke-width:0.264583"
+         x="916.58655"
+         y="-28.726566">LigandAtomMapping</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;fill:#008000;stroke-width:0.264583"
+       x="916.10333"
+       y="-42.032505"
+       id="text6243-9-6-0-8-4"><tspan
+         sodipodi:role="line"
+         id="tspan6241-2-6-4-7-2"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;fill:#008000;fill-opacity:1;stroke-width:0.264583"
+         x="916.10333"
+         y="-42.032505">LigandNetwork</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="M 692.18834,-7.3446 676.0104,41.27456"
+       id="path8549-2"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 716.01348,-4.28633 20.01768,47.21846"
+       id="path8549-2-8"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 731.04991,-16.49453 73.0279,63.95123"
+       id="path8549-2-8-0"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 719.26977,69.612372 h -12.7"
+       id="path8549-6"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 865.31977,69.612372 h -12.7"
+       id="path8549-6-5"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 778.80102,69.612372 h 12.7"
+       id="path8549-6-7"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 924.85103,69.612372 h 12.7"
+       id="path8549-6-7-7"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 822.0611,-3.68447 -0.027,45.46101"
+       id="path8549-1"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="M 804.10403,-5.6048424 765.20485,41.370668"
+       id="path8549-1-2"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="M 840.36028,-6.3903788 879.25946,40.585132"
+       id="path8549-1-2-4"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 853.8104,-18.97419 101.6,63.5"
+       id="path8549-9-0"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:3.2;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWideRounded)"
+       d="m 790.3104,-18.97419 -101.6,63.5"
+       id="path8549-9-0-7"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g1"
+       transform="translate(-1.5264423,-203.09704)">
+      <circle
+         style="fill:#f6f6f6;fill-opacity:1;stroke:#7a17d0;stroke-width:0.832787;stroke-dasharray:none;stroke-opacity:1"
+         id="path6074-3-4"
+         cx="676.01038"
+         cy="272.70941"
+         r="24.983595" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+         x="661.16083"
+         y="274.64401"
+         id="text11716"><tspan
+           sodipodi:role="line"
+           id="tspan11714"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;stroke-width:0.264583"
+           x="661.16083"
+           y="274.64401">ligand_a</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="735.02905"
+       y="71.920242"
+       id="text11716-0-6"><tspan
+         sodipodi:role="line"
+         id="tspan11714-3-3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;stroke-width:0.264583"
+         x="735.02905"
+         y="71.920242">a_to_b</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="883.30164"
+       y="71.920242"
+       id="text11716-0-6-1"><tspan
+         sodipodi:role="line"
+         id="tspan11714-3-3-7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;stroke-width:0.264583"
+         x="883.30164"
+         y="71.920242">b_to_c</tspan></text>
+    <circle
+       style="fill:#f6f6f6;fill-opacity:1;stroke:#008000;stroke-width:0.832787;stroke-dasharray:none;stroke-opacity:1"
+       id="path6074-0"
+       cx="707.87292"
+       cy="-30.757427"
+       r="24.983601" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="691.28015"
+       y="-33.300251"
+       id="text11716-0-0-4-4-5"><tspan
+         sodipodi:role="line"
+         id="tspan11714-3-4-4-7-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;text-align:start;text-anchor:start;stroke-width:0.264583"
+         x="691.28015"
+         y="-33.300251">ligand</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;text-align:start;text-anchor:start;stroke-width:0.264583"
+         x="691.28015"
+         y="-23.598864"
+         id="tspan1">network_i</tspan></text>
+    <g
+       id="g2"
+       transform="translate(290.52752,-203.09704)">
+      <circle
+         style="fill:#f6f6f6;fill-opacity:1;stroke:#7a17d0;stroke-width:0.832787;stroke-dasharray:none;stroke-opacity:1"
+         id="path6074-3-4-4"
+         cx="676.01038"
+         cy="272.70941"
+         r="24.983595" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+         x="661.16083"
+         y="274.64401"
+         id="text11716-6"><tspan
+           sodipodi:role="line"
+           id="tspan11714-0"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;stroke-width:0.264583"
+           x="661.16083"
+           y="274.64401">ligand_c</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;line-height:1.25;font-family:helvetica;-inkscape-font-specification:helvetica;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="805.47632"
+       y="-33.300251"
+       id="text11716-0-0-4-4-5-3"><tspan
+         sodipodi:role="line"
+         id="tspan11714-3-4-4-7-5-9"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;text-align:start;text-anchor:start;stroke-width:0.264583"
+         x="805.47632"
+         y="-33.300251">ligand</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.76111px;font-family:helvetica;-inkscape-font-specification:helvetica;text-align:start;text-anchor:start;stroke-width:0.264583"
+         x="805.47632"
+         y="-23.598864"
+         id="tspan1-0">network_ii</tspan></text>
+  </g>
+</svg>
