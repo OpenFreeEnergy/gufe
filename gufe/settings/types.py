@@ -42,10 +42,9 @@ def make_custom_quantity(unit_name: str) -> Type:
         A custom type that inherits from openff.units.Quantity.
     """
 
-    CustomQuantity = Annotated[
-        GufeQuantity, AfterValidator(_unit_validator_factory(unit_name))
-    ]
+    CustomQuantity = Annotated[GufeQuantity, AfterValidator(_unit_validator_factory(unit_name))]
     return CustomQuantity
+
 
 # brute-force these custom types so that mypy recognizes them
 NanometerQuantity = Annotated[
