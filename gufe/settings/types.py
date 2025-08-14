@@ -69,6 +69,11 @@ NanosecondQuantity = Annotated[
     AfterValidator(_unit_validator_factory("nanosecond")),
 ]
 
+PicosecondQuantity = Annotated[
+    GufeQuantity,
+    AfterValidator(_unit_validator_factory("picosecond")),
+]
+
 AngstromQuantity = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("angstrom")),
