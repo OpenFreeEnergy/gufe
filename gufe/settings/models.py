@@ -22,9 +22,7 @@ class SettingsBaseModel(_BaseModel):
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
     model_config = ConfigDict(
         extra="forbid",
-# needed to parse custom types
-arbitrary_types_allowed=True
-        #   arbitrary_types_allowed=False
+        arbitrary_types_allowed=True,  # needed to parse custom types
         # use_enum_values=True,
     )
 
