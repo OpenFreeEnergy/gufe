@@ -17,6 +17,9 @@ from ..vendor.openff.interchange._annotations import (
     quantity_json_serializer,
     quantity_validator,
 )
+from ..vendor.openff.interchange._annotations import (
+    _unit_validator_factory as unit_validator,
+)
 
 GufeQuantity = Annotated[
     Quantity,
