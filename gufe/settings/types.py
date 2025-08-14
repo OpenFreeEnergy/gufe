@@ -1,7 +1,6 @@
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 
-# from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Type
 
 from openff.units import Quantity
 from pydantic import (
@@ -13,8 +12,7 @@ from pydantic import (
 
 from ..vendor.openff.interchange._annotations import _BoxQuantity as BoxQuantity
 from ..vendor.openff.interchange._annotations import (
-    _duck_to_nanometer,
-    _unit_validator_factory as unit_validator,
+    _unit_validator_factory,
     _unwrap_list_of_openmm_quantities,
     quantity_json_serializer,
     quantity_validator,
@@ -26,69 +24,92 @@ GufeQuantity = Annotated[
     WrapSerializer(quantity_json_serializer),
 ]
 
+
+def custom_quantity(unit_name: str) -> Type:
+    """Helper function for generating custom quantity types.
+
+    Parameters
+    ----------
+    unit_name : str
+        unit name to validate against (e.g. 'nanometer')
+
+    Returns
+    -------
+    Type
+        A custom type that inherits from openff.units.Quantity.
+    """
+
+    CustomQuantity = Annotated[
+        GufeQuantity, AfterValidator(_unit_validator_factory(unit_name))
+    ]
+    return CustomQuantity
+
+# brute-force these custom types so that mypy recognizes them
 NanometerQuantity = Annotated[
     GufeQuantity,
-    AfterValidator(unit_validator("nanometer")),
+    AfterValidator(_unit_validator_factory("nanometer")),
 ]
 
 AtmQuantity = Annotated[
     GufeQuantity,
-    AfterValidator(unit_validator("atm")),
+    AfterValidator(_unit_validator_factory("atm")),
 ]
 
 KelvinQuantity = Annotated[
     GufeQuantity,
-    AfterValidator(unit_validator("kelvin")),
+    AfterValidator(_unit_validator_factory("kelvin")),
 ]
 
-# NanosecondQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(unit_validator("nanosecond")),
-# ]
+# types used elsewhere in the ecosystem
+# TODO: add tests here or let that happen in openfe?
+NanosecondQuantity = Annotated[
+    GufeQuantity,
+    AfterValidator(_unit_validator_factory("nanosecond")),
+]
 
-# AngstromQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(unit_validator("angstrom")),
-# ]
+AngstromQuantity = Annotated[
+    GufeQuantity,
+    AfterValidator(_unit_validator_factory("angstrom")),
+]
 
 # FemtosecondQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("femtosecond")),
+#     AfterValidator(_unit_validator_factory("femtosecond")),
 # ]
 
 # PicosecondQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("picosecond")),
+#     AfterValidator(_unit_validator_factory("picosecond")),
 # ]
 
 # InversePicosecondQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("1/picosecond")),
+#     AfterValidator(_unit_validator_factory("1/picosecond")),
 # ]
 
 # KCalPerMolQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("kilocalorie_per_mole")),
+#     AfterValidator(_unit_validator_factory("kilocalorie_per_mole")),
 # ]
 
 # TimestepQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("timestep")),
+#     AfterValidator(_unit_validator_factory("timestep")),
 # ]
 
 # SpringConstantLinearQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("kilojoule_per_mole / nm ** 2")),
+#     AfterValidator(_unit_validator_factory("kilojoule_per_mole / nm ** 2")),
 # ]
 
 # SpringConstantAngularQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("kilojoule_per_mole / radians ** 2")),
+#     AfterValidator(_unit_validator_factory("kilojoule_per_mole / radians ** 2")),
 # ]
 
 # RadiansQuantity = Annotated[
 #     GufeQuantity,
-#     AfterValidator(unit_validator("radians")),
+#     AfterValidator(_unit_validator_factory("radians")),
 # ]
 
 ArrayQuantity = Annotated[
@@ -98,5 +119,5 @@ ArrayQuantity = Annotated[
 
 NanometerArrayQuantity = Annotated[
     ArrayQuantity,
-    AfterValidator(unit_validator("nanometer")),
+    AfterValidator(_unit_validator_factory("nanometer")),
 ]
