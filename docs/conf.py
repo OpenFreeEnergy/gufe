@@ -74,8 +74,9 @@ autodoc_mock_imports = [
 autodoc_pydantic_model_show_config_summary = False
 autodoc_pydantic_model_show_validator_summary = False
 autodoc_pydantic_model_show_validator_members = False
-autodoc_pydantic_model_show_json_error_strategy = "coerce"  # TODO: we cannot currently generate schemas for models w/ pint quantities
-
+autodoc_pydantic_model_show_json_error_strategy = (
+    "coerce"  # TODO: we cannot currently generate schemas for models w/ pint quantities
+)
 
 
 # -- Options for HTML output -------------------------------------------------

@@ -14,10 +14,12 @@ from pydantic import (
 from ..vendor.openff.interchange._annotations import _BoxQuantity as BoxQuantity
 from ..vendor.openff.interchange._annotations import (
     _duck_to_nanometer,
-    _unit_validator_factory as unit_validator,
     _unwrap_list_of_openmm_quantities,
     quantity_json_serializer,
     quantity_validator,
+)
+from ..vendor.openff.interchange._annotations import (
+    _unit_validator_factory as unit_validator,
 )
 
 GufeQuantity = Annotated[
