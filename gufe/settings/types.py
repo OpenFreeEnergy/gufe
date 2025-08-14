@@ -14,100 +14,91 @@ from pydantic import (
 from ..vendor.openff.interchange._annotations import _BoxQuantity as BoxQuantity
 from ..vendor.openff.interchange._annotations import (
     _duck_to_nanometer,
-    _unit_validator_factory,
+    _unit_validator_factory as unit_validator,
     _unwrap_list_of_openmm_quantities,
     quantity_json_serializer,
     quantity_validator,
 )
 
-PydanticQuantity = Annotated[
+GufeQuantity = Annotated[
     Quantity,
     WrapValidator(quantity_validator),
     WrapSerializer(quantity_json_serializer),
 ]
-AngstromQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("angstrom")),
-]
 
 NanometerQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("nanometer")),
-]
-
-FemtosecondQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("femtosecond")),
-]
-
-NanosecondQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("nanosecond")),
-]
-
-PicosecondQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("picosecond")),
-]
-
-InversePicosecondQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("1/picosecond")),
+    GufeQuantity,
+    AfterValidator(unit_validator("nanometer")),
 ]
 
 AtmQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("atm")),
+    GufeQuantity,
+    AfterValidator(unit_validator("atm")),
 ]
 
 KelvinQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("kelvin")),
+    GufeQuantity,
+    AfterValidator(unit_validator("kelvin")),
 ]
 
-KCalPerMolQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("kilocalorie_per_mole")),
-]
+# NanosecondQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("nanosecond")),
+# ]
 
-TimestepQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("timestep")),
-]
+# AngstromQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("angstrom")),
+# ]
 
-SpringConstantLinearQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("kilojoule_per_mole / nm ** 2")),
-]
+# FemtosecondQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("femtosecond")),
+# ]
 
-SpringConstantAngularQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("kilojoule_per_mole / radians ** 2")),
-]
+# PicosecondQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("picosecond")),
+# ]
 
-RadiansQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("radians")),
-]
+# InversePicosecondQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("1/picosecond")),
+# ]
 
-ArrayQuantity = Annotated[
-    PydanticQuantity,
-    BeforeValidator(_unwrap_list_of_openmm_quantities),
-]
+# KCalPerMolQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("kilocalorie_per_mole")),
+# ]
 
-NanometerArrayQuantity = Annotated[
-    PydanticQuantity,
-    AfterValidator(_unit_validator_factory("nanometer")),
-    BeforeValidator(_duck_to_nanometer),
-    BeforeValidator(_unwrap_list_of_openmm_quantities),
-]
+# TimestepQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("timestep")),
+# ]
 
-# class CaseInsensitiveStrEnum(StrEnum):
-#     # SEE: https://docs.python.org/3/library/enum.html#enum.Enum._missing_
-#     @classmethod
-#     def _missing_(cls, value):
-#         value = value.lower()
-#         for member in cls:
-#             if member.value == value:
-#                 return member
-#         return None
+# SpringConstantLinearQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("kilojoule_per_mole / nm ** 2")),
+# ]
+
+# SpringConstantAngularQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("kilojoule_per_mole / radians ** 2")),
+# ]
+
+# RadiansQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("radians")),
+# ]
+
+# ArrayQuantity = Annotated[
+#     GufeQuantity,
+#     BeforeValidator(_unwrap_list_of_openmm_quantities),
+# ]
+
+# NanometerArrayQuantity = Annotated[
+#     GufeQuantity,
+#     AfterValidator(unit_validator("nanometer")),
+#     BeforeValidator(_duck_to_nanometer),
+#     BeforeValidator(_unwrap_list_of_openmm_quantities),
+# ]
