@@ -91,14 +91,12 @@ KelvinQuantity = Annotated[
 #     AfterValidator(unit_validator("radians")),
 # ]
 
-# ArrayQuantity = Annotated[
-#     GufeQuantity,
-#     BeforeValidator(_unwrap_list_of_openmm_quantities),
-# ]
+ArrayQuantity = Annotated[
+    GufeQuantity,
+    BeforeValidator(_unwrap_list_of_openmm_quantities),
+]
 
-# NanometerArrayQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(unit_validator("nanometer")),
-#     BeforeValidator(_duck_to_nanometer),
-#     BeforeValidator(_unwrap_list_of_openmm_quantities),
-# ]
+NanometerArrayQuantity = Annotated[
+    ArrayQuantity,
+    AfterValidator(unit_validator("nanometer")),
+]
