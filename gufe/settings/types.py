@@ -28,7 +28,7 @@ GufeQuantity = Annotated[
 ]
 
 
-def custom_quantity(unit_name: str) -> Type:
+def make_custom_quantity(unit_name: str) -> Type:
     """Helper function for generating custom quantity types.
 
     Parameters
@@ -75,45 +75,10 @@ AngstromQuantity = Annotated[
     AfterValidator(_unit_validator_factory("angstrom")),
 ]
 
-# FemtosecondQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("femtosecond")),
-# ]
-
-# PicosecondQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("picosecond")),
-# ]
-
-# InversePicosecondQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("1/picosecond")),
-# ]
-
-# KCalPerMolQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("kilocalorie_per_mole")),
-# ]
-
-# TimestepQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("timestep")),
-# ]
-
-# SpringConstantLinearQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("kilojoule_per_mole / nm ** 2")),
-# ]
-
-# SpringConstantAngularQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("kilojoule_per_mole / radians ** 2")),
-# ]
-
-# RadiansQuantity = Annotated[
-#     GufeQuantity,
-#     AfterValidator(_unit_validator_factory("radians")),
-# ]
+KCalPerMolQuantity = Annotated[
+    GufeQuantity,
+    AfterValidator(_unit_validator_factory("kilocalorie_per_mole")),
+]
 
 ArrayQuantity = Annotated[
     GufeQuantity,
