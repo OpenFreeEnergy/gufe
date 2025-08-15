@@ -1,18 +1,14 @@
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 
-from typing import Annotated, Any, Type
+from typing import Annotated, Type
 
 from openff.units import Quantity
 from pydantic import (
     AfterValidator,
     BeforeValidator,
-    GetCoreSchemaHandler,
-    ValidationInfo,
-    ValidatorFunctionWrapHandler,
     WrapSerializer,
     WrapValidator,
 )
-from pydantic_core import core_schema
 
 from ..vendor.openff.interchange._annotations import _BoxQuantity as BoxQuantity
 from ..vendor.openff.interchange._annotations import (
@@ -22,31 +18,11 @@ from ..vendor.openff.interchange._annotations import (
     quantity_validator,
 )
 
-
-class _QuantityPydanticAnnotation:
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls,
-        source: Any,
-        handler: GetCoreSchemaHandler,
-    ) -> core_schema.CoreSchema:
-        json_schema = core_schema.with_info_wrap_validator_function(
-            function=quantity_validator,
-            schema=core_schema.str_schema(),
-        )
-        python_schema = core_schema.with_info_wrap_validator_function(
-            function=quantity_validator,
-            schema=core_schema.is_instance_schema(Quantity),
-        )
-        serialize_schema = core_schema.wrap_serializer_function_ser_schema(quantity_json_serializer)
-        return core_schema.json_or_python_schema(
-            json_schema=json_schema,
-            python_schema=python_schema,
-            serialization=serialize_schema,
-        )
-
-
-GufeQuantity = Annotated[Quantity, _QuantityPydanticAnnotation]
+GufeQuantity = Annotated[
+    Quantity,
+    WrapValidator(quantity_validator),
+    WrapSerializer(quantity_json_serializer),
+]
 
 
 def make_custom_quantity(unit_name: str) -> Type:
