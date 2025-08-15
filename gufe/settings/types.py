@@ -31,11 +31,7 @@ class _QuantityPydanticAnnotation:
         an openff-units Quantity, except it's also pydantic-compatible.
         """
         json_schema = core_schema.with_info_wrap_validator_function(
-            function=quantity_validator,
-            schema=core_schema.dict_schema(
-                values_schema=core_schema.float_schema(),  # TODO not just floats
-                keys_schema=core_schema.str_schema(),
-            ),
+            function=quantity_validator, schema=core_schema.float_schema()
         )
         python_schema = core_schema.with_info_wrap_validator_function(
             function=quantity_validator,
