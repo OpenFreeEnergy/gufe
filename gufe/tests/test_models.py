@@ -14,60 +14,62 @@ from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, Ther
 
 def test_settings_schema():
     """Settings schema should be stable"""
-    # expected_schema = {
-    #     "$defs": {
-    #         "BaseForceFieldSettings": {
-    #             "additionalProperties": False,
-    #             "description": "Base class for ForceFieldSettings objects",
-    #             "properties": {},
-    #             "title": "BaseForceFieldSettings",
-    #             "type": "object",
-    #         },
-    #         "ThermoSettings": {
-    #             "additionalProperties": False,
-    #             "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
-    #             "properties": {
-    #                 "temperature": {
-    #                     "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
-    #                     "default": None,
-    #                     "description": "Simulation temperature, default units kelvin",
-    #                     "title": "Temperature",
-    #                 },
-    #                 "pressure": {
-    #                     "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
-    #                     "default": None,
-    #                     "description": "Simulation pressure, default units standard atmosphere (atm)",
-    #                     "title": "Pressure",
-    #                 },
-    #                 "ph": {
-    #                     "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
-    #                     "default": None,
-    #                     "description": "Simulation pH",
-    #                     "title": "Ph",
-    #                 },
-    #                 "redox_potential": {
-    #                     "anyOf": [{"type": "number"}, {"type": "null"}],
-    #                     "default": None,
-    #                     "description": "Simulation redox potential",
-    #                     "title": "Redox Potential",
-    #                 },
-    #             },
-    #             "title": "ThermoSettings",
-    #             "type": "object",
-    #         },
-    #     },
-    #     "additionalProperties": False,
-    #     "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
-    #     "properties": {
-    #         "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings"},
-    #         "thermo_settings": {"$ref": "#/$defs/ThermoSettings"},
-    #     },
-    #     "required": ["forcefield_settings", "thermo_settings"],
-    #     "title": "Settings",
-    #     "type": "object",
-    # }
-    schema = Settings.model_json_schema(mode="serialization")
-    # assert schema == expected_schema
+    expected_schema = {
+        "$defs": {
+            "BaseForceFieldSettings": {
+                "additionalProperties": False,
+                "description": "Base class for ForceFieldSettings objects",
+                "properties": {},
+                "title": "BaseForceFieldSettings",
+                "type": "object",
+            },
+            "ThermoSettings": {
+                "additionalProperties": False,
+                "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
+                "properties": {
+                    "temperature": {
+                        "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation temperature, default units kelvin",
+                        "title": "Temperature",
+                    },
+                    "pressure": {
+                        "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pressure, default units standard atmosphere (atm)",
+                        "title": "Pressure",
+                    },
+                    "ph": {
+                        "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pH",
+                        "title": "Ph",
+                    },
+                    "redox_potential": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation redox potential",
+                        "title": "Redox Potential",
+                    },
+                },
+                "title": "ThermoSettings",
+                "type": "object",
+            },
+        },
+        "additionalProperties": False,
+        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
+        "properties": {
+            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings"},
+            "thermo_settings": {"$ref": "#/$defs/ThermoSettings"},
+        },
+        "required": ["forcefield_settings", "thermo_settings"],
+        "title": "Settings",
+        "type": "object",
+    }
+    breakpoint()
+    ser_schema = Settings.model_json_schema(mode="serialization")
+    val_schema = Settings.model_json_schema(mode="validation")
+    assert ser_schema == expected_schema
 
 
 def test_default_settings():
