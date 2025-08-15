@@ -7,10 +7,6 @@ from pydantic import (
     AfterValidator,
     BeforeValidator,
     GetCoreSchemaHandler,
-    ValidationInfo,
-    ValidatorFunctionWrapHandler,
-    WrapSerializer,
-    WrapValidator,
 )
 from pydantic_core import core_schema
 
@@ -30,9 +26,16 @@ class _QuantityPydanticAnnotation:
         source: Any,
         handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
+        """
+        This Annotation lets us define a GufeQuantity that is identical to
+        an openff-units Quantity, except it's also pydantic-compatible.
+        """
         json_schema = core_schema.with_info_wrap_validator_function(
             function=quantity_validator,
-            schema=core_schema.str_schema(),
+            schema=core_schema.dict_schema(
+                values_schema=core_schema.float_schema(),  # TODO not just floats
+                keys_schema=core_schema.str_schema(),
+            ),
         )
         python_schema = core_schema.with_info_wrap_validator_function(
             function=quantity_validator,
