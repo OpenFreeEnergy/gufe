@@ -28,15 +28,15 @@ def test_settings_schema():
                 "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
                 "properties": {
                     "temperature": {
-                        "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
+                        "anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation temperature, default units kelvin",
+                        "description": "Simulation temperature in kelvin)",
                         "title": "Temperature",
                     },
                     "pressure": {
-                        "anyOf": [{"additionalProperties": True, "type": "object"}, {"type": "null"}],
+                        "anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation pressure, default units standard atmosphere (atm)",
+                        "description": "Simulation pressure in standard atmosphere (atm)",
                         "title": "Pressure",
                     },
                     "ph": {
@@ -59,17 +59,18 @@ def test_settings_schema():
         "additionalProperties": False,
         "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
         "properties": {
-            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings"},
-            "thermo_settings": {"$ref": "#/$defs/ThermoSettings"},
+            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings", "title": "Forcefield Settings"},
+            "thermo_settings": {"$ref": "#/$defs/ThermoSettings", "title": "Thermo Settings"},
         },
         "required": ["forcefield_settings", "thermo_settings"],
         "title": "Settings",
         "type": "object",
     }
-    breakpoint()
     ser_schema = Settings.model_json_schema(mode="serialization")
     val_schema = Settings.model_json_schema(mode="validation")
+    # TODO: should our serialization and validation schemas really be the same?
     assert ser_schema == expected_schema
+    assert val_schema == expected_schema
 
 
 def test_default_settings():
