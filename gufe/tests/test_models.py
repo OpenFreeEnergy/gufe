@@ -28,13 +28,13 @@ def test_settings_schema():
                 "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
                 "properties": {
                     "temperature": {
-                        "anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}],
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
                         "description": "Simulation temperature in kelvin)",
                         "title": "Temperature",
                     },
                     "pressure": {
-                        "anyOf": [{"additionalProperties": {"type": "number"}, "type": "object"}, {"type": "null"}],
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
                         "description": "Simulation pressure in standard atmosphere (atm)",
                         "title": "Pressure",
