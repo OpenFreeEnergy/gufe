@@ -48,7 +48,7 @@ class _QuantityPydanticAnnotation:
 GufeQuantity = Annotated[Quantity, _QuantityPydanticAnnotation]
 
 
-def make_custom_quantity(unit_name: str) -> Type:
+def specify_quantity_units(unit_name: str) -> AfterValidator:
     """Helper function for generating custom quantity types.
 
     Parameters
@@ -58,50 +58,52 @@ def make_custom_quantity(unit_name: str) -> Type:
 
     Returns
     -------
-    Type
-        A custom type that inherits from openff.units.Quantity.
+    AfterValidator
+        An AfterValidator for defining a custom Quantity type.
+
+
+
     """
 
-    CustomQuantity = Annotated[GufeQuantity, AfterValidator(_unit_validator_factory(unit_name))]
-    return CustomQuantity
+    return AfterValidator(_unit_validator_factory(unit_name))
 
 
 # brute-force these custom types so that mypy recognizes them
 NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("nanometer")),
+    specify_quantity_units("nanometer"),
 ]
 
 AtmQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("atm")),
+    specify_quantity_units("atm"),
 ]
 
 KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("kelvin")),
+    specify_quantity_units("kelvin"),
 ]
 
 # types used elsewhere in the ecosystem
 # TODO: add tests here or let that happen in openfe?
 NanosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("nanosecond")),
+    specify_quantity_units("nanosecond"),
 ]
 
 PicosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("picosecond")),
+    specify_quantity_units("picosecond"),
 ]
 
 AngstromQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("angstrom")),
+    specify_quantity_units("angstrom"),
 ]
 
 KCalPerMolQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    AfterValidator(_unit_validator_factory("kilocalorie_per_mole")),
+    specify_quantity_units("kilocalorie_per_mole"),
 ]
 
 ArrayQuantity: TypeAlias = Annotated[
@@ -111,5 +113,5 @@ ArrayQuantity: TypeAlias = Annotated[
 
 NanometerArrayQuantity: TypeAlias = Annotated[
     ArrayQuantity,
-    AfterValidator(_unit_validator_factory("nanometer")),
+    specify_quantity_units("nanometer"),
 ]
