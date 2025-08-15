@@ -1,6 +1,6 @@
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 
-from typing import Annotated, Any, Type
+from typing import Annotated, Any, Type, TypeAlias
 
 from openff.units import Quantity
 from pydantic import (
@@ -67,49 +67,49 @@ def make_custom_quantity(unit_name: str) -> Type:
 
 
 # brute-force these custom types so that mypy recognizes them
-NanometerQuantity = Annotated[
+NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("nanometer")),
 ]
 
-AtmQuantity = Annotated[
+AtmQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("atm")),
 ]
 
-KelvinQuantity = Annotated[
+KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("kelvin")),
 ]
 
 # types used elsewhere in the ecosystem
 # TODO: add tests here or let that happen in openfe?
-NanosecondQuantity = Annotated[
+NanosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("nanosecond")),
 ]
 
-PicosecondQuantity = Annotated[
+PicosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("picosecond")),
 ]
 
-AngstromQuantity = Annotated[
+AngstromQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("angstrom")),
 ]
 
-KCalPerMolQuantity = Annotated[
+KCalPerMolQuantity: TypeAlias = Annotated[
     GufeQuantity,
     AfterValidator(_unit_validator_factory("kilocalorie_per_mole")),
 ]
 
-ArrayQuantity = Annotated[
+ArrayQuantity: TypeAlias = Annotated[
     GufeQuantity,
     BeforeValidator(_unwrap_list_of_openmm_quantities),
 ]
 
-NanometerArrayQuantity = Annotated[
+NanometerArrayQuantity: TypeAlias = Annotated[
     ArrayQuantity,
     AfterValidator(_unit_validator_factory("nanometer")),
 ]
