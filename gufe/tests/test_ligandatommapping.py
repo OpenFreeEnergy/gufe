@@ -174,6 +174,12 @@ def test_mapping_distances(benzene_phenol_mapping):
         assert i == pytest.approx(r)
 
 
+def test_get_alchemical_charge_difference(simple_mapping):
+    charge_diff = simple_mapping.get_alchemical_charge_difference()
+
+    assert charge_diff == 0
+
+
 def test_uniques(atom_mapping_basic_test_files):
     mapping = LigandAtomMapping(
         componentA=atom_mapping_basic_test_files["methylcyclohexane"],

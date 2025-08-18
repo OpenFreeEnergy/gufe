@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -222,3 +222,18 @@ class LigandAtomMapping(AtomMapping):
             dists.append(dA.Distance(dB))
 
         return np.array(dists)
+
+    def get_alchemical_charge_difference(self) -> int:
+        """
+        Return the difference in formal charge between stateA and stateB defined as (formal charge A - formal charge B)
+
+        Returns
+        -------
+        int:
+            The difference in formal charge between the end states.
+        """
+        from rdkit import Chem
+
+        charge_a = Chem.rdmolops.GetFormalCharge(self.componentA.to_rdkit())
+        charge_b = Chem.rdmolops.GetFormalCharge(self.componentB.to_rdkit())
+        return charge_a - charge_b
