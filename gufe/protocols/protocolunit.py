@@ -86,11 +86,11 @@ class ProtocolUnitResult(GufeTokenizable):
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
         stderr : dict[str, bytes] | None
-            stderr output captured during execution of the `ProtocolUnit`.
+            stderr output captured during execution of the ``ProtocolUnit``.
             The keys are the filenames given to the captured output and the
             values are the bytes contained within those files after execution.
         stdout : dict[str, bytes] | None
-            stdout output captured during execution of the `ProtocolUnit`.
+            stdout output captured during execution of the ``ProtocolUnit``.
             The keys are the filenames given to the captured output and the
             values are the bytes contained within those files after execution.
         start_time, end_time: datetime.datetime
