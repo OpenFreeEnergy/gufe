@@ -429,6 +429,10 @@ def execute_DAG(
             result = unit.execute(context=context, raise_error=raise_error, **inputs)
             all_results.append(result)
 
+            # clean up outputs
+            shutil.rmtree(stderr)
+            shutil.rmtree(stdout)
+
             if not keep_scratch:
                 shutil.rmtree(scratch)
 
