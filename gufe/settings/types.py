@@ -67,8 +67,6 @@ def specify_quantity_units(unit_name: str) -> AfterValidator:
 
     return AfterValidator(_unit_validator_factory(unit_name))
 
-
-# brute-force these custom types so that mypy recognizes them
 NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanometer"),
@@ -85,7 +83,6 @@ KelvinQuantity: TypeAlias = Annotated[
 ]
 
 # types used elsewhere in the ecosystem
-# TODO: add tests here or let that happen in openfe?
 NanosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanosecond"),
@@ -106,12 +103,12 @@ KCalPerMolQuantity: TypeAlias = Annotated[
     specify_quantity_units("kilocalorie_per_mole"),
 ]
 
-ArrayQuantity: TypeAlias = Annotated[
+GufeArrayQuantity: TypeAlias = Annotated[
     GufeQuantity,
     BeforeValidator(_unwrap_list_of_openmm_quantities),
 ]
 
 NanometerArrayQuantity: TypeAlias = Annotated[
-    ArrayQuantity,
+    GufeArrayQuantity,
     specify_quantity_units("nanometer"),
 ]
