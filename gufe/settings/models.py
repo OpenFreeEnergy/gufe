@@ -126,10 +126,9 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     """Parameters to set up the force field with OpenMM ForceFields
 
     .. note::
-       Right now we just basically just grab what we need for the
-       :class:`openmmforcefields.system_generators.SystemGenerator`
-       signature. See the `OpenMMForceField SystemGenerator documentation`_
-       for more details.
+       Currently, this stores what is needed for the
+       :class:`openmmforcefields.system_generators.SystemGenerator` signature.
+       See the `OpenMMForceField SystemGenerator documentation`_ for more details.
 
 
     .. _`OpenMMForceField SystemGenerator documentation`:

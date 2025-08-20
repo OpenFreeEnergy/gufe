@@ -49,7 +49,7 @@ autodoc_default_options = {
     "undoc-members": True,
 }
 
-# TODO: temporary workaround to get docs to build I figure out why only nonbonded_cutoff won't serialize.
+# TODO: temporary workaround to get docs to build I figure out why only OpenMMSystemGeneratorFFSettings GufeQuantities won't serialize.
 autodoc_pydantic_model_show_json_error_strategy = ("coerce")
 
 autosummary_generate = True
