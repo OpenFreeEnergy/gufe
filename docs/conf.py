@@ -49,6 +49,9 @@ autodoc_default_options = {
     "undoc-members": True,
 }
 
+# TODO: temporary workaround to get docs to build I figure out why only nonbonded_cutoff won't serialize.
+autodoc_pydantic_model_show_json_error_strategy = ("coerce")
+
 autosummary_generate = True
 
 intersphinx_mapping = {
@@ -67,17 +70,6 @@ autodoc_mock_imports = [
     "msgpack",
     "rdkit",
 ]
-
-# autodoc_pydantic settings
-
-# autodoc_pydantic settings
-autodoc_pydantic_model_show_config_summary = False
-autodoc_pydantic_model_show_validator_summary = False
-autodoc_pydantic_model_show_validator_members = False
-autodoc_pydantic_model_show_json_error_strategy = (
-    "coerce"  # TODO: we cannot currently generate schemas for models w/ pint quantities
-)
-
 
 # -- Options for HTML output -------------------------------------------------
 
