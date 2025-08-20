@@ -110,7 +110,7 @@ class TestSettingsValidation:
             ("1.1 nm", True, 1.1 * unit.nanometer),
             ("1.1", False, None),
             (-1.0 * unit.nanometer, False, None),
-            # NOTE: this is not precisely equal for smaller values due to pint unit floating point precision things.
+            # NOTE: this is not precisely equal for smaller values due to pint unit floating point precision
             (100.0 * unit.angstrom, True, 10.0 * unit.nanometer),
             (300 * unit.kelvin, False, None),
             (True, False, None),
