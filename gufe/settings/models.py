@@ -174,7 +174,6 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
 
     @field_validator("nonbonded_method", mode="after")
     def allowed_nonbonded(cls, v):
-        # TODO: replace this with an annotated Literal.
         options = ["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"]
         if v.lower() not in [x.lower() for x in options]:
             errmsg = f"Only {options} are allowed nonbonded_methods"
