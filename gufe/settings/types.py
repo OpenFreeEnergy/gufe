@@ -10,7 +10,6 @@ from pydantic import (
 )
 from pydantic_core import core_schema
 
-from ..vendor.openff.interchange._annotations import _BoxQuantity as BoxQuantity
 from ..vendor.openff.interchange._annotations import (
     _unit_validator_factory,
     _unwrap_list_of_openmm_quantities,
@@ -66,6 +65,7 @@ def specify_quantity_units(unit_name: str) -> AfterValidator:
     """
 
     return AfterValidator(_unit_validator_factory(unit_name))
+
 
 NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,

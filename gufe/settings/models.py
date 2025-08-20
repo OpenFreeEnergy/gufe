@@ -23,7 +23,6 @@ class SettingsBaseModel(_BaseModel):
     model_config = ConfigDict(
         extra="forbid",
         arbitrary_types_allowed=True,  # needed to parse custom types
-        # use_enum_values=True,
     )
 
     def _ipython_display_(self):
@@ -113,12 +112,6 @@ class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
 
     ...
-
-
-# class ConstraintEnum(CaseInsensitiveStrEnum):
-#     hbonds = "hbonds"
-#     allbonds = "allbonds"
-#     hangles = "hangles"
 
 
 def _to_lowercase(value: Any):
