@@ -1,6 +1,9 @@
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
+"""
+Custom types that inherit from openff.units.Quantity and are pydantic-compatible.
+"""
 
-from typing import Annotated, Any, Type, TypeAlias
+from typing import Annotated, Any, TypeAlias
 
 from openff.units import Quantity
 from pydantic import (
@@ -71,37 +74,45 @@ NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanometer"),
 ]
+"""Convert a pint.Quantity or to nanometers, if possible."""
 
 AtmQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("atm"),
 ]
+"""Convert a pint.Quantity or to atm, if possible."""
 
 KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kelvin"),
 ]
+"""Convert a pint.Quantity or to kelvin, if possible."""
 
 # types used elsewhere in the ecosystem
 NanosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanosecond"),
 ]
+"""Convert a pint.Quantity or to nanoseconds, if possible."""
+
 
 PicosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("picosecond"),
 ]
+"""Convert a pint.Quantity or to picoseconds, if possible."""
 
 AngstromQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("angstrom"),
 ]
+"""Convert a pint.Quantity or to angstroms, if possible."""
 
 KCalPerMolQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kilocalorie_per_mole"),
 ]
+"""Convert a pint.Quantity or to kcal/mol, if possible."""
 
 GufeArrayQuantity: TypeAlias = Annotated[
     GufeQuantity,
