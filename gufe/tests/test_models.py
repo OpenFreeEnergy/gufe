@@ -72,12 +72,46 @@ def test_settings_schema():
     assert ser_schema == expected_schema
     assert val_schema == expected_schema
 
+
 def test_openmmffsettings_schema():
-    expected_schema = {'additionalProperties': False, 'description': 'Parameters to set up the force field with OpenMM ForceFields\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceField SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceField SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator', 'properties': {'constraints': {'anyOf': [{'enum': ['hbonds', 'allbonds', 'hangles'], 'type': 'string'}, {'type': 'null'}], 'default': 'hbonds', 'title': 'Constraints'}, 'rigid_water': {'default': True, 'title': 'Rigid Water', 'type': 'boolean'}, 'hydrogen_mass': {'default': 3.0, 'title': 'Hydrogen Mass', 'type': 'number'}, 'forcefields': {'default': ['amber/ff14SB.xml', 'amber/tip3p_standard.xml', 'amber/tip3p_HFE_multivalent.xml', 'amber/phosaa10.xml'], 'items': {'type': 'string'}, 'title': 'Forcefields', 'type': 'array'}, 'small_molecule_forcefield': {'default': 'openff-2.1.1', 'title': 'Small Molecule Forcefield', 'type': 'string'}, 'nonbonded_method': {'default': 'PME', 'title': 'Nonbonded Method', 'type': 'string'}, 'nonbonded_cutoff': {'title': 'Nonbonded Cutoff', 'type': 'number'}}, 'title': 'OpenMMSystemGeneratorFFSettings', 'type': 'object'}
+    expected_schema = {
+        "additionalProperties": False,
+        "description": "Parameters to set up the force field with OpenMM ForceFields\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceField SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceField SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator",
+        "properties": {
+            "constraints": {
+                "anyOf": [{"enum": ["hbonds", "allbonds", "hangles"], "type": "string"}, {"type": "null"}],
+                "default": "hbonds",
+                "title": "Constraints",
+            },
+            "rigid_water": {"default": True, "title": "Rigid Water", "type": "boolean"},
+            "hydrogen_mass": {"default": 3.0, "title": "Hydrogen Mass", "type": "number"},
+            "forcefields": {
+                "default": [
+                    "amber/ff14SB.xml",
+                    "amber/tip3p_standard.xml",
+                    "amber/tip3p_HFE_multivalent.xml",
+                    "amber/phosaa10.xml",
+                ],
+                "items": {"type": "string"},
+                "title": "Forcefields",
+                "type": "array",
+            },
+            "small_molecule_forcefield": {
+                "default": "openff-2.1.1",
+                "title": "Small Molecule Forcefield",
+                "type": "string",
+            },
+            "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
+            "nonbonded_cutoff": {"ge": 0, "title": "Nonbonded Cutoff", "type": "number"},
+        },
+        "title": "OpenMMSystemGeneratorFFSettings",
+        "type": "object",
+    }
     ser_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
     val_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
     assert ser_schema == expected_schema
     assert val_schema == expected_schema
+
 
 def test_default_settings():
     my_settings = Settings.get_defaults()
