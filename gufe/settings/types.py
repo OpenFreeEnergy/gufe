@@ -120,8 +120,3 @@ GufeArrayQuantity: TypeAlias = Annotated[
     GufeQuantity,
     BeforeValidator(_unwrap_list_of_openmm_quantities),
 ]
-
-NanometerArrayQuantity: TypeAlias = Annotated[
-    GufeArrayQuantity,
-    specify_quantity_units("nanometer"),
-]
