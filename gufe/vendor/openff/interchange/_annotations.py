@@ -5,7 +5,7 @@ from typing import Annotated, Any
 
 import numpy
 from annotated_types import Gt
-from openff.toolkit import Quantity
+from openff.units import Quantity # import from units so we don't have to build toolkit just for docs
 from pydantic import (
     AfterValidator,
     BeforeValidator,
