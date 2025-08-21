@@ -113,7 +113,7 @@ def test_openmmffsettings_schema():
         "type": "object",
     }
     ser_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
-    val_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
+    val_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="validation")
     assert ser_schema == expected_schema
     assert val_schema == expected_schema
 
