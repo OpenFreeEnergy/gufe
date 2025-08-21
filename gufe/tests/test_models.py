@@ -68,6 +68,7 @@ def test_settings_schema():
     }
     ser_schema = Settings.model_json_schema(mode="serialization")
     val_schema = Settings.model_json_schema(mode="validation")
+
     # TODO: should our serialization and validation schemas really be the same?
     assert ser_schema == expected_schema
     assert val_schema == expected_schema
@@ -81,10 +82,20 @@ def test_openmmffsettings_schema():
             "constraints": {
                 "anyOf": [{"enum": ["hbonds", "allbonds", "hangles"], "type": "string"}, {"type": "null"}],
                 "default": "hbonds",
+                "description": "Constraints to be applied to system. One of ``'hbonds'``, ``'allbonds'``, ``'hangles'`` or None, default ``'hbonds'``.",
                 "title": "Constraints",
             },
-            "rigid_water": {"default": True, "title": "Rigid Water", "type": "boolean"},
-            "hydrogen_mass": {"default": 3.0, "title": "Hydrogen Mass", "type": "number"},
+            "rigid_water": {
+                "default": True,
+                "description": "Whether to use a rigid water model, default ``True``.",
+                "title": "Rigid Water",
+                "type": "boolean",
+            },
+            "hydrogen_mass": {
+                "description": "Mass to be repartitioned to hydrogens from neighbouring heavy atoms (in amu), default ``3.0 atm``",
+                "title": "Hydrogen Mass",
+                "type": "number",
+            },
             "forcefields": {
                 "default": [
                     "amber/ff14SB.xml",
@@ -92,16 +103,23 @@ def test_openmmffsettings_schema():
                     "amber/tip3p_HFE_multivalent.xml",
                     "amber/phosaa10.xml",
                 ],
+                "description": "List of force field paths for all components except :class:`SmallMoleculeComponent`",
                 "items": {"type": "string"},
                 "title": "Forcefields",
                 "type": "array",
             },
             "small_molecule_forcefield": {
                 "default": "openff-2.1.1",
+                "description": "Name of the force field to be used for :class:`SmallMoleculeComponent`",
                 "title": "Small Molecule Forcefield",
                 "type": "string",
             },
-            "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
+            "nonbonded_method": {
+                "default": "PME",
+                "description": "Method for treating nonbonded interactions, options are currently ``'CutoffNonPeriodic'``, ``'CutoffPeriodic'``, ``'Ewald'``, ``'LJPME'``, ``'NoCutoff'``, ``'PME'``. Default ``'PME'``. ",
+                "title": "Nonbonded Method",
+                "type": "string",
+            },
             "nonbonded_cutoff": {
                 "description": "Cutoff value for short range nonbonded interactions.",
                 "ge": 0,

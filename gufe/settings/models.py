@@ -137,33 +137,38 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    constraints: Annotated[Literal["hbonds", "allbonds", "hangles"], BeforeValidator(_to_lowercase)] | None = "hbonds"
-    """Constraints to be applied to system.
-       One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
-    rigid_water: bool = True
-    """Whether to use a rigid water model. Default True"""
-    hydrogen_mass: float = 3.0
-    """Mass to be repartitioned to hydrogens from neighbouring
-       heavy atoms (in amu), default 3.0"""
+    constraints: Annotated[Literal["hbonds", "allbonds", "hangles"], BeforeValidator(_to_lowercase)] | None = Field(
+        default="hbonds",
+        description="Constraints to be applied to system. One of ``'hbonds'``, ``'allbonds'``, ``'hangles'`` or None, default ``'hbonds'``.",
+    )
+    rigid_water: bool = Field(True, description="Whether to use a rigid water model, default ``True``.")
 
-    forcefields: list[str] = [
-        "amber/ff14SB.xml",  # ff14SB protein force field
-        "amber/tip3p_standard.xml",  # TIP3P and recommended monovalent ion parameters
-        "amber/tip3p_HFE_multivalent.xml",  # for divalent ions
-        "amber/phosaa10.xml",  # Handles THE TPO
-    ]
-    """List of force field paths for all components except :class:`SmallMoleculeComponent` """
+    hydrogen_mass: AtmQuantity = Field(
+        default=3.0 * unit.atm,
+        description="Mass to be repartitioned to hydrogens from neighbouring heavy atoms (in amu), default ``3.0 atm``",
+    )
 
-    small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
-    """Name of the force field to be used for :class:`SmallMoleculeComponent` """
+    forcefields: list[str] = Field(
+        default=[
+            "amber/ff14SB.xml",  # ff14SB protein force field
+            "amber/tip3p_standard.xml",  # TIP3P and recommended monovalent ion parameters
+            "amber/tip3p_HFE_multivalent.xml",  # for divalent ions
+            "amber/phosaa10.xml",  # Handles THE TPO
+        ],
+        description="List of force field paths for all components except :class:`SmallMoleculeComponent`",
+    )
 
-    nonbonded_method: str = "PME"
-    """
-    Method for treating nonbonded interactions, options are currently
-    "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
-    Default PME.
-    """
-    # TODO: currently, serialization scheme doesn't work for default values since we're not using PlainValidator
+    # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
+    small_molecule_forcefield: str = Field(
+        default="openff-2.1.1", description="Name of the force field to be used for :class:`SmallMoleculeComponent`"
+    )
+
+    nonbonded_method: str = Field(
+        default="PME",
+        description="Method for treating nonbonded interactions, options are currently ``'CutoffNonPeriodic'``, ``'CutoffPeriodic'``, ``'Ewald'``, ``'LJPME'``, ``'NoCutoff'``, ``'PME'``. Default ``'PME'``. ",
+    )
+
+    # TODO: currently, serialization scheme doesn't work for default values, will be fixed in pydantic v2.12
     # see https://github.com/pydantic/pydantic/issues/11446
     nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = Field(
         default=1.0 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
