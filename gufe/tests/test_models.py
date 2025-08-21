@@ -48,7 +48,7 @@ def test_settings_schema():
                     "redox_potential": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation redox potential",
+                        "description": "Simulation redox potential in millivolts (mV).",
                         "title": "Redox Potential",
                     },
                 },
@@ -238,9 +238,14 @@ class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            (1.0, True, 1.0),
             (None, True, None),
-            ("1", True, 1.0),
+            (1 * unit.mV, True, 1 * unit.mV),
+            ("1.0 mV", True, 1 * unit.mV),
+            ("0.001 volts", True, 1 * unit.mV),
+            (0.001 * unit.volt, True, 1 * unit.mV),
+            (0.001 * unit.nanometer, False, None),
+            ("0.001 nm", False, None),
+
         ],
     )
     def test_thermo_redox(self, value, valid, expected):

@@ -6,15 +6,16 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypeAlias
 
 from annotated_types import Ge
 from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-from .types import AtmQuantity, KelvinQuantity, NanometerQuantity
+from .types import AtmQuantity, GufeQuantity, KelvinQuantity, NanometerQuantity, specify_quantity_units
 
+VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
 
 class SettingsBaseModel(_BaseModel):
     """Settings and modifications we want for all settings classes."""
@@ -105,7 +106,7 @@ class ThermoSettings(SettingsBaseModel):
     temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
     pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
-    redox_potential: float | None = Field(None, description="Simulation redox potential")
+    redox_potential: VoltsQuantity | None = Field(None, description="Simulation redox potential in millivolts (mV).")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
