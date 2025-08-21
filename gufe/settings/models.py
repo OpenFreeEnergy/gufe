@@ -162,7 +162,9 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
     Default PME.
     """
-    nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = 1.0 * unit.nanometer
+    # TODO: currently, serialization scheme doesn't work for default values since we're not using PlainValidator
+    # see https://github.com/pydantic/pydantic/issues/11446
+    nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = 1.0 * unit.nanometer  # type: ignore
     """
     Cutoff value for short range nonbonded interactions.
     Default 1.0 * unit.nanometer.
