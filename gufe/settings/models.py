@@ -135,7 +135,6 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    # constraints: CaseInsensitiveStrEnum('Constraints', ['hbonds', 'allbonds', 'hangles']) | None = 'hbonds'
     constraints: Annotated[Literal["hbonds", "allbonds", "hangles"], BeforeValidator(_to_lowercase)] | None = "hbonds"
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
