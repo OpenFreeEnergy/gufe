@@ -3,15 +3,13 @@
 Custom types that inherit from openff.units.Quantity and are pydantic-compatible.
 """
 
-from typing import Annotated, Any, Dict, TypeAlias
+from typing import Annotated, Any, TypeAlias
 
-import numpy
 from openff.units import Quantity
 from pydantic import (
     AfterValidator,
     BeforeValidator,
     GetCoreSchemaHandler,
-    PlainSerializer,
 )
 from pydantic_core import core_schema
 
@@ -21,19 +19,6 @@ from ..vendor.openff.interchange._annotations import (
     quantity_json_serializer,
     quantity_validator,
 )
-
-
-def plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
-    magnitude = quantity.m
-
-    if isinstance(magnitude, numpy.ndarray):
-        # This could be something fancier, list a bytestring
-        magnitude = magnitude.tolist()
-
-    return {
-        "val": magnitude,
-        "unit": str(quantity.units),
-    }
 
 
 class _QuantityPydanticAnnotation:
@@ -55,7 +40,7 @@ class _QuantityPydanticAnnotation:
             schema=core_schema.is_instance_schema(Quantity),
         )
 
-        serialize_schema = core_schema.plain_serializer_function_ser_schema(plain_quantity_serializer)
+        serialize_schema = core_schema.wrap_serializer_function_ser_schema(quantity_json_serializer)
         return core_schema.json_or_python_schema(
             json_schema=json_schema,
             python_schema=python_schema,
