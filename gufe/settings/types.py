@@ -13,9 +13,9 @@ from pydantic import (
     Field,
     PlainSerializer,
     PlainValidator,
+    ValidationInfo,
     WithJsonSchema,
 )
-
 from ..vendor.openff.interchange._annotations import (
     _duck_to_nanometer,
     _is_box_shape,
@@ -24,8 +24,21 @@ from ..vendor.openff.interchange._annotations import (
 )
 
 
-def _plain_quantity_validator(value: Any) -> Quantity:
+def _plain_quantity_validator(
+    value: Any,
+    info: ValidationInfo,
+) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
+    if info.mode == "json":
+        assert isinstance(value, dict), "Quantity must be in dict form here."
+
+        # this is coupled to how a Quantity looks in JSON
+        return Quantity(value["val"], value["unit"])
+
+        # some more work may be needed to work with arrays, lists, tuples, etc.
+
+    assert info.mode == "python"
+
     if isinstance(value, Quantity):
         return value
     elif isinstance(value, str):
@@ -56,7 +69,7 @@ def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
 GufeQuantity = Annotated[
     Quantity,
     PlainValidator(_plain_quantity_validator),
-    WithJsonSchema({"type": "number"}),
+    WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
 ]
 
