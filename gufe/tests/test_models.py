@@ -104,7 +104,6 @@ def test_openmmffsettings_schema():
             "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
             "nonbonded_cutoff": {
                 "description": "Cutoff value for short range nonbonded interactions.",
-                "ge": 0,
                 "title": "Nonbonded Cutoff",
                 "type": "number",
             },

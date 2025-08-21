@@ -10,47 +10,55 @@ from pydantic import (
     AfterValidator,
     BeforeValidator,
     GetCoreSchemaHandler,
+    Field,
+    PlainSerializer,
+    PlainValidator,
+    WithJsonSchema,
 )
-from pydantic_core import core_schema
 
 from ..vendor.openff.interchange._annotations import (
     _duck_to_nanometer,
     _is_box_shape,
     _unit_validator_factory,
     _unwrap_list_of_openmm_quantities,
-    quantity_json_serializer,
-    quantity_validator,
 )
 
 
-class _QuantityPydanticAnnotation:
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls,
-        source: Any,
-        handler: GetCoreSchemaHandler,
-    ) -> core_schema.CoreSchema:
-        """
-        This Annotation lets us define a GufeQuantity that is identical to
-        an openff-units Quantity, except it's also pydantic-compatible.
-        """
-        json_schema = core_schema.with_info_wrap_validator_function(
-            function=quantity_validator, schema=core_schema.float_schema()
-        )
-        python_schema = core_schema.with_info_wrap_validator_function(
-            function=quantity_validator,
-            schema=core_schema.is_instance_schema(Quantity),
-        )
+def _plain_quantity_validator(value: Any) -> Quantity:
+    """Take Quantity-like objects and convert them to Quantity objects."""
+    if isinstance(value, Quantity):
+        return value
+    elif isinstance(value, str):
+        return Quantity(value)
+    elif isinstance(value, dict):
+        return Quantity(value["val"], value["unit"])
+    if "openmm" in str(type(value)):
+        from openff.units.openmm import from_openmm
 
-        serialize_schema = core_schema.wrap_serializer_function_ser_schema(quantity_json_serializer)
-        return core_schema.json_or_python_schema(
-            json_schema=json_schema,
-            python_schema=python_schema,
-            serialization=serialize_schema,
-        )
+        return from_openmm(value)
+    else:
+        raise ValueError(f"Invalid type {type(value)} for Quantity")
 
 
-GufeQuantity = Annotated[Quantity, _QuantityPydanticAnnotation]
+def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
+    magnitude = quantity.m
+
+    if isinstance(magnitude, numpy.ndarray):
+        # This could be something fancier, list a bytestring
+        magnitude = magnitude.tolist()
+
+    return {
+        "val": magnitude,
+        "unit": str(quantity.units),
+    }
+
+
+GufeQuantity = Annotated[
+    Quantity,
+    PlainValidator(_plain_quantity_validator),
+    WithJsonSchema({"type": "number"}),
+    PlainSerializer(_plain_quantity_serializer),
+]
 
 
 def specify_quantity_units(unit_name: str) -> AfterValidator:
@@ -65,8 +73,6 @@ def specify_quantity_units(unit_name: str) -> AfterValidator:
     -------
     AfterValidator
         An AfterValidator for defining a custom Quantity type.
-
-
 
     """
 
@@ -97,7 +103,6 @@ NanosecondQuantity: TypeAlias = Annotated[
     specify_quantity_units("nanosecond"),
 ]
 """Convert a pint.Quantity or to nanoseconds, if possible."""
-
 
 PicosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
