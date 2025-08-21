@@ -3,14 +3,15 @@
 Custom types that inherit from openff.units.Quantity and are pydantic-compatible.
 """
 
-from typing import Annotated, Any, TypeAlias
+from typing import Annotated, Any, Dict, TypeAlias
 
+import numpy
 from openff.units import Quantity
 from pydantic import (
     AfterValidator,
     BeforeValidator,
-    GetCoreSchemaHandler,
     Field,
+    GetCoreSchemaHandler,
     PlainSerializer,
     PlainValidator,
     ValidationInfo,
@@ -68,6 +69,7 @@ def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
 
 GufeQuantity = Annotated[
     Quantity,
+    Field(validate_default=True),  # fail fast up front if the default isn't valid.
     PlainValidator(_plain_quantity_validator),
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
