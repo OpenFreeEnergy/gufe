@@ -56,8 +56,8 @@ _CHIRALITY_STR_TO_RDKIT = {v: k for k, v in _CHIRALITY_RDKIT_TO_STR.items()}
 
 
 # ions and charges pulled from amber:
-# https://github.com/Amber-MD/AmberClassic/blob/42e88bf9a2214ba008140280713a430f3ecd4a90/dat/leap/lib/atomic_ions.lib#L1C1-L68C6
-ions_dict = {
+# see `amber list <https://github.com/Amber-MD/AmberClassic/blob/42e88bf9a2214ba008140280713a430f3ecd4a90/dat/leap/lib/atomic_ions.lib#L1C1-L68C6`_
+_ions_dict = {
     "AG": 1,
     "Ag": 2,
     "AL": 3,
@@ -268,15 +268,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
         def _get_ion_charge(ion_key):
             ik = ion_key.strip()  # strip b/c we never want whitespace
 
-            if charge := ions_dict.get(ik):
+            if charge := _ions_dict.get(ik):
                 return charge
-            elif charge := ions_dict.get(ik.upper()):
+            elif charge := _ions_dict.get(ik.upper()):
                 return charge
-            elif charge := ions_dict.get(ik.strip(digits)):
+            elif charge := _ions_dict.get(ik.strip(digits)):
                 return charge
-            elif charge := ions_dict.get(ik.strip(digits).upper()):
+            elif charge := _ions_dict.get(ik.strip(digits).upper()):
                 return charge
-            elif charge := ions_dict.get(ik.strip(digits).title()):
+            elif charge := _ions_dict.get(ik.strip(digits).title()):
                 return charge
 
             # raise an error if we can't find a match
