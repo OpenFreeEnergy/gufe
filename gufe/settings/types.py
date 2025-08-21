@@ -18,6 +18,7 @@ from ..vendor.openff.interchange._annotations import (
     _unwrap_list_of_openmm_quantities,
     quantity_json_serializer,
     quantity_validator,
+    _BoxQuantity as BoxQuantity,
 )
 
 
