@@ -245,7 +245,6 @@ class TestSettingsValidation:
             (0.001 * unit.volt, True, 1 * unit.mV),
             (0.001 * unit.nanometer, False, None),
             ("0.001 nm", False, None),
-
         ],
     )
     def test_thermo_redox(self, value, valid, expected):

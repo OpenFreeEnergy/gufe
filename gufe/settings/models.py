@@ -17,6 +17,7 @@ from .types import AtmQuantity, GufeQuantity, KelvinQuantity, NanometerQuantity,
 
 VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
 
+
 class SettingsBaseModel(_BaseModel):
     """Settings and modifications we want for all settings classes."""
 
