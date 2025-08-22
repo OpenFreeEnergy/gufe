@@ -14,11 +14,12 @@ from pydantic import (
 from pydantic_core import core_schema
 
 from ..vendor.openff.interchange._annotations import (
+    _duck_to_nanometer,
+    _is_box_shape,
     _unit_validator_factory,
     _unwrap_list_of_openmm_quantities,
     quantity_json_serializer,
     quantity_validator,
-    _BoxQuantity as BoxQuantity,
 )
 
 
@@ -124,4 +125,11 @@ GufeArrayQuantity: TypeAlias = Annotated[
 NanometerArrayQuantity: TypeAlias = Annotated[
     GufeArrayQuantity,
     specify_quantity_units("nanometer"),
+]
+
+BoxQuantity = Annotated[
+    NanometerQuantity,
+    AfterValidator(_is_box_shape),
+    BeforeValidator(_duck_to_nanometer),
+    BeforeValidator(_unwrap_list_of_openmm_quantities),
 ]
