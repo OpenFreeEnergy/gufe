@@ -11,12 +11,12 @@ from pydantic import (
     AfterValidator,
     BeforeValidator,
     Field,
-    GetCoreSchemaHandler,
     PlainSerializer,
     PlainValidator,
     ValidationInfo,
     WithJsonSchema,
 )
+
 from ..vendor.openff.interchange._annotations import (
     _duck_to_nanometer,
     _is_box_shape,
