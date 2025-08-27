@@ -30,10 +30,10 @@ def _plain_quantity_validator(
     info: ValidationInfo,
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
+
     # logic from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
     if info.mode == "json":
         assert isinstance(value, dict), "Quantity must be in dict form here."
-
         # this is coupled to how a Quantity looks in JSON
         return Quantity(value["val"], value["unit"])
 
