@@ -299,8 +299,21 @@ class TestFreezing:
         s1 = Settings.get_defaults()
         s2 = s1.frozen_copy()
 
-        # TODO: equality checks have changed in v2 such that this is no longer true
         assert s1 == s2
+
+    def test_frozen_equality_changed(self):
+        # the frozen-ness of Settings doesn't alter its contents
+        # therefore a frozen/unfrozen Settings which are otherwise identical
+        # should be considered equal
+        s1 = Settings.get_defaults()
+        s2 = s1.frozen_copy()
+        s1.forcefield_settings.constraints = "allbonds"
+        assert s1 != s2
+
+    def test_settings_equality_not_settings(self):
+        """check that our custom __eq__ implementation handles non-settings objects"""
+        s1 = Settings.get_defaults()
+        assert s1 != "not a settings object"
 
     def test_set_subsection(self):
         # check that attempting to set a subsection of settings still respects
