@@ -30,6 +30,7 @@ def _plain_quantity_validator(
     info: ValidationInfo,
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
+    # logic from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
     if info.mode == "json":
         assert isinstance(value, dict), "Quantity must be in dict form here."
 
@@ -55,6 +56,7 @@ def _plain_quantity_validator(
 
 
 def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
+    # logic from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
     magnitude = quantity.m
 
     if isinstance(magnitude, numpy.ndarray):
@@ -98,54 +100,56 @@ NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanometer"),
 ]
-"""Convert a pint.Quantity or to nanometers, if possible."""
+"""Convert a pint.Quantity to nanometers, if possible."""
 
 AtmQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("atm"),
 ]
-"""Convert a pint.Quantity or to atm, if possible."""
+"""Convert a pint.Quantity to atm, if possible."""
 
 KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kelvin"),
 ]
-"""Convert a pint.Quantity or to kelvin, if possible."""
+"""Convert a pint.Quantity to kelvin, if possible."""
 
 # types used elsewhere in the ecosystem
 NanosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanosecond"),
 ]
-"""Convert a pint.Quantity or to nanoseconds, if possible."""
+"""Convert a pint.Quantity to nanoseconds, if possible."""
 
 PicosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("picosecond"),
 ]
-"""Convert a pint.Quantity or to picoseconds, if possible."""
+"""Convert a pint.Quantity to picoseconds, if possible."""
 
 AngstromQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("angstrom"),
 ]
-"""Convert a pint.Quantity or to angstroms, if possible."""
+"""Convert a pint.Quantity to angstroms, if possible."""
 
 KCalPerMolQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kilocalorie_per_mole"),
 ]
-"""Convert a pint.Quantity or to kcal/mol, if possible."""
+"""Convert a pint.Quantity to kcal/mol, if possible."""
 
 GufeArrayQuantity: TypeAlias = Annotated[
     GufeQuantity,
     BeforeValidator(_unwrap_list_of_openmm_quantities),
 ]
+"""Convert to a list of pint.Quantity objects, if possible."""
 
 NanometerArrayQuantity: TypeAlias = Annotated[
     GufeArrayQuantity,
     specify_quantity_units("nanometer"),
 ]
+"""Convert to a list of pint.Quantity objects to nanometers, if possible."""
 
 BoxQuantity = Annotated[
     NanometerQuantity,
