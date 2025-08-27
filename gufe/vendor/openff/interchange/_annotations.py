@@ -6,14 +6,6 @@ from typing import Annotated, Any
 import numpy
 from annotated_types import Gt
 from openff.units import Quantity  # import from units so we don't have to build toolkit just for docs
-from pydantic import (
-    AfterValidator,
-    BeforeValidator,
-    ValidationInfo,
-    ValidatorFunctionWrapHandler,
-    WrapSerializer,
-    WrapValidator,
-)
 
 PositiveFloat = Annotated[float, Gt(0)]
 
@@ -45,160 +37,19 @@ def _unit_validator_factory(unit: str) -> Callable:
     return functools.partial(_has_compatible_dimensionality, unit=unit, convert=True)
 
 
-(
-    _is_distance,
-    _is_velocity,
-    _is_mass,
-    _is_temperature,
-) = (
+(_is_distance,) = (
     _dimensionality_validator_factory(unit=_unit)
     for _unit in [
         "nanometer",
-        "nanometer / picosecond",
-        "unified_atomic_mass_unit",
-        "kelvin",
     ]
 )
 
-(
-    _is_dimensionless,
-    _is_kj_mol,
-    _is_nanometer,
-    _is_degree,
-    _is_elementary_charge,
-) = (
+(_is_nanometer,) = (
     _unit_validator_factory(unit=_unit)
     for _unit in [
-        "dimensionless",
-        "kilojoule / mole",
         "nanometer",
-        "degree",
-        "elementary_charge",
     ]
 )
-
-
-def quantity_validator(
-    value: str | Quantity | dict,
-    handler: ValidatorFunctionWrapHandler,
-    info: ValidationInfo,
-) -> Quantity:
-    """Take Quantity-like objects and convert them to Quantity objects."""
-    if info.mode == "json":
-        assert isinstance(value, dict), "Quantity must be in dict form here."
-
-        # this is coupled to how a Quantity looks in JSON
-        return Quantity(value["val"], value["unit"])
-
-        # some more work may be needed to work with arrays, lists, tuples, etc.
-
-    assert info.mode == "python"
-
-    if isinstance(value, Quantity):
-        return value
-    elif isinstance(value, str):
-        return Quantity(value)
-    elif isinstance(value, dict):
-        return Quantity(value["val"], value["unit"])
-    if "openmm" in str(type(value)):
-        from openff.units.openmm import from_openmm
-
-        return from_openmm(value)
-    else:
-        raise ValueError(f"Invalid type {type(value)} for Quantity")
-
-
-def quantity_json_serializer(
-    quantity: Quantity,
-    nxt,
-) -> dict:
-    """Serialize a Quantity to a JSON-compatible dictionary."""
-    magnitude = quantity.m
-
-    if isinstance(magnitude, numpy.ndarray):
-        # This could be something fancier, list a bytestring
-        magnitude = magnitude.tolist()
-
-    return {
-        "val": magnitude,
-        "unit": str(quantity.units),
-    }
-
-
-# Pydantic v2 likes to marry validators and serializers to types with Annotated
-# https://docs.pydantic.dev/latest/concepts/validators/#annotated-validators
-_Quantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_DimensionlessQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_dimensionless),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_DistanceQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_distance),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_LengthQuantity = _DistanceQuantity
-
-_VelocityQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_velocity),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_MassQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_mass),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_TemperatureQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_temperature),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_DegreeQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_degree),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_ElementaryChargeQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_elementary_charge),
-    WrapSerializer(quantity_json_serializer),
-]
-
-_kJMolQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_kj_mol),
-    WrapSerializer(quantity_json_serializer),
-]
-
-
-def _is_positions_shape(quantity: Quantity) -> Quantity:
-    if quantity.m.shape[1] == 3:
-        return quantity
-    else:
-        raise ValueError(
-            f"Quantity {quantity} of wrong shape ({quantity.shape}) to be positions.",
-        )
 
 
 def _duck_to_nanometer(value: Any):
@@ -207,16 +58,6 @@ def _duck_to_nanometer(value: Any):
         return Quantity(value, "nanometer")
     else:
         return value
-
-
-_PositionsQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_nanometer),
-    AfterValidator(_is_positions_shape),
-    BeforeValidator(_duck_to_nanometer),
-    WrapSerializer(quantity_json_serializer),
-]
 
 
 def _is_box_shape(quantity) -> Quantity:
@@ -244,14 +85,3 @@ def _unwrap_list_of_openmm_quantities(value: Any):
 
     else:
         return value
-
-
-_BoxQuantity = Annotated[
-    Quantity,
-    WrapValidator(quantity_validator),
-    AfterValidator(_is_distance),
-    AfterValidator(_is_box_shape),
-    BeforeValidator(_duck_to_nanometer),
-    BeforeValidator(_unwrap_list_of_openmm_quantities),
-    WrapSerializer(quantity_json_serializer),
-]
