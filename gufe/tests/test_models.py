@@ -8,7 +8,6 @@ import json
 
 import pytest
 from openff.units import unit
-from openff.units.openmm import from_openmm
 from openmm import unit as openmm_unit
 
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
@@ -70,7 +69,7 @@ def test_settings_schema():
     }
     ser_schema = Settings.model_json_schema(mode="serialization")
     val_schema = Settings.model_json_schema(mode="validation")
-    # TODO: should our serialization and validation schemas really be the same?
+
     assert ser_schema == expected_schema
     assert val_schema == expected_schema
 
