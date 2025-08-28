@@ -6,16 +6,14 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Annotated, Any, Literal
 
 from annotated_types import Ge
 from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-from .types import AtmQuantity, GufeQuantity, KelvinQuantity, NanometerQuantity, specify_quantity_units
-
-VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
+from .types import AtmQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
 
 
 class SettingsBaseModel(_BaseModel):

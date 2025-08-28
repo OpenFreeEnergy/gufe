@@ -139,6 +139,9 @@ KCalPerMolQuantity: TypeAlias = Annotated[
 ]
 """Convert a pint.Quantity to kcal/mol, if possible."""
 
+VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
+"""Convert a pint.Quantity to volts, if possible."""
+
 GufeArrayQuantity: TypeAlias = Annotated[
     GufeQuantity,
     BeforeValidator(_unwrap_list_of_openmm_quantities),

@@ -27,29 +27,9 @@ def _has_compatible_dimensionality(
         )
 
 
-def _dimensionality_validator_factory(unit: str) -> Callable:
-    """Return a function, meant to be passed to a validator, that checks for a specific unit."""
-    return functools.partial(_has_compatible_dimensionality, unit=unit, convert=False)
-
-
 def _unit_validator_factory(unit: str) -> Callable:
     """Return a function, meant to be passed to a validator, that checks for a specific unit."""
     return functools.partial(_has_compatible_dimensionality, unit=unit, convert=True)
-
-
-(_is_distance,) = (
-    _dimensionality_validator_factory(unit=_unit)
-    for _unit in [
-        "nanometer",
-    ]
-)
-
-(_is_nanometer,) = (
-    _unit_validator_factory(unit=_unit)
-    for _unit in [
-        "nanometer",
-    ]
-)
 
 
 def _duck_to_nanometer(value: Any):
