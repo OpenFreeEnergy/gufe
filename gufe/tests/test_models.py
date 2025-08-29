@@ -98,7 +98,7 @@ def test_openmmffsettings_schema():
                 "type": "array",
             },
             "small_molecule_forcefield": {
-                "default": "openff-2.1.1",
+                "default": "openff-2.2.1",
                 "title": "Small Molecule Forcefield",
                 "type": "string",
             },
