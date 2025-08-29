@@ -238,9 +238,9 @@ Any nested ``GufeTokenizable``\s are left as-is.
         ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)})
         ],
     'edges': [
-        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=toluene-solvent, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
-        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=styrene-solvent, components={'ligand': SmallMoleculeComponent(name=styrene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None),
-        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-d01baed9cf2500c393bd6ddb35ee38aa>, name=None)
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=toluene-solvent, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-489fb1395a32c5183bcc1d43fa521960>, name=None),
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=styrene-solvent, components={'ligand': SmallMoleculeComponent(name=styrene), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-489fb1395a32c5183bcc1d43fa521960>, name=None),
+        Transformation(stateA=ChemicalSystem(name=benzene-solvent, components={'ligand': SmallMoleculeComponent(name=benzene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=phenol-solvent, components={'ligand': SmallMoleculeComponent(name=phenol), 'solvent': SolventComponent(name=O, K+, Cl-)}), protocol=<Protocol-489fb1395a32c5183bcc1d43fa521960>, name=None)
         ],
     'name': None,
     '__qualname__': 'AlchemicalNetwork',
@@ -310,7 +310,7 @@ To show the structure of a keyed chain, below we have redacted all information e
     ('SmallMoleculeComponent-3b51f5f92521c712049da092ab061930', {...}),
     ('SmallMoleculeComponent-ec3c7a92771f8872dab1a9fc4911c795', {...}),
     ('SmallMoleculeComponent-8225dfb11f2e8157a3fcdcd673d3d40e', {...}),
-    ('Protocol-d01baed9cf2500c393bd6ddb35ee38aa', {...}),
+    ('Protocol-489fb1395a32c5183bcc1d43fa521960', {...}),
     ('ChemicalSystem-ba83a53f18700b3738680da051ff35f3', {
         'components': {
             'ligand': {':gufe-key:': 'SmallMoleculeComponent-3b51f5f92521c712049da092ab061930'},
@@ -332,12 +332,12 @@ To show the structure of a keyed chain, below we have redacted all information e
     ('Transformation-e8d1ccf53116e210d1ccbc3870007271', {
         'stateA': {':gufe-key:': 'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755'},
         'stateB': {':gufe-key:': 'ChemicalSystem-ba83a53f18700b3738680da051ff35f3'},
-        'protocol': {':gufe-key:': 'DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa'},
+        'protocol': {':gufe-key:': 'DummyProtocol-489fb1395a32c5183bcc1d43fa521960'},
         ...}),
     ('Transformation-4d0f802817071c8d14b37efd35187318', {
         'stateA': {':gufe-key:': 'ChemicalSystem-3c648332ff8dccc03a1e1a3d44bc9755'},
         'stateB': {':gufe-key:': 'ChemicalSystem-655f4d0008a537fe811b11a2dc4a029e'},
-        'protocol': {':gufe-key:': 'DummyProtocol-d01baed9cf2500c393bd6ddb35ee38aa'},
+        'protocol': {':gufe-key:': 'DummyProtocol-489fb1395a32c5183bcc1d43fa521960'},
         ...}),
     ('AlchemicalNetwork-f8bfd63bc848672aa52b081b4d68fadf', {
         'nodes': [
