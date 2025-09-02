@@ -23,7 +23,7 @@ class SettingsBaseModel(_BaseModel):
     model_config = ConfigDict(
         extra="forbid",
         arbitrary_types_allowed=True,  # needed to parse custom types
-        # validate_default=True,
+        validate_default=True,
     )
 
     def _ipython_display_(self):
