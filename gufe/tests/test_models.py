@@ -351,6 +351,20 @@ class BoxSettingsModel(SettingsBaseModel):
     box_vectors: BoxQuantity
 
 
+def test_box_quantity_schema():
+    expected_schema = {
+        "additionalProperties": False,
+        "properties": {"box_vectors": {"title": "Box Vectors", "type": "number"}},
+        "required": ["box_vectors"],
+        "title": "BoxSettingsModel",
+        "type": "object",
+    }
+    ser_schema = BoxSettingsModel.model_json_schema(mode="serialization")
+    val_schema = BoxSettingsModel.model_json_schema(mode="validation")
+    assert ser_schema == expected_schema
+    assert val_schema == expected_schema
+
+
 @pytest.mark.parametrize(
     "value",
     [
