@@ -1,3 +1,5 @@
+# This code is part of OpenFE and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
 # adapted from from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 """
 Custom types that inherit from openff.units.Quantity and are pydantic-compatible.
