@@ -143,20 +143,18 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(constraints=value)
             assert s.constraints == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="Input should be 'hbonds', 'allbonds' or 'hangles'"):
                 _ = OpenMMSystemGeneratorFFSettings(constraints=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
             (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
-            (0 * unit.nanometer, True, 0 * unit.nanometer),
             (openmm_unit.Quantity(2.0, openmm_unit.nanometer), True, 2.0 * unit.nanometer),
             ({"val": 1.0, "unit": unit.nanometer}, True, 1.0 * unit.nanometer),
             (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
             ("1.1", False, None),
-            (-1.0 * unit.nanometer, False, None),
             # NOTE: this is not precisely equal for smaller values due to pint unit floating point precision
             (100.0 * unit.angstrom, True, 10.0 * unit.nanometer),
             (300 * unit.kelvin, False, None),
@@ -170,7 +168,22 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
             assert s.nonbonded_cutoff == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="nonbonded_cutoff"):
+                _ = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            (0 * unit.nanometer, True, 0 * unit.nanometer),
+            (-1.0 * unit.nanometer, False, None),
+        ],
+    )
+    def test_negative_cutoff_error(self, value, valid, expected):
+        if valid:
+            s = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
+            assert s.nonbonded_cutoff == expected
+        else:
+            with pytest.raises(ValueError, match=" Input should be greater than or equal to 0"):
                 _ = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
 
     @pytest.mark.parametrize(
@@ -187,7 +200,7 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
             assert s.nonbonded_method == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="nonbonded_method"):
                 _ = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
 
     @pytest.mark.parametrize(
@@ -205,7 +218,7 @@ class TestSettingsValidation:
             settings = ThermoSettings(temperature=value)
             assert settings.temperature == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="temperature"):
                 _ = ThermoSettings(temperature=value)
 
     @pytest.mark.parametrize(
@@ -222,7 +235,7 @@ class TestSettingsValidation:
             s = ThermoSettings(pressure=value)
             assert s.pressure == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="pressure"):
                 _ = ThermoSettings(pressure=value)
 
     @pytest.mark.parametrize(
@@ -239,7 +252,7 @@ class TestSettingsValidation:
             s = ThermoSettings(ph=value)
             assert s.ph == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="ph"):
                 _ = ThermoSettings(ph=value)
 
     @pytest.mark.parametrize(
@@ -259,7 +272,7 @@ class TestSettingsValidation:
             s = ThermoSettings(redox_potential=value)
             assert s.redox_potential == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="redox"):
                 _ = ThermoSettings(redox_potential=value)
 
 
