@@ -6,11 +6,14 @@ json round trip, and physical unit testing belongs here.
 
 import json
 
+import numpy as np
 import pytest
 from openff.units import unit
 from openmm import unit as openmm_unit
 
+from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
+from gufe.settings.types import BoxQuantity
 
 
 def test_settings_schema():
@@ -342,3 +345,35 @@ class TestFreezing:
 
         with pytest.raises(AttributeError, match="immutable"):
             s.thermo_settings = ts
+
+
+class BoxSettingsModel(SettingsBaseModel):
+    box_vectors: BoxQuantity
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
+        np.asarray([1.0, 1.0, 1.0]),
+        [1.0, 1.0, 1.0],
+        [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]] * unit.angstrom,
+    ],
+)
+def test_valid_box_quantity(value):
+    box_settings = BoxSettingsModel(box_vectors=value)
+    assert box_settings.box_vectors.units == unit.nanometer
+
+
+# TODO: improve this error handling
+# @pytest.mark.parametrize(
+#     "value,err_msg",
+#     [
+#         ("a string", None),
+#         (1.0*unit.nanometer, None),
+#         (1.0, None),
+#     ],
+# )
+# def test_invalid_box_quantity(value, err_msg):
+#     with pytest.raises(RuntimeError):
+#         BoxSettingsModel(box_vectors=value)
