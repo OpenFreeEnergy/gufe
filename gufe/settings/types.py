@@ -34,15 +34,12 @@ def _plain_quantity_validator(
             # this is coupled to how a Quantity looks in JSON
             return Quantity(quantity_dict["val"], quantity_dict["unit"])
         except KeyError:
-            raise (ValueError, "Quantity must be a dict with keys 'val' and 'unit'.")
+            raise ValueError("Quantity must be a dict with keys 'val' and 'unit'.")
 
     if info.mode == "json":
         if not isinstance(value, dict):
-            raise (
-                ValueError,
-                f"Quantity must be represented as a dict, not {type(value)}, when in JSON representation.",
-            )
-        dict_to_quantity(value)
+            raise ValueError(f"Quantity must be represented as a dict, not {type(value)}, when in JSON representation.")
+        return dict_to_quantity(value)
 
     elif info.mode == "python":
         if isinstance(value, Quantity):
