@@ -61,7 +61,8 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         u2 = DummyUnit()
         assert u1.key != u2.key
 
-    def test_execute(self, tmpdir):
+    @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
+    def test_execute(self, tmpdir, capture_stderr_stdout):
         with tmpdir.as_cwd():
             unit = DummyUnit()
 
@@ -71,11 +72,14 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            stderr = Path("stderr") / str(unit.key)
-            stderr.mkdir(parents=True)
+            stderr = None
+            stdout = None
+            if capture_stderr_stdout:
+                stderr = Path("stderr") / str(unit.key)
+                stderr.mkdir(parents=True)
 
-            stdout = Path("stdout") / str(unit.key)
-            stdout.mkdir(parents=True)
+                stdout = Path("stdout") / str(unit.key)
+                stdout.mkdir(parents=True)
 
             ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
@@ -84,6 +88,9 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
             for output_type in ("stderr", "stdout"):
                 data = getattr(u, output_type)
+                if not capture_stderr_stdout:
+                    assert data == {}
+                    continue
                 for process_number in range(1, 3):
                     entry = f"dummy_execute_{output_type}_process_{process_number}"
                     output = f"Sample {output_type} from process {process_number}".encode()
@@ -103,13 +110,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            stderr = Path("stderr") / str(unit.key)
-            stderr.mkdir(parents=True)
-
-            stdout = Path("stdout") / str(unit.key)
-            stdout.mkdir(parents=True)
-
-            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             with pytest.raises(ExecutionInterrupt):
                 unit.execute(context=ctx, an_input=3)
@@ -128,13 +129,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            stderr = Path("stderr") / str(unit.key)
-            stderr.mkdir(parents=True)
-
-            stdout = Path("stdout") / str(unit.key)
-            stdout.mkdir(parents=True)
-
-            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             with pytest.raises(KeyboardInterrupt):
                 unit.execute(context=ctx, an_input=3)
