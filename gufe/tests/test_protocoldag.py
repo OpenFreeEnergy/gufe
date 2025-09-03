@@ -19,10 +19,13 @@ class WriterUnit(gufe.ProtocolUnit):
             out.write(f"unit {my_id} existed!\n")
         with open(os.path.join(ctx.scratch, f"unit_{my_id}_scratch.txt"), "w") as out:
             out.write(f"unit {my_id} was here\n")
-        with open(os.path.join(ctx.stderr, f"unit_{my_id}_stderr"), "w") as out:
-            out.write(f"unit {my_id} wrote to stderr")
-        with open(os.path.join(ctx.stdout, f"unit_{my_id}_stdout"), "w") as out:
-            out.write(f"unit {my_id} wrote to stdout")
+
+        if ctx.stderr:
+            with open(os.path.join(ctx.stderr, f"unit_{my_id}_stderr"), "w") as out:
+                out.write(f"unit {my_id} wrote to stderr")
+        if ctx.stdout:
+            with open(os.path.join(ctx.stdout, f"unit_{my_id}_stdout"), "w") as out:
+                out.write(f"unit {my_id} wrote to stdout")
 
         return {
             "log": "finished",
@@ -74,7 +77,8 @@ def writefile_dag():
 
 @pytest.mark.parametrize("keep_shared", [False, True])
 @pytest.mark.parametrize("keep_scratch", [False, True])
-def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
+@pytest.mark.parametrize("capture_stderr_stdout", [False, True])
+def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag, capture_stderr_stdout):
     with tmpdir.as_cwd():
         shared = pathlib.Path("shared")
         shared.mkdir(parents=True)
@@ -82,11 +86,13 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
         scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path("stderr")
-        stderr.mkdir(parents=True)
-
-        stdout = pathlib.Path("stdout")
-        stdout.mkdir(parents=True)
+        stderr = None
+        stdout = None
+        if capture_stderr_stdout:
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
 
         # run dag
         execute_DAG(
@@ -109,16 +115,23 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
                 f"scratch_{str(pu.key)}_attempt_0",
                 f"unit_{identity}_scratch.txt",
             )
-            stderr_file = os.path.join(
-                stderr,
-                f"stderr_{str(pu.key)}_attempt_0",
-                f"unit_{identity}_stderr",
-            )
-            stdout_file = os.path.join(
-                stdout,
-                f"stdout_{str(pu.key)}_attempt_0",
-                f"unit_{identity}_stdout",
-            )
+
+            if capture_stderr_stdout:
+                stderr_file = os.path.join(
+                    stderr,
+                    f"stderr_{str(pu.key)}_attempt_0",
+                    f"unit_{identity}_stderr",
+                )
+                stdout_file = os.path.join(
+                    stdout,
+                    f"stdout_{str(pu.key)}_attempt_0",
+                    f"unit_{identity}_stdout",
+                )
+
+                # stderr and stdout are always removed since their
+                # contents are included in the unit results
+                assert not os.path.exists(stderr_file)
+                assert not os.path.exists(stdout_file)
 
             if keep_shared:
                 assert os.path.exists(shared_file)
@@ -128,11 +141,6 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag):
                 assert os.path.exists(scratch_file)
             else:
                 assert not os.path.exists(scratch_file)
-
-            # stderr and stdout are always removed since their
-            # contents are included in the unit results
-            assert not os.path.exists(stderr_file)
-            assert not os.path.exists(stdout_file)
 
         # check that our shared and scratch basedirs are left behind
         assert shared.exists()

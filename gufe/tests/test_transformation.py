@@ -305,8 +305,6 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
                 protocoldag2,
                 shared_basedir=shared,
                 scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
             )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])

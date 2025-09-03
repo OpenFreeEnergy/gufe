@@ -389,19 +389,11 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
-
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
-
             with pytest.raises(ValueError, match="I have failed my mission"):
                 execute_DAG(
                     dag,
                     shared_basedir=shared,
                     scratch_basedir=scratch,
-                    stderr_basedir=stderr,
-                    stdout_basedir=stdout,
                     raise_error=True,
                 )
 
@@ -660,15 +652,7 @@ class TestNoDepProtocol:
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
-
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
-
-            dag_result = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
-            )
+            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         assert dag_result.ok()
 
@@ -685,16 +669,8 @@ class TestNoDepProtocol:
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
-
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
-
             # we have no dependencies, so this should be all three Unit results
-            dag_result = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
-            )
+            dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
 
         terminal_results = dag_result.terminal_protocol_unit_results
 
@@ -829,18 +805,10 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmpdir):
         scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path("stderr")
-        stderr.mkdir(parents=True)
-
-        stdout = pathlib.Path("stdout")
-        stdout.mkdir(parents=True)
-
         r = execute_DAG(
             dag,
             shared_basedir=shared,
             scratch_basedir=scratch,
-            stderr_basedir=stderr,
-            stdout_basedir=stdout,
             keep_shared=True,
             keep_scratch=True,
             raise_error=False,
@@ -874,19 +842,11 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmpdir):
         scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path("stderr")
-        stderr.mkdir(parents=True)
-
-        stdout = pathlib.Path("stdout")
-        stdout.mkdir(parents=True)
-
         with pytest.raises(ValueError):
             r = execute_DAG(
                 dag,
                 shared_basedir=shared,
                 scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
                 keep_shared=True,
                 keep_scratch=True,
                 raise_error=False,
