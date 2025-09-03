@@ -27,25 +27,32 @@ def _plain_quantity_validator(
     info: ValidationInfo,
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
-
     # logic adapted from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
+
+    def dict_to_quantity(quantity_dict: dict) -> Quantity:
+        try:
+            # this is coupled to how a Quantity looks in JSON
+            return Quantity(quantity_dict["val"], quantity_dict["unit"])
+        except KeyError:
+            raise (ValueError, "Quantity must be a dict with keys 'val' and 'unit'.")
+
     if info.mode == "json":
-        assert isinstance(value, dict), "Quantity must be in dict form here."
-        # this is coupled to how a Quantity looks in JSON
-        return Quantity(value["val"], value["unit"])
+        if not isinstance(value, dict):
+            raise (
+                ValueError,
+                f"Quantity must be represented as a dict, not {type(value)}, when in JSON representation.",
+            )
+        dict_to_quantity(value)
 
-        # some more work may be needed to work with arrays, lists, tuples, etc.
-
-    assert info.mode == "python"
-
-    if isinstance(value, Quantity):
-        return value
-    elif isinstance(value, str):
-        return Quantity(value)
-    elif isinstance(value, dict):
-        return Quantity(value["val"], value["unit"])
-    else:
-        raise ValueError(f"Invalid type {type(value)} for Quantity")
+    elif info.mode == "python":
+        if isinstance(value, Quantity):
+            return value
+        elif isinstance(value, str):
+            return Quantity(value)
+        elif isinstance(value, dict):
+            return Quantity(value["val"], value["unit"])
+        else:
+            raise ValueError(f"Invalid type {type(value)} for Quantity")
 
 
 def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
