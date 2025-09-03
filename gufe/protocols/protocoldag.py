@@ -353,8 +353,8 @@ def execute_DAG(
     *,
     shared_basedir: Path,
     scratch_basedir: Path,
-    stderr_basedir: Path,
-    stdout_basedir: Path,
+    stderr_basedir: Path | None,
+    stdout_basedir: Path | None,
     keep_shared: bool = False,
     keep_scratch: bool = False,
     raise_error: bool = True,
@@ -373,9 +373,9 @@ def execute_DAG(
         class:``ProtocolUnit`` instances.
     scratch_basedir : Path
         Filesystem path to use for `ProtocolUnit` `scratch` space.
-    stderr_basedir : Path
+    stderr_basedir : Path | None
         Filesystem path to use for `ProtocolUnit` `stderr` archiving.
-    stdout_basedir : Path
+    stdout_basedir : Path | None
         Filesystem path to use for `ProtocolUnit` `stdout` archiving.
     keep_shared : bool
         If True, don't remove shared directories for `ProtocolUnit`s after
@@ -417,11 +417,15 @@ def execute_DAG(
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
             scratch.mkdir()
 
-            stderr = stderr_basedir / f"stderr_{str(unit.key)}_attempt_{attempt}"
-            stderr.mkdir()
+            stderr = None
+            if stderr_basedir:
+                stderr = stderr_basedir / f"stderr_{str(unit.key)}_attempt_{attempt}"
+                stderr.mkdir()
 
-            stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
-            stdout.mkdir()
+            stdout = None
+            if stdout_basedir:
+                stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
+                stdout.mkdir()
 
             context = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
@@ -430,8 +434,10 @@ def execute_DAG(
             all_results.append(result)
 
             # clean up outputs
-            shutil.rmtree(stderr)
-            shutil.rmtree(stdout)
+            if stderr:
+                shutil.rmtree(stderr)
+            if stdout:
+                shutil.rmtree(stdout)
 
             if not keep_scratch:
                 shutil.rmtree(scratch)

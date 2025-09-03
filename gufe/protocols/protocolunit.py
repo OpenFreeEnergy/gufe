@@ -355,7 +355,7 @@ class ProtocolUnit(GufeTokenizable):
         result: ProtocolUnitResult | ProtocolUnitFailure
         start = datetime.datetime.now()
 
-        def extract_bytes(context_dir):
+        def extract_bytes(context_dir) -> dict | None:
             """Iterate over directory of files (depth 1) and create
             dictionary containing their contents.
             """
