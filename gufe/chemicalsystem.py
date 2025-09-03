@@ -129,7 +129,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     def isin(
         self, item: Component | type[Component], return_matches: bool = False
     ) -> bool | tuple[bool, list[Component]]:
-        """Check if a Component or Component type is in this ChemicalSystem.
+        """Check if a Component or Component type is in this ChemicalSystem and optionally return matches.
 
         Parameters
         ----------
@@ -141,9 +141,11 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
 
         Returns
         -------
-        bool
-            True if the Component or Component type is in
-            this ChemicalSystem, False otherwise.
+        bool or tuple(bool, list of Components)
+            If `return_matches` is False, returns True if the item is found, else False.
+            If `return_matches` is True, returns a tuple where the first element
+            is a bool indicating if the item is found, and the second element is
+            a list of matching Components.
         """
         # check the input types
         if not (isinstance(item, Component) or (isinstance(item, type) and issubclass(item, Component))):
