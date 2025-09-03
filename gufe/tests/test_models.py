@@ -362,6 +362,18 @@ class TestArrayQuantity:
         array_settings = self.ArraySettingsModel(array_quantity=value)
         assert array_settings.array_quantity.units == unit.angstrom
 
+    @pytest.mark.parametrize(
+        "value",
+        [
+            5 * unit.angstrom,
+            "5 nanometers",
+        ],
+    )
+    def test_invalid_array_quantity(self, value):
+        with pytest.raises(ValueError, match="not an array"):
+            array_settings = self.ArraySettingsModel(array_quantity=value)
+            assert array_settings.array_quantity.units == unit.angstrom
+
 
 class TestBoxVectors:
     class BoxSettingsModel(SettingsBaseModel):
