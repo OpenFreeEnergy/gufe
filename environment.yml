@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - ambertools >=22.0  # why were we getting old ones?
+  - annotated-types
   - coverage
   - msgpack-python
   - networkx
