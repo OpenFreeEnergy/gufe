@@ -126,7 +126,9 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
                 total_charge += fc
         return total_charge
 
-    def isin(self, item: Component | type[Component], return_matches: bool = False) -> bool | tuple[bool, list[Component]]:
+    def isin(
+        self, item: Component | type[Component], return_matches: bool = False
+    ) -> bool | tuple[bool, list[Component]]:
         """Check if a Component or Component type is in this ChemicalSystem.
 
         Parameters
