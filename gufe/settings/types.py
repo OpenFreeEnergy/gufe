@@ -69,6 +69,14 @@ def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
     }
 
 
+def _is_array(quantity) -> Quantity:
+    if isinstance(quantity.m, numpy.ndarray):
+        return quantity
+    else:
+        raise ValueError(f"Quantity {quantity} is not an array.")
+
+
+# TODO: enforce that this is *not* a list?
 GufeQuantity = Annotated[
     Quantity,
     Field(validate_default=True),  # fail fast up front if the default isn't valid.
@@ -76,6 +84,8 @@ GufeQuantity = Annotated[
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
 ]
+GufeArrayQuantity: TypeAlias = Annotated[GufeQuantity, AfterValidator(_is_array)]
+"""Convert to a pint.Quantity array, if possible."""
 
 
 def specify_quantity_units(unit_name: str) -> AfterValidator:
@@ -141,9 +151,6 @@ KCalPerMolQuantity: TypeAlias = Annotated[
 
 VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
 """Convert a pint.Quantity to volts, if possible."""
-
-GufeArrayQuantity: TypeAlias = GufeQuantity  # TODO: add array checks?
-"""Convert to a list of pint.Quantity objects, if possible."""
 
 NanometerArrayQuantity: TypeAlias = Annotated[
     GufeArrayQuantity,

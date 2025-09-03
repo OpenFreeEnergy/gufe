@@ -5,6 +5,7 @@ json round trip, and physical unit testing belongs here.
 """
 
 import json
+from typing import Iterable
 
 import numpy as np
 import pytest
@@ -12,7 +13,7 @@ from openff.units import unit
 
 from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
-from gufe.settings.types import BoxQuantity
+from gufe.settings.types import BoxQuantity, GufeArrayQuantity, GufeQuantity, NanometerQuantity
 
 
 def test_settings_schema():
@@ -346,21 +347,36 @@ class TestFreezing:
             s.thermo_settings = ts
 
 
-class CustomSettingsModel(SettingsBaseModel):
-    box_vectors: BoxQuantity
+class TestArrayQuantity:
+    class ArraySettingsModel(SettingsBaseModel):
+        array_quantity: GufeArrayQuantity
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            [0.0, 1.0] * unit.angstrom,
+            [[0.0, 1.0], [0.0, 0.0], [1.0, 1.0]] * unit.angstrom,
+        ],
+    )
+    def test_valid_array_quantity(self, value):
+        array_settings = self.ArraySettingsModel(array_quantity=value)
+        assert array_settings.array_quantity.units == unit.angstrom
 
 
 class TestBoxVectors:
+    class BoxSettingsModel(SettingsBaseModel):
+        box_vectors: BoxQuantity
+
     def test_box_quantity_schema(self):
         expected_schema = {
             "additionalProperties": False,
             "properties": {"box_vectors": {"title": "Box Vectors", "type": "number"}},
             "required": ["box_vectors"],
-            "title": "CustomSettingsModel",
+            "title": "BoxSettingsModel",
             "type": "object",
         }
-        ser_schema = CustomSettingsModel.model_json_schema(mode="serialization")
-        val_schema = CustomSettingsModel.model_json_schema(mode="validation")
+        ser_schema = self.BoxSettingsModel.model_json_schema(mode="serialization")
+        val_schema = self.BoxSettingsModel.model_json_schema(mode="validation")
         assert ser_schema == expected_schema
         assert val_schema == expected_schema
 
@@ -374,7 +390,7 @@ class TestBoxVectors:
         ],
     )
     def test_valid_box_quantity(self, value):
-        box_settings = CustomSettingsModel(box_vectors=value)
+        box_settings = self.BoxSettingsModel(box_vectors=value)
         assert box_settings.box_vectors.units == unit.nanometer
 
     # TODO: improve this error handling
@@ -388,4 +404,4 @@ class TestBoxVectors:
     # )
     # def test_invalid_box_quantity(value, err_msg):
     #     with pytest.raises(RuntimeError):
-    #         CustomSettingsModel(box_vectors=value)
+    #         self.BoxSettingsModel(box_vectors=value)
