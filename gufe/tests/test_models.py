@@ -154,6 +154,7 @@ class TestSettingsValidation:
         [
             (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
             ({"val": 1.0, "unit": unit.nanometer}, True, 1.0 * unit.nanometer),
+            ({"foo": 1.0, "bar": unit.nanometer}, False, None),
             (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
             ("1.1", False, None),
