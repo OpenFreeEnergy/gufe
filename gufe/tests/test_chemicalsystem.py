@@ -4,10 +4,11 @@
 import numpy as np
 import pytest
 
-from gufe import ChemicalSystem
+from gufe import ChemicalSystem, SmallMoleculeComponent, SolventComponent
 from gufe.components import ProteinComponent
 
 from .test_tokenization import GufeTokenizableTestsMixin
+from ..components.explicitmoleculecomponent import ExplicitMoleculeComponent
 
 
 def test_ligand_construction(solv_comp, toluene_ligand_comp):
@@ -130,6 +131,49 @@ def test_sorting(solvated_complex, solvated_ligand):
     order2 = [solvated_ligand, solvated_complex, solvated_ligand]
 
     assert sorted(order1) == sorted(order2)
+
+
+def test_isin_wrong_type(solvated_complex):
+    with pytest.raises(TypeError, match="`item` must be an instance or subclass of `Component`"):
+        solvated_complex.isin(float)
+
+def test_isin_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
+    # check for present instances don't return matches
+    assert solvated_complex.isin(prot_comp) is True
+
+def test_isin_type(solvated_complex):
+    # check for present types don't return matches
+    assert solvated_complex.isin(ProteinComponent) is True
+
+def test_isin_instance_return_matches(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
+    # check for present instances
+    isin, matches = solvated_complex.isin(prot_comp, return_matches=True)
+    assert isin is True
+    assert matches == [prot_comp]
+
+    isin, matches = solvated_complex.isin(toluene_ligand_comp, return_matches=True)
+    assert isin is True
+    assert matches == [toluene_ligand_comp]
+
+    # check for absent instance
+    isin, matches = solvated_complex.isin(phenol_ligand_comp, return_matches=True)
+    assert isin is False
+    assert matches == []
+
+def test_isin_type_return_matches(solvated_ligand):
+    # check for present types
+    isin, matches = solvated_ligand.isin(ProteinComponent, return_matches=True)
+    assert isin is False
+    assert matches == []
+
+    isin, matches = solvated_ligand.isin(SmallMoleculeComponent, return_matches=True)
+    assert isin is True
+    assert matches == [solvated_ligand.components["ligand"]]
+
+    isin, matches = solvated_ligand.isin(SolventComponent, return_matches=True)
+    assert isin is True
+    assert matches == [solvated_ligand.components["solvent"]]
+
 
 
 class TestChemicalSystem(GufeTokenizableTestsMixin):
