@@ -13,7 +13,7 @@ from openff.units import unit
 
 from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
-from gufe.settings.types import BoxQuantity, GufeArrayQuantity, GufeQuantity, NanometerQuantity
+from gufe.settings.types import BoxQuantity, GufeQuantity, NanometerArrayQuantity, NanometerQuantity
 
 
 def test_settings_schema():
@@ -349,18 +349,18 @@ class TestFreezing:
 
 class TestArrayQuantity:
     class ArraySettingsModel(SettingsBaseModel):
-        array_quantity: GufeArrayQuantity
+        array_quantity: NanometerArrayQuantity
 
     @pytest.mark.parametrize(
         "value",
         [
-            [0.0, 1.0] * unit.angstrom,
+            [0.0, 1.0] * unit.nanometer,
             [[0.0, 1.0], [0.0, 0.0], [1.0, 1.0]] * unit.angstrom,
         ],
     )
     def test_valid_array_quantity(self, value):
         array_settings = self.ArraySettingsModel(array_quantity=value)
-        assert array_settings.array_quantity.units == unit.angstrom
+        assert array_settings.array_quantity.units == unit.nanometer
 
     @pytest.mark.parametrize(
         "value",
