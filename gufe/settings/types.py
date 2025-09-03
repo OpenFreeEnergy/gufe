@@ -47,7 +47,7 @@ def _plain_quantity_validator(
         elif isinstance(value, str):
             return Quantity(value)
         elif isinstance(value, dict):
-            return Quantity(value["val"], value["unit"])
+            return dict_to_quantity(value)
         else:
             raise ValueError(f"Invalid type {type(value)} for Quantity")
 
