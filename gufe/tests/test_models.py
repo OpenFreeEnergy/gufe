@@ -156,6 +156,7 @@ class TestSettingsValidation:
             (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
             ("1.1", False, None),
+            ([1.0 * unit.nanometer], False, None),
             # NOTE: this is not precisely equal for smaller values due to pint unit floating point precision
             (100.0 * unit.angstrom, True, 10.0 * unit.nanometer),
             (300 * unit.kelvin, False, None),
@@ -345,7 +346,7 @@ class TestFreezing:
             s.thermo_settings = ts
 
 
-class BoxSettingsModel(SettingsBaseModel):
+class CustomSettingsModel(SettingsBaseModel):
     box_vectors: BoxQuantity
 
 
@@ -355,11 +356,11 @@ class TestBoxVectors:
             "additionalProperties": False,
             "properties": {"box_vectors": {"title": "Box Vectors", "type": "number"}},
             "required": ["box_vectors"],
-            "title": "BoxSettingsModel",
+            "title": "CustomSettingsModel",
             "type": "object",
         }
-        ser_schema = BoxSettingsModel.model_json_schema(mode="serialization")
-        val_schema = BoxSettingsModel.model_json_schema(mode="validation")
+        ser_schema = CustomSettingsModel.model_json_schema(mode="serialization")
+        val_schema = CustomSettingsModel.model_json_schema(mode="validation")
         assert ser_schema == expected_schema
         assert val_schema == expected_schema
 
@@ -373,7 +374,7 @@ class TestBoxVectors:
         ],
     )
     def test_valid_box_quantity(self, value):
-        box_settings = BoxSettingsModel(box_vectors=value)
+        box_settings = CustomSettingsModel(box_vectors=value)
         assert box_settings.box_vectors.units == unit.nanometer
 
     # TODO: improve this error handling
@@ -387,4 +388,4 @@ class TestBoxVectors:
     # )
     # def test_invalid_box_quantity(value, err_msg):
     #     with pytest.raises(RuntimeError):
-    #         BoxSettingsModel(box_vectors=value)
+    #         CustomSettingsModel(box_vectors=value)
