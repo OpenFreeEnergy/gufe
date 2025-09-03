@@ -47,21 +47,3 @@ def _is_box_shape(quantity) -> Quantity:
         return numpy.eye(3) * quantity
     else:
         raise ValueError(f"Quantity {quantity} is not a box.")
-
-
-def _unwrap_list_of_openmm_quantities(value: Any):
-    """Unwrap a list of OpenMM quantities to a single Quantity."""
-    if isinstance(value, list):
-        if any(["openmm" in str(type(element)) for element in value]):
-            from openff.units.openmm import from_openmm
-
-            if len({element.unit for element in value}) != 1:
-                raise ValueError("All units must be the same.")
-
-            return from_openmm(value)
-
-        else:
-            return value
-
-    else:
-        return value

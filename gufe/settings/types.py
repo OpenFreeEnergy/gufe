@@ -19,12 +19,7 @@ from pydantic import (
     WithJsonSchema,
 )
 
-from ..vendor.openff.interchange._annotations import (
-    _duck_to_nanometer,
-    _is_box_shape,
-    _unit_validator_factory,
-    _unwrap_list_of_openmm_quantities,
-)
+from ..vendor.openff.interchange._annotations import _duck_to_nanometer, _is_box_shape, _unit_validator_factory
 
 
 def _plain_quantity_validator(
@@ -33,7 +28,7 @@ def _plain_quantity_validator(
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
 
-    # logic from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
+    # logic adapted from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
     if info.mode == "json":
         assert isinstance(value, dict), "Quantity must be in dict form here."
         # this is coupled to how a Quantity looks in JSON
@@ -49,10 +44,6 @@ def _plain_quantity_validator(
         return Quantity(value)
     elif isinstance(value, dict):
         return Quantity(value["val"], value["unit"])
-    if "openmm" in str(type(value)):
-        from openff.units.openmm import from_openmm
-
-        return from_openmm(value)
     else:
         raise ValueError(f"Invalid type {type(value)} for Quantity")
 
@@ -144,10 +135,7 @@ KCalPerMolQuantity: TypeAlias = Annotated[
 VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
 """Convert a pint.Quantity to volts, if possible."""
 
-GufeArrayQuantity: TypeAlias = Annotated[
-    GufeQuantity,
-    BeforeValidator(_unwrap_list_of_openmm_quantities),
-]
+GufeArrayQuantity: TypeAlias = GufeQuantity  # TODO: add array checks?
 """Convert to a list of pint.Quantity objects, if possible."""
 
 NanometerArrayQuantity: TypeAlias = Annotated[
@@ -159,6 +147,5 @@ NanometerArrayQuantity: TypeAlias = Annotated[
 BoxQuantity = Annotated[
     NanometerQuantity,
     AfterValidator(_is_box_shape),
-    BeforeValidator(_duck_to_nanometer),
-    BeforeValidator(_unwrap_list_of_openmm_quantities),
+    BeforeValidator(_duck_to_nanometer),  # TODO: do we want to enforce units here instead?
 ]

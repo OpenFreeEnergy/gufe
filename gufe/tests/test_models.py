@@ -9,7 +9,6 @@ import json
 import numpy as np
 import pytest
 from openff.units import unit
-from openmm import unit as openmm_unit
 
 from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
@@ -153,7 +152,6 @@ class TestSettingsValidation:
         "value,valid,expected",
         [
             (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
-            (openmm_unit.Quantity(2.0, openmm_unit.nanometer), True, 2.0 * unit.nanometer),
             ({"val": 1.0, "unit": unit.nanometer}, True, 1.0 * unit.nanometer),
             (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
