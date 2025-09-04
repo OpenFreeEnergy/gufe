@@ -137,29 +137,37 @@ def test_isin_wrong_type(solvated_complex):
     with pytest.raises(TypeError, match="`item` must be an instance or subclass of `Component`"):
         solvated_complex.isin(float)
 
-
 def test_isin_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
+    # check for present instances don't return matches
+    assert solvated_complex.isin(prot_comp) is True
+
+def test_isin_type(solvated_complex):
+    # check for present types don't return matches
+    assert solvated_complex.isin(ProteinComponent) is True
+
+
+def test_isin_instance_return_matches(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
     # check for present instances
-    matches = solvated_complex.isin(prot_comp)
+    matches = solvated_complex.isin(prot_comp, return_matches=True)
     assert matches == [prot_comp]
 
-    matches = solvated_complex.isin(toluene_ligand_comp)
+    matches = solvated_complex.isin(toluene_ligand_comp, return_matches=True)
     assert matches == [toluene_ligand_comp]
 
     # check for absent instance
-    matches = solvated_complex.isin(phenol_ligand_comp)
+    matches = solvated_complex.isin(phenol_ligand_comp, return_matches=True)
     assert matches == []
 
 
 def test_isin_type_return_matches(solvated_ligand):
     # check for present types
-    matches = solvated_ligand.isin(ProteinComponent)
+    matches = solvated_ligand.isin(ProteinComponent, return_matches=True)
     assert matches == []
 
-    matches = solvated_ligand.isin(SmallMoleculeComponent)
+    matches = solvated_ligand.isin(SmallMoleculeComponent, return_matches=True)
     assert matches == [solvated_ligand.components["ligand"]]
 
-    matches = solvated_ligand.isin(SolventComponent)
+    matches = solvated_ligand.isin(SolventComponent, return_matches=True)
     assert matches == [solvated_ligand.components["solvent"]]
 
 
