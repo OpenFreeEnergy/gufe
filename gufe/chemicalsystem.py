@@ -129,15 +129,15 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
     def isin(self, item: Component | type[Component]) -> list[Component]:
         """Check if a Component or Component type is in this ChemicalSystem and return all matches.
 
-         Parameters
-         ----------
-         item : Component or type of Component
-             The Component instance or class to check for.
+        Parameters
+        ----------
+        item : Component or type of Component
+            The Component instance or class to check for.
 
-         Returns
-         -------
-        list of Components
-             Returns a list of matching Components.
+        Returns
+        -------
+        list[Components]
+            Returns a list of matching Components.
         """
         # check the input types
         if not (isinstance(item, Component) or (isinstance(item, type) and issubclass(item, Component))):
