@@ -137,9 +137,11 @@ def test_isin_wrong_type(solvated_complex):
     with pytest.raises(TypeError, match="`item` must be an instance or subclass of `Component`"):
         solvated_complex.isin(float)
 
+
 def test_isin_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
     # check for present instances don't return matches
     assert solvated_complex.isin(prot_comp) is True
+
 
 def test_isin_type(solvated_complex):
     # check for present types don't return matches
