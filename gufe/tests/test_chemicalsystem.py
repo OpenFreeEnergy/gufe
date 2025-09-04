@@ -139,43 +139,27 @@ def test_isin_wrong_type(solvated_complex):
 
 
 def test_isin_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
-    # check for present instances don't return matches
-    assert solvated_complex.isin(prot_comp) is True
-
-
-def test_isin_type(solvated_complex):
-    # check for present types don't return matches
-    assert solvated_complex.isin(ProteinComponent) is True
-
-
-def test_isin_instance_return_matches(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
     # check for present instances
-    isin, matches = solvated_complex.isin(prot_comp, return_matches=True)
-    assert isin is True
+    matches = solvated_complex.isin(prot_comp)
     assert matches == [prot_comp]
 
-    isin, matches = solvated_complex.isin(toluene_ligand_comp, return_matches=True)
-    assert isin is True
+    matches = solvated_complex.isin(toluene_ligand_comp)
     assert matches == [toluene_ligand_comp]
 
     # check for absent instance
-    isin, matches = solvated_complex.isin(phenol_ligand_comp, return_matches=True)
-    assert isin is False
+    matches = solvated_complex.isin(phenol_ligand_comp)
     assert matches == []
 
 
 def test_isin_type_return_matches(solvated_ligand):
     # check for present types
-    isin, matches = solvated_ligand.isin(ProteinComponent, return_matches=True)
-    assert isin is False
+    matches = solvated_ligand.isin(ProteinComponent)
     assert matches == []
 
-    isin, matches = solvated_ligand.isin(SmallMoleculeComponent, return_matches=True)
-    assert isin is True
+    matches = solvated_ligand.isin(SmallMoleculeComponent)
     assert matches == [solvated_ligand.components["ligand"]]
 
-    isin, matches = solvated_ligand.isin(SolventComponent, return_matches=True)
-    assert isin is True
+    matches = solvated_ligand.isin(SolventComponent)
     assert matches == [solvated_ligand.components["solvent"]]
 
 

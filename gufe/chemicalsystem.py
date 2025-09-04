@@ -127,25 +127,19 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         return total_charge
 
     def isin(
-        self, item: Component | type[Component], return_matches: bool = False
-    ) -> bool | tuple[bool, list[Component]]:
-        """Check if a Component or Component type is in this ChemicalSystem and optionally return matches.
+        self, item: Component | type[Component]
+    ) -> list[Component]:
+        """Check if a Component or Component type is in this ChemicalSystem and return all matches.
 
         Parameters
         ----------
         item : Component or type of Component
             The Component instance or class to check for.
-        return_matches: bool, default False
-            If True, return a tuple of (bool, list of matching Components).
-            If False, return just a bool.
 
         Returns
         -------
-        bool or tuple(bool, list of Components)
-            If `return_matches` is False, returns True if the item is found, else False.
-            If `return_matches` is True, returns a tuple where the first element
-            is a bool indicating if the item is found, and the second element is
-            a list of matching Components.
+       list of Components
+            Returns a list of matching Components.
         """
         # check the input types
         if not (isinstance(item, Component) or (isinstance(item, type) and issubclass(item, Component))):
@@ -160,10 +154,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
                 if isinstance(comp, item):
                     matches.append(comp)
 
-        if return_matches:
-            return len(matches) > 0, matches
-        else:
-            return len(matches) > 0
+        return matches
 
     def __getitem__(self, item):
         return self.components[item]
