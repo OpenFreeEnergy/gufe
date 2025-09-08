@@ -126,38 +126,53 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
                 total_charge += fc
         return total_charge
 
-    def isin(self, item: Component | type[Component], return_matches: bool = False) -> bool | list[Component]:
-        """Check if a Component or Component type is in this ChemicalSystem and optionally return all matches.
+    def contains(self, item: Component | type[Component]) -> bool:
+        """Check if a Component or Component type is in this ChemicalSystem.
 
         Parameters
         ----------
         item : Component or type of Component
             The Component instance or class to check for.
-        return_matches: bool, default False
-            If True, return a list of all matching Components instead of a boolean.
 
         Returns
         -------
-        bool or list[Components]
-            Returns a boolean if `return_matches` is False indicating the presence of the Component or Component type,
-            otherwise returns a list of all matching Components.
+        bool
+            Returns True if the item is found in the ChemicalSystem, False otherwise.
         """
         # check the input types
         if not (isinstance(item, Component) or (isinstance(item, type) and issubclass(item, Component))):
             raise TypeError("`item` must be an instance or subclass of `Component`")
 
-        matches = []
         for comp in self._components.values():
             if isinstance(item, Component):
                 if comp == item:
-                    matches.append(comp)
+                    return True
             elif issubclass(item, Component):
                 if isinstance(comp, item):
-                    matches.append(comp)
+                    return True
 
-        if return_matches:
-            return matches
-        return len(matches) > 0
+        return False
+
+    def get_components_of_type(self, item: type[Component]) -> list[Component]:
+        """Get all Components of a specific type in this ChemicalSystem
+
+        Parameters
+        ----------
+        item : type of Component
+            The class of Component to search for.
+
+        Returns
+        -------
+        list of Component
+            A list of all Components in the ChemicalSystem that are instances of the specified type.
+            If no Components of the specified type are found, an empty list is returned.
+        """
+        if not (isinstance(item, type) and issubclass(item, Component)):
+            raise TypeError("`item` must be a subclass of `Component`")
+
+        matches = [comp for comp in self._components.values() if isinstance(comp, item)]
+
+        return matches
 
     def __getitem__(self, item):
         return self.components[item]

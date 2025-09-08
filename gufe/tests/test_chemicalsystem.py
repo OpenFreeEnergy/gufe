@@ -133,43 +133,31 @@ def test_sorting(solvated_complex, solvated_ligand):
     assert sorted(order1) == sorted(order2)
 
 
-def test_isin_wrong_type(solvated_complex):
+def test_contains_wrong_type(solvated_complex):
     with pytest.raises(TypeError, match="`item` must be an instance or subclass of `Component`"):
-        solvated_complex.isin(float)
+        solvated_complex.contains(float)
 
 
-def test_isin_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
+def test_contains_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
     # check for present instances don't return matches
-    assert solvated_complex.isin(prot_comp) is True
+    assert solvated_complex.contains(prot_comp) is True
+    assert solvated_complex.contains(phenol_ligand_comp) is False
 
 
-def test_isin_type(solvated_complex):
+def test_contains_type(solvated_complex):
     # check for present types don't return matches
-    assert solvated_complex.isin(ProteinComponent) is True
+    assert solvated_complex.contains(ProteinComponent) is True
 
 
-def test_isin_instance_return_matches(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
-    # check for present instances
-    matches = solvated_complex.isin(prot_comp, return_matches=True)
-    assert matches == [prot_comp]
-
-    matches = solvated_complex.isin(toluene_ligand_comp, return_matches=True)
-    assert matches == [toluene_ligand_comp]
-
-    # check for absent instance
-    matches = solvated_complex.isin(phenol_ligand_comp, return_matches=True)
-    assert matches == []
-
-
-def test_isin_type_return_matches(solvated_ligand):
+def test_get_components_of_type(solvated_ligand):
     # check for present types
-    matches = solvated_ligand.isin(ProteinComponent, return_matches=True)
+    matches = solvated_ligand.get_components_of_type(ProteinComponent)
     assert matches == []
 
-    matches = solvated_ligand.isin(SmallMoleculeComponent, return_matches=True)
+    matches = solvated_ligand.get_components_of_type(SmallMoleculeComponent)
     assert matches == [solvated_ligand.components["ligand"]]
 
-    matches = solvated_ligand.isin(SolventComponent, return_matches=True)
+    matches = solvated_ligand.get_components_of_type(SolventComponent)
     assert matches == [solvated_ligand.components["solvent"]]
 
 
