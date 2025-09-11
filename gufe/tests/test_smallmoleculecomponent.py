@@ -244,7 +244,7 @@ class TestSmallMoleculeComponentPartialCharges:
     @pytest.fixture(scope="function")
     def charged_off_ethane(self, named_ethane):
         off_ethane = named_ethane.to_openff()
-        off_ethane.assign_partial_charges(partial_charge_method="am1bcc")
+        off_ethane.assign_partial_charges(partial_charge_method="gasteiger")
         return off_ethane
 
     def test_partial_charges_logging(self, charged_off_ethane, caplog):
