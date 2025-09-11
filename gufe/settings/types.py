@@ -81,6 +81,8 @@ GufeQuantity = Annotated[
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
 ]
+
+
 GufeArrayQuantity: TypeAlias = Annotated[GufeQuantity, AfterValidator(_is_array)]
 """Convert to a pint.Quantity array, if possible."""
 
