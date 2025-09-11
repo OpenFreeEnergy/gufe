@@ -15,7 +15,6 @@ from pydantic import (
     Field,
     PlainSerializer,
     PlainValidator,
-    ValidationInfo,
     WithJsonSchema,
 )
 
@@ -24,7 +23,6 @@ from ..vendor.openff.interchange._annotations import _duck_to_nanometer, _is_box
 
 def _plain_quantity_validator(
     value: Any,
-    info: ValidationInfo,
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
     # logic adapted from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
@@ -36,32 +34,19 @@ def _plain_quantity_validator(
         except KeyError:
             raise ValueError("Quantity must be a dict with keys 'val' and 'unit'.")
 
-    if info.mode == "json":
-        if not isinstance(value, dict):
-            raise ValueError(f"Quantity must be represented as a dict, not {type(value)}, when in JSON representation.")
+    if isinstance(value, Quantity):
+        return value
+    elif isinstance(value, str):
+        return Quantity(value)
+    elif isinstance(value, dict):
         return dict_to_quantity(value)
-
-    elif info.mode == "python":
-        if isinstance(value, Quantity):
-            return value
-        elif isinstance(value, str):
-            return Quantity(value)
-        elif isinstance(value, dict):
-            return dict_to_quantity(value)
-        else:
-            raise ValueError(f"Invalid type {type(value)} for Quantity")
+    else:
+        raise ValueError(f"Invalid type {type(value)} for Quantity")
 
 
 def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
-    # logic from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
-    magnitude = quantity.m
-
-    if isinstance(magnitude, numpy.ndarray):
-        # This could be something fancier, list a bytestring
-        magnitude = magnitude.tolist()
-
     return {
-        "val": magnitude,
+        "val": quantity.m,
         "unit": str(quantity.units),
     }
 
