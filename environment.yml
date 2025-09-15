@@ -2,12 +2,11 @@ name: gufe
 channels:
   - conda-forge
 dependencies:
-  - ambertools >=22.0  # why were we getting old ones?
   - coverage
   - msgpack-python
   - networkx
   - numpy
-  - openff-toolkit >=0.15.1
+  - openff-toolkit-base >=0.15.1
   - openff-units >=0.3.1
   - openmm
   - pint
