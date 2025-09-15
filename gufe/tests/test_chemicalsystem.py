@@ -161,6 +161,11 @@ def test_get_components_of_type(solvated_ligand):
     assert matches == [solvated_ligand.components["solvent"]]
 
 
+def test_get_components_of_type_wrong_type(solvated_complex):
+    with pytest.raises(TypeError, match="`item` must be a subclass of `Component`"):
+        solvated_complex.get_components_of_type(float)
+
+
 class TestChemicalSystem(GufeTokenizableTestsMixin):
     cls = ChemicalSystem
     repr = "ChemicalSystem(name=, components={'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)})"
