@@ -126,22 +126,18 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         # build graph from protocol unit results
         self._result_graph = self._build_graph(protocol_unit_results)
 
-        # build mapping from protocol units to results
-        keys_to_unit = {unit.key: unit for unit in self._protocol_units}
-        unit_result_mapping = defaultdict(list)
+        # build mappings from protocol units to results
+        unit_key_to_unit = {unit.key: unit for unit in protocol_units}
+        unit_key_to_results = defaultdict(list)
         self._result_unit_mapping = dict()
+        self._unit_result_mapping = dict()
 
         for result in protocol_unit_results:
-            unit = keys_to_unit[result.source_key]
-            unit_result_mapping[unit].append(result)
-            self._result_unit_mapping[result] = unit
+            unit_key_to_results[result.source_key].append(result)
+            self._result_unit_mapping[result] = unit_key_to_unit[result.source_key]
 
-        # initialize empty list for protocol_units that didn't have any
-        # protocol_unit_results
-        for unit in (set(protocol_units) - set(unit_result_mapping.keys())):
-            unit_result_mapping[unit]
-
-        self._unit_result_mapping = dict(unit_result_mapping)
+        for unit in protocol_units:
+            self._unit_result_mapping[unit] = unit_key_to_results.get(unit.key, list())
 
     @classmethod
     def _defaults(cls):
