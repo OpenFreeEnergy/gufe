@@ -32,14 +32,6 @@ def _unit_validator_factory(unit: str) -> Callable:
     return functools.partial(_has_compatible_dimensionality, unit=unit, convert=True)
 
 
-def _duck_to_nanometer(value: Any):
-    """Cast list or ndarray without units to Quantity[ndarray] of nanometer."""
-    if isinstance(value, (list, numpy.ndarray)):
-        return Quantity(value, "nanometer")
-    else:
-        return value
-
-
 def _is_box_shape(quantity) -> Quantity:
     if quantity.m.shape == (3, 3):
         return quantity
