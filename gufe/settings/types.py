@@ -11,14 +11,13 @@ import numpy
 from openff.units import Quantity
 from pydantic import (
     AfterValidator,
-    BeforeValidator,
     Field,
     PlainSerializer,
     PlainValidator,
     WithJsonSchema,
 )
 
-from ..vendor.openff.interchange._annotations import _duck_to_nanometer, _is_box_shape, _unit_validator_factory
+from ..vendor.openff.interchange._annotations import _is_box_shape, _unit_validator_factory
 
 
 def _plain_quantity_validator(
@@ -145,5 +144,4 @@ NanometerArrayQuantity: TypeAlias = Annotated[
 BoxQuantity = Annotated[
     NanometerQuantity,
     AfterValidator(_is_box_shape),
-    BeforeValidator(_duck_to_nanometer),  # TODO: do we want to enforce units here instead?
 ]

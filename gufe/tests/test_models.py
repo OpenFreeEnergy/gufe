@@ -396,28 +396,42 @@ class TestBoxVectors:
         assert val_schema == expected_schema
 
     @pytest.mark.parametrize(
-        "value",
+        "value,m_expected",
         [
-            np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]) * unit.nanometer,
-            np.asarray([1.0, 1.0, 1.0]) * unit.nanometer,
-            [1.0, 1.0, 1.0] * unit.nanometer,
-            [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]] * unit.angstrom,
+            (
+                np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]) * unit.nanometer,
+                np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
+            ),
+            (
+                np.asarray([1.0, 1.0, 1.0]) * unit.nanometer,
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            ),  # fmt: off
+            (
+                [1.0, 1.0, 1.0] * unit.nanometer,
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            ),  # fmt: off
+            (
+                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]] * unit.angstrom,
+                [[0.0, 0.0, 0.1], [0.0, 0.1, 0.0], [0.1, 0.0, 0.0]],
+            ),
         ],
     )
-    def test_valid_box_quantity(self, value):
+    def test_valid_box_quantity(self, value, m_expected):
         box_settings = self.BoxSettingsModel(box_vectors=value)
         assert box_settings.box_vectors.units == unit.nanometer
+        ## use allclose to handle angstrom->nanometer diffs
+        np.testing.assert_allclose(box_settings.box_vectors.magnitude, m_expected, rtol=2e-16, atol=2e-17)
 
-    # TODO: improve this error handling
+    # TODO: improve this error handling, the AttributeErrors aren't very user-friendly
     @pytest.mark.parametrize(
-        "value,err_type",
+        "value,err_type,match_str",
         [
-            ("a string", AttributeError),
-            (1.0 * unit.nanometer, AttributeError),
-            (1.0, ValueError),
-            # ([1.0, 1.0, 1.0],ValueError),
+            ("some string", AttributeError, "is not defined in the unit registry"),
+            (1.0 * unit.nanometer, AttributeError, "float' object has no attribute"),
+            (1.0, ValueError, "Invalid type <class 'float'> for Quantity"),
+            ([1.0, 1.0, 1.0], ValueError, "Invalid type <class 'list'> for Quantity "),
         ],
     )
-    def test_invalid_box_quantity(self, value, err_type):
-        with pytest.raises(err_type):
+    def test_invalid_box_quantity(self, value, err_type, match_str):
+        with pytest.raises(err_type, match=match_str):
             self.BoxSettingsModel(box_vectors=value)
