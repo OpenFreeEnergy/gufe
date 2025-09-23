@@ -398,9 +398,9 @@ class TestBoxVectors:
     @pytest.mark.parametrize(
         "value",
         [
-            np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
-            np.asarray([1.0, 1.0, 1.0]),
-            [1.0, 1.0, 1.0],
+            np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]) * unit.nanometer,
+            np.asarray([1.0, 1.0, 1.0]) * unit.nanometer,
+            [1.0, 1.0, 1.0] * unit.nanometer,
             [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]] * unit.angstrom,
         ],
     )
@@ -409,14 +409,15 @@ class TestBoxVectors:
         assert box_settings.box_vectors.units == unit.nanometer
 
     # TODO: improve this error handling
-    # @pytest.mark.parametrize(
-    #     "value,err_msg",
-    #     [
-    #         ("a string", None),
-    #         (1.0*unit.nanometer, None),
-    #         (1.0, None),
-    #     ],
-    # )
-    # def test_invalid_box_quantity(value, err_msg):
-    #     with pytest.raises(RuntimeError):
-    #         self.BoxSettingsModel(box_vectors=value)
+    @pytest.mark.parametrize(
+        "value,err_type",
+        [
+            ("a string", AttributeError),
+            (1.0 * unit.nanometer, AttributeError),
+            (1.0, ValueError),
+            # ([1.0, 1.0, 1.0],ValueError),
+        ],
+    )
+    def test_invalid_box_quantity(self, value, err_type):
+        with pytest.raises(err_type):
+            self.BoxSettingsModel(box_vectors=value)
