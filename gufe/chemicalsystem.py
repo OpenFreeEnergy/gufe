@@ -138,9 +138,16 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         -------
         bool
             Returns True if the item is found in the ChemicalSystem, False otherwise.
+
+        Examples
+        --------
+        To check if a specific Component instance is in a ChemicalSystem:
+        >>> chem_sys = ChemicalSystem(components={"ligand": ligand_comp, "solvent": solvent_comp})
+        >>> is_present = chem_sys.contains(ligand_comp)
+        >>> print(is_present)  # True if ligand_comp is in chem_sys, False otherwise
         """
         # check the input types
-        if not (isinstance(item, Component) or issubclass(item, Component))):
+        if not (isinstance(item, Component) or issubclass(item, Component)):
             raise TypeError("`item` must be an instance or subclass of `Component`")
 
         for comp in self._components.values():
@@ -166,6 +173,13 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         list of Component
             A list of all Components in the ChemicalSystem that are instances of the specified type.
             If no Components of the specified type are found, an empty list is returned.
+
+        Examples
+        --------
+        To get all SmallMoleculeComponents in a ChemicalSystem:
+        >>> chem_sys = ChemicalSystem(components={"ligand": ligand_comp, "solvent": solvent_comp})
+        >>> small_molecules = chem_sys.get_components_of_type(SmallMoleculeComponent)
+        >>> print(small_molecules)  # List of SmallMoleculeComponent instances
         """
         if not (isinstance(item, type) and issubclass(item, Component)):
             raise TypeError("`item` must be a subclass of `Component`")

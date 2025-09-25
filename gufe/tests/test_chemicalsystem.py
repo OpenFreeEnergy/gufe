@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from gufe import ChemicalSystem, SmallMoleculeComponent, SolventComponent
+from gufe import ChemicalSystem, SmallMoleculeComponent, SolventComponent, Component
 from gufe.components import ProteinComponent
 
 from ..components.explicitmoleculecomponent import ExplicitMoleculeComponent
@@ -159,6 +159,10 @@ def test_get_components_of_type(solvated_ligand):
 
     matches = solvated_ligand.get_components_of_type(SolventComponent)
     assert matches == [solvated_ligand.components["solvent"]]
+
+    # check base class returns all components
+    matches = solvated_ligand.get_components_of_type(Component)
+    assert matches == [solvated_ligand.components["ligand"], solvated_ligand.components["solvent"]]
 
 
 def test_get_components_of_type_wrong_type(solvated_complex):
