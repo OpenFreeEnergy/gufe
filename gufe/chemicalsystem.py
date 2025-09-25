@@ -140,7 +140,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
             Returns True if the item is found in the ChemicalSystem, False otherwise.
         """
         # check the input types
-        if not (isinstance(item, Component) or (isinstance(item, type) and issubclass(item, Component))):
+        if not (isinstance(item, Component) or issubclass(item, Component))):
             raise TypeError("`item` must be an instance or subclass of `Component`")
 
         for comp in self._components.values():
