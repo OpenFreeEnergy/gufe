@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from gufe import ChemicalSystem, SmallMoleculeComponent, SolventComponent, Component
+from gufe import ChemicalSystem, Component, SmallMoleculeComponent, SolventComponent
 from gufe.components import ProteinComponent
 
 from ..components.explicitmoleculecomponent import ExplicitMoleculeComponent
