@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-	"setuptools>=61.2",
+	"setuptools>=77.0.3",
 	"versioningit",
 ]
 build-backend = "setuptools.build_meta"
@@ -10,7 +10,7 @@ name = "gufe"
 description = ""
 readme = "README.md"
 authors = [{name = "The OpenFE developers", email = "openfe@omsf.io"}]
-license = {text = "MIT"}
+license = "MIT"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
