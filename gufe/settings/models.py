@@ -6,40 +6,25 @@ Pydantic models used for storing settings.
 
 import abc
 import pprint
-from typing import Optional, Union
+from typing import Annotated, Any, Literal
 
+from annotated_types import Ge
 from openff.units import unit
+from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
-from gufe.vendor.openff.models.models import DefaultModel
-from gufe.vendor.openff.models.types import FloatQuantity
-
-try:
-    from pydantic.v1 import Extra, Field, PositiveFloat, PrivateAttr, validator
-except ImportError:
-    from pydantic import (
-        Extra,
-        Field,
-        PositiveFloat,
-        PrivateAttr,
-        validator,
-    )
-
-import pydantic
+from ..vendor.openff.interchange.pydantic import _BaseModel
+from .types import AtmQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
 
 
-class SettingsBaseModel(DefaultModel):
+class SettingsBaseModel(_BaseModel):
     """Settings and modifications we want for all settings classes."""
 
     _is_frozen: bool = PrivateAttr(default_factory=lambda: False)
-
-    class Config:
-        """
-        :noindex:
-        """
-
-        extra = pydantic.Extra.forbid
-        arbitrary_types_allowed = False
-        smart_union = True
+    model_config = ConfigDict(
+        extra="forbid",
+        arbitrary_types_allowed=True,  # needed to parse custom types
+        validate_default=True,
+    )
 
     def _ipython_display_(self):
         pprint.pprint(self.dict())
@@ -50,11 +35,11 @@ class SettingsBaseModel(DefaultModel):
         This is intended to be used by Protocols to make their stored Settings
         read-only
         """
-        copied = self.copy(deep=True)
+        copied = self.model_copy(deep=True)
 
         def freeze_model(model):
             submodels = (
-                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -71,11 +56,11 @@ class SettingsBaseModel(DefaultModel):
         Settings objects become frozen when within a Protocol.  If you *really*
         need to reverse this, this method is how.
         """
-        copied = self.copy(deep=True)
+        copied = self.model_copy(deep=True)
 
         def unfreeze_model(model):
             submodels = (
-                mod for field in model.__fields__ if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
@@ -100,6 +85,15 @@ class SettingsBaseModel(DefaultModel):
             )
         return super().__setattr__(name, value)
 
+    def __eq__(self, other: Any) -> bool:
+        # reproduces pydantic v1 equality, since v2 checks for private attr equality,
+        # which results in frozen/unfrozen objects not being equal
+        # https://github.com/pydantic/pydantic/blob/2486e068e85c51728c9f2d344cfee2f7e11d555c/pydantic/v1/main.py#L911
+        if isinstance(other, _BaseModel):
+            return self.model_dump() == other.model_dump()
+        else:
+            return self.model_dump() == other
+
 
 class ThermoSettings(SettingsBaseModel):
     """Settings for thermodynamic parameters.
@@ -109,45 +103,40 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: FloatQuantity["kelvin"] = Field(None, description="Simulation temperature, default units kelvin")
-    pressure: FloatQuantity["standard_atmosphere"] = Field(
-        None, description="Simulation pressure, default units standard atmosphere (atm)"
-    )
+    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
+    pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
     ph: PositiveFloat | None = Field(None, description="Simulation pH")
-    redox_potential: float | None = Field(None, description="Simulation redox potential")
+    redox_potential: VoltsQuantity | None = Field(None, description="Simulation redox potential in millivolts (mV).")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
     """Base class for ForceFieldSettings objects"""
 
-    class Config:
-        """:noindex:"""
-
-        pass
-
     ...
+
+
+def _to_lowercase(value: Any):
+    """make any string input lowercase"""
+    if isinstance(value, (str)):
+        return value.lower()
+    else:
+        return value
 
 
 class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     """Parameters to set up the force field with OpenMM ForceFields
 
     .. note::
-       Right now we just basically just grab what we need for the
-       :class:`openmmforcefields.system_generators.SystemGenerator`
-       signature. See the `OpenMMForceField SystemGenerator documentation`_
-       for more details.
+       Currently, this stores what is needed for the
+       :class:`openmmforcefields.system_generators.SystemGenerator` signature.
+       See the `OpenMMForceField SystemGenerator documentation`_ for more details.
 
 
     .. _`OpenMMForceField SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
-    class Config:
-        """:noindex:"""
-
-        pass
-
-    constraints: str | None = "hbonds"
+    constraints: Annotated[Literal["hbonds", "allbonds", "hangles"], BeforeValidator(_to_lowercase)] | None = "hbonds"
     """Constraints to be applied to system.
        One of 'hbonds', 'allbonds', 'hangles' or None, default 'hbonds'"""
     rigid_water: bool = True
@@ -164,44 +153,27 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     ]
     """List of force field paths for all components except :class:`SmallMoleculeComponent` """
 
-    small_molecule_forcefield: str = "openff-2.1.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
+    small_molecule_forcefield: str = "openff-2.2.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent` """
 
-    nonbonded_method = "PME"
+    nonbonded_method: str = "PME"
     """
-    Method for treating nonbonded interactions, currently only PME and
-    NoCutoff are allowed. Default PME.
+    Method for treating nonbonded interactions, options are currently
+    "CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME".
+    Default PME.
     """
-    nonbonded_cutoff: FloatQuantity["nanometer"] = 1.0 * unit.nanometer
-    """
-    Cutoff value for short range nonbonded interactions.
-    Default 1.0 * unit.nanometer.
-    """
+    # TODO: currently, serialization scheme doesn't work for default values, will be fixed in pydantic v2.12
+    # see https://github.com/pydantic/pydantic/issues/11446
+    nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = Field(
+        default=1.0 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
+    )
 
-    @validator("nonbonded_method")
-    def allowed_nonbonded(cls, v):
-        if v.lower() not in ["pme", "nocutoff"]:
-            errmsg = "Only PME and NoCutoff are allowed nonbonded_methods"
+    @field_validator("nonbonded_method", mode="after")
+    def allowed_nonbonded_methods(cls, v):
+        options = ["CutoffNonPeriodic", "CutoffPeriodic", "Ewald", "LJPME", "NoCutoff", "PME"]
+        if v.lower() not in [x.lower() for x in options]:
+            errmsg = f"Only {options} are allowed nonbonded_methods"
             raise ValueError(errmsg)
-        return v
-
-    @validator("nonbonded_cutoff")
-    def is_positive_distance(cls, v):
-        # these are time units, not simulation steps
-        if not v.is_compatible_with(unit.nanometer):
-            raise ValueError("nonbonded_cutoff must be in distance units (i.e. nanometers)")
-        if v < 0:
-            errmsg = "nonbonded_cutoff must be a positive value"
-            raise ValueError(errmsg)
-        return v
-
-    @validator("constraints")
-    def constraint_check(cls, v):
-        allowed = {"hbonds", "hangles", "allbonds"}
-
-        if not (v is None or v.lower() in allowed):
-            raise ValueError(f"Bad constraints value, use one of {allowed}")
-
         return v
 
 
@@ -214,8 +186,8 @@ class Settings(SettingsBaseModel):
     Protocols can subclass this to extend this to cater for their additional settings.
     """
 
-    forcefield_settings: BaseForceFieldSettings
-    thermo_settings: ThermoSettings
+    forcefield_settings: InstanceOf[BaseForceFieldSettings]
+    thermo_settings: InstanceOf[ThermoSettings]
 
     @classmethod
     def get_defaults(cls):
