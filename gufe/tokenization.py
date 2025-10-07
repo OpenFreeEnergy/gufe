@@ -937,10 +937,10 @@ class KeyedChain:
                 continue
             gt = key_decode_dependencies(keyed_dict, registry=tokenizable_map)
             tokenizable_map[gufe_key] = gt
-        return gt
+        return gt  # type: ignore
 
     def decode_subchains(self, func: Callable) -> Generator[GufeTokenizable, None, None]:
-        tokenizable_map = {}
+        tokenizable_map: dict[str, GufeTokenizable] = {}
         for idx, (_, keyed_dict) in enumerate(self):
             if func(keyed_dict):
                 yield KeyedChain(self[: idx + 1]).to_gufe(tokenizable_map=tokenizable_map)
