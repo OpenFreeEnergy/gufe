@@ -597,6 +597,35 @@ class TestKeyedChain:
         assert kc[-1] == kc._keyed_chain[-1]
         assert kc[:] == kc._keyed_chain[:]
 
+    def test_decode_subchains(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        # decode all chemical systems, which are just the network nodes
+        assert set(kc.decode_subchains(lambda kd: kd["__qualname__"] == "ChemicalSystem")) == set(kc.to_gufe().nodes)
+        # decode all transformations, which are just the network edges
+        assert set(
+            kc.decode_subchains(lambda kd: kd["__qualname__"] in ["Transformation", "NonTransformation"])
+        ) == set(kc.to_gufe().edges)
+
+        # get chemical systems with "-complex" in name
+        assert set(
+            kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem" and "-solvent" in kd["name"])
+        ) == {gt for gt in kc.to_gufe().nodes if "-solvent" in gt.name}
+
+        # get the set of solvent components of the network
+        solvent_components = set()
+        for cs in kc.to_gufe().nodes:
+            solvent_components.add(cs.components["solvent"])
+
+        assert set(kc.decode_subchains(lambda kd: kd.get("__qualname__") == "SolventComponent")) == solvent_components
+
+        # early return example: get first valid chemical system from
+        # generator and leave, useful for very large keyed chains
+        cs_with_next = next(kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem"), None)
+        for cs in kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem"):
+            assert cs is cs_with_next
+            break
+
 
 def test_datetime_to_json():
     d = datetime.datetime.fromisoformat("2023-05-05T09:06:43.699068")
