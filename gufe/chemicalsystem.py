@@ -142,6 +142,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         Examples
         --------
         To check if a specific Component instance is in a ChemicalSystem:
+
         >>> chem_sys = ChemicalSystem(components={"ligand": ligand_comp, "solvent": solvent_comp})
         >>> is_present = chem_sys.contains(ligand_comp)
         >>> print(is_present)  # True if ligand_comp is in chem_sys, False otherwise
@@ -177,6 +178,7 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
         Examples
         --------
         To get all SmallMoleculeComponents in a ChemicalSystem:
+
         >>> chem_sys = ChemicalSystem(components={"ligand": ligand_comp, "solvent": solvent_comp})
         >>> small_molecules = chem_sys.get_components_of_type(SmallMoleculeComponent)
         >>> print(small_molecules)  # List of SmallMoleculeComponent instances
