@@ -11,6 +11,18 @@ from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
 class DummyUnit(ProtocolUnit):
     @staticmethod
     def _execute(ctx: Context, an_input=2, **inputs):
+        # Write mock subprocess stdout and stderr for multiple
+        # "processes".  Do this before raising any exceptions to check
+        # that the ProtocolUnitFailure can contain stderr or stdout.
+        for output_type, output_dir in [("stderr", ctx.stderr), ("stdout", ctx.stdout)]:
+            if output_dir is None:
+                continue
+            for process_number in range(1, 3):
+                filename = Path(output_dir) / f"dummy_execute_{output_type}_process_{process_number}"
+                output = f"Sample {output_type} from process {process_number}".encode()
+                with open(filename, "wb") as f:
+                    f.write(output)
+
         if an_input != 2:
             raise ValueError("`an_input` should always be 2(!!!)")
 
@@ -49,7 +61,8 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         u2 = DummyUnit()
         assert u1.key != u2.key
 
-    def test_execute(self, tmpdir):
+    @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
+    def test_execute(self, tmpdir, capture_stderr_stdout):
         with tmpdir.as_cwd():
             unit = DummyUnit()
 
@@ -59,20 +72,29 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            stderr = None
+            stdout = None
+            if capture_stderr_stdout:
+                stderr = Path("stderr") / str(unit.key)
+                stderr.mkdir(parents=True)
+
+                stdout = Path("stdout") / str(unit.key)
+                stdout.mkdir(parents=True)
+
+            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
 
-            unit = DummyUnit()
-
-            shared = Path("shared") / str(unit.key)
-            shared.mkdir(parents=True)
-
-            scratch = Path("scratch") / str(unit.key)
-            scratch.mkdir(parents=True)
-
-            ctx = Context(shared=shared, scratch=scratch)
+            for output_type in ("stderr", "stdout"):
+                data = getattr(u, output_type)
+                if not capture_stderr_stdout:
+                    assert data == {}
+                    continue
+                for process_number in range(1, 3):
+                    entry = f"dummy_execute_{output_type}_process_{process_number}"
+                    output = f"Sample {output_type} from process {process_number}".encode()
+                    assert data[entry] == output
 
             # now try actually letting the error raise on execute
             with pytest.raises(ValueError, match="should always be 2"):
@@ -88,7 +110,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             with pytest.raises(ExecutionInterrupt):
                 unit.execute(context=ctx, an_input=3)
@@ -107,7 +129,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
             with pytest.raises(KeyboardInterrupt):
                 unit.execute(context=ctx, an_input=3)

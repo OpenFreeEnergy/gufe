@@ -225,7 +225,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            dagresult: ProtocolDAGResult = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
+            dagresult: ProtocolDAGResult = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
+            )
 
         return protocol, dag, dagresult
 
@@ -245,8 +253,19 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
             dagfailure: ProtocolDAGResult = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=False
+                dag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+                raise_error=False,
             )
 
         return protocol, dag, dagfailure
