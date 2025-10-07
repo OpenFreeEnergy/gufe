@@ -4,6 +4,15 @@ CHANGELOG
 
 .. current developments
 
+v1.6.1
+====================
+
+**Changed:**
+
+* ``ambertools`` is no longer a dependency (`PR #620 <https://github.com/OpenFreeEnergy/gufe/pull/620>_`)
+
+
+
 v1.6.0
 ====================
 

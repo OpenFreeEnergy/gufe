@@ -1,14 +1,11 @@
 name: gufe-docs
 channels:
-- https://conda.anaconda.org/jaimergp/label/unsupported-cudatoolkit-shim
 - https://conda.anaconda.org/conda-forge
 dependencies:
-- autodoc-pydantic
+- autodoc-pydantic >=2.0
 - openff-units
 - python=3.12
 - sphinx
 - openmm
 - networkx
 - furo
-# - pip:
-#   - git+https://github.com/OpenFreeEnergy/ofe-sphinx-theme@a45f3edd5bc3e973c1a01b577c71efa1b62a65d6
