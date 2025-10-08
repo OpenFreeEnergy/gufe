@@ -4,9 +4,10 @@
 import numpy as np
 import pytest
 
-from gufe import ChemicalSystem
+from gufe import ChemicalSystem, Component, SmallMoleculeComponent, SolventComponent
 from gufe.components import ProteinComponent
 
+from ..components.explicitmoleculecomponent import ExplicitMoleculeComponent
 from .test_tokenization import GufeTokenizableTestsMixin
 
 
@@ -130,6 +131,43 @@ def test_sorting(solvated_complex, solvated_ligand):
     order2 = [solvated_ligand, solvated_complex, solvated_ligand]
 
     assert sorted(order1) == sorted(order2)
+
+
+def test_contains_wrong_type(solvated_complex):
+    with pytest.raises(TypeError, match="`item` must be an instance or subclass of `Component`"):
+        solvated_complex.contains(float)
+
+
+def test_contains_instance(solvated_complex, prot_comp, toluene_ligand_comp, phenol_ligand_comp):
+    # check for present instances don't return matches
+    assert solvated_complex.contains(prot_comp) is True
+    assert solvated_complex.contains(phenol_ligand_comp) is False
+
+
+def test_contains_type(solvated_complex):
+    # check for present types don't return matches
+    assert solvated_complex.contains(ProteinComponent) is True
+
+
+def test_get_components_of_type(solvated_ligand):
+    # check for present types
+    matches = solvated_ligand.get_components_of_type(ProteinComponent)
+    assert matches == []
+
+    matches = solvated_ligand.get_components_of_type(SmallMoleculeComponent)
+    assert matches == [solvated_ligand.components["ligand"]]
+
+    matches = solvated_ligand.get_components_of_type(SolventComponent)
+    assert matches == [solvated_ligand.components["solvent"]]
+
+    # check base class returns all components
+    matches = solvated_ligand.get_components_of_type(Component)
+    assert matches == [solvated_ligand.components["ligand"], solvated_ligand.components["solvent"]]
+
+
+def test_get_components_of_type_wrong_type(solvated_complex):
+    with pytest.raises(TypeError, match="`item` must be a subclass of `Component`"):
+        solvated_complex.get_components_of_type(float)
 
 
 class TestChemicalSystem(GufeTokenizableTestsMixin):
