@@ -6,7 +6,8 @@ import json
 from collections import defaultdict
 from os import PathLike
 from string import digits
-from typing import Optional, TextIO, Union
+from typing import Optional, TextIO, Union, override
+from openmm.unit import Quantity
 
 import numpy as np
 from openmm import app
@@ -606,3 +607,105 @@ class ProteinComponent(ExplicitMoleculeComponent):
         }
 
         return d
+
+
+class ProteinMembraneComponent(ProteinComponent):
+    """
+    Protein component with optional membrane periodic box vectors.
+    """
+
+    def __init__(self, rdkit: Mol, name: str = "", periodic_box_vectors=None):
+        super().__init__(rdkit=rdkit, name=name)
+        self._periodic_box_vectors = periodic_box_vectors
+
+    @classmethod
+    def from_pdb_file(cls, pdb_file: str, name: str = ""):
+        """
+        Create ProteinMembraneComponent from a PDB file.
+
+        Parameters
+        ----------
+        pdb_file : str
+            path to the pdb file.
+        name : str, optional
+            name of the input protein, by default ""
+        Returns
+        -------
+        ProteinMembraneComponent
+            the deserialized molecule
+        """
+        pdb = PDBFile(pdb_file)
+        # Get base protein
+        prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
+        # Get periodic box vectors if present
+        box = pdb.topology.getPeriodicBoxVectors()
+        return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
+
+    @classmethod
+    def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
+        """
+        Converts to our internal representation (rdkit Mol)
+
+        Parameters
+        ----------
+        openmm_PDBFile : PDBFile or PDBxFile
+            object of the protein
+        name : str
+            name of the protein
+
+        Returns
+        -------
+        ProteinMembraneComponent
+            the deserialized molecule
+        """
+        prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
+        box = openmm_PDBFile.topology.getPeriodicBoxVectors()
+        return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
+
+
+    def _to_dict(self):
+        """
+        Serialize to dict, including periodic box vectors safely.
+        """
+        d = super()._to_dict()
+
+        box = self._periodic_box_vectors
+        if box is not None:
+            # Convert to OpenMM Quantity-safe structure
+            # Each vector = Quantity(Vec3 or array)
+            value = np.array(
+                [[float(c / box[0][0].unit) for c in v] for v in box])
+            unit_str = str(box[0][0].unit)
+
+            d["periodic_box_vectors"] = {
+                "value": value.tolist(),
+                "unit": unit_str,
+            }
+        else:
+            d["periodic_box_vectors"] = None
+
+        return d
+
+
+    @classmethod
+    def _from_dict(cls, d, name=""):
+        """
+        Deserialize from dict, including periodic box vectors.
+        """
+        prot = ProteinComponent._from_dict(d, name=name)
+
+        box_data = d.get("periodic_box_vectors")
+        box_vectors = None
+
+        if box_data is not None:
+            unit_str = box_data["unit"]
+            unit_obj = getattr(omm_unit, unit_str, omm_unit.nanometer)
+            arr = np.array(box_data["value"])
+            box_vectors = [arr[i] * unit_obj for i in range(3)]
+
+        return cls(
+            rdkit=prot._rdkit,
+            name=prot.name,
+            periodic_box_vectors=box_vectors,
+        )
+    

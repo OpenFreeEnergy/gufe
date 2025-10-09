@@ -9,7 +9,7 @@ from numpy.testing import assert_almost_equal
 from packaging.version import Version
 from rdkit import Chem
 
-from gufe import ProteinComponent
+from gufe import ProteinComponent, ProteinMembraneComponent
 
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -358,6 +358,21 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         pdb_generator = custom_pdb_ion(ion_name)
         with pytest.raises(ValueError, match="ab7 in residue CL at index 1."):
             self.cls.from_pdb_file(next(pdb_generator))
+
+
+class TestProteinMembraneComponent(GufeTokenizableTestsMixin):
+    cls = ProteinMembraneComponent
+    # key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
+    # repr = "ProteinComponent(name=Steve)"
+
+    @pytest.fixture
+    def instance(self, PDB_181L_path):
+        return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
+
+    def test_protein_box_vectors(self, PDB_181L_path):
+        m1 = self.cls.from_pdb_file(PDB_181L_path)
+        vectors = m1.periodic_box_vectors
+        assert vectors[0][0] == 13.4081
 
 
 def test_no_monomer_info_error(ethane):
