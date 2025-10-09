@@ -708,4 +708,3 @@ class ProteinMembraneComponent(ProteinComponent):
             name=prot.name,
             periodic_box_vectors=box_vectors,
         )
-    

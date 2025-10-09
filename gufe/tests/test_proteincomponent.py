@@ -363,7 +363,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 class TestProteinMembraneComponent(GufeTokenizableTestsMixin):
     cls = ProteinMembraneComponent
     # key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
-    # repr = "ProteinComponent(name=Steve)"
+    repr = "ProteinMembraneComponent(name=Steve)"
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
@@ -371,8 +371,8 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin):
 
     def test_protein_box_vectors(self, PDB_181L_path):
         m1 = self.cls.from_pdb_file(PDB_181L_path)
-        vectors = m1.periodic_box_vectors
-        assert vectors[0][0] == 13.4081
+        vectors = m1._periodic_box_vectors
+        assert vectors[0][0] == 13.4081 * unit.nanometer
 
 
 def test_no_monomer_info_error(ethane):
