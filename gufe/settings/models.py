@@ -13,7 +13,7 @@ from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-from .types import AtmQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
+from .types import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
 
 
 class SettingsBaseModel(_BaseModel):
@@ -103,9 +103,9 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
-    pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
-    ph: PositiveFloat | None = Field(None, description="Simulation pH")
+    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin.")
+    pressure: BarQuantity | None = Field(None, description="Simulation pressure in bar.")
+    ph: PositiveFloat | None = Field(None, description="Simulation pH.")
     redox_potential: VoltsQuantity | None = Field(None, description="Simulation redox potential in millivolts (mV).")
 
 

@@ -95,11 +95,11 @@ NanometerQuantity: TypeAlias = Annotated[
 ]
 """Convert a pint.Quantity to nanometers, if possible."""
 
-AtmQuantity: TypeAlias = Annotated[
+BarQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    specify_quantity_units("atm"),
+    specify_quantity_units("bar"),
 ]
-"""Convert a pint.Quantity to atm, if possible."""
+"""Convert a pint.Quantity to bar, if possible."""
 
 KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
