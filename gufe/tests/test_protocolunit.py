@@ -72,8 +72,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             scratch = Path("scratch") / str(unit.key)
             scratch.mkdir(parents=True)
 
-            stderr = None
-            stdout = None
             if capture_stderr_stdout:
                 stderr = Path("stderr") / str(unit.key)
                 stderr.mkdir(parents=True)
@@ -81,7 +79,9 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
                 stdout = Path("stdout") / str(unit.key)
                 stdout.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+                ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+            else:
+                ctx = Context(shared=shared, scratch=scratch)
 
             u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
             assert u.exception[0] == "ValueError"
