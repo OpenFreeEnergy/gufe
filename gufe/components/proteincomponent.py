@@ -291,15 +291,15 @@ class ProteinComponent(ExplicitMoleculeComponent):
         def _get_formal_charge(valence, connectivity, atom_name):
             if connectivity == 0:  # ions
                 fc = _get_ion_charge(atom_name)
-            elif default_valence > connectivity:  # negative charge
-                fc = -(default_valence - connectivity)
-            elif default_valence < connectivity:  # positive charge
-                fc = +(connectivity - default_valence)
+            elif valence > connectivity:  # negative charge
+                fc = -(valence - connectivity)
+            elif valence < connectivity:  # positive charge
+                fc = +(connectivity - valence)
             else:
                 fc = 0
             return fc
         
-        for id, a in enumerate(rd_mol.GetAtoms()):
+        for atom_id, a in enumerate(rd_mol.GetAtoms()):
             atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
 
@@ -326,7 +326,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
                 if valence_failure:
                     raise Chem.AtomValenceException(
-                        f"Could not set valence of atom num {id} "
+                        f"Could not set valence of atom id {atom_id} "
+                        f"with atomic number {atomic_num} "
                         f"with connectivity {connectivity} and "
                         f"formal charge {fc} and "
                         f"default valence {default_valence}."
