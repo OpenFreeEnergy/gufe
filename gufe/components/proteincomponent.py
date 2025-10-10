@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from os import PathLike
 from string import digits
-from typing import Optional, TextIO, Union, override
+from typing import Optional, TextIO, Union
 from openmm.unit import Quantity
 
 import numpy as np
