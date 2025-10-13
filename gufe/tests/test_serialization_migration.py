@@ -233,11 +233,11 @@ class Grandparent(_DefaultBase):
         self.settings = settings
 
     def _to_dict(self):
-        return {"settings": self.settings.dict()}
+        return {"settings": self.settings.model_dump()}
 
     @classmethod
     def _from_dict(cls, dct):
-        settings = GrandparentSettings.parse_obj(dct["settings"])
+        settings = GrandparentSettings.model_validate(dct["settings"])
         return cls(settings=settings)
 
     @classmethod

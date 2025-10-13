@@ -2,7 +2,8 @@ name: gufe-docs
 channels:
 - https://conda.anaconda.org/conda-forge
 dependencies:
-- autodoc-pydantic
+- autodoc-pydantic >=2.0
+- pydantic <2.12
 - openff-units
 - python=3.12
 - sphinx

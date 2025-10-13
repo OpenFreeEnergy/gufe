@@ -5,79 +5,139 @@ json round trip, and physical unit testing belongs here.
 """
 
 import json
+from typing import Iterable
 
+import numpy as np
 import pytest
-from openff.units import unit
+from openff.units import Quantity, unit
 
+from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
+from gufe.settings.types import BoxQuantity, GufeQuantity, NanometerArrayQuantity, NanometerQuantity
 
 
 def test_settings_schema():
     """Settings schema should be stable"""
     expected_schema = {
-        "title": "Settings",
-        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
-        "type": "object",
-        "properties": {
-            "forcefield_settings": {"$ref": "#/definitions/BaseForceFieldSettings"},
-            "thermo_settings": {"$ref": "#/definitions/ThermoSettings"},
-        },
-        "required": ["forcefield_settings", "thermo_settings"],
-        "additionalProperties": False,
-        "definitions": {
+        "$defs": {
             "BaseForceFieldSettings": {
-                "title": "BaseForceFieldSettings",
-                "description": "Base class for ForceFieldSettings objects",
-                "type": "object",
-                "properties": {},
                 "additionalProperties": False,
+                "description": "Base class for ForceFieldSettings objects",
+                "properties": {},
+                "title": "BaseForceFieldSettings",
+                "type": "object",
             },
             "ThermoSettings": {
-                "title": "ThermoSettings",
+                "additionalProperties": False,
                 "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
-                "type": "object",
                 "properties": {
                     "temperature": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation temperature in kelvin.",
                         "title": "Temperature",
-                        "description": "Simulation temperature, default units kelvin",
-                        "type": "number",
                     },
                     "pressure": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pressure in bar.",
                         "title": "Pressure",
-                        "description": "Simulation pressure, default units standard atmosphere (atm)",
-                        "type": "number",
                     },
-                    "ph": {"title": "Ph", "description": "Simulation pH", "exclusiveMinimum": 0, "type": "number"},
+                    "ph": {
+                        "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pH.",
+                        "title": "Ph",
+                    },
                     "redox_potential": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation redox potential in millivolts (mV).",
                         "title": "Redox Potential",
-                        "description": "Simulation redox potential",
-                        "type": "number",
                     },
                 },
-                "additionalProperties": False,
+                "title": "ThermoSettings",
+                "type": "object",
             },
         },
+        "additionalProperties": False,
+        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
+        "properties": {
+            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings", "title": "Forcefield Settings"},
+            "thermo_settings": {"$ref": "#/$defs/ThermoSettings", "title": "Thermo Settings"},
+        },
+        "required": ["forcefield_settings", "thermo_settings"],
+        "title": "Settings",
+        "type": "object",
     }
-    schema = Settings.schema()
-    assert schema == expected_schema
+    ser_schema = Settings.model_json_schema(mode="serialization")
+    val_schema = Settings.model_json_schema(mode="validation")
+
+    assert ser_schema == expected_schema
+    assert val_schema == expected_schema
+
+
+def test_openmmffsettings_schema():
+    expected_schema = {
+        "additionalProperties": False,
+        "description": "Parameters to set up the force field with OpenMM ForceFields\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceField SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceField SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator",
+        "properties": {
+            "constraints": {
+                "anyOf": [{"enum": ["hbonds", "allbonds", "hangles"], "type": "string"}, {"type": "null"}],
+                "default": "hbonds",
+                "title": "Constraints",
+            },
+            "rigid_water": {"default": True, "title": "Rigid Water", "type": "boolean"},
+            "hydrogen_mass": {"default": 3.0, "title": "Hydrogen Mass", "type": "number"},
+            "forcefields": {
+                "default": [
+                    "amber/ff14SB.xml",
+                    "amber/tip3p_standard.xml",
+                    "amber/tip3p_HFE_multivalent.xml",
+                    "amber/phosaa10.xml",
+                ],
+                "items": {"type": "string"},
+                "title": "Forcefields",
+                "type": "array",
+            },
+            "small_molecule_forcefield": {
+                "default": "openff-2.2.1",
+                "title": "Small Molecule Forcefield",
+                "type": "string",
+            },
+            "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
+            "nonbonded_cutoff": {
+                "description": "Cutoff value for short range nonbonded interactions.",
+                "title": "Nonbonded Cutoff",
+                "type": "number",
+            },
+        },
+        "title": "OpenMMSystemGeneratorFFSettings",
+        "type": "object",
+    }
+    ser_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
+    val_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="validation")
+    assert ser_schema == expected_schema
+    assert val_schema == expected_schema
 
 
 def test_default_settings():
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
-    my_settings.json()
-    my_settings.schema_json(indent=2)
+    my_settings.model_dump_json()
+    json.dumps(my_settings.model_json_schema(mode="serialization"), indent=2)
 
 
 class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            ("parsnips", False, None),  # shouldn't be allowed
+            ("Parsnips", False, None),  # shouldn't be allowed
+            (1.0, False, None),  # shouldn't be allowed
             ("hbonds", True, "hbonds"),
             ("hangles", True, "hangles"),
             ("allbonds", True, "allbonds"),  # allowed options
-            ("HBonds", True, "HBonds"),  # check case insensitivity TODO: cast this to lower?
+            ("HBonds", True, "hbonds"),  # check case insensitivity
             (None, True, None),
         ],
     )
@@ -86,19 +146,21 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(constraints=value)
             assert s.constraints == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="Input should be 'hbonds', 'allbonds' or 'hangles'"):
                 _ = OpenMMSystemGeneratorFFSettings(constraints=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
             (1.0 * unit.nanometer, True, 1.0 * unit.nanometer),
-            (1.0, True, 1.0 * unit.nanometer),  # should cast float to nanometer
+            ({"val": 1.0, "unit": unit.nanometer}, True, 1.0 * unit.nanometer),
+            ({"foo": 1.0, "bar": unit.nanometer}, False, None),
+            (1.0, False, None),  # requires a length unit.
             ("1.1 nm", True, 1.1 * unit.nanometer),
-            ("1.1 ", False, None),
-            (0, True, 0 * unit.nanometer),
-            (-1.0 * unit.nanometer, False, None),
-            # (1.0 * unit.angstrom, True, 0.100 * unit.nanometer),  # TODO: why does this not work?
+            ("1.1", False, None),
+            ([1.0 * unit.nanometer], False, None),
+            # NOTE: this is not precisely equal for smaller values due to pint unit floating point precision
+            (100.0 * unit.angstrom, True, 10.0 * unit.nanometer),
             (300 * unit.kelvin, False, None),
             (True, False, None),
             (None, False, None),
@@ -110,13 +172,28 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
             assert s.nonbonded_cutoff == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="nonbonded_cutoff"):
                 _ = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            ("pme", True, "pme"),
+            (0 * unit.nanometer, True, 0 * unit.nanometer),
+            (-1.0 * unit.nanometer, False, None),
+        ],
+    )
+    def test_negative_cutoff_error(self, value, valid, expected):
+        if valid:
+            s = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
+            assert s.nonbonded_cutoff == expected
+        else:
+            with pytest.raises(ValueError, match=" Input should be greater than or equal to 0"):
+                _ = OpenMMSystemGeneratorFFSettings(nonbonded_cutoff=value)
+
+    @pytest.mark.parametrize(
+        "value,valid,expected",
+        [
+            ("NoCutoff", True, "NoCutoff"),
             ("NOCUTOFF", True, "NOCUTOFF"),
             ("no cutoff", False, None),
             (1.0, False, None),
@@ -127,34 +204,35 @@ class TestSettingsValidation:
             s = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
             assert s.nonbonded_method == expected
         else:
-            with pytest.raises(ValueError, match="Only PME and NoCutoff are allowed"):
+            with pytest.raises(ValueError, match="nonbonded_method"):
                 _ = OpenMMSystemGeneratorFFSettings(nonbonded_method=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
             (298 * unit.kelvin, True, 298 * unit.kelvin),
-            (298, True, 298 * unit.kelvin),
-            (298.0, True, 298 * unit.kelvin),
             ("298 kelvin", True, 298 * unit.kelvin),
+            # currently, celsius must be defined explicitly with Quantity https://pint.readthedocs.io/en/stable/user/nonmult.html
+            (Quantity(25, unit.degC), True, 298.15 * unit.kelvin),
+            (298, False, None),  # requires units
             ("298", False, None),
             (298 * unit.angstrom, False, None),
         ],
     )
     def test_thermo_temperature(self, value, valid, expected):
         if valid:
-            s = ThermoSettings(temperature=value)
-            assert s.temperature == expected
+            settings = ThermoSettings(temperature=value)
+            assert settings.temperature == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="temperature"):
                 _ = ThermoSettings(temperature=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            (1.0 * unit.atm, True, 1.0 * unit.atm),
-            (1.0, True, 1.0 * unit.atm),
-            ("1 atm", True, 1.0 * unit.atm),
+            (1.0 * unit.bar, True, 1.0 * unit.bar),
+            (1.0, False, None),  # require units
+            ("1 bar", True, 1.0 * unit.bar),
             ("1.0", False, None),
         ],
     )
@@ -163,7 +241,7 @@ class TestSettingsValidation:
             s = ThermoSettings(pressure=value)
             assert s.pressure == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="pressure"):
                 _ = ThermoSettings(pressure=value)
 
     @pytest.mark.parametrize(
@@ -172,7 +250,7 @@ class TestSettingsValidation:
             (1.0, True, 1.0),
             (1, True, 1.0),
             ("1 ph", False, None),
-            (1.0 * unit.atm, False, None),
+            (1.0 * unit.bar, False, None),
         ],
     )
     def test_thermo_ph(self, value, valid, expected):
@@ -180,15 +258,19 @@ class TestSettingsValidation:
             s = ThermoSettings(ph=value)
             assert s.ph == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="ph"):
                 _ = ThermoSettings(ph=value)
 
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            (1.0, True, 1.0),
             (None, True, None),
-            ("1", True, 1.0),
+            (1 * unit.mV, True, 1 * unit.mV),
+            ("1.0 mV", True, 1 * unit.mV),
+            ("0.001 volts", True, 1 * unit.mV),
+            (0.001 * unit.volt, True, 1 * unit.mV),
+            (0.001 * unit.nanometer, False, None),
+            ("0.001 nm", False, None),
         ],
     )
     def test_thermo_redox(self, value, valid, expected):
@@ -196,7 +278,7 @@ class TestSettingsValidation:
             s = ThermoSettings(redox_potential=value)
             assert s.redox_potential == expected
         else:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="redox"):
                 _ = ThermoSettings(redox_potential=value)
 
 
@@ -236,10 +318,24 @@ class TestFreezing:
         # the frozen-ness of Settings doesn't alter its contents
         # therefore a frozen/unfrozen Settings which are otherwise identical
         # should be considered equal
-        s = Settings.get_defaults()
-        s2 = s.frozen_copy()
+        s1 = Settings.get_defaults()
+        s2 = s1.frozen_copy()
 
-        assert s == s2
+        assert s1 == s2
+
+    def test_frozen_equality_changed(self):
+        # the frozen-ness of Settings doesn't alter its contents
+        # therefore a frozen/unfrozen Settings which are otherwise identical
+        # should be considered equal
+        s1 = Settings.get_defaults()
+        s2 = s1.frozen_copy()
+        s1.forcefield_settings.constraints = "allbonds"
+        assert s1 != s2
+
+    def test_settings_equality_not_settings(self):
+        """check that our custom __eq__ implementation handles non-settings objects"""
+        s1 = Settings.get_defaults()
+        assert s1 != "not a settings object"
 
     def test_set_subsection(self):
         # check that attempting to set a subsection of settings still respects
@@ -252,3 +348,90 @@ class TestFreezing:
 
         with pytest.raises(AttributeError, match="immutable"):
             s.thermo_settings = ts
+
+
+class TestArrayQuantity:
+    class ArraySettingsModel(SettingsBaseModel):
+        array_quantity: NanometerArrayQuantity
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            [0.0, 1.0] * unit.nanometer,
+            [[0.0, 1.0], [0.0, 0.0], [1.0, 1.0]] * unit.angstrom,
+        ],
+    )
+    def test_valid_array_quantity(self, value):
+        array_settings = self.ArraySettingsModel(array_quantity=value)
+        assert array_settings.array_quantity.units == unit.nanometer
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            5 * unit.angstrom,
+            "5 nanometers",
+        ],
+    )
+    def test_invalid_array_quantity(self, value):
+        with pytest.raises(ValueError, match="not an array"):
+            array_settings = self.ArraySettingsModel(array_quantity=value)
+            assert array_settings.array_quantity.units == unit.angstrom
+
+
+class TestBoxVectors:
+    class BoxSettingsModel(SettingsBaseModel):
+        box_vectors: BoxQuantity
+
+    def test_box_quantity_schema(self):
+        expected_schema = {
+            "additionalProperties": False,
+            "properties": {"box_vectors": {"title": "Box Vectors", "type": "number"}},
+            "required": ["box_vectors"],
+            "title": "BoxSettingsModel",
+            "type": "object",
+        }
+        ser_schema = self.BoxSettingsModel.model_json_schema(mode="serialization")
+        val_schema = self.BoxSettingsModel.model_json_schema(mode="validation")
+        assert ser_schema == expected_schema
+        assert val_schema == expected_schema
+
+    @pytest.mark.parametrize(
+        "value,m_expected",
+        [
+            (
+                np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]) * unit.nanometer,
+                np.asarray([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
+            ),
+            (
+                np.asarray([1.0, 1.0, 1.0]) * unit.nanometer,
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            ),  # fmt: off
+            (
+                [1.0, 1.0, 1.0] * unit.nanometer,
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            ),  # fmt: off
+            (
+                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]] * unit.angstrom,
+                [[0.0, 0.0, 0.1], [0.0, 0.1, 0.0], [0.1, 0.0, 0.0]],
+            ),
+        ],
+    )
+    def test_valid_box_quantity(self, value, m_expected):
+        box_settings = self.BoxSettingsModel(box_vectors=value)
+        assert box_settings.box_vectors.units == unit.nanometer
+        ## use allclose to handle angstrom->nanometer diffs
+        np.testing.assert_allclose(box_settings.box_vectors.magnitude, m_expected, rtol=2e-16, atol=2e-17)
+
+    # TODO: improve this error handling, the AttributeErrors aren't very user-friendly
+    @pytest.mark.parametrize(
+        "value,err_type,match_str",
+        [
+            ("some string", AttributeError, "is not defined in the unit registry"),
+            (1.0 * unit.nanometer, AttributeError, "float' object has no attribute"),
+            (1.0, ValueError, "Invalid type <class 'float'> for Quantity"),
+            ([1.0, 1.0, 1.0], ValueError, "Invalid type <class 'list'> for Quantity "),
+        ],
+    )
+    def test_invalid_box_quantity(self, value, err_type, match_str):
+        with pytest.raises(err_type, match=match_str):
+            self.BoxSettingsModel(box_vectors=value)
