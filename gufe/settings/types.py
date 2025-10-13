@@ -8,7 +8,7 @@ Custom types that inherit from openff.units.Quantity and are pydantic-compatible
 from typing import Annotated, Any, Dict, TypeAlias
 
 import numpy
-from openff.units import Quantity
+from openff.units import Quantity, UnitRegistry
 from pydantic import (
     AfterValidator,
     Field,
@@ -25,18 +25,19 @@ def _plain_quantity_validator(
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
     # logic adapted from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
+    ureg = UnitRegistry(autoconvert_offset_to_baseunit=True)
 
     def dict_to_quantity(quantity_dict: dict) -> Quantity:
         try:
             # this is coupled to how a Quantity looks in JSON
-            return Quantity(quantity_dict["val"], quantity_dict["unit"])
+            return ureg.Quantity(quantity_dict["val"], quantity_dict["unit"])
         except KeyError:
             raise ValueError("Quantity must be a dict with keys 'val' and 'unit'.")
 
     if isinstance(value, Quantity):
         return value
     elif isinstance(value, str):
-        return Quantity(value)
+        return ureg.Quantity(value)
     elif isinstance(value, dict):
         return dict_to_quantity(value)
     else:

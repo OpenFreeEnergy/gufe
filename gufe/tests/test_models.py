@@ -10,10 +10,13 @@ from typing import Iterable
 import numpy as np
 import pytest
 from openff.units import Quantity, unit
+from pint import UnitRegistry
 
 from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
 from gufe.settings.types import BoxQuantity, GufeQuantity, NanometerArrayQuantity, NanometerQuantity
+
+ureg = UnitRegistry(autoconvert_offset_to_baseunit=True)
 
 
 def test_settings_schema():
@@ -212,7 +215,7 @@ class TestSettingsValidation:
         [
             (298 * unit.kelvin, True, 298 * unit.kelvin),
             ("298 kelvin", True, 298 * unit.kelvin),
-            # currently, celsius must be defined explicitly with Quantity https://pint.readthedocs.io/en/stable/user/nonmult.html
+            # # currently, celsius must be defined explicitly with Quantity https://pint.readthedocs.io/en/stable/user/nonmult.html
             (Quantity(25, unit.degC), True, 298.15 * unit.kelvin),
             ("25 celsius", True, 298.15 * unit.kelvin),
             (298, False, None),  # requires units
