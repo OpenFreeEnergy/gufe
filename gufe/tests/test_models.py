@@ -214,6 +214,7 @@ class TestSettingsValidation:
             ("298 kelvin", True, 298 * unit.kelvin),
             # currently, celsius must be defined explicitly with Quantity https://pint.readthedocs.io/en/stable/user/nonmult.html
             (Quantity(25, unit.degC), True, 298.15 * unit.kelvin),
+            ("25 celsius", True, 298.15 * unit.kelvin),
             (298, False, None),  # requires units
             ("298", False, None),
             (298 * unit.angstrom, False, None),
