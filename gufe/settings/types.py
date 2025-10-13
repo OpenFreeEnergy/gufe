@@ -25,7 +25,8 @@ def _plain_quantity_validator(
 ) -> Quantity:
     """Take Quantity-like objects and convert them to Quantity objects."""
     # logic adapted from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
-    ureg = UnitRegistry(autoconvert_offset_to_baseunit=True)
+
+    ureg = UnitRegistry(autoconvert_offset_to_baseunit=True)  # enables celsius->kelvin parsing
 
     def dict_to_quantity(quantity_dict: dict) -> Quantity:
         try:
