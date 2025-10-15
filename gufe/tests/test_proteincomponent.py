@@ -363,7 +363,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_protein_valence_error(self):
         """Make sure exception is raised if a valid valence cannot be determined."""
         with pytest.raises(Chem.AtomValenceException, match="Could not set valence of atom id"):
-            with mock.patch("rdkit.Chem.rdchem.PeriodicTable.GetValenceList", return_value=[1000]):
+            with mock.patch("rdkit.Chem.rdchem.PeriodicTable.GetValenceList", return_value=[10000000]):
                 self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
 
 
