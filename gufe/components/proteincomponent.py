@@ -11,7 +11,7 @@ from typing import Optional, TextIO, Union
 import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
 from ..custom_typing import RDKitMol
@@ -305,33 +305,33 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
             default_valence = periodicTable.GetDefaultValence(atomic_num)
+            with rdBase.BlockLogs() as block:
+                try:
+                    fc = _get_formal_charge(default_valence, connectivity, atom_name)
+                    a.SetFormalCharge(fc)
+                    a.UpdatePropertyCache(strict=True)
+                except Chem.AtomValenceException:
+                    # atom may have other valences
+                    valence_failure = True
+                    for alt_v in periodicTable.GetValenceList(atomic_num):
+                        try:
+                            fc = _get_formal_charge(alt_v, connectivity, atom_name)
+                            a.SetFormalCharge(fc)
+                            a.UpdatePropertyCache(strict=True)
+                        except Chem.AtomValenceException:
+                            continue
+                        else:
+                            valence_failure = False
+                            break
 
-            try:
-                fc = _get_formal_charge(default_valence, connectivity, atom_name)
-                a.SetFormalCharge(fc)
-                a.UpdatePropertyCache(strict=True)
-            except Chem.AtomValenceException:
-                # atom may have other valences
-                valence_failure = True
-                for alt_v in periodicTable.GetValenceList(atomic_num):
-                    try:
-                        fc = _get_formal_charge(alt_v, connectivity, atom_name)
-                        a.SetFormalCharge(fc)
-                        a.UpdatePropertyCache(strict=True)
-                    except Chem.AtomValenceException:
-                        continue
-                    else:
-                        valence_failure = False
-                        break
-
-                if valence_failure:
-                    raise Chem.AtomValenceException(
-                        f"Could not set valence of atom id {atom_id} "
-                        f"with atomic number {atomic_num} "
-                        f"with connectivity {connectivity} and "
-                        f"formal charge {fc} and "
-                        f"default valence {default_valence}."
-                    )
+                    if valence_failure:
+                        raise Chem.AtomValenceException(
+                            f"Could not set valence of atom id {atom_id} "
+                            f"with atomic number {atomic_num} "
+                            f"with connectivity {connectivity} and "
+                            f"formal charge {fc} and "
+                            f"default valence {default_valence}."
+                        )
 
             netcharge += fc
 
