@@ -299,7 +299,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 fc = 0
             return fc
 
-        for atom_id, a in enumerate(rd_mol.GetAtoms()):
+        for atom_id, a in enumerate(rd_mol.GetAtoms()):  # TODO: should this index start at 1?
             atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
 
