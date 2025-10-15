@@ -39,7 +39,9 @@ class SettingsBaseModel(_BaseModel):
 
         def freeze_model(model):
             submodels = (
-                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod
+                for field in model.__class__.model_fields
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -60,7 +62,9 @@ class SettingsBaseModel(_BaseModel):
 
         def unfreeze_model(model):
             submodels = (
-                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod
+                for field in model.__class__.model_fields
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
