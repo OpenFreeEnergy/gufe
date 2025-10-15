@@ -288,7 +288,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Formal Charge
         netcharge = 0
 
-        def _get_formal_charge(valence, connectivity, atom_name):
+        def _get_formal_charge(valence: int, connectivity: int, atom_name: str) -> int:
             if connectivity == 0:  # ions
                 fc = _get_ion_charge(atom_name)
             elif valence > connectivity:  # negative charge
@@ -305,7 +305,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
             connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
             default_valence = periodicTable.GetDefaultValence(atomic_num)
-            with rdBase.BlockLogs() as block:
+            with rdBase.BlockLogs():  # turn off rdkit's verbose logging
                 try:
                     fc = _get_formal_charge(default_valence, connectivity, atom_name)
                     a.SetFormalCharge(fc)
