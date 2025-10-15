@@ -13,7 +13,7 @@ from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-from .types import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
+from .typing import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
 
 
 class SettingsBaseModel(_BaseModel):
