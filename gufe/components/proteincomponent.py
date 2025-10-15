@@ -298,7 +298,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             else:
                 fc = 0
             return fc
-        
+
         for atom_id, a in enumerate(rd_mol.GetAtoms()):
             atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
@@ -331,7 +331,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                         f"with connectivity {connectivity} and "
                         f"formal charge {fc} and "
                         f"default valence {default_valence}."
-                    )   
+                    )
 
             netcharge += fc
 
