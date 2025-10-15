@@ -42,7 +42,7 @@ PDB_FILE = pooch.create(
         "thrombin_protein.pdb": "md5:261b8f040b389188e8c0cf14fbab5775",
         "tnsk2_protein.pdb": "md5:aa13bef540d061ed66ef4240886a39ec",
         "tyk2_protein.pdb": "md5:48d447290ee637ce8e3255cfa572297a",
-        "3tzr_rna.pdb": "md5:48d447290ee637ce8e3255cfa572297a",
+        "3tzr_rna.pdb": "md5:db5bbde903e7b9f589d437543ba088cd",
     },
     retry_if_failed=10,  # Set to 10 since tests might try and download the same file at the same time
 )
