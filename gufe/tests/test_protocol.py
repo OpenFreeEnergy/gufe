@@ -361,9 +361,9 @@ class TestProtocol(GufeTokenizableTestsMixin):
         assert not dagfailure.ok()
         assert isinstance(dagfailure, ProtocolDAGResult)
 
-        # check that PR#622 has intended effect
+        # check that PR#622 has intended effect; both of these would have failed previously
         assert set(dagfailure._unit_result_mapping.keys()) == set(dagfailure.protocol_units)
-        ## this would have raised an exception previously
+        ## this would have previously raised a `KeyError`
         assert not all([any(pur.ok() for pur in dagfailure._unit_result_mapping[pu]) for pu in dagfailure._protocol_units])
 
         failed_units = dagfailure.protocol_unit_failures
