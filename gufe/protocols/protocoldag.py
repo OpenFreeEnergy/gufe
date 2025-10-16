@@ -60,7 +60,7 @@ class DAGMixin:
 
     @property
     def protocol_units(self) -> list[ProtocolUnit]:
-        """List of `ProtocolUnit` s given in DAG-dependency order.
+        """List of ``ProtocolUnit`` s given in DAG-dependency order.
 
         DAG-dependency order guarantees that any task is listed after all of its
         dependencies.
@@ -69,7 +69,7 @@ class DAGMixin:
 
     @property
     def transformation_key(self) -> GufeKey | None:
-        """The `GufeKey` of the `Transformation` this object performs.
+        """The ``GufeKey`` of the ``Transformation`` this object performs.
 
         If `None`, then this object was not created from a `Transformation`.
         This may be the case when creating a `ProtocolDAG` from a `Protocol`
@@ -159,7 +159,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def result_graph(self) -> nx.DiGraph:
-        """DAG of `ProtocolUnitResult` nodes with edges denoting dependencies.
+        """DAG of ``ProtocolUnitResult`` nodes with edges denoting dependencies.
 
         Each edge is directed from a task towards its dependencies; for example,
         an edge between a production run and its equilibration would point
@@ -178,7 +178,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
-        """A list of all failed `ProtocolUnit`\s.
+        """A list of all failed ``ProtocolUnit``\s.
 
         Note
         ----
@@ -201,19 +201,20 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         return [r for r in self.protocol_unit_results if r.ok()]
 
     def unit_to_result(self, protocol_unit: ProtocolUnit) -> ProtocolUnitResult:
-        """Return the successful `ProtocolUnitResult` for a given `ProtocolUnit`, if it exists.
+        """Return the successful ``ProtocolUnitResult`` for a given ``ProtocolUnit``,
+        if it exists.
 
         Returns
         -------
         success : ProtocolUnitResult
-          the successful `ProtocolUnitResult` for this `ProtocolUnit`
+          the successful ``ProtocolUnitResult`` for this ``ProtocolUnit``
 
         Raises
         ------
         MissingUnitResultError:
-          if there are no results for that `ProtocolUnit`
+          if there are no results for that ``ProtocolUnit``
         ProtocolUnitFailureError:
-          if there are only failures for that `ProtocolUnit`
+          if there are only failures for that ``ProtocolUnit``
         """
         try:
             unit_results = self._unit_result_mapping[protocol_unit]
@@ -227,17 +228,17 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
                 raise ProtocolUnitFailureError(f"No success for `protocol_unit`:{protocol_unit} found")
 
     def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
-        """Return all `ProtocolUnitResult`\s (success and failure) for a given `ProtocolUnit`.
+        """Return all ``ProtocolUnitResult``\s (success and failure) for a given ``ProtocolUnit``.
 
         Returns
         -------
         results : list[ProtocolUnitResult]
-          `ProtocolUnitResult`\s for the given `ProtocolUnit`
+          ``ProtocolUnitResult``\s for the given ``ProtocolUnit``
 
         Raises
         ------
         MissingUnitResultError
-          if no `ProtocolUnitResult`\s present for the given `ProtocolUnit`
+          if no ``ProtocolUnitResult``\s present for the given ``ProtocolUnit``
         """
         try:
             return self._unit_result_mapping[protocol_unit]
@@ -245,17 +246,17 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
             raise MissingUnitResultError(f"No such `protocol_unit`:{protocol_unit} present")
 
     def result_to_unit(self, protocol_unit_result: ProtocolUnitResult) -> ProtocolUnit:
-        """Return the `ProtocolUnit` corresponding to the given `ProtocolUnitResult`.
+        """Return the ``ProtocolUnit`` corresponding to the given ``ProtocolUnitResult``.
 
         Returns
         -------
         ProtocolUnit
-            the `ProtocolUnit` corresponding to the given `ProtocolUnitResult`
+            the ``ProtocolUnit`` corresponding to the given ``ProtocolUnitResult``
 
         Raises
         ------
         MissingUnitResultError
-          if the given `ProtocolUnitResult` isn't present
+          if the given ``ProtocolUnitResult`` isn't present
         """
         try:
             return self._result_unit_mapping[protocol_unit_result]
@@ -263,9 +264,9 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
             raise MissingUnitResultError(f"No such `protocol_unit_result`:{protocol_unit_result} present")
 
     def ok(self) -> bool:
-        """Check if this `ProtocolDAGResult` succeeded or failed.
+        """Check if this ``ProtocolDAGResult`` succeeded or failed.
 
-        Returns ``True`` if there is at least one successful `ProtocolUnitResult` for each `ProtocolUnit`,
+        Returns ``True`` if there is at least one successful ``ProtocolUnitResult`` for each ``ProtocolUnit``,
         and ``False`` otherwise.
 
         """
@@ -274,12 +275,12 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
-        """Get `ProtocolUnitResult`\s that terminate the DAG.
+        """Get ``ProtocolUnitResult``\s that terminate the DAG.
 
         Returns
         -------
         list[ProtocolUnitResult]
-          All `ProtocolUnitResult`\s which do not have a `ProtocolUnitResult`
+          All ``ProtocolUnitResult``\s which do not have a ``ProtocolUnitResult``
           that follows on (depends) on them.
         """
         return [u for u in self._protocol_unit_results if not nx.ancestors(self._result_graph, u)]
