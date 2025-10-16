@@ -4,7 +4,7 @@ ci:
   autofix_prs: false
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -19,8 +19,13 @@ repos:
   - id: trailing-whitespace
     exclude: '\.(pdb|gro|top|sdf|xml|cif|graphml)$'
 
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: "v2.8.0"
+  hooks:
+    - id: pyproject-fmt
+
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.12
+  rev: v0.13.3
   hooks:
     # Run the linter.
     - id: ruff

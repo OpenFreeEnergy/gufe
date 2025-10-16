@@ -126,6 +126,70 @@ class ChemicalSystem(GufeTokenizable, abc.Mapping):
                 total_charge += fc
         return total_charge
 
+    def contains(self, item: Component | type[Component]) -> bool:
+        """Check if a Component or Component type is in this ChemicalSystem.
+
+        Parameters
+        ----------
+        item : Component or type of Component
+            The Component instance or class to check for.
+
+        Returns
+        -------
+        bool
+            Returns True if the item is found in the ChemicalSystem, False otherwise.
+
+        Examples
+        --------
+        To check if a specific Component instance is in a ChemicalSystem:
+
+        >>> chem_sys = ChemicalSystem(components={"ligand": ligand_comp, "solvent": solvent_comp})
+        >>> is_present = chem_sys.contains(ligand_comp)
+        >>> print(is_present)  # True if ligand_comp is in chem_sys, False otherwise
+        """
+        # check the input types
+        if not (isinstance(item, Component) or issubclass(item, Component)):
+            raise TypeError("`item` must be an instance or subclass of `Component`")
+
+        for comp in self._components.values():
+            if isinstance(item, Component):
+                if comp == item:
+                    return True
+            elif issubclass(item, Component):
+                if isinstance(comp, item):
+                    return True
+
+        return False
+
+    def get_components_of_type(self, item: type[Component]) -> list[Component]:
+        """Get all Components of a specific type in this ChemicalSystem
+
+        Parameters
+        ----------
+        item : type of Component
+            The class of Component to search for.
+
+        Returns
+        -------
+        list of Component
+            A list of all Components in the ChemicalSystem that are instances of the specified type.
+            If no Components of the specified type are found, an empty list is returned.
+
+        Examples
+        --------
+        To get all SmallMoleculeComponents in a ChemicalSystem:
+
+        >>> chem_sys = ChemicalSystem(components={"ligand": ligand_comp, "solvent": solvent_comp})
+        >>> small_molecules = chem_sys.get_components_of_type(SmallMoleculeComponent)
+        >>> print(small_molecules)  # List of SmallMoleculeComponent instances
+        """
+        if not (isinstance(item, type) and issubclass(item, Component)):
+            raise TypeError("`item` must be a subclass of `Component`")
+
+        matches = [comp for comp in self._components.values() if isinstance(comp, item)]
+
+        return matches
+
     def __getitem__(self, item):
         return self.components[item]
 

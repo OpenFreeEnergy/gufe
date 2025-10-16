@@ -1,37 +1,79 @@
 [build-system]
-requires = [
-	"setuptools>=61.2",
-	"versioningit",
-]
 build-backend = "setuptools.build_meta"
+requires = [
+  "setuptools>=77.0.3",
+  "versioningit",
+]
 
 [project]
 name = "gufe"
 description = ""
 readme = "README.md"
-authors = [{name = "The OpenFE developers", email = "openfe@omsf.io"}]
-license = {text = "MIT"}
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: POSIX",
-    "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
-    "Topic :: Scientific/Engineering :: Chemistry",
-]
-urls = {Homepage = "https://github.com/OpenFreeEnergy/gufe"}
-requires-python = ">= 3.10"
+license = "MIT"
+license-files = [ "LICENSE" ]
+authors = [ { name = "The OpenFE developers", email = "openfe@omsf.io" } ]
+requires-python = ">=3.10"
 
-dynamic = ["version"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Chemistry",
+]
+dynamic = [ "version" ]
+urls = { Homepage = "https://github.com/OpenFreeEnergy/gufe" }
 
 [tool.setuptools]
 zip-safe = false
 include-package-data = true
-license-files = ["LICENSE"]
 
 [tool.setuptools.packages]
-find = {namespaces = false}
+find = { namespaces = false }
+
+[tool.ruff]
+line-length = 120
+
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+lint.select = [
+  # "F",  # Pyflakes
+  "I", # isort
+  "W", # pycodestyle warnings
+  # "E",  # pycodestyle errors
+  # "C901"  # mccabe complexity  TODO: add this back in
+  # "UP", # TODO: add this in
+]
+lint.ignore = [
+  "E402", # module-level import not at top (conflicts w/ isort)
+  "E722", # bare excepts (TODO: we should fix these in a follow-up PR)
+  "E731", # lambda expressions (TODO: we should fix these)
+  "F401", # unused imports (TODO: we should fix these)
+  "UP03", # pyupgrade linting (TODO: we should fix these)
+]
+lint.isort.known-first-party = [ "gufe" ]
+
+[tool.coverage.run]
+omit = [
+  "*/_version.py",
+  "*/tests/dev/*py",
+  "gufe/tests/*",
+  "gufe/vendor/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "pragma: no-cover",
+  "-no-cov",
+  "raise NotImplementedError",
+  '\.\.\.',
+]
 
 [tool.mypy]
 files = "gufe"
@@ -42,27 +84,9 @@ module = "gufe.vendor.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "rdkit.Chem.AllChem.*"  # TODO: troubleshoot these missing imports, add tests
+module = "rdkit.Chem.AllChem.*" # TODO: troubleshoot these missing imports, add tests
 follow_imports = 'skip'
 follow_imports_for_stubs = true
-
-[tool.coverage.run]
-omit = [
-    "*/_version.py",
-    "*/tests/dev/*py",
-    "gufe/tests/*",
-    "gufe/vendor/*",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "pragma: no-cover",
-    "-no-cov",
-    "raise NotImplementedError",
-    '\.\.\.',
-]
-
 
 [tool.versioningit]
 default-version = "1+unknown"
@@ -74,37 +98,13 @@ distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 
 [tool.versioningit.vcs]
 method = "git"
-match = ["*"]
+match = [ "*" ]
 default-tag = "0.0.0"
-
-[tool.ruff]
-line-length = 120
-
-[tool.ruff.lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-select = [
-    # "F",  # Pyflakes
-    "I",  # isort
-    "W",  # pycodestyle warnings
-    # "E",  # pycodestyle errors
-    # "C901"  # mccabe complexity  TODO: add this back in
-    # "UP", # TODO: add this in
-]
-ignore = [
-    "E402",  # module-level import not at top (conflicts w/ isort)
-    "E731",  # lambda expressions (TODO: we should fix these)
-    "E722",  # bare excepts (TODO: we should fix these in a follow-up PR)
-    "F401",  # unused imports (TODO: we should fix these)
-    "UP03",  # pyupgrade linting (TODO: we should fix these)
-    ]
-
-[tool.ruff.lint.isort]
-known-first-party = ["gufe"]
 
 [tool.interrogate]
 fail-under = 0
-ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*"]
+ignore-regex = [ "^get$", "^mock_.*", ".*BaseClass.*" ]
 # possible values for verbose: 0 (minimal output), 1 (-v), 2 (-vv)
 verbose = 2
 color = true
-exclude = ["build", "docs"]
+exclude = [ "build", "docs" ]
