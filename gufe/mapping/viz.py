@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Tuple, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,7 +12,11 @@ try:
 except ImportError:
     pass  # Don't throw  error, will happen later
 
+from ..utils import requires_package
 from . import AtomMapping
+
+if TYPE_CHECKING:
+    import py3Dmol
 
 
 def _get_max_dist_in_x(atom_mapping: AtomMapping) -> float:
@@ -40,7 +44,7 @@ def _get_max_dist_in_x(atom_mapping: AtomMapping) -> float:
     return estm if (estm > 5) else 5
 
 
-def _translate(mol, shift: Union[Tuple[float, float, float], NDArray[np.float64]]):
+def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[np.float64]]) -> Chem.Mol:
     """
         shifts the molecule by the shift vector
 
@@ -65,7 +69,8 @@ def _translate(mol, shift: Union[Tuple[float, float, float], NDArray[np.float64]
     return mol
 
 
-def _add_spheres(view: py3Dmol.view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]):
+@requires_package("py3Dmol")
+def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
     """
         will add spheres according to mapping to the view. (inplace!)
 

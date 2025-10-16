@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -14,12 +14,15 @@ from gufe.visualization.mapping_visualization import draw_mapping
 
 from ..tokenization import JSON_HANDLER
 from ..utils import requires_package
-from . import AtomMapping, viz
+from . import AtomMapping
 
 try:
     import py3Dmol
 except ImportError:
     pass  # Don't throw  error, will happen later
+
+if TYPE_CHECKING:
+    import py3Dmol
 
 
 class LigandAtomMapping(AtomMapping):
@@ -235,9 +238,10 @@ class LigandAtomMapping(AtomMapping):
         view : py3Dmol.view
             View of the system containing both molecules in the edge.
         """
+        from . import viz
 
         if shift is None:
-            shift = np.array([_get_max_dist_in_x(self) * 1.5, 0, 0])
+            shift = np.array([viz._get_max_dist_in_x(self) * 1.5, 0, 0])
         else:
             shift = np.array(shift)
 
