@@ -299,7 +299,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 fc = 0
             return fc
 
-        for atom_id, a in enumerate(rd_mol.GetAtoms()):  # TODO: should this index start at 1?
+        for atom_id, a in enumerate(rd_mol.GetAtoms()):
             atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
 
@@ -326,10 +326,10 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
                     if valence_failure:
                         raise Chem.AtomValenceException(
-                            f"Could not set valence of atom id {atom_id} "
-                            f"with atomic number {atomic_num} "
-                            f"with connectivity {connectivity} and "
-                            f"formal charge {fc} and "
+                            f"Could not set valence of atom id {atom_id + 1} "  # pdb atom ids index from 1
+                            f"with atomic number {atomic_num}, "
+                            f"connectivity {connectivity}, "
+                            f"formal charge {fc}, and "
                             f"default valence {default_valence}."
                         )
 
