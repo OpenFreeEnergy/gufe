@@ -13,6 +13,13 @@ from gufe.visualization.mapping_visualization import (
     draw_unhighlighted_molecule,
 )
 
+try:
+    import py3dmol
+
+    HAS_PY3DMOL = True
+except ImportError:
+    HAS_PY3DMOL = False
+
 # default colors currently used
 _HIGHLIGHT_COLOR = (220 / 255, 50 / 255, 32 / 255, 1)
 _CHANGED_ELEMENTS_COLOR = (0, 90 / 255, 181 / 255, 1)
@@ -244,3 +251,11 @@ def test_draw_unhighlighted_molecule_integration_smoke(benzene_transforms):
     # integration test/smoke test to catch errors if the upstream drawing
     # code changes
     draw_unhighlighted_molecule(benzene_transforms["benzene"].to_rdkit())
+
+
+@pytest.mark.skipif(not HAS_PY3DMOL)
+def test_visualize_3D_mapping(benzene_phenol_mapping):
+    """
+    smoke test just checking if nothing goes horribly wrong
+    """
+    benzene_phenol_mapping.view_3d()
