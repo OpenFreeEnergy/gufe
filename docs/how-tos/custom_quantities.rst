@@ -3,7 +3,7 @@
 How to define a custom ``GufeQuantity``
 =======================================
 
-``GufeQuantity`` is compatible with both pydantic serialization and openff.
+:class:`.GufeQuantity`` is compatible with both pydantic serialization and openff.
 
 See :class:`.settings.typing` for quanities included in gufe.
 
