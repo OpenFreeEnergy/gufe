@@ -205,7 +205,7 @@ class LigandAtomMapping(AtomMapping):
             )
 
     @requires_package("py3Dmol")
-    def view_3D(
+    def view_3d(
         self,
         spheres: Optional[bool] = True,
         show_atomIDs: Optional[bool] = False,
@@ -238,7 +238,7 @@ class LigandAtomMapping(AtomMapping):
         view : py3Dmol.view
             View of the system containing both molecules in the edge.
         """
-        from . import viz
+        from ..visualization import mapping_visualization as viz
 
         if shift is None:
             shift = np.array([viz._get_max_dist_in_x(self) * 1.5, 0, 0])

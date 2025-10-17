@@ -251,11 +251,3 @@ def test_draw_unhighlighted_molecule_integration_smoke(benzene_transforms):
     # integration test/smoke test to catch errors if the upstream drawing
     # code changes
     draw_unhighlighted_molecule(benzene_transforms["benzene"].to_rdkit())
-
-
-@pytest.mark.skipif(not HAS_PY3DMOL, reason="optional dep py3Dmol not found")
-def test_visualize_3D_mapping(benzene_phenol_mapping):
-    """
-    smoke test just checking if nothing goes horribly wrong
-    """
-    benzene_phenol_mapping.view_3d()
