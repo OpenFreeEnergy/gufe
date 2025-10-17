@@ -338,7 +338,7 @@ def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[n
     return mol
 
 
-# @requires_package("py3dmol")
+@requires_package("py3Dmol")
 def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
     """
         will add spheres according to mapping to the view. (inplace!)

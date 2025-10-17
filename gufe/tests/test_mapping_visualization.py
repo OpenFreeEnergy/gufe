@@ -4,7 +4,6 @@ from unittest import mock
 import pytest
 from rdkit import Chem
 
-import gufe
 from gufe.visualization.mapping_visualization import (
     _get_unique_bonds_and_atoms,
     _match_elements,
@@ -14,7 +13,7 @@ from gufe.visualization.mapping_visualization import (
 )
 
 try:
-    import py3dmol
+    import py3Dmol
 
     HAS_PY3DMOL = True
 except ImportError:
