@@ -8,7 +8,7 @@ import io
 import os
 import pathlib
 import shutil
-from typing import ContextManager, Tuple, Union
+from typing import ContextManager, Iterator, Tuple, Union
 
 from ..errors import ChangedExternalResourceError, MissingExternalResourceError
 
@@ -161,7 +161,7 @@ class ExternalStorage(abc.ABC):
         """
         return self._exists(location)
 
-    def iter_contents(self, prefix=""):
+    def iter_contents(self, prefix="") -> Iterator[str]:
         """Iterate over the labels in this storage.
 
         Parameters
@@ -169,13 +169,16 @@ class ExternalStorage(abc.ABC):
         prefix : str
             Only iterate over paths that start with the given prefix.
 
-        Returns
-        -------
+        Yields
+        ------
         Iterator[str] :
             Contents of this storage, which may include items without
             metadata.
         """
-        return self._iter_contents(prefix)
+        yield self._iter_contents(prefix)
+
+    def __iter__(self):
+        yield from self.iter_contents()
 
     @abc.abstractmethod
     def _iter_contents(self, prefix=""):
