@@ -2,15 +2,11 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import abc
 import dataclasses
-import glob
 import hashlib
-import io
-import os
 import pathlib
-import shutil
-from typing import ContextManager, Iterator, Tuple, Union
+from typing import ContextManager, Iterator
 
-from ..errors import ChangedExternalResourceError, MissingExternalResourceError
+from ..errors import MissingExternalResourceError
 
 
 @dataclasses.dataclass
