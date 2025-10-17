@@ -4,7 +4,6 @@ from unittest import mock
 import pytest
 from rdkit import Chem
 
-import gufe
 from gufe.visualization.mapping_visualization import (
     _get_unique_bonds_and_atoms,
     _match_elements,
@@ -12,6 +11,13 @@ from gufe.visualization.mapping_visualization import (
     draw_one_molecule_mapping,
     draw_unhighlighted_molecule,
 )
+
+try:
+    import py3Dmol
+
+    HAS_PY3DMOL = True
+except ImportError:
+    HAS_PY3DMOL = False
 
 # default colors currently used
 _HIGHLIGHT_COLOR = (220 / 255, 50 / 255, 32 / 255, 1)

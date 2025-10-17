@@ -289,6 +289,15 @@ def test_with_fancy_annotations(simple_mapping):
     assert m == m2
 
 
+# TODO: move this to test_mapping_viz
+# @pytest.mark.skipif(not HAS_PY3DMOL, reason="optional dep py3Dmol not found")
+def test_visualize_3D_mapping(simple_mapping):
+    """
+    smoke test just checking if nothing goes horribly wrong
+    """
+    simple_mapping.view_3d()
+
+
 class TestLigandAtomMappingBoundsChecks:
     @pytest.fixture
     def molA(self):
