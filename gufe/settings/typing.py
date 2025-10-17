@@ -65,6 +65,7 @@ GufeQuantity = Annotated[
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
 ]
+"""Pydantic type inherits from ``openff.units.Quantity but serializes in a gufe-compatible way."""
 
 
 GufeArrayQuantity: TypeAlias = Annotated[GufeQuantity, AfterValidator(_is_array)]
