@@ -169,7 +169,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def protocol_unit_results(self) -> list[ProtocolUnitResult]:
-        """`ProtocolUnitResult`\s for each `ProtocolUnit` used to compute this object.
+        r"""`ProtocolUnitResult`\s for each `ProtocolUnit` used to compute this object.
 
         Results are given in DAG-dependency order. In this order, tasks are
         always listed after their dependencies.
@@ -178,7 +178,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def protocol_unit_failures(self) -> list[ProtocolUnitFailure]:
-        """A list of all failed ``ProtocolUnit``\s.
+        r"""A list of all failed ``ProtocolUnit``\s.
 
         Note
         ----
@@ -228,7 +228,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
                 raise ProtocolUnitFailureError(f"No success for `protocol_unit`:{protocol_unit} found")
 
     def unit_to_all_results(self, protocol_unit: ProtocolUnit) -> list[ProtocolUnitResult]:
-        """Return all ``ProtocolUnitResult``\s (success and failure) for a given ``ProtocolUnit``.
+        r"""Return all ``ProtocolUnitResult``\s (success and failure) for a given ``ProtocolUnit``.
 
         Returns
         -------
@@ -275,7 +275,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
 
     @property
     def terminal_protocol_unit_results(self) -> list[ProtocolUnitResult]:
-        """Get ``ProtocolUnitResult``\s that terminate the DAG.
+        r"""Get ``ProtocolUnitResult``\s that terminate the DAG.
 
         Returns
         -------
