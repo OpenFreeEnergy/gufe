@@ -169,7 +169,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     # TODO: currently, serialization scheme doesn't work for default values, will be fixed in pydantic v2.12
     # see https://github.com/pydantic/pydantic/issues/11446
     nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = Field(
-        default=1.0 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
+        default=0.9 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
     )
 
     @field_validator("nonbonded_method", mode="after")

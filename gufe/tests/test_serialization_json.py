@@ -291,7 +291,7 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     "nonbonded_method": "PME",
                     "nonbonded_cutoff": {
                         ":is_custom:": True,
-                        "magnitude": 1.0,
+                        "magnitude": 0.9,
                         "pint_unit_registry": "openff_units",
                         "unit": "nanometer",
                     },
