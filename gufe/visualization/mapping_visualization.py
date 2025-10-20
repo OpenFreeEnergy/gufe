@@ -10,7 +10,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
-from ..utils import import_optional_package
+from ..utils import requires_package
 
 if TYPE_CHECKING:
     import py3Dmol
@@ -331,7 +331,7 @@ def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[n
     return mol
 
 
-@import_optional_package("py3Dmol")
+@requires_package("py3Dmol")
 def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
     """
         will add spheres according to mapping to the view. (inplace!)

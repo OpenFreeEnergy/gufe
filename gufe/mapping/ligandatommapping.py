@@ -13,7 +13,7 @@ from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
 
 from ..tokenization import JSON_HANDLER
-from ..utils import import_optional_package
+from ..utils import requires_package
 from . import AtomMapping
 
 if TYPE_CHECKING:
@@ -199,7 +199,7 @@ class LigandAtomMapping(AtomMapping):
                 )
             )
 
-    @import_optional_package("py3Dmol")
+    @requires_package("py3Dmol")
     def view_3d(
         self,
         spheres: Optional[bool] = True,
@@ -233,6 +233,8 @@ class LigandAtomMapping(AtomMapping):
         view : py3Dmol.view
             View of the system containing both molecules in the edge.
         """
+        import py3Dmol
+
         from ..visualization import mapping_visualization as viz
 
         if shift is None:
