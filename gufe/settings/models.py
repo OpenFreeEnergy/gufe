@@ -103,14 +103,20 @@ class ThermoSettings(SettingsBaseModel):
     """Settings for thermodynamic parameters.
 
     .. note::
-       No checking is done to ensure a valid thermodynamic ensemble is
-       possible.
+       No checking is done to ensure a valid thermodynamic ensemble is possible.
     """
 
-    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin.")
-    pressure: BarQuantity | None = Field(None, description="Simulation pressure in bar.")
+    temperature: KelvinQuantity | None = Field(
+        None,
+        description="Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius')``. See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
+    )
+    pressure: BarQuantity | None = Field(
+        None, description="Simulation pressure in bar. Compatible units will be converted to bar."
+    )
     ph: PositiveFloat | None = Field(None, description="Simulation pH.")
-    redox_potential: VoltsQuantity | None = Field(None, description="Simulation redox potential in millivolts (mV).")
+    redox_potential: VoltsQuantity | None = Field(
+        None, description="Simulation redox potential in millivolts (mV). Compatible units will be converted to mV."
+    )
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
@@ -169,7 +175,8 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     # TODO: currently, serialization scheme doesn't work for default values, will be fixed in pydantic v2.12
     # see https://github.com/pydantic/pydantic/issues/11446
     nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = Field(
-        default=0.9 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
+        default=0.9 * unit.nanometer,
+        description="Cutoff value for short range nonbonded interactions in nm. Compatible units will be converted to nm.",
     )
 
     @field_validator("nonbonded_method", mode="after")
