@@ -12,7 +12,7 @@ from openmm.unit import Quantity
 import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
 from ..custom_typing import RDKitMol
@@ -288,24 +288,51 @@ class ProteinComponent(ExplicitMoleculeComponent):
         # Add Additionals
         # Formal Charge
         netcharge = 0
-        for a in rd_mol.GetAtoms():
+
+        def _get_formal_charge(valence: int, connectivity: int, atom_name: str) -> int:
+            if connectivity == 0:  # ions
+                fc = _get_ion_charge(atom_name)
+            elif valence > connectivity:  # negative charge
+                fc = -(valence - connectivity)
+            elif valence < connectivity:  # positive charge
+                fc = +(connectivity - valence)
+            else:
+                fc = 0
+            return fc
+
+        for atom_id, a in enumerate(rd_mol.GetAtoms()):
             atom_name = a.GetMonomerInfo().GetName().strip()
             atomic_num = a.GetAtomicNum()
 
             connectivity = sum(_BONDORDER_TO_ORDER[bond.GetBondType()] for bond in a.GetBonds())
             default_valence = periodicTable.GetDefaultValence(atomic_num)
+            with rdBase.BlockLogs():  # turn off rdkit's verbose logging
+                try:
+                    fc = _get_formal_charge(default_valence, connectivity, atom_name)
+                    a.SetFormalCharge(fc)
+                    a.UpdatePropertyCache(strict=True)
+                except Chem.AtomValenceException:
+                    # atom may have other valences
+                    valence_failure = True
+                    for alt_v in periodicTable.GetValenceList(atomic_num):
+                        try:
+                            fc = _get_formal_charge(alt_v, connectivity, atom_name)
+                            a.SetFormalCharge(fc)
+                            a.UpdatePropertyCache(strict=True)
+                        except Chem.AtomValenceException:
+                            continue
+                        else:
+                            valence_failure = False
+                            break
 
-            if connectivity == 0:  # ions
-                fc = _get_ion_charge(atom_name)
-            elif default_valence > connectivity:  # negative charge
-                fc = -(default_valence - connectivity)
-            elif default_valence < connectivity:  # positive charge
-                fc = +(connectivity - default_valence)
-            else:
-                fc = 0  # neutral
-
-            a.SetFormalCharge(fc)
-            a.UpdatePropertyCache(strict=True)
+                    if valence_failure:
+                        raise Chem.AtomValenceException(
+                            f"Could not set valence of atom id {atom_id + 1} "  # pdb atom ids index from 1
+                            f"with atomic number {atomic_num}, "
+                            f"connectivity {connectivity}, "
+                            f"formal charge {fc}, and "
+                            f"default valence {default_valence}."
+                        )
 
             netcharge += fc
 

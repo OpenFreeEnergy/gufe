@@ -13,7 +13,7 @@ from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-from .types import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
+from .typing import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
 
 
 class SettingsBaseModel(_BaseModel):
@@ -39,7 +39,9 @@ class SettingsBaseModel(_BaseModel):
 
         def freeze_model(model):
             submodels = (
-                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod
+                for field in model.__class__.model_fields
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -60,7 +62,9 @@ class SettingsBaseModel(_BaseModel):
 
         def unfreeze_model(model):
             submodels = (
-                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod
+                for field in model.__class__.model_fields
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
