@@ -607,7 +607,7 @@ class TestKeyedChain:
             kc.decode_subchains(lambda kd: kd["__qualname__"] in ["Transformation", "NonTransformation"])
         ) == set(kc.to_gufe().edges)
 
-        # get chemical systems with "-complex" in name
+        # get chemical systems with "-solvent" in the name
         assert set(
             kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem" and "-solvent" in kd["name"])
         ) == {gt for gt in kc.to_gufe().nodes if "-solvent" in gt.name}
