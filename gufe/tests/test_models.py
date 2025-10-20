@@ -34,7 +34,7 @@ def test_settings_schema():
                     "temperature": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius'). See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
+                        "description": "Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius')``. See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
                         "title": "Temperature",
                     },
                     "pressure": {

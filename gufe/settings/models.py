@@ -108,7 +108,7 @@ class ThermoSettings(SettingsBaseModel):
 
     temperature: KelvinQuantity | None = Field(
         None,
-        description="Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius'). See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
+        description="Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius')``. See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
     )
     pressure: BarQuantity | None = Field(
         None, description="Simulation pressure in bar. Compatible units will be converted to bar."
