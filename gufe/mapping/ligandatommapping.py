@@ -14,6 +14,7 @@ from gufe.visualization.mapping_visualization import draw_mapping
 
 from ..tokenization import JSON_HANDLER
 from ..utils import requires_package
+from ..visualization import mapping_visualization as viz
 from . import AtomMapping
 
 if TYPE_CHECKING:
@@ -234,8 +235,6 @@ class LigandAtomMapping(AtomMapping):
             View of the system containing both molecules in the edge.
         """
         import py3Dmol
-
-        from ..visualization import mapping_visualization as viz
 
         if shift is None:
             shift = np.array([viz._get_max_dist_in_x(self) * 1.5, 0, 0])
