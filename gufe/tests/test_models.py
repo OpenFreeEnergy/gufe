@@ -29,18 +29,18 @@ def test_settings_schema():
             },
             "ThermoSettings": {
                 "additionalProperties": False,
-                "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is\n   possible.",
+                "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is possible.",
                 "properties": {
                     "temperature": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation temperature in kelvin.",
+                        "description": "Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius'). See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
                         "title": "Temperature",
                     },
                     "pressure": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation pressure in bar.",
+                        "description": "Simulation pressure in bar. Compatible units will be converted to bar.",
                         "title": "Pressure",
                     },
                     "ph": {
@@ -52,7 +52,7 @@ def test_settings_schema():
                     "redox_potential": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation redox potential in millivolts (mV).",
+                        "description": "Simulation redox potential in millivolts (mV). Compatible units will be converted to mV.",
                         "title": "Redox Potential",
                     },
                 },
@@ -70,6 +70,7 @@ def test_settings_schema():
         "title": "Settings",
         "type": "object",
     }
+
     ser_schema = Settings.model_json_schema(mode="serialization")
     val_schema = Settings.model_json_schema(mode="validation")
 
@@ -107,7 +108,7 @@ def test_openmmffsettings_schema():
             },
             "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
             "nonbonded_cutoff": {
-                "description": "Cutoff value for short range nonbonded interactions.",
+                "description": "Cutoff value for short range nonbonded interactions in nm. Compatible units will be converted to nm.",
                 "title": "Nonbonded Cutoff",
                 "type": "number",
             },
