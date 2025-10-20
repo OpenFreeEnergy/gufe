@@ -13,7 +13,7 @@ v1.7.0
 * Added method ``ChemicalSystem.contains()`` to check if a ``Component`` or ``Component`` type is present in the ``ChemicalSystem`` (`PR #608 <https://github.com/OpenFreeEnergy/gufe/pull/608>`_).
 * Added method ``ChemicalSystem.get_components_of_type()`` to return a list of ``Component``\s that match the ``Component`` type in the ``ChemicalSystem`` (`PR #608 <https://github.com/OpenFreeEnergy/gufe/pull/608>`_).
 * Added ``LigandAtomMapping.view_3d()`` method (previously implemented as ``openfe.utils.visualization_3D.view_mapping()`` (`PR #646 <https://github.com/OpenFreeEnergy/gufe/pull/646>`_).
-* Added option for protocol developers to specify paths for storing stderr and stdout  (`PR #600 <https://github.com/OpenFreeEnergy/gufe/pull/600>`_ and `PR #638 <https://github.com/OpenFreeEnergy/gufe/pull/638>`_).
+* Added optional ``stderr`` and ``stdout`` arguments to ``gufe.protocols.protocoldag.execute_DAG()`` (`PR #600 <https://github.com/OpenFreeEnergy/gufe/pull/600>`_ and `PR #638 <https://github.com/OpenFreeEnergy/gufe/pull/638>`_).
 
 **Changed:**
 
