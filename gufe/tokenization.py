@@ -940,6 +940,23 @@ class KeyedChain:
         return gt  # type: ignore
 
     def decode_subchains(self, func: Callable) -> Generator[GufeTokenizable, None, None]:
+        """Extract ``GufeTokenizable`` objects matching a pattern from a KeyedChain.
+
+        The ``func`` function is applied to each keyed dict contained
+        in the ``KeyedChain``. When it evaluates to a truthy value,
+        the ``GufeTokenizable`` is created from its dependencies also
+        present in the ``KeyedChain``.
+
+        Example
+        -------
+
+        Suppose only the ``NonTransformation`` ``GufeTokenizable``
+        objects are wanted from a ``KeyedChain``, ``an_kc``, that
+        encodes an ``AlchemicalNetwork``.
+
+        >>> nontransformations = list(an_kc.decode_subchains(lambda kd: kd["__qualname__"] == "NonTransformation"))
+
+        """
         tokenizable_map: dict[str, GufeTokenizable] = {}
         for idx, (_, keyed_dict) in enumerate(self):
             if func(keyed_dict):
