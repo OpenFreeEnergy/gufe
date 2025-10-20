@@ -944,8 +944,9 @@ class KeyedChain:
 
         The ``func`` function is applied to each keyed dict contained
         in the ``KeyedChain``. When it evaluates to a truthy value,
-        the ``GufeTokenizable`` is created from its dependencies also
-        present in the ``KeyedChain``.
+        the ``GufeTokenizable`` is created and yielded. Dependencies
+        of this ``GufeTokenizable`` are derived from preceeding
+        portions of the ``KeyedChain``.
 
         Example
         -------
