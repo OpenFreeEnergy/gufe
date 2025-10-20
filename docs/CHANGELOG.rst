@@ -11,30 +11,21 @@ v1.7.0
 
 * Added method ``LigandAtomMapping.get_alchemical_charge_difference()``. This replaces the functionality of the now-deprecated method ``openfe.utils.ligand_utils.get_alchemical_charge_difference()`` in ``openfe`` (`PR #602 <https://github.com/OpenFreeEnergy/gufe/pull/602>`_).
 * Added method ``ChemicalSystem.contains()`` to check if a ``Component`` or ``Component`` type is present in the ``ChemicalSystem`` (`PR #608 <https://github.com/OpenFreeEnergy/gufe/pull/608>`_).
-
-* Added method ``ChemicalSystem.get_components_of_type()`` to return a list of ``Component``s that match the ``Component`` type in the ``ChemicalSystem`` (`PR #608 <https://github.com/OpenFreeEnergy/gufe/pull/608>`_).
+* Added method ``ChemicalSystem.get_components_of_type()`` to return a list of ``Component``\s that match the ``Component`` type in the ``ChemicalSystem`` (`PR #608 <https://github.com/OpenFreeEnergy/gufe/pull/608>`_).
 * Added ``LigandAtomMapping.view_3d()`` method (previously implemented as ``openfe.utils.visualization_3D.view_mapping()`` (`PR #646 <https://github.com/OpenFreeEnergy/gufe/pull/646>`_).
 
 **Changed:**
 
-* The default short range cutoff `nonbonded_cutoff` in
-  OpenMMSystemGeneratorFFSettings has been reduced to 0.9 nm in line with
-  best practices. PR #648
-* The default small molecule force field version has been updated from
-  openff-2.1.1 to openff-2.2.1.
-* ``FloatQuantity`` is no longer supported. Instead, use `GufeQuantity` and `specify_quantity_units()` to make a `TypeAlias`.
-* System generator setting ``nonbonded_cutoff`` no longer attempts to coerce ambiguous inputs to ``unit.nanometer``. Instead, a length unit is required, e.g. ``2.2 * unit.nanometer`` or ``"2.2 nm"``.
-* ``ThermoSettings`` parameters ``pressure`` and ``temperature`` no longer attempt to coerce ambiguous inputs to unts. Instead, the units must be passed explicitly, e.g. ``1.0 * units.bar`` or ``"1 bar"`` for pressure, and ``300 * unit.kelvin`` or ``"300 kelvin"`` for temperature.
+* The default short range cutoff ``nonbonded_cutoff`` in OpenMMSystemGeneratorFFSettings has been reduced to 0.9 nm in line with best practices. (`PR #648 <https://github.com/OpenFreeEnergy/gufe/pull/648>`_).
+* The default small molecule force field version has been updated from openff-2.1.1 to openff-2.2.1 (`PR #601 <https://github.com/OpenFreeEnergy/gufe/pull/601>`_).
+* ``FloatQuantity`` is no longer supported. Instead, use ``GufeQuantity`` and ``specify_quantity_units()`` to make a ``TypeAlias``. See `the how-to guide <https://gufe.openfree.energy/en/v1.7.0/how-tos/custom_quantities.html>`_ for a small example of how to define a custom ``Quantity``.(`PR #584 <https://github.com/OpenFreeEnergy/gufe/pull/584>`_).
+* System generator setting ``nonbonded_cutoff`` no longer attempts to coerce ambiguous inputs to ``unit.nanometer``. Instead, a length unit is required, e.g. ``2.2 * unit.nanometer`` or ``"2.2 nm"`` (`PR #584 <https://github.com/OpenFreeEnergy/gufe/pull/584>`_).
+* ``ThermoSettings`` parameters ``pressure`` and ``temperature`` no longer attempt to coerce ambiguous inputs to unts. Instead, the units must be passed explicitly, e.g. ``1.0 * units.bar`` or ``"1 bar"`` for pressure, and ``300 * unit.kelvin`` or ``"300 kelvin"`` for temperature (`PR #584 <https://github.com/OpenFreeEnergy/gufe/pull/584>`_).
 
-**Deprecated:**
-
-*
-
-.. TODO: add a link to docs
 
 **Fixed:**
 
-* We now ensure that all ``ProtocolUnit``\s in ``protocol_units`` for a ``ProtocolDAGResult`` are included in ``self._unit_result_mapping``, ensuring that calls to ``self.ok()`` do not raise a ``KeyError`` in cases where a ``ProtocolUnitResult`` was never executed for a given ``ProtocolUnit``.
+* We now ensure that all ``ProtocolUnit``\s in ``protocol_units`` for a ``ProtocolDAGResult`` are included in ``self._unit_result_mapping``, ensuring that calls to ``self.ok()`` do not raise a ``KeyError`` in cases where a ``ProtocolUnitResult`` was never executed for a given ``ProtocolUnit`` (`PR #622 <https://github.com/OpenFreeEnergy/gufe/pull/622>`_).
 * Fixed bug where pdb files containing phosphorous would cause an error when creating a ``ProteinComponent`` (`PR #639 <https://github.com/OpenFreeEnergy/gufe/pull/639>`_)
 
 
