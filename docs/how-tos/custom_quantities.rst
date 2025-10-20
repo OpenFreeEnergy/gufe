@@ -18,7 +18,7 @@ To make your own:
 
 or for an array:
 
-.. code::
+.. code::  python
 
     from gufe.settings.typing import GufeArrayQuantity, specify_quantity_units
 
