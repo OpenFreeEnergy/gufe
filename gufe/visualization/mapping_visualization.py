@@ -10,14 +10,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
-from ..utils import requires_package
-
-try:
-    import py3Dmol
-    from matplotlib import pyplot as plt
-    from matplotlib.colors import rgb2hex
-except ImportError:
-    pass  # Don't throw  error, will happen later
+from ..utils import import_optional_package
 
 if TYPE_CHECKING:
     import py3Dmol
@@ -338,7 +331,7 @@ def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[n
     return mol
 
 
-@requires_package("py3Dmol")
+@import_optional_package("py3Dmol")
 def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
     """
         will add spheres according to mapping to the view. (inplace!)
@@ -354,6 +347,9 @@ def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) 
     mapping : Dict[int, int]
         mapping of atoms from mol1 to mol2
     """
+    from matplotlib import pyplot as plt
+    from matplotlib.colors import rgb2hex
+
     # Get colourmap of size mapping
     cmap = plt.get_cmap("hsv", len(mapping))
     for i, pair in enumerate(mapping.items()):

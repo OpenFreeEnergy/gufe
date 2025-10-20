@@ -13,13 +13,8 @@ from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import draw_mapping
 
 from ..tokenization import JSON_HANDLER
-from ..utils import requires_package
+from ..utils import import_optional_package
 from . import AtomMapping
-
-try:
-    import py3Dmol
-except ImportError:
-    pass  # Don't throw  error, will happen later
 
 if TYPE_CHECKING:
     import py3Dmol
@@ -204,7 +199,7 @@ class LigandAtomMapping(AtomMapping):
                 )
             )
 
-    @requires_package("py3Dmol")
+    @import_optional_package("py3Dmol")
     def view_3d(
         self,
         spheres: Optional[bool] = True,

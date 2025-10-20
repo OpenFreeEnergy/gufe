@@ -55,8 +55,8 @@ class ensure_filelike:
             self.context.close()
 
 
-# taken from openfe who shamelessly borrowed from openff.toolkit
-def requires_package(package_name: str) -> Callable:
+# taken from openfe who shamelessly borrowed from openff.toolkit's 'requires_package'
+def import_optional_package(package_name: str) -> Callable:
     """
     Helper function to denote that a function requires some optional
     dependency. A function decorated with this decorator will raise
