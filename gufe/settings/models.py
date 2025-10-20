@@ -106,11 +106,12 @@ class ThermoSettings(SettingsBaseModel):
        No checking is done to ensure a valid thermodynamic ensemble is
        possible.
     """
-
     temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin.")
     pressure: BarQuantity | None = Field(None, description="Simulation pressure in bar.")
     ph: PositiveFloat | None = Field(None, description="Simulation pH.")
     redox_potential: VoltsQuantity | None = Field(None, description="Simulation redox potential in millivolts (mV).")
+    membrane: bool = Field(False, description="Whether to simulate a membrane "
+                                              "system and use a MonteCarloMembraneBarostat.")
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
