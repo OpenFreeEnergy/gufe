@@ -3,9 +3,9 @@
 How to define a custom ``GufeQuantity``
 =======================================
 
-:class:`.GufeQuantity`` is compatible with both pydantic serialization and openff.
+:class:`gufe.settings.typing.GufeQuantity` is compatible with both pydantic serialization and openff.
 
-See :class:`.settings.typing` for quantities included in gufe.
+See :class:`gufe.settings.typing` for quantities included in gufe.
 
 To make your own:
 
