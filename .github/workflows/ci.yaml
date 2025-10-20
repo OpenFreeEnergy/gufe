@@ -23,7 +23,7 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}
-    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.py3Dmol }}"
+    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🎨-${{ matrix.py3Dmol }}"
     strategy:
       fail-fast: false
       matrix:
