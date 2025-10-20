@@ -31,7 +31,7 @@ def get_test_filename(filename):
 POOCH_CACHE = pooch.os_cache("gufe")
 PDB_FILE = pooch.create(
     path=POOCH_CACHE,
-    base_url="doi:10.5281/zenodo.15376306",
+    base_url="doi:10.5281/zenodo.17362291",
     registry={
         "hif2a_protein.pdb": "md5:158711011c6b85b1d55ad68a559ca07b",
         "cmet_protein.pdb": "md5:0a38968fe9c09a49da2f1c57e84196f0",
@@ -42,6 +42,7 @@ PDB_FILE = pooch.create(
         "thrombin_protein.pdb": "md5:261b8f040b389188e8c0cf14fbab5775",
         "tnsk2_protein.pdb": "md5:aa13bef540d061ed66ef4240886a39ec",
         "tyk2_protein.pdb": "md5:48d447290ee637ce8e3255cfa572297a",
+        "3tzr_rna.pdb": "md5:db5bbde903e7b9f589d437543ba088cd",
     },
     retry_if_failed=10,  # Set to 10 since tests might try and download the same file at the same time
 )
@@ -70,6 +71,7 @@ _benchmark_pdb_names = [
     "thrombin_protein",
     "tnsk2_protein",
     "tyk2_protein",
+    "3tzr_rna",
 ]
 
 PDB_ZENODO_LOADERS = {name: PoochFileLike(name) for name in _benchmark_pdb_names}

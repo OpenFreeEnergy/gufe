@@ -13,7 +13,7 @@ from openff.units import Quantity, unit
 
 from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
-from gufe.settings.types import BoxQuantity, GufeQuantity, NanometerArrayQuantity, NanometerQuantity
+from gufe.settings.typing import BoxQuantity, GufeQuantity, NanometerArrayQuantity, NanometerQuantity
 
 
 def test_settings_schema():
@@ -34,19 +34,19 @@ def test_settings_schema():
                     "temperature": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation temperature in kelvin)",
+                        "description": "Simulation temperature in kelvin.",
                         "title": "Temperature",
                     },
                     "pressure": {
                         "anyOf": [{"type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation pressure in standard atmosphere (atm)",
+                        "description": "Simulation pressure in bar.",
                         "title": "Pressure",
                     },
                     "ph": {
                         "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
                         "default": None,
-                        "description": "Simulation pH",
+                        "description": "Simulation pH.",
                         "title": "Ph",
                     },
                     "redox_potential": {
@@ -230,9 +230,9 @@ class TestSettingsValidation:
     @pytest.mark.parametrize(
         "value,valid,expected",
         [
-            (1.0 * unit.atm, True, 1.0 * unit.atm),
+            (1.0 * unit.bar, True, 1.0 * unit.bar),
             (1.0, False, None),  # require units
-            ("1 atm", True, 1.0 * unit.atm),
+            ("1 bar", True, 1.0 * unit.bar),
             ("1.0", False, None),
         ],
     )
@@ -250,7 +250,7 @@ class TestSettingsValidation:
             (1.0, True, 1.0),
             (1, True, 1.0),
             ("1 ph", False, None),
-            (1.0 * unit.atm, False, None),
+            (1.0 * unit.bar, False, None),
         ],
     )
     def test_thermo_ph(self, value, valid, expected):

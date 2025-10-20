@@ -34,8 +34,8 @@ class Context:
 
     scratch: PathLike
     shared: PathLike
-    stderr: PathLike | None
-    stdout: PathLike | None
+    stderr: PathLike | None = None
+    stdout: PathLike | None = None
 
 
 def _list_dependencies(inputs, cls):

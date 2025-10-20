@@ -13,7 +13,7 @@ dependencies:
   - pint
   - pip
   - pooch
-  - pydantic >=2.0
+  - pydantic >=2.0, <2.12
   - pytest
   - pytest-cov
   - pytest-xdist

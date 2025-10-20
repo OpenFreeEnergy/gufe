@@ -13,7 +13,7 @@ from openff.units import unit
 from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
-from .types import AtmQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
+from .typing import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
 
 
 class SettingsBaseModel(_BaseModel):
@@ -39,7 +39,9 @@ class SettingsBaseModel(_BaseModel):
 
         def freeze_model(model):
             submodels = (
-                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod
+                for field in model.__class__.model_fields
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 freeze_model(mod)
@@ -60,7 +62,9 @@ class SettingsBaseModel(_BaseModel):
 
         def unfreeze_model(model):
             submodels = (
-                mod for field in model.model_fields if isinstance(mod := getattr(model, field), SettingsBaseModel)
+                mod
+                for field in model.__class__.model_fields
+                if isinstance(mod := getattr(model, field), SettingsBaseModel)
             )
             for mod in submodels:
                 unfreeze_model(mod)
@@ -103,9 +107,9 @@ class ThermoSettings(SettingsBaseModel):
        possible.
     """
 
-    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin)")
-    pressure: AtmQuantity | None = Field(None, description="Simulation pressure in standard atmosphere (atm)")
-    ph: PositiveFloat | None = Field(None, description="Simulation pH")
+    temperature: KelvinQuantity | None = Field(None, description="Simulation temperature in kelvin.")
+    pressure: BarQuantity | None = Field(None, description="Simulation pressure in bar.")
+    ph: PositiveFloat | None = Field(None, description="Simulation pH.")
     redox_potential: VoltsQuantity | None = Field(None, description="Simulation redox potential in millivolts (mV).")
 
 
@@ -165,7 +169,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     # TODO: currently, serialization scheme doesn't work for default values, will be fixed in pydantic v2.12
     # see https://github.com/pydantic/pydantic/issues/11446
     nonbonded_cutoff: Annotated[NanometerQuantity, Ge(0)] = Field(
-        default=1.0 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
+        default=0.9 * unit.nanometer, description="Cutoff value for short range nonbonded interactions."
     )
 
     @field_validator("nonbonded_method", mode="after")
