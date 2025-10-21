@@ -27,7 +27,7 @@ class SettingsBaseModel(_BaseModel):
     )
 
     def _ipython_display_(self):
-        pprint.pprint(self.dict())
+        pprint.pprint(self.model_dump())
 
     def frozen_copy(self):
         """A copy of this Settings object which cannot be modified
