@@ -165,13 +165,13 @@ class ExternalStorage(abc.ABC):
         prefix : str
             Only iterate over paths that start with the given prefix.
 
-        Yields
-        ------
+        Returns
+        -------
         Iterator[str] :
             Contents of this storage, which may include items without
             metadata.
         """
-        yield self._iter_contents(prefix)
+        return self._iter_contents(prefix)
 
     def __iter__(self):
         """
