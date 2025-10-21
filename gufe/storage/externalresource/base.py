@@ -2,15 +2,11 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import abc
 import dataclasses
-import glob
 import hashlib
-import io
-import os
 import pathlib
-import shutil
-from typing import ContextManager, Tuple, Union
+from typing import ContextManager, Iterator
 
-from ..errors import ChangedExternalResourceError, MissingExternalResourceError
+from ..errors import MissingExternalResourceError
 
 
 @dataclasses.dataclass
@@ -161,7 +157,7 @@ class ExternalStorage(abc.ABC):
         """
         return self._exists(location)
 
-    def iter_contents(self, prefix=""):
+    def iter_contents(self, prefix="") -> Iterator[str]:
         """Iterate over the labels in this storage.
 
         Parameters
@@ -176,6 +172,13 @@ class ExternalStorage(abc.ABC):
             metadata.
         """
         return self._iter_contents(prefix)
+
+    def __iter__(self):
+        """
+        This uses `iter_contents` under the hood with no prefix making this
+        appear to be like an `ls -R` operation on storage mediums.
+        """
+        yield from self.iter_contents()
 
     @abc.abstractmethod
     def _iter_contents(self, prefix=""):
