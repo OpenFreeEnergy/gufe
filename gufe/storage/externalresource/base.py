@@ -174,6 +174,10 @@ class ExternalStorage(abc.ABC):
         yield self._iter_contents(prefix)
 
     def __iter__(self):
+        """
+        This uses `iter_contents` under the hood with no prefix making this
+        appear to be like an `ls -R` operation on storage mediums.
+        """
         yield from self.iter_contents()
 
     @abc.abstractmethod
