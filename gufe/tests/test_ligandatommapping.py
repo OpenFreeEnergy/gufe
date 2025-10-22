@@ -14,6 +14,13 @@ from gufe import LigandAtomMapping, SmallMoleculeComponent
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
+try:
+    import py3Dmol
+
+    HAS_PY3DMOL = True
+except ImportError:
+    HAS_PY3DMOL = False
+
 
 def mol_from_smiles(smiles: str) -> gufe.SmallMoleculeComponent:
     m = Chem.AddHs(Chem.MolFromSmiles(smiles))
@@ -287,6 +294,14 @@ def test_with_fancy_annotations(simple_mapping):
     m2 = LigandAtomMapping.from_dict(m.to_dict())
 
     assert m == m2
+
+
+@pytest.mark.skipif(not HAS_PY3DMOL, reason="optional dep py3Dmol not found")
+def test_visualize_3D_mapping(simple_mapping):
+    """
+    smoke test just checking if nothing goes horribly wrong
+    """
+    simple_mapping.view_3d()
 
 
 class TestLigandAtomMappingBoundsChecks:

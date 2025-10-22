@@ -11,3 +11,4 @@ How-To Guides
    atommapping
    atommapper
    protocol
+   custom_quantities
