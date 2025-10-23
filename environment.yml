@@ -17,7 +17,7 @@ dependencies:
   - pytest
   - pytest-cov
   - pytest-xdist
-  - rdkit!=2024.03.6  # https://github.com/OpenFreeEnergy/gufe/issues/456
+  - rdkit>=2024.09.1  # github.com/OpenFreeEnergy/gufe/issues/664
   - typing-extensions
   - zstandard
   # docs
