@@ -35,7 +35,7 @@ def complex_equilibrium(solvated_complex):
 
 class TestTransformation(GufeTokenizableTestsMixin):
     cls = Transformation
-    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-ef99c7533fa57ad5ed2616067eb04fbb>, name=None)"
+    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-13cfc31d879fd8877e6a57558c2e9f38>, name=None)"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -61,7 +61,19 @@ class TestTransformation(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -112,11 +124,29 @@ class TestTransformation(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
             protocoldag = tnf.create()
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
             protocoldag2 = tnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult2 = execute_DAG(
+                protocoldag2,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -174,7 +204,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
 class TestNonTransformation(GufeTokenizableTestsMixin):
     cls = NonTransformation
-    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-ef99c7533fa57ad5ed2616067eb04fbb>, name=None)"
+    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-13cfc31d879fd8877e6a57558c2e9f38>, name=None)"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):
@@ -199,7 +229,19 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
         protocolresult = ntnf.gather([protocoldagresult])
 
@@ -243,11 +285,27 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
             protocoldag = ntnf.create()
-            protocoldagresult = execute_DAG(protocoldag, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult = execute_DAG(
+                protocoldag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+            )
 
             protocoldag2 = ntnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(protocoldag2, shared_basedir=shared, scratch_basedir=scratch)
+            protocoldagresult2 = execute_DAG(
+                protocoldag2,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+            )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
 

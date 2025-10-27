@@ -3,6 +3,7 @@
 import copy
 import io
 import os
+from unittest import mock
 
 import pytest
 from numpy.testing import assert_almost_equal
@@ -358,6 +359,12 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         pdb_generator = custom_pdb_ion(ion_name)
         with pytest.raises(ValueError, match="ab7 in residue CL at index 1."):
             self.cls.from_pdb_file(next(pdb_generator))
+
+    def test_protein_valence_error(self):
+        """Make sure exception is raised if a valid valence cannot be determined."""
+        with pytest.raises(Chem.AtomValenceException, match="Could not set valence of atom id"):
+            with mock.patch("rdkit.Chem.rdchem.PeriodicTable.GetValenceList", return_value=[10000000]):
+                self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
 
 
 def test_no_monomer_info_error(ethane):

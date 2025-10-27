@@ -34,6 +34,8 @@ class Context:
 
     scratch: PathLike
     shared: PathLike
+    stderr: PathLike | None = None
+    stdout: PathLike | None = None
 
 
 def _list_dependencies(inputs, cls):
@@ -64,6 +66,8 @@ class ProtocolUnitResult(GufeTokenizable):
         source_key: GufeKey,
         inputs: dict[str, Any],
         outputs: dict[str, Any],
+        stderr: dict[str, bytes] | None = None,
+        stdout: dict[str, bytes] | None = None,
         start_time: datetime.datetime | None = None,
         end_time: datetime.datetime | None = None,
     ):
@@ -81,6 +85,14 @@ class ProtocolUnitResult(GufeTokenizable):
         outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
+        stderr : dict[str, bytes] | None
+            stderr output captured during execution of the ``ProtocolUnit``.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
+        stdout : dict[str, bytes] | None
+            stdout output captured during execution of the ``ProtocolUnit``.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
         start_time, end_time: datetime.datetime
             The start and end time for executing this Unit
         """
@@ -88,6 +100,8 @@ class ProtocolUnitResult(GufeTokenizable):
         self._source_key = source_key
         self._inputs = inputs
         self._outputs = outputs
+        self._stderr = stderr or dict()
+        self._stdout = stdout or dict()
         self._start_time = start_time
         self._end_time = end_time
 
@@ -112,6 +126,8 @@ class ProtocolUnitResult(GufeTokenizable):
             "source_key": self.source_key,
             "inputs": self.inputs,
             "outputs": self.outputs,
+            "stderr": self.stderr,
+            "stdout": self.stdout,
             "start_time": self.start_time,
             "end_time": self.end_time,
         }
@@ -138,6 +154,14 @@ class ProtocolUnitResult(GufeTokenizable):
     @property
     def outputs(self):
         return self._outputs
+
+    @property
+    def stderr(self):
+        return self._stderr
+
+    @property
+    def stdout(self):
+        return self._stdout
 
     @property
     def dependencies(self) -> list[ProtocolUnitResult]:
@@ -171,6 +195,8 @@ class ProtocolUnitFailure(ProtocolUnitResult):
         source_key,
         inputs,
         outputs,
+        stderr: dict[str, bytes] | None = None,
+        stdout: dict[str, bytes] | None = None,
         _key=None,
         exception,
         traceback,
@@ -191,6 +217,14 @@ class ProtocolUnitFailure(ProtocolUnitResult):
         outputs : Dict[str, Any]
             Outputs from the `ProtocolUnit._execute` that generated this
             `ProtocolUnitResult`.
+        stderr : dict[str, bytes] | None
+            stderr output captured during execution of the `ProtocolUnit`.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
+        stdout : dict[str, bytes] | None
+            stdout output captured during execution of the `ProtocolUnit`.
+            The keys are the filenames given to the captured output and the
+            values are the bytes contained within those files after execution.
         exception : Tuple[str, Tuple[Any, ...]]
             A tuple giving details on the exception raised during `ProtocolUnit`
             execution. The first element gives the type of exception raised; the
@@ -205,6 +239,8 @@ class ProtocolUnitFailure(ProtocolUnitResult):
             source_key=source_key,
             inputs=inputs,
             outputs=outputs,
+            stderr=stderr or {},
+            stdout=stdout or {},
             start_time=start_time,
             end_time=end_time,
         )
@@ -319,13 +355,31 @@ class ProtocolUnit(GufeTokenizable):
         result: ProtocolUnitResult | ProtocolUnitFailure
         start = datetime.datetime.now()
 
+        def extract_bytes(context_dir) -> dict | None:
+            """Iterate over directory of files (depth 1) and create
+            dictionary containing their contents.
+            """
+            record_dict = {}
+            if context_dir:
+                for entry in context_dir.iterdir():
+                    if entry.is_file():
+                        with entry.open("rb") as f:
+                            record_dict[entry.name] = f.read()
+            return record_dict
+
         try:
             outputs = self._execute(context, **inputs)
+
+            stderr = extract_bytes(context.stderr)
+            stdout = extract_bytes(context.stdout)
+
             result = ProtocolUnitResult(
                 name=self.name,
                 source_key=self.key,
                 inputs=inputs,
                 outputs=outputs,
+                stderr=stderr,
+                stdout=stdout,
                 start_time=start,
                 end_time=datetime.datetime.now(),
             )
@@ -336,11 +390,16 @@ class ProtocolUnit(GufeTokenizable):
             if raise_error:
                 raise
 
+            stderr = extract_bytes(context.stderr)
+            stdout = extract_bytes(context.stdout)
+
             result = ProtocolUnitFailure(
                 name=self._name,
                 source_key=self.key,
                 inputs=inputs,
                 outputs=dict(),
+                stderr=stderr,
+                stdout=stdout,
                 exception=(e.__class__.__qualname__, e.args),
                 traceback=traceback.format_exc(),
                 start_time=start,

@@ -65,6 +65,7 @@ GufeQuantity = Annotated[
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
 ]
+"""Pydantic type inherits from ``openff.units.Quantity`` but serializes in a gufe-compatible way."""
 
 
 GufeArrayQuantity: TypeAlias = Annotated[GufeQuantity, AfterValidator(_is_array)]
@@ -93,55 +94,63 @@ NanometerQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanometer"),
 ]
-"""Convert a pint.Quantity to nanometers, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with nanometers. Input will be converted to nanometers upon model validation."""
 
-AtmQuantity: TypeAlias = Annotated[
+BarQuantity: TypeAlias = Annotated[
     GufeQuantity,
-    specify_quantity_units("atm"),
+    specify_quantity_units("bar"),
 ]
-"""Convert a pint.Quantity to atm, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with bar. Input will be converted to bar upon model validation."""
 
 KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kelvin"),
 ]
-"""Convert a pint.Quantity to kelvin, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with kelvin. Input will be converted to kelvin upon model validation.
+Note: to define input in Celsius, you must use ``Quantity`` explicitly, e.g. ``openff.units.Quantity(25, "celsius")`` instead of ``25 * unit.celsius``.
+See  https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.
+"""
 
 # types used elsewhere in the ecosystem
 NanosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("nanosecond"),
 ]
-"""Convert a pint.Quantity to nanoseconds, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with nanoseconds. Input will be converted to nanoseconds upon model validation."""
 
 PicosecondQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("picosecond"),
 ]
-"""Convert a pint.Quantity to picoseconds, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with picoseconds. Input will be converted to picoseconds upon model validation."""
 
 AngstromQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("angstrom"),
 ]
-"""Convert a pint.Quantity to angstroms, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with angstroms. Input will be converted to angstroms upon model validation."""
 
 KCalPerMolQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kilocalorie_per_mole"),
 ]
-"""Convert a pint.Quantity to kcal/mol, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with kilocalorie_per_mole. Input will be converted to kilocalorie_per_mole upon model validation."""
 
 VoltsQuantity: TypeAlias = Annotated[GufeQuantity, specify_quantity_units("volts")]
-"""Convert a pint.Quantity to volts, if possible."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with volts. Input will be converted to volts upon model validation."""
 
 NanometerArrayQuantity: TypeAlias = Annotated[
     GufeArrayQuantity,
     specify_quantity_units("nanometer"),
 ]
-"""Convert to a list of pint.Quantity objects to nanometers, if possible."""
+"""Pydantic type that requires an array of ``pint.Quantity`` compatible with nanometer. Input will be converted to nanometers upon model validation."""
 
 BoxQuantity = Annotated[
     NanometerQuantity,
     AfterValidator(_is_box_shape),
 ]
+"""
+Pydantic type that requires a 3x3 or 3x1 array of ``pint.Quantity`` values compatible with nanometers.
+Input will be converted to nanometer upon model validation.
+If input is a 3x1 array, it will be converted to 3x3 diagonal array with zeroes on the off-diagonal.
+"""

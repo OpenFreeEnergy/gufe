@@ -225,7 +225,15 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
-            dagresult: ProtocolDAGResult = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
+            dagresult: ProtocolDAGResult = execute_DAG(
+                dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
+            )
 
         return protocol, dag, dagresult
 
@@ -245,8 +253,19 @@ class TestProtocol(GufeTokenizableTestsMixin):
             scratch = pathlib.Path("scratch")
             scratch.mkdir(parents=True)
 
+            stderr = pathlib.Path("stderr")
+            stderr.mkdir(parents=True)
+
+            stdout = pathlib.Path("stdout")
+            stdout.mkdir(parents=True)
+
             dagfailure: ProtocolDAGResult = execute_DAG(
-                dag, shared_basedir=shared, scratch_basedir=scratch, raise_error=False
+                dag,
+                shared_basedir=shared,
+                scratch_basedir=scratch,
+                stderr_basedir=stderr,
+                stdout_basedir=stdout,
+                raise_error=False,
             )
 
         return protocol, dag, dagfailure
@@ -341,6 +360,13 @@ class TestProtocol(GufeTokenizableTestsMixin):
 
         assert not dagfailure.ok()
         assert isinstance(dagfailure, ProtocolDAGResult)
+
+        # check that PR#622 has intended effect; both of these would have failed previously
+        assert set(dagfailure._unit_result_mapping.keys()) == set(dagfailure.protocol_units)
+        ## this would have previously raised a `KeyError`
+        assert not all(
+            [any(pur.ok() for pur in dagfailure._unit_result_mapping[pu]) for pu in dagfailure._protocol_units]
+        )
 
         failed_units = dagfailure.protocol_unit_failures
 

@@ -2,10 +2,18 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from collections.abc import Collection
 from itertools import chain
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Tuple, Union
 
+import numpy as np
+from numpy.typing import NDArray
 from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
+from rdkit.Geometry.rdGeometry import Point3D
+
+from ..utils import requires_package
+
+if TYPE_CHECKING:
+    import py3Dmol
 
 # highlight core element changes differently from unique atoms
 # RGBA color value needs to be between 0 and 1, so divide by 255
@@ -296,3 +304,96 @@ def draw_unhighlighted_molecule(mol, d2d=None):
         bond_colors=[{}],
         highlight_color=red,
     )
+
+
+def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[np.float64]]) -> Chem.Mol:
+    """
+        shifts the molecule by the shift vector
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        rdkit mol that get shifted
+    shift : Tuple[float, float, float]
+        shift vector
+
+    Returns
+    -------
+    Chem.Mol
+        shifted Molecule (copy of original one)
+    """
+    mol = Chem.Mol(mol)
+    conf = mol.GetConformer()
+    for i, atom in enumerate(mol.GetAtoms()):
+        x, y, z = conf.GetAtomPosition(i)
+        point = Point3D(x + shift[0], y + shift[1], z + shift[2])
+        conf.SetAtomPosition(i, point)
+    return mol
+
+
+@requires_package("py3Dmol")
+def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
+    """
+        will add spheres according to mapping to the view. (inplace!)
+
+    Parameters
+    ----------
+    view : py3Dmol.view
+        view to be edited
+    mol1 : Chem.Mol
+        molecule 1 of the mapping
+    mol2 : Chem.Mol
+        molecule 2 of the mapping
+    mapping : Dict[int, int]
+        mapping of atoms from mol1 to mol2
+    """
+    from matplotlib import pyplot as plt
+    from matplotlib.colors import rgb2hex
+
+    # Get colourmap of size mapping
+    cmap = plt.get_cmap("hsv", len(mapping))
+    for i, pair in enumerate(mapping.items()):
+        p1 = mol1.GetConformer().GetAtomPosition(pair[0])
+        p2 = mol2.GetConformer().GetAtomPosition(pair[1])
+        color = rgb2hex(cmap(i))
+        view.addSphere(
+            {
+                "center": {"x": p1.x, "y": p1.y, "z": p1.z},
+                "radius": 0.6,
+                "color": color,
+                "alpha": 0.8,
+            }
+        )
+        view.addSphere(
+            {
+                "center": {"x": p2.x, "y": p2.y, "z": p2.z},
+                "radius": 0.6,
+                "color": color,
+                "alpha": 0.8,
+            }
+        )
+
+
+def _get_max_dist_in_x(atom_mapping) -> float:
+    """helper function
+        find the correct mol shift, so no overlap happens in vis
+
+    Returns
+    -------
+    float
+        maximal size of mol in x dimension
+    """
+    posA = atom_mapping.componentA.to_rdkit().GetConformer().GetPositions()
+    posB = atom_mapping.componentB.to_rdkit().GetConformer().GetPositions()
+    max_d = []
+
+    for pos in [posA, posB]:
+        d = np.zeros(shape=(len(pos), len(pos)))
+        for i, pA in enumerate(pos):
+            for j, pB in enumerate(pos[i:], start=i):
+                d[i, j] = (pB - pA)[0]
+
+        max_d.append(np.max(d))
+
+    estm = float(np.round(max(max_d), 1))
+    return estm if (estm > 5) else 5
