@@ -16,7 +16,7 @@ import weakref
 from collections.abc import Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Callable, Dict, List, Optional, TextIO, Tuple, Union
 
 import networkx as nx
 from typing_extensions import Self
@@ -927,13 +927,41 @@ class KeyedChain:
         """Initialize a KeyedChain from a GufeTokenizable."""
         return cls(cls.gufe_to_keyed_chain_rep(gufe_object))
 
-    def to_gufe(self) -> GufeTokenizable:
+    def to_gufe(self, tokenizable_map: dict[str, GufeTokenizable] | None = None) -> GufeTokenizable:
         """Initialize a GufeTokenizable."""
-        gts: dict[str, GufeTokenizable] = {}
+        if tokenizable_map is None:
+            tokenizable_map = {}
+
         for gufe_key, keyed_dict in self:
-            gt = key_decode_dependencies(keyed_dict, registry=gts)
-            gts[gufe_key] = gt
-        return gt
+            if gt := tokenizable_map.get(gufe_key):
+                continue
+            gt = key_decode_dependencies(keyed_dict, registry=tokenizable_map)
+            tokenizable_map[gufe_key] = gt
+        return gt  # type: ignore
+
+    def decode_subchains(self, func: Callable) -> Generator[GufeTokenizable, None, None]:
+        """Extract ``GufeTokenizable`` objects matching a pattern from a KeyedChain.
+
+        The ``func`` function is applied to each keyed dict contained
+        in the ``KeyedChain``. When it evaluates to a truthy value,
+        the ``GufeTokenizable`` is created and yielded. Dependencies
+        of this ``GufeTokenizable`` are derived from preceeding
+        portions of the ``KeyedChain``.
+
+        Example
+        -------
+
+        Suppose only the ``NonTransformation`` ``GufeTokenizable``
+        objects are wanted from a ``KeyedChain``, ``an_kc``, that
+        encodes an ``AlchemicalNetwork``.
+
+        >>> nontransformations = list(an_kc.decode_subchains(lambda kd: kd["__qualname__"] == "NonTransformation"))
+
+        """
+        tokenizable_map: dict[str, GufeTokenizable] = {}
+        for idx, (_, keyed_dict) in enumerate(self):
+            if func(keyed_dict):
+                yield KeyedChain(self[: idx + 1]).to_gufe(tokenizable_map=tokenizable_map)
 
     @classmethod
     def from_keyed_chain_rep(cls, keyed_chain: list[tuple[str, dict]]) -> Self:
