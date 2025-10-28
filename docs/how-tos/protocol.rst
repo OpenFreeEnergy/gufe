@@ -38,17 +38,17 @@ This defines all the configuration parameters your protocol needs:
 
 .. code-block:: python
 
-    import pydantic
+    from pydantic import InstanceOf
 
-    from gufe.settings import Settings
-    from gufe.settings.types import NanosecondQuantity
+    from gufe.settings import Settings, SettingsBaseModel
+    from gufe.settings.typing import NanosecondQuantity
 
 
     class SimulationSettings(SettingsBaseModel):
         """Settings for simulation control, including lengths, etc...
 
         """
-        minimization_steps = 5000
+        minimization_steps: int = 5000
         """Number of minimization steps to perform. Default 5000."""
 
         equilibration_length: NanosecondQuantity
@@ -75,10 +75,27 @@ This defines all the configuration parameters your protocol needs:
         simulation_settings: SimulationSettings
         alchemical_settings: AlchemicalSettings
 
+        # by subclassing from ``Settings``, we also get:
+        # - forcefield_settings : parameters for force field choices
+        # - thermo_settings : thermodynamics parameters, e.g. pressure, temperature
+
 
 Some notes on the above:
 
-1. ...
+1. **gufe** includes several :class:`~gufe.settings.typing.GufeQuantity` types,
+   including the :class:`~gufe.settings.typing.NanosecondQuantity` used above.
+   We recommend using these for settings fields that carry units,
+   and you can easily make your own if necessary by following the pattern in the :mod:`gufe.settings.typing` module.
+
+2. We definied a couple :class:`~gufe.settings.models.SettingsBaseModel` subclasses to group together related settings,
+   such as the number of steps to use for various portions of the simulation in ``SimulationSettings``.
+   It is common practice to break a ``Protocol`` ``Settings`` object up in this way to make them more modular and easier to work with.
+
+3. Our :class:`~gufe.settings.models.Settings` subclass ``MyProtocolSettings`` will then feature a hierarchy of settings:
+    - ``simulation_settings``: 
+    - ``alchemical_settings``
+    - ``forcefield_settings``
+    - ``thermo_settings``
 
 
 Step 2: Define your ProtocolResult
