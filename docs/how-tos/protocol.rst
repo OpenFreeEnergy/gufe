@@ -38,9 +38,32 @@ This defines all the configuration parameters your protocol needs:
 
 .. code-block:: python
 
-    from gufe.settings import Settings
     import pydantic
-    from openff.units import unit
+
+    from gufe.settings import Settings
+    from gufe.settings.types import NanosecondQuantity
+
+
+    class SimulationSettings(SettingsBaseModel):
+        """Settings for simulation control, including lengths, etc...
+
+        """
+        minimization_steps = 5000
+        """Number of minimization steps to perform. Default 5000."""
+
+        equilibration_length: NanosecondQuantity
+        """Length of the equilibration phase in units of time."""
+
+        production_length: NanosecondQuantity
+        """Length of the production phase in units of time."""
+
+
+    class AlchemicalSettings(SettingsBaseModel):
+        """Settings specific to the particulars of this alchemical method.
+
+        """
+        ...
+
 
     class MyProtocolSettings(Settings):
         """Settings for an example Protocol.
@@ -48,16 +71,14 @@ This defines all the configuration parameters your protocol needs:
         """
         # the number of independent simulations to perform
         n_repeats: int = 5
-        
-        simulation_length: pydantic.Field(
-            default=10.0 * unit.nanosecond,
-            description="Length of each simulation"
-        )
-        
-        equilibration_length: pydantic.Field(
-            default=1.0 * unit.nanosecond, 
-            description="Equilibration time before production"
-        )
+
+        simulation_settings: SimulationSettings
+        alchemical_settings: AlchemicalSettings
+
+
+Some notes on the above:
+
+1. ...
 
 
 Step 2: Define your ProtocolResult
