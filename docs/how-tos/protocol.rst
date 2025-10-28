@@ -4,7 +4,7 @@ How to define a new ``Protocol``
 ================================
 
 The **gufe** :ref:`Protocol <protocol>` system is designed as an *extensible point* of the library,
-allowing developers to write their own methods for performing free energy calculations in a form that can take full advantage of the OpenFE ecosystem.
+allowing developers to write their own methods for performing calculations in a form that can take full advantage of the OpenFE ecosystem.
 
 Our recommendation in this how-to is to start simple;
 we will call out areas where you can iterate further on making your ``Protocol`` more sophisticated.
