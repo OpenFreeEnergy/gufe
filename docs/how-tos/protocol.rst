@@ -111,25 +111,32 @@ Create a :ref:`ProtocolResult <protocolresult>` subclass that defines how to com
 
     class MyProtocolResult(ProtocolResult):
         
+        # required method
+        # return ``None`` if Protocol doesn't produce an estimate
         def get_estimate(self) -> unit.Quantity:
             """Calculate the free energy estimate from all runs."""
-            # Extract the key results from all completed runs
-            free_energies = []
-            for run_result in self.data["free_energies"]:
-                free_energies.append(run_result)
+            # extract the key results from all completed runs
+            free_energies = self.data["free_energies"]
+
+            # get unit of the first value
+            u = free_energies[0].u
             
-            # Return the mean as our best estimate
-            mean_dg = np.mean(free_energies) * unit.kilocalorie_per_mole
-            return mean_dg
+            # return the mean as our best estimate, converting to same units
+            return np.mean(np.asarray([dG.to(u).m for dG in free_energies])) * u
         
+        # required method
+        # return ``None`` if Protocol doesn't produce an estimate
         def get_uncertainty(self) -> unit.Quantity:
             """Calculate the uncertainty from all runs."""
             free_energies = self.data["free_energies"]
-            if len(free_energies) < 2:
-                return 0.0 * unit.kilocalorie_per_mole
+
+            # get unit of the first value
+            u = free_energies[0].u
             
-            std_err = np.std(free_energies) / np.sqrt(len(free_energies))
-            return std_err * unit.kilocalorie_per_mole
+            # return the standard error as our uncertainty, converting to the same units
+            std_dev = np.std(np.asarray([dG.to(u).m for dG in free_energies])) * u
+            std_err = std_dev / np.sqrt(len(free_energies))
+            return std_err
 
 
 It's okay for the implementations of these methods to be a guess for now.
