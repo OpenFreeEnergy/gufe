@@ -9,6 +9,8 @@ allowing developers to write their own methods for performing calculations in a 
 Our recommendation in this how-to is to start simple;
 we will call out areas where you can iterate further on making your ``Protocol`` more sophisticated.
 
+If you want a complete, runnable example to start building your own ``Protocol`` from, skip here: :ref:`howto-protocol-complete-example`
+
 .. image:: ../_static/gufe_protocol_diagram.svg
     :alt: The ``gufe`` protocol system.
 
@@ -29,6 +31,8 @@ Multiple ``ProtocolDAG`` executions can be aggregated into a single :ref:`Protoc
 If this is your first time writing a ``Protocol``, we recommend defining these components in the following step order.
 You can of course iterate on these components as you write each one, improving the implementation as you go.
 
+
+.. _howto-protocol-settings:
 
 Step 1: Define your Settings
 -----------------------------
@@ -87,7 +91,7 @@ Some notes on the above:
    We recommend using these for settings fields that carry units,
    and you can easily make your own if necessary by following the pattern in the :mod:`gufe.settings.typing` module.
 
-2. We definied a couple :class:`~gufe.settings.models.SettingsBaseModel` subclasses to group together related settings,
+2. We defined a couple :class:`~gufe.settings.models.SettingsBaseModel` subclasses to group together related settings,
    such as the number of steps to use for various portions of the simulation in ``SimulationSettings``.
    It is common practice to break a ``Protocol`` ``Settings`` object up in this way to make them more modular and easier to work with.
 
@@ -97,6 +101,8 @@ Some notes on the above:
     - ``forcefield_settings``
     - ``thermo_settings``
 
+
+.. _howto-protocol-protocol-result:
 
 Step 2: Define your ProtocolResult
 ----------------------------------
@@ -159,11 +165,13 @@ Some additional notes:
    It may make sense to create other methods returning quantities of interest from this sampling, however.
 
 
+.. _howto-protocol-protocol-units:
+
 Step 3: Define your ProtocolUnits
 ----------------------------------
 
-Create the computational units that will perform the actual work.
-Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement an ``_execute`` method.
+Create the :ref:`ProtocolUnits <protocolunit>` that will perform the actual work.
+Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and implement an ``_execute`` method.
 
 .. important :: 
 
@@ -172,22 +180,27 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
 
 .. code-block:: python
 
-    from gufe import ProtocolUnit
+    from gufe import ProtocolUnit, Context
 
     class SetupUnit(ProtocolUnit):
         """Prepare the system for simulation."""
         
         @staticmethod
-        def _execute(ctx, *, stateA, stateB, mapping, settings, **inputs):
+        def _execute(ctx: Context, *, stateA, stateB, mapping, settings, **inputs):
             """Set up the alchemical system."""
             import pickle
             from pathlib import Path
             
             # ctx provides scratch and shared directories
             # Use ctx.shared to write files that other units will need
-            shared_dir = Path(ctx.shared)
+            shared_dir = ctx.shared
+
+            # Use ctx.scratch to write temporary files needed only within this unit
+            # These files will typically be deleted by the execution engine 
+            # upon unit completion
+            scratch_dir = ctx.scratch
             
-            # Your setup logic here...
+            # As an example, your setup logic here...
             # - Create alchemical system from stateA/stateB
             # - Apply the atom mapping 
             # - Set up force field parameters
@@ -207,6 +220,7 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
             with open(coords_file, 'wb') as f:
                 pickle.dump(coordinates, f)
             
+            # These outputs will form the output content of the corresponding ProtocolUnitResult
             return {
                 "system_file": str(system_file),
                 "topology_file": str(topology_file),
@@ -218,7 +232,7 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
         """Run an individual simulation."""
         
         @staticmethod 
-        def _execute(ctx, *, setup_result, window, settings, **inputs):
+        def _execute(ctx: Context, *, setup_result, window, settings, **inputs):
             """Execute a single alchemical window simulation."""
             import pickle
             from pathlib import Path
@@ -230,6 +244,8 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
                 topology = pickle.load(f)
             with open(setup_result.outputs["initial_coordinates_file"], 'rb') as f:
                 coordinates = pickle.load(f)
+
+            self.logger.info("Simulation start...")
             
             # Your simulation logic here...
             # - Run equilibration for `settings.equilibration_length`
@@ -237,6 +253,8 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
             # - Calculate free energy contribution
             dg_contribution = ...  # Your free energy calculation
             final_coords = ...     # Your final coordinates
+
+            self.logger.info("Simulation complete.")
             
             # Write output files to shared directory
             shared_dir = Path(ctx.shared)
@@ -245,6 +263,7 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
             with open(final_coords_file, 'wb') as f:
                 pickle.dump(final_coords, f)
             
+            # These outputs will form the output content of the corresponding ProtocolUnitResult
             return {
                 "free_energy_contribution": dg_contribution,
                 "final_coordinates_file": str(final_coords_file),
@@ -256,7 +275,7 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
         """Analyze results from all simulations."""
         
         @staticmethod
-        def _execute(ctx, *, simulation_results, settings, **inputs):
+        def _execute(ctx: Context, *, simulation_results, settings, **inputs):
             """Combine results from all simulation windows."""
             import pickle
             from pathlib import Path
@@ -291,6 +310,7 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
             with open(analysis_file, 'wb') as f:
                 pickle.dump(analysis_data, f)
             
+            # These outputs will form the output content of the corresponding ProtocolUnitResult
             return {
                 "total_free_energy": total_free_energy,
                 "analysis_file": str(analysis_file),
@@ -298,12 +318,30 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
             }
 
 
+Some notes on the above:
+
+1. The inputs for a :ref:`ProtocolUnit <protocolunit>` ``_execute`` method must start with the ``Context`` object,
+   which provides the ``ProtocolUnit`` with appropriate ``shared`` and ``scratch`` directories,
+   as well as directories for depositing ``stderr`` and ``stdout`` as desired for subprocess calls.
+
+2. Every input following ``Context`` can be whatever the unit needs as input for it,
+   with the contstraint that each element itself by serializable by :mod:`gufe`.
+   See :ref:`concepts-serialization` for the types supported.
+
+3. You can use the ``ProtocolUnit``\s ``logger`` property for writing log messages to its own log stream.
+   The execution engine performing the ``ProtocolUnit`` may then preserve these in a way that they are parsable later.
+
+
+4. When a ``ProtocolUnit``\s ``_execute`` method completes, the content of the returned ``dict`` becomes
+   the ``outputs`` attribute of the corresponding :ref:`ProtocolUnitResult <protocolunitresult>`.
+
+
 .. _howto-protocol-protocol-class:
 
 Step 4: Implement your Protocol class
 -------------------------------------
 
-Now create your main custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>` and ties everything together:
+Now create your main custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>`, and ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`ProtocolResult <howto-protocol-protocol-result>`, and :ref:`ProtocolUnits <howto-protocol-protocol-units>` we created above:
 
 .. code-block:: python
 
@@ -463,6 +501,8 @@ Dependencies between ``ProtocolUnit`` objects are established implicitly by pass
 The ``ProtocolDAG`` automatically determines the execution order from these dependencies.
 Units with no dependencies run first, followed by units whose dependencies have completed.
 
+
+.. _howto-protocol-complete-example:
 
 Putting it all together: A complete example
 --------------------------------------------
