@@ -21,11 +21,76 @@ In the rare case where you want to custom-define as much as possible, you can in
 Step 2: Write Tests for Expected Behavior
 -----------------------------------------
 
-As when defining any new ``GufeTokenizable``, you are encouraged to use the ``GufeTokenizableTestsMixin`` to ensure that your new ``Component`` works as intended.
+As when defining any new ``GufeTokenizable``, you are encouraged to use the ``GufeTokenizableTestsMixin`` pytest fixture to ensure that your new ``Component`` works as intended.
 
-Step 3: Define the Template Methods
+For example:
+
+.. code-block:: python
+    :caption: catmoleculecomponent.py
+
+    from gufe import SmallMoleculeComponent
+
+    # this is all the code you need to get the GufeTokenizableTestsMixin to pass,
+    # since SmallMoleculeComponent fully implemented
+    class CatMoleculeComponent(SmallMoleculeComponent):
+        pass
+
+.. code-block:: python
+    :caption: test_catmoleculecomponent.py
+
+    from .catcomponent import CatMoleculeComponent
+
+
+    class TestCatMoleculeComponent(GufeTokenizableTestsMixin):
+        cls = CatMoleculeComponent
+        repr = "CatMoleculeComponent(name=ethane)"
+
+        @pytest.fixture()
+        def instance(self):
+            mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
+            Chem.AllChem.Compute2DCoords(mol)
+            return CatMoleculeComponent(rdkit=mol, name="ethane")
+
+.. TODO: how to include a new attribute in dict while keeping parent class behavior?
+
+Step 3: Define the Required Methods
 -----------------------------------
+
+- you will need to define anything that is an ``abstractmethod``, both in ``Component`` itself, as well as the ``abstractmethod``\s that it inherits from ``GufeTokenizable`` (since component is a subclass of GufeTokenizable)
+- this is a key benefit of instead inheriting from a class that is not an abstract base class, as many more methods will come pre-defined. For example, if you inherit from `ExplicitMoleculeComponent` you only have to define to/from  dict. For example:
+
+
 
 
 Step 4: Define Additional Functionality
 ---------------------------------------
+
+.. code-block:: python
+    :caption: catmoleculecomponent.py
+
+    class CatMoleculeComponent(SmallMoleculeComponent):
+        def __init__(self, rdkit: Chem.rdchem.Mol, name:str="", is_hydrophobic:bool=True):
+            self.is_hydrophobic = is_hydrophobic
+            super().__init__(rdkit=rdkit, name=name)
+
+.. code-block:: python
+    :caption: test_catmoleculecomponent.py
+
+    from .catcomponent import CatMoleculeComponent
+
+    @pytest.fixture
+    def cat_ethane():
+        mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
+        Chem.AllChem.Compute2DCoords(mol)
+        return CatMoleculeComponent(rdkit=mol, name="ethane")
+
+    class TestCatMoleculeComponent(GufeTokenizableTestsMixin):
+        cls = CatMoleculeComponent
+        repr = "CatMoleculeComponent(name=ethane)"
+
+        @pytest.fixture()
+        def instance(self, cat_ethane):
+            return cat_ethane
+
+    def test_is_hydrophobic_default(cat_ethane):
+        assert cat_ethane.is_hydrophobic is True
