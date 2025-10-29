@@ -101,7 +101,7 @@ Some notes on the above:
 Step 2: Define your ProtocolResult
 ----------------------------------
 
-Create a result class that inherits from :ref:`ProtocolResult <protocolresult>` and defines how to compute estimates and uncertainties from your protocol's outputs:
+Create a :ref:`ProtocolResult <protocolresult>` subclass that defines how to compute estimates and uncertainties from your ``Protocol``'s outputs:
 
 .. code-block:: python
 
@@ -130,6 +130,26 @@ Create a result class that inherits from :ref:`ProtocolResult <protocolresult>` 
             
             std_err = np.std(free_energies) / np.sqrt(len(free_energies))
             return std_err * unit.kilocalorie_per_mole
+
+
+It's okay for the implementations of these methods to be a guess for now.
+We will define how the contents of ``MyProtocolResult.data`` are assembled in :ref:`howto-protocol-protocol-class`.
+
+Some additional notes:
+
+1. The example above returns a single estimate by taking the sample mean of the individual :ref:`ProtocolDAGResult <protocoldagresult>` estimates,
+   and reports the uncertainty in that single estimate as the standard error.
+   This is not the only choice available.
+   Some ``Protocol``\s choose to report their uncertainty as the standard deviation.
+   Other ``Protocol``\s don't report the estimate as a sample mean at all, instead aggregating trajectories of reduced potentials
+   or nonequilibrium works and deriving a single estimate from these using estimators such as BAR or MBAR.
+   The choice is yours as to what is most appropriate for your ``Protocol``.
+
+2. Although less common, you can also write ``Protocol``\s for :ref:`NonTransformations <nontransformation>`.
+   These operate on a single :ref:`ChemicalSystem <chemicalsystem>`,
+   and typically perform some form of sampling, such as equilibrium molecular dynamics.
+   In this case, the :meth:`~gufe.protocols.protocol.ProtocolResult.get_estimate` and :meth:`~gufe.protocols.protocol.ProtocolResult.get_uncertainty` methods typically lack meaning, and can be writtent to return ``None``.
+   It may make sense to create other methods returning quantities of interest from this sampling, however.
 
 
 Step 3: Define your ProtocolUnits
@@ -270,6 +290,8 @@ Each unit should inherit from :ref:`ProtocolUnit <protocolunit>` and implement a
                 "log": "Analysis completed"
             }
 
+
+.. _howto-protocol-protocol-class:
 
 Step 4: Implement your Protocol class
 -------------------------------------
