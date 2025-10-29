@@ -7,11 +7,11 @@ from collections import defaultdict
 from os import PathLike
 from string import digits
 from typing import Optional, TextIO, Union
-from openmm.unit import Quantity
 
 import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
+from openmm.unit import Quantity
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
@@ -689,7 +689,6 @@ class ProteinMembraneComponent(ProteinComponent):
         box = openmm_PDBFile.topology.getPeriodicBoxVectors()
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
-
     def _to_dict(self):
         """
         Serialize to dict, including periodic box vectors safely.
@@ -700,8 +699,7 @@ class ProteinMembraneComponent(ProteinComponent):
         if box is not None:
             # Convert to OpenMM Quantity-safe structure
             # Each vector = Quantity(Vec3 or array)
-            value = np.array(
-                [[float(c / box[0][0].unit) for c in v] for v in box])
+            value = np.array([[float(c / box[0][0].unit) for c in v] for v in box])
             unit_str = str(box[0][0].unit)
 
             d["periodic_box_vectors"] = {
@@ -712,7 +710,6 @@ class ProteinMembraneComponent(ProteinComponent):
             d["periodic_box_vectors"] = None
 
         return d
-
 
     @classmethod
     def _from_dict(cls, d, name=""):

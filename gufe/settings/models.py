@@ -105,6 +105,7 @@ class ThermoSettings(SettingsBaseModel):
     .. note::
        No checking is done to ensure a valid thermodynamic ensemble is possible.
     """
+
     temperature: KelvinQuantity | None = Field(
         None,
         description="Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius')``. See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
@@ -116,8 +117,9 @@ class ThermoSettings(SettingsBaseModel):
     redox_potential: VoltsQuantity | None = Field(
         None, description="Simulation redox potential in millivolts (mV). Compatible units will be converted to mV."
     )
-    membrane: bool = Field(False, description="Whether to simulate a membrane "
-                                              "system and use a MonteCarloMembraneBarostat.")
+    membrane: bool = Field(
+        False, description="Whether to simulate a membrane system and use a MonteCarloMembraneBarostat."
+    )
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
