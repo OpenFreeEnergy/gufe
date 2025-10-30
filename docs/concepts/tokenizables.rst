@@ -363,6 +363,8 @@ Note that this graphical representation is a Directed Acyclic Graph (DAG):
     :alt: Diagram of a keyed chain representation of an alchemical network.
 
 
+.. _concepts-tokenizables-serialization-methods:
+
 Serialization Methods
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -370,6 +372,7 @@ All ``GufeTokenizables`` can be serialized as either JSON (``to_json()``) or `Me
 JSON is preferable for human-readability, archival, and interoperability with other tools that do not use **gufe**.
 MessagePack is a more efficient format and ideal for passing information between processes, but it is not human-readable and requires **gufe** for extracting any data.
 
+See :ref:`concepts-serialization` for the data types supported by the serialization methods in **gufe**.
 
 .. note::
     See :doc:`../how-tos/serialization` for details on how to implement serialization of your own GufeTokenizables.

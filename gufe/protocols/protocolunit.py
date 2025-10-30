@@ -32,10 +32,10 @@ class Context:
 
     """
 
-    scratch: PathLike
-    shared: PathLike
-    stderr: PathLike | None = None
-    stdout: PathLike | None = None
+    scratch: Path
+    shared: Path
+    stderr: Path | None = None
+    stdout: Path | None = None
 
 
 def _list_dependencies(inputs, cls):
