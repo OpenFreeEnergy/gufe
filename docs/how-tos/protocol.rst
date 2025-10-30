@@ -73,8 +73,8 @@ This defines all the configuration parameters your protocol needs:
         """Settings for an example Protocol.
 
         """
-        # the number of independent simulations to perform
-        n_repeats: int = 5
+        # the number of lambda windows to perform
+        n_lambdas: int = 5
 
         simulation_settings: SimulationSettings
         alchemical_settings: AlchemicalSettings
@@ -171,7 +171,7 @@ Step 3: Define your ProtocolUnits
 ----------------------------------
 
 Create the :ref:`ProtocolUnits <protocolunit>` that will perform the actual work.
-Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and implement an ``_execute`` method.
+These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and implement an ``_execute`` method:
 
 .. important :: 
 
@@ -189,7 +189,6 @@ Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.P
         def _execute(ctx: Context, *, stateA, stateB, mapping, settings, **inputs):
             """Set up the alchemical system."""
             import pickle
-            from pathlib import Path
             
             # ctx provides scratch and shared directories
             # Use ctx.shared to write files that other units will need
@@ -220,7 +219,7 @@ Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.P
             with open(coords_file, 'wb') as f:
                 pickle.dump(coordinates, f)
             
-            # These outputs will form the output content of the corresponding ProtocolUnitResult
+            # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
                 "system_file": str(system_file),
                 "topology_file": str(topology_file),
@@ -232,10 +231,9 @@ Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.P
         """Run an individual simulation."""
         
         @staticmethod 
-        def _execute(ctx: Context, *, setup_result, window, settings, **inputs):
+        def _execute(ctx: Context, *, setup_result, lambda_window, settings, **inputs):
             """Execute a single alchemical window simulation."""
             import pickle
-            from pathlib import Path
             
             # Load large objects from files written by setup unit
             with open(setup_result.outputs["system_file"], 'rb') as f:
@@ -245,30 +243,33 @@ Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.P
             with open(setup_result.outputs["initial_coordinates_file"], 'rb') as f:
                 coordinates = pickle.load(f)
 
+            # use the built-in logger for the ProtocolUnit where desired to give visibility
+            # on runtime behavior, help debug issues, etc.
             self.logger.info("Simulation start...")
             
             # Your simulation logic here...
-            # - Run equilibration for `settings.equilibration_length`
-            # - Run production simulation for `settings.simulation_length`
-            # - Calculate free energy contribution
-            dg_contribution = ...  # Your free energy calculation
-            final_coords = ...     # Your final coordinates
+            # - Run minimization for `settings.simulation_settings.minimization_steps`
+            # - Run equilibration for `settings.simulation_settings.equilibration_length`
+            # - Run production simulation for `settings.simulation_settings.simulation_length`
+            # - Gather reduced potentials `u_nk` from sampling;
+            #   see also: https://alchemlyb.readthedocs.io/en/latest/parsing.html#u-nk-standard-form
+            u_nk = ...             # trajectory of `u_nk`
+            final_coords = ...     # final coordinates
 
             self.logger.info("Simulation complete.")
             
             # Write output files to shared directory
-            shared_dir = Path(ctx.shared)
-            final_coords_file = shared_dir / f"final_coords_window_{window}.pkl"
-            
+            u_nk_file = ctx.shared / f"u_nk{window}.pkl"
+            final_coords_file = ctx.shared / f"final_coords_window_{window}.pkl"
+
             with open(final_coords_file, 'wb') as f:
                 pickle.dump(final_coords, f)
             
-            # These outputs will form the output content of the corresponding ProtocolUnitResult
+            # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
-                "free_energy_contribution": dg_contribution,
+                "u_nk": u_nk,
                 "final_coordinates_file": str(final_coords_file),
-                "window": window,
-                "log": f"Simulation completed for window {window}"
+                "lambda_window": lambda_window,
             }
 
     class AnalysisUnit(ProtocolUnit):
@@ -278,43 +279,37 @@ Each ``ProtocolUnit`` should inherit from :class:`~gufe.protocols.protocolunit.P
         def _execute(ctx: Context, *, simulation_results, settings, **inputs):
             """Combine results from all simulation windows."""
             import pickle
-            from pathlib import Path
+            from alchemlyb.estimators import MBAR
             
             # simulation_results will be a list of ProtocolUnitResult objects
-            total_free_energy = 0.0
-            logs = []
+            u_nks = []
             final_coords = {}
             
             for sim_result in simulation_results:
                 # Extract numerical results directly
-                total_free_energy += sim_result.outputs["free_energy_contribution"]
-                logs.append(sim_result.outputs["log"])
+                u_nks.append(sim_result.outputs["u_nk"]
                 
                 # Load coordinate files if needed for analysis
-                window = sim_result.outputs["window"]
+                lambda_window = sim_result.outputs["lambda_window"]
                 coords_file = sim_result.outputs["final_coordinates_file"]
                 with open(coords_file, 'rb') as f:
                     coords = pickle.load(f)
-                final_coords[window] = coords
+
+                final_coords[lambda_window] = coords
+
+            # get a free energy estimate with MBAR
+            u_nk_all = pd.concat(u_nks)
+            mbar = MBAR()
+            mbar.fit(u_nk_all)
+
+            total_free_energy = mbar.delta_f.loc[0.0, 1.0]
+
+            # Perform any other analysis of e.g. final coordinates
+            # ...
             
-            # Write final analysis results to shared directory
-            shared_dir = Path(ctx.shared)
-            analysis_file = shared_dir / "final_analysis.pkl"
-            
-            analysis_data = {
-                "total_free_energy": total_free_energy,
-                "final_coordinates": final_coords,
-                "simulation_logs": logs
-            }
-            
-            with open(analysis_file, 'wb') as f:
-                pickle.dump(analysis_data, f)
-            
-            # These outputs will form the output content of the corresponding ProtocolUnitResult
+            # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
                 "total_free_energy": total_free_energy,
-                "analysis_file": str(analysis_file),
-                "log": "Analysis completed"
             }
 
 
@@ -323,28 +318,35 @@ Some notes on the above:
 1. The inputs for a :ref:`ProtocolUnit <protocolunit>` ``_execute`` method must start with the ``Context`` object,
    which provides the ``ProtocolUnit`` with appropriate ``shared`` and ``scratch`` directories,
    as well as directories for depositing ``stderr`` and ``stdout`` as desired for subprocess calls.
+   The execution engine populates this ``Context`` object before running the ``ProtocolUnit``.
 
-2. Every input following ``Context`` can be whatever the unit needs as input for it,
-   with the contstraint that each element itself by serializable by :mod:`gufe`.
+2. Every input following ``Context`` can be whatever the ``ProtocolUnit`` needs as inputs,
+   with the constraint that each element be serializable by :mod:`gufe`.
    See :ref:`concepts-serialization` for the types supported.
+   ``dict``\s and ``list``\s with elements of these types are also allowed to arbitrary depth.
 
-3. You can use the ``ProtocolUnit``\s ``logger`` property for writing log messages to its own log stream.
-   The execution engine performing the ``ProtocolUnit`` may then preserve these in a way that they are parsable later.
+3. When an input is another ``ProtocolUnit`` (possibly nested in ``list``\s and/or ``dict``\s),
+   as in ``simulation_results`` in ``AnalysisUnit`` above, the ``ProtocolUnit`` is converted to its corresponding
+   :ref:`ProtocolUnitResult <protocolunitresult>` by the execution engine before being fed to the ``_execute`` method.
+   This occurs as the execution engine walks the :ref:`ProtocolDAG <protocoldag>` in topological order.
 
-
-4. When a ``ProtocolUnit``\s ``_execute`` method completes, the content of the returned ``dict`` becomes
+4. When a ``ProtocolUnit``'s ``_execute`` method completes, the content of the returned ``dict`` becomes
    the ``outputs`` attribute of the corresponding :ref:`ProtocolUnitResult <protocolunitresult>`.
 
+5. You can use the ``ProtocolUnit``'s ``logger`` property to write log messages to its own log stream.
+   The execution engine performing the ``ProtocolUnit`` may then preserve these so they can be introspected later.
 
 .. _howto-protocol-protocol-class:
 
 Step 4: Implement your Protocol class
 -------------------------------------
 
-Now create your main custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>`, and ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`ProtocolResult <howto-protocol-protocol-result>`, and :ref:`ProtocolUnits <howto-protocol-protocol-units>` we created above:
+Now create your custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>`. 
+This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`ProtocolResult <howto-protocol-protocol-result>`, and :ref:`ProtocolUnits <howto-protocol-protocol-units>` we created above:
 
 .. code-block:: python
 
+    import numpy as np
     from gufe import Protocol, ChemicalSystem, ComponentMapping, ProtocolDAGResult, ProtocolUnit
     from typing import Optional, Union, List, Iterable, Any
 
@@ -360,7 +362,7 @@ Now create your main custom ``Protocol`` class that inherits from :ref:`Protocol
                 # Include any thermodynamic settings your protocol needs
                 # thermo_settings=ThermoSettings(temperature=298.15 * unit.kelvin),
                 # Protocol-specific defaults
-                n_repeats=5,
+                n_lambdas=5,
                 simulation_length=10.0 * unit.nanosecond,
                 equilibration_length=1.0 * unit.nanosecond
             )
@@ -394,11 +396,11 @@ Now create your main custom ``Protocol`` class that inherits from :ref:`Protocol
             
             # Create multiple independent simulation units
             simulations = []
-            for i in range(self.settings.n_repeats):
+            for i in np.linspace(0, 1, self.settings.n_lambdas):
                 sim_unit = SimulationUnit(
                     name=f"simulation_{i}",
                     setup_result=setup,  # This creates the dependency
-                    window=i,
+                    lambda_window=i,
                     settings=self.settings
                 )
                 simulations.append(sim_unit)
