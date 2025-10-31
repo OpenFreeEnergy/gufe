@@ -71,6 +71,7 @@ ions_dict = {
     "Ce": 4,
     "Cl-": -1,
     "CL": -1,
+    "CLA": -1,
     "CO": 2,
     "Cr": 2,
     "CR": 3,
@@ -106,6 +107,7 @@ ions_dict = {
     "NI": 2,
     "PB": 2,
     "PD": 2,
+    "POT": 1,
     "PR": 3,
     "PT": 2,
     "Pu": 4,
@@ -114,6 +116,7 @@ ions_dict = {
     "Sm": 2,
     "SM": 3,
     "Sn": 2,
+    "SOD": 1,
     "SR": 2,
     "TB": 3,
     "Th": 4,
@@ -638,7 +641,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
 class ProteinMembraneComponent(ProteinComponent):
     """
-    Protein component with optional membrane periodic box vectors.
+    Protein component with membrane periodic box vectors.
     """
 
     def __init__(self, rdkit: Mol, name: str = "", periodic_box_vectors=None):
