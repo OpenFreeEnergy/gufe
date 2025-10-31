@@ -86,6 +86,7 @@ class TestMessagePack:
                 1 * openff.units.unit.nanometer,
                 1.0 * openff.units.unit.nanometer,
                 0.8 * openff.units.unit.nanometer,
+                openff.units.Quantity(25, "celsius"),
                 np.array([-1.0, 0, 1.0]) * openff.units.unit.nanometer,
             ]
 

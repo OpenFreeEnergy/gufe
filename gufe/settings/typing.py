@@ -65,6 +65,7 @@ GufeQuantity = Annotated[
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),
 ]
+"""Pydantic type inherits from ``openff.units.Quantity`` but serializes in a gufe-compatible way."""
 
 
 GufeArrayQuantity: TypeAlias = Annotated[GufeQuantity, AfterValidator(_is_array)]
@@ -105,7 +106,10 @@ KelvinQuantity: TypeAlias = Annotated[
     GufeQuantity,
     specify_quantity_units("kelvin"),
 ]
-"""Pydantic type that requires a ``pint.Quantity`` compatible with kelvin. Input will be converted to kelvin upon model validation."""
+"""Pydantic type that requires a ``pint.Quantity`` compatible with kelvin. Input will be converted to kelvin upon model validation.
+Note: to define input in Celsius, you must use ``Quantity`` explicitly, e.g. ``openff.units.Quantity(25, "celsius")`` instead of ``25 * unit.celsius``.
+See  https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.
+"""
 
 # types used elsewhere in the ecosystem
 NanosecondQuantity: TypeAlias = Annotated[
