@@ -2,7 +2,7 @@
 build-backend = "setuptools.build_meta"
 requires = [
   "setuptools>=77.0.3",
-  "versioningit",
+  "setuptools-scm>=8",
 ]
 
 [project]
@@ -36,6 +36,9 @@ include-package-data = true
 
 [tool.setuptools.packages]
 find = { namespaces = false }
+
+[tool.setuptools_scm]
+fallback_version = "0.0.0"
 
 [tool.ruff]
 line-length = 120
@@ -87,19 +90,6 @@ ignore_errors = true
 module = "rdkit.Chem.AllChem.*" # TODO: troubleshoot these missing imports, add tests
 follow_imports = 'skip'
 follow_imports_for_stubs = true
-
-[tool.versioningit]
-default-version = "1+unknown"
-
-[tool.versioningit.format]
-distance = "{base_version}+{distance}.{vcs}{rev}"
-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
-distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
-
-[tool.versioningit.vcs]
-method = "git"
-match = [ "*" ]
-default-tag = "0.0.0"
 
 [tool.interrogate]
 fail-under = 0
