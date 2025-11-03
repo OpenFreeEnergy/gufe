@@ -11,3 +11,4 @@ utilize **gufe** APIs.
 
    tokenizables
    included_models
+   serialization
