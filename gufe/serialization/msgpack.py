@@ -99,7 +99,7 @@ def ext_hook_default(code: int, data: bytes):
             return Path(string_rep_data)
         case MPEXT.UNIT:
             magnitude, unit, _ = msgpack.unpackb(data, ext_hook=ext_hook_default)
-            return magnitude * Quantity(unit)
+            return Quantity(magnitude, unit)
         case MPEXT.NDARRAY:
             _dtype, _shape, _bytes = msgpack.unpackb(data)
             return np.frombuffer(_bytes, dtype=np.dtype(_dtype)).reshape(_shape)
