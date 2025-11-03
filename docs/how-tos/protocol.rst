@@ -302,7 +302,8 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
             mbar = MBAR()
             mbar.fit(u_nk_all)
 
-            total_free_energy = mbar.delta_f.loc[0.0, 1.0]
+            total_free_energy = mbar.delta_f_.loc[0.0, 1.0]
+            total_free_energy_uncertainty = mbar.d_delta_f_.loc[0.0, 1.0]
 
             # Perform any other analysis of e.g. final coordinates
             # ...
@@ -310,6 +311,8 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
             # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
                 "total_free_energy": total_free_energy,
+                "total_free_energy_uncertainty": total_free_energy_uncertainty,
+                ...
             }
 
 
@@ -336,6 +339,7 @@ Some notes on the above:
 5. You can use the ``ProtocolUnit``'s ``logger`` property to write log messages to its own log stream.
    The execution engine performing the ``ProtocolUnit`` may then preserve these so they can be introspected later.
 
+
 .. _howto-protocol-protocol-class:
 
 Step 4: Implement your Protocol class
@@ -358,33 +362,40 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
         @classmethod
         def _default_settings(cls) -> MyProtocolSettings:
             """Provide sensible default settings."""
+            from gufe.settings import OpenMMSystemGeneratorFFSettings, ThermoSettings
+
             return MyProtocolSettings(
-                # Include any thermodynamic settings your protocol needs
-                # thermo_settings=ThermoSettings(temperature=298.15 * unit.kelvin),
-                # Protocol-specific defaults
                 n_lambdas=5,
-                simulation_length=10.0 * unit.nanosecond,
-                equilibration_length=1.0 * unit.nanosecond
+                simulation_settings=SimulationSettings(
+                    equilibration_length=1.0 * unit.nanosecond,
+                    production_length=10.0 * unit.nanosecond
+                ),
+                alchemical_settings=AlchemicalSettings(),
+                forcefield_settings=OpenMMSystemGeneratorFFSettings(),
+                thermo_settings=ThermoSettings(
+                    temperature=300 * unit.kelvin, pressure=1 * unit.bar
+                ),
             )
         
         def _create(
             self,
             stateA: ChemicalSystem,
             stateB: ChemicalSystem,
-            mapping: Optional[Union[ComponentMapping, List[ComponentMapping]]] = None,
-            extends: Optional[ProtocolDAGResult] = None,
+            mapping: Union[ComponentMapping, List[ComponentMapping]] | None = None,
+            extends: ProtocolDAGResult | None = None,
         ) -> List[ProtocolUnit]:
-            """Create the computational workflow."""
+            """Create DAG of ProtocolUnits performing the Protocol."""
             
             # Handle extension from previous results if needed
             if extends is not None:
                 # Extract useful information from the previous run
                 # This might be final coordinates, equilibrated structures, etc.
+                # e.g.
                 starting_point = extends.protocol_unit_results[-1].outputs
             else:
                 starting_point = None
             
-            # Create the setup unit (runs once)
+            # Create the setup unit
             setup = SetupUnit(
                 name="system_setup",
                 stateA=stateA,
@@ -394,12 +405,13 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                 starting_point=starting_point
             )
             
-            # Create multiple independent simulation units
+            # Create multiple independent simulation units,
+            # one for each lambda window
             simulations = []
             for i in np.linspace(0, 1, self.settings.n_lambdas):
                 sim_unit = SimulationUnit(
-                    name=f"simulation_{i}",
-                    setup_result=setup,  # This creates the dependency
+                    name=f"simulation_lambda_{i}",
+                    setup_result=setup,  # this creates dependency on SetupUnit
                     lambda_window=i,
                     settings=self.settings
                 )
@@ -408,7 +420,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
             # Create analysis unit that depends on all simulations
             analysis = AnalysisUnit(
                 name="final_analysis",
-                simulation_results=simulations,  # Depends on all simulations
+                simulation_results=simulations,  # depends on all simulations
                 settings=self.settings
             )
             
@@ -421,7 +433,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
             # into data that the ProtocolResult can use to compute estimates
             
             free_energies = []
-            all_logs = []
+            free_energy_uncertainties = []
             
             for dag_result in protocol_dag_results:
                 # Find the terminal (final) unit results
@@ -430,18 +442,21 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                         free_energies.append(
                             unit_result.outputs["total_free_energy"]
                         )
-                        all_logs.extend(unit_result.outputs["simulation_logs"])
+                        free_energy_uncertainties.append(
+                            unit_result.outputs["total_free_energy_uncertainty"]
+                        )
             
             return {
                 "free_energies": free_energies,
-                "logs": all_logs
+                "free_energy_uncertainties": free_energy_uncertainties,
             }
 
 
 Step 5: Add validation (optional)
 ----------------------------------
 
-You can add custom validation to check that inputs are compatible with your protocol:
+You can add custom validation to check that inputs are compatible with your ``Protocol``.
+This may be called by execution engines prior to calling the ``_create`` method as a way to fail quickly.
 
 .. code-block:: python
 
@@ -459,17 +474,10 @@ You can add custom validation to check that inputs are compatible with your prot
             """Validate inputs for this protocol."""
             from gufe.protocols.errors import ProtocolValidationError
             
-            # Check that both states have the required components
-            if not stateA.components or not stateB.components:
-                raise ProtocolValidationError("Empty chemical systems not supported")
-            
-            # Check that we have a mapping if needed
-            if mapping is None:
-                raise ProtocolValidationError("This protocol requires atom mappings")
-            
-            # Check ability to extend from given results
-            if extends and not extends.ok():
-                raise ProtocolValidationError("Cannot extend from failed ProtocolDAGResult")
+            # check ``Protocol._default_validate`` for the types of validations
+            # done for all Protocols
+
+            # add your own that are specific to your custom Protocol here
 
 
 Understanding ProtocolUnit dependencies
@@ -509,7 +517,7 @@ Units with no dependencies run first, followed by units whose dependencies have 
 Putting it all together: A complete example
 --------------------------------------------
 
-Here's a simplified but complete protocol implementation:
+Here's a simplified but complete :ref:`Protocol <protocol>` implementation:
 
 .. code-block:: python
 
@@ -574,8 +582,12 @@ Once implemented, your protocol can be used like any other **gufe** protocol:
 
 .. code-block:: python
 
-    # Create protocol with custom settings
-    settings = MyProtocolSettings(n_repeats=10, simulation_length=20*unit.nanosecond)
+    # Get default settings, modify as needed
+    settings = MyProtocol.default_settings()
+    settings.n_lambdas = 10
+    settings.simulation_settings.production_length = 20.0 * unit.nanosecond
+
+    # Create Protocol instance with custom settings
     protocol = MyProtocol(settings)
     
     # Create a ProtocolDAG for specific chemical systems
@@ -598,13 +610,14 @@ Best practices and tips
 1. **Start simple**: Begin with a minimal working implementation and add complexity gradually.
 
 2. **Handle errors gracefully**: Use ``try``/``except`` in ``_execute`` methods and return meaningful error information.
+   This will help with introspection of the :ref:`ProtocolUnitFailure <protocolunitfailure>` resulting from an exception raised by the :ref:`ProtocolUnit <protocolunit>`.
 
 3. **Use the context effectively**: The ``ctx`` parameter provides ``scratch`` (temporary, persists over execution of a single ``ProtocolUnit``) and ``shared`` (persists over execution of the ``ProtocolDAG``) directories.
-   Use ``ctx.shared`` for large objects that need to pass between units; store file paths in return objects, not the objects themselves.
+   Use ``ctx.shared`` for large objects that need to pass between units; store file paths in return ``dict``\s, not the objects themselves.
 
 4. **Test thoroughly**: Write unit tests for your ``ProtocolUnit`` classes early in development.
 
-5. **Document your settings**: Use Pydantic's `Field() function <https://docs.pydantic.dev/latest/concepts/fields/>`_ with descriptions to document what each setting does.
+5. **Document your settings**: Use Pydantic's `Field() function <https://docs.pydantic.dev/latest/concepts/fields/>`_ with descriptions to document what each setting does, or use docstring conventions for each of the settings.
 
 6. **Consider serialization**: All your classes should be serializable - avoid complex objects that can't be serialized with ``GufeTokenizable.to_json``.
 
@@ -620,32 +633,46 @@ Create unit tests for each component:
 
 .. code-block:: python
 
-    def test_protocol_creation():
-        """Test that the protocol can be created with default settings."""
-        protocol = MyProtocol(MyProtocol.default_settings())
-        assert isinstance(protocol.settings, MyProtocolSettings)
+    from gufe.tests import GufeTokenizableTestsMixin
 
-    def test_dag_creation(sample_chemical_systems):
-        """Test ProtocolDAG creation."""
-        protocol = MyProtocol(MyProtocol.default_settings())
-        dag = protocol.create(
-            stateA=sample_chemical_systems[0],
-            stateB=sample_chemical_systems[1],
-            mapping=sample_mapping
-        )
-        
-        assert len(dag.protocol_units) > 0
-        # Test that dependencies are set up correctly
-        
-    def test_unit_execution():
-        """Test individual ProtocolUnit execution."""
-        from gufe.protocols.protocolunit import Context
-        
-        unit = SimpleUnit(name="test", replica=0, settings=SimpleProtocolSettings())
-        
-        # Mock context and inputs
-        ctx = Context(scratch="/tmp", shared="/tmp")
-        result = unit._execute(ctx, replica=0)
-        
-        assert "result" in result
-        assert isinstance(result["result"], float)
+    # inheriting from GufeTokenizableTestsMixin automatically applies a set
+    # of tests checking that the Protocol is a well-behaved GufeTokenizable
+    # and that it serializes well
+    class TestMyProtocol(GufeTokenizableTestsMixin)
+
+        cls = MyProtocol
+        repr = None
+
+        @pytest.fixture
+        def instance(self):
+            return MyProtocol(settings=MyProtocol.default_settings())
+
+        def test_protocol_creation(self):
+            """Test that the protocol can be created with default settings."""
+            protocol = MyProtocol(MyProtocol.default_settings())
+            assert isinstance(protocol.settings, MyProtocolSettings)
+
+        def test_dag_creation(self, sample_chemical_systems):
+            """Test ProtocolDAG creation."""
+            protocol = MyProtocol(MyProtocol.default_settings())
+            dag = protocol.create(
+                stateA=sample_chemical_systems[0],
+                stateB=sample_chemical_systems[1],
+                mapping=sample_mapping
+            )
+            
+            assert len(dag.protocol_units) > 0
+            # Test that dependencies are set up correctly
+            
+        def test_unit_execution(self):
+            """Test individual ProtocolUnit execution."""
+            from gufe.protocols.protocolunit import Context
+            
+            unit = SimpleUnit(name="test", replica=0, settings=SimpleProtocolSettings())
+            
+            # Mock context and inputs
+            ctx = Context(scratch="/tmp", shared="/tmp")
+            result = unit._execute(ctx, replica=0)
+            
+            assert "result" in result
+            assert isinstance(result["result"], float)
