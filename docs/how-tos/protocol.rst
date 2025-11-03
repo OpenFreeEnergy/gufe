@@ -96,7 +96,7 @@ Some notes on the above:
    It is common practice to break a ``Protocol`` ``Settings`` object up in this way to make them more modular and easier to work with.
 
 3. Our :class:`~gufe.settings.models.Settings` subclass ``MyProtocolSettings`` will then feature a hierarchy of settings:
-    - ``simulation_settings``: 
+    - ``simulation_settings``:
     - ``alchemical_settings``
     - ``forcefield_settings``
     - ``thermo_settings``
@@ -116,7 +116,7 @@ Create a :ref:`ProtocolResult <protocolresult>` subclass that defines how to com
     import numpy as np
 
     class MyProtocolResult(ProtocolResult):
-        
+
         # required method
         # return ``None`` if Protocol doesn't produce an estimate
         def get_estimate(self) -> unit.Quantity:
@@ -126,10 +126,10 @@ Create a :ref:`ProtocolResult <protocolresult>` subclass that defines how to com
 
             # get unit of the first value
             u = free_energies[0].u
-            
+
             # return the mean as our best estimate, converting to same units
             return np.mean(np.asarray([dG.to(u).m for dG in free_energies])) * u
-        
+
         # required method
         # return ``None`` if Protocol doesn't produce an estimate
         def get_uncertainty(self) -> unit.Quantity:
@@ -138,7 +138,7 @@ Create a :ref:`ProtocolResult <protocolresult>` subclass that defines how to com
 
             # get unit of the first value
             u = free_energies[0].u
-            
+
             # return the standard error as our uncertainty, converting to the same units
             std_dev = np.std(np.asarray([dG.to(u).m for dG in free_energies])) * u
             std_err = std_dev / np.sqrt(len(free_energies))
@@ -173,7 +173,7 @@ Step 3: Define your ProtocolUnits
 Create the :ref:`ProtocolUnits <protocolunit>` that will perform the actual work.
 These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and implement an ``_execute`` method:
 
-.. important :: 
+.. important ::
 
    Use ``ctx.shared`` for large objects that need to be passed between units.
    This avoids serialization issues and improves performance by keeping file paths in the return objects instead of the large objects themselves.
@@ -184,41 +184,41 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
 
     class SetupUnit(ProtocolUnit):
         """Prepare the system for simulation."""
-        
+
         @staticmethod
         def _execute(ctx: Context, *, stateA, stateB, mapping, settings, **inputs):
             """Set up the alchemical system."""
             import pickle
-            
+
             # ctx provides scratch and shared directories
             # Use ctx.shared to write files that other units will need
             shared_dir = ctx.shared
 
             # Use ctx.scratch to write temporary files needed only within this unit
-            # These files will typically be deleted by the execution engine 
+            # These files will typically be deleted by the execution engine
             # upon unit completion
             scratch_dir = ctx.scratch
-            
+
             # As an example, your setup logic here...
             # - Create alchemical system from stateA/stateB
-            # - Apply the atom mapping 
+            # - Apply the atom mapping
             # - Set up force field parameters
             prepared_system = ...  # Your setup code here
             topology = ...         # Your topology creation
             coordinates = ...      # Your coordinate preparation
-            
+
             # Write large objects to shared directory instead of returning them
             system_file = shared_dir / "system.pkl"
-            topology_file = shared_dir / "topology.pkl" 
+            topology_file = shared_dir / "topology.pkl"
             coords_file = shared_dir / "initial_coords.pkl"
-            
+
             with open(system_file, 'wb') as f:
                 pickle.dump(prepared_system, f)
             with open(topology_file, 'wb') as f:
                 pickle.dump(topology, f)
             with open(coords_file, 'wb') as f:
                 pickle.dump(coordinates, f)
-            
+
             # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
                 "system_file": str(system_file),
@@ -229,12 +229,12 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
 
     class SimulationUnit(ProtocolUnit):
         """Run an individual simulation."""
-        
-        @staticmethod 
+
+        @staticmethod
         def _execute(ctx: Context, *, setup_result, lambda_window, settings, **inputs):
             """Execute a single alchemical window simulation."""
             import pickle
-            
+
             # Load large objects from files written by setup unit
             with open(setup_result.outputs["system_file"], 'rb') as f:
                 system = pickle.load(f)
@@ -246,7 +246,7 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
             # use the built-in logger for the ProtocolUnit where desired to give visibility
             # on runtime behavior, help debug issues, etc.
             self.logger.info("Simulation start...")
-            
+
             # Your simulation logic here...
             # - Run minimization for `settings.simulation_settings.minimization_steps`
             # - Run equilibration for `settings.simulation_settings.equilibration_length`
@@ -257,14 +257,14 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
             final_coords = ...     # final coordinates
 
             self.logger.info("Simulation complete.")
-            
+
             # Write output files to shared directory
             u_nk_file = ctx.shared / f"u_nk{window}.pkl"
             final_coords_file = ctx.shared / f"final_coords_window_{window}.pkl"
 
             with open(final_coords_file, 'wb') as f:
                 pickle.dump(final_coords, f)
-            
+
             # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
                 "u_nk": u_nk,
@@ -274,21 +274,21 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
 
     class AnalysisUnit(ProtocolUnit):
         """Analyze results from all simulations."""
-        
+
         @staticmethod
         def _execute(ctx: Context, *, simulation_results, settings, **inputs):
             """Combine results from all simulation windows."""
             import pickle
             from alchemlyb.estimators import MBAR
-            
+
             # simulation_results will be a list of ProtocolUnitResult objects
             u_nks = []
             final_coords = {}
-            
+
             for sim_result in simulation_results:
                 # Extract numerical results directly
                 u_nks.append(sim_result.outputs["u_nk"]
-                
+
                 # Load coordinate files if needed for analysis
                 lambda_window = sim_result.outputs["lambda_window"]
                 coords_file = sim_result.outputs["final_coordinates_file"]
@@ -307,7 +307,7 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
 
             # Perform any other analysis of e.g. final coordinates
             # ...
-            
+
             # This dict will form the output content of the corresponding ProtocolUnitResult
             return {
                 "total_free_energy": total_free_energy,
@@ -345,7 +345,7 @@ Some notes on the above:
 Step 4: Implement your Protocol class
 -------------------------------------
 
-Now create your custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>`. 
+Now create your custom ``Protocol`` class that inherits from :ref:`Protocol <protocol>`.
 This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`ProtocolResult <howto-protocol-protocol-result>`, and :ref:`ProtocolUnits <howto-protocol-protocol-units>` we created above:
 
 .. code-block:: python
@@ -358,7 +358,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
         # Required class attributes
         result_cls = MyProtocolResult
         _settings_cls = MyProtocolSettings
-        
+
         @classmethod
         def _default_settings(cls) -> MyProtocolSettings:
             """Provide sensible default settings."""
@@ -376,7 +376,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                     temperature=300 * unit.kelvin, pressure=1 * unit.bar
                 ),
             )
-        
+
         def _create(
             self,
             stateA: ChemicalSystem,
@@ -385,7 +385,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
             extends: ProtocolDAGResult | None = None,
         ) -> List[ProtocolUnit]:
             """Create DAG of ProtocolUnits performing the Protocol."""
-            
+
             # Handle extension from previous results if needed
             if extends is not None:
                 # Extract useful information from the previous run
@@ -394,7 +394,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                 starting_point = extends.protocol_unit_results[-1].outputs
             else:
                 starting_point = None
-            
+
             # Create the setup unit
             setup = SetupUnit(
                 name="system_setup",
@@ -404,7 +404,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                 settings=self.settings,
                 starting_point=starting_point
             )
-            
+
             # Create multiple independent simulation units,
             # one for each lambda window
             simulations = []
@@ -416,25 +416,25 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                     settings=self.settings
                 )
                 simulations.append(sim_unit)
-            
+
             # Create analysis unit that depends on all simulations
             analysis = AnalysisUnit(
                 name="final_analysis",
                 simulation_results=simulations,  # depends on all simulations
                 settings=self.settings
             )
-            
+
             # Return all units - dependencies are implicit from constructor args
             return [setup, *simulations, analysis]
-        
+
         def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
             """Aggregate results from multiple ProtocolDAG executions."""
             # This method combines results from multiple independent protocol runs
             # into data that the ProtocolResult can use to compute estimates
-            
+
             free_energies = []
             free_energy_uncertainties = []
-            
+
             for dag_result in protocol_dag_results:
                 # Find the terminal (final) unit results
                 for unit_result in dag_result.terminal_protocol_unit_results:
@@ -445,7 +445,7 @@ This ties together the :ref:`Settings <howto-protocol-settings>`, :ref:`Protocol
                         free_energy_uncertainties.append(
                             unit_result.outputs["total_free_energy_uncertainty"]
                         )
-            
+
             return {
                 "free_energies": free_energies,
                 "free_energy_uncertainties": free_energy_uncertainties,
@@ -462,18 +462,18 @@ This may be called by execution engines prior to calling the ``_create`` method 
 
     class MyProtocol(Protocol):
         # ... other methods ...
-        
+
         def _validate(
-            self, 
-            *, 
-            stateA: ChemicalSystem, 
-            stateB: ChemicalSystem, 
+            self,
+            *,
+            stateA: ChemicalSystem,
+            stateB: ChemicalSystem,
             mapping: Optional[Union[ComponentMapping, List[ComponentMapping]]] = None,
             extends: Optional[ProtocolDAGResult] = None
         ):
             """Validate inputs for this protocol."""
             from gufe.protocols.errors import ProtocolValidationError
-            
+
             # check ``Protocol._default_validate`` for the types of validations
             # done for all Protocols
 
@@ -489,10 +489,10 @@ Dependencies between ``ProtocolUnit`` objects are established implicitly by pass
 
     # setup runs first (no dependencies)
     setup = SetupUnit(name="setup", ...)
-    
+
     # simulation depends on setup (setup passed as argument)
     simulation = SimulationUnit(name="sim", setup_result=setup, ...)
-    
+
     # analysis depends on simulation (simulation passed as argument)
     analysis = AnalysisUnit(name="analysis", simulation_results=[simulation], ...)
 
@@ -503,8 +503,8 @@ Dependencies between ``ProtocolUnit`` objects are established implicitly by pass
     # Dependencies work when units are in lists
     simulations = [sim1, sim2, sim3]
     analysis = AnalysisUnit(name="analysis", simulations=simulations, ...)
-    
-    # Dependencies work when units are in dictionaries  
+
+    # Dependencies work when units are in dictionaries
     unit_dict = {"equilibration": eq_unit, "production": prod_unit}
     final_unit = FinalUnit(name="final", inputs=unit_dict, ...)
 
@@ -535,7 +535,7 @@ Here's a simplified but complete :ref:`Protocol <protocol>` implementation:
     class SimpleProtocolResult(ProtocolResult):
         def get_estimate(self):
             return np.mean(self.data["values"]) * unit.kilocalorie_per_mole
-        
+
         def get_uncertainty(self):
             values = self.data["values"]
             if len(values) < 2:
@@ -554,11 +554,11 @@ Here's a simplified but complete :ref:`Protocol <protocol>` implementation:
     class SimpleProtocol(Protocol):
         result_cls = SimpleProtocolResult
         _settings_cls = SimpleProtocolSettings
-        
+
         @classmethod
         def _default_settings(cls):
             return SimpleProtocolSettings(n_repeats=3)
-        
+
         def _create(self, stateA, stateB, mapping=None, extends=None) -> List[ProtocolUnit]:
             # Create n_repeats independent units
             units = [
@@ -566,7 +566,7 @@ Here's a simplified but complete :ref:`Protocol <protocol>` implementation:
                 for i in range(self.settings.n_repeats)
             ]
             return units
-        
+
         def _gather(self, protocol_dag_results: Iterable[ProtocolDAGResult]) -> dict[str, Any]:
             values = []
             for dag_result in protocol_dag_results:
@@ -589,17 +589,17 @@ Once implemented, your protocol can be used like any other **gufe** protocol:
 
     # Create Protocol instance with custom settings
     protocol = MyProtocol(settings)
-    
+
     # Create a ProtocolDAG for specific chemical systems
     dag = protocol.create(
         stateA=chem_system_a,
         stateB=chem_system_b,
         mapping=atom_mapping
     )
-    
+
     # Execute on a scheduler (not shown)
     # dag_result = scheduler.execute(dag)
-    
+
     # Gather multiple results into final estimate
     # final_result = protocol.gather([dag_result1, dag_result2, ...])
 
@@ -660,19 +660,19 @@ Create unit tests for each component:
                 stateB=sample_chemical_systems[1],
                 mapping=sample_mapping
             )
-            
+
             assert len(dag.protocol_units) > 0
             # Test that dependencies are set up correctly
-            
+
         def test_unit_execution(self):
             """Test individual ProtocolUnit execution."""
             from gufe.protocols.protocolunit import Context
-            
+
             unit = SimpleUnit(name="test", replica=0, settings=SimpleProtocolSettings())
-            
+
             # Mock context and inputs
             ctx = Context(scratch="/tmp", shared="/tmp")
             result = unit._execute(ctx, replica=0)
-            
+
             assert "result" in result
             assert isinstance(result["result"], float)
