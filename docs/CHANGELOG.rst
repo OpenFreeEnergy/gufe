@@ -4,6 +4,15 @@ CHANGELOG
 
 .. current developments
 
+v1.7.1
+====================
+
+**Fixed:**
+
+* Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization.
+
+
+
 v1.7.0
 ====================
 
