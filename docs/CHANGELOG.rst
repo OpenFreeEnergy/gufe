@@ -4,6 +4,16 @@ CHANGELOG
 
 .. current developments
 
+v1.7.1
+====================
+
+**Fixed:**
+
+* Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization (`PR #666 <https://github.com/OpenFreeEnergy/gufe/pull/666>`_)
+
+* Fixed a Pydantic deprecation warning when viewing ``Settings`` in an IPython display (such as a jupyter notebook (`PR #653 <https://github.com/OpenFreeEnergy/gufe/pull/666>`_).
+
+
 v1.7.0
 ====================
 
