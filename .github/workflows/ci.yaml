@@ -3,11 +3,10 @@ on:
   # Allow for workflows to be manuallly triggered
   workflow_dispatch:
   pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
+      - release
   schedule:
     # At 07:00 UTC on Monday and Thursday.
     - cron: "0 7 * * *"
