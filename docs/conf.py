@@ -77,6 +77,7 @@ autodoc_mock_imports = [
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
+html_show_sourcelink = True
 html_theme = "furo"
 # html_theme_options = {
 #    "accent_color": "FeelingFabulous",
