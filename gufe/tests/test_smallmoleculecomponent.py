@@ -52,6 +52,11 @@ def named_ethane():
         ("bar", "", "foo", "foo"),
         ("baz", "bar", "foo", "foo"),
         ("foo", "", "", "foo"),
+        ("foo/bar", "", "", "foobar"),
+        (" foo bar ", "", "", "foobar"),
+        ("foo*bar", "", "", "foobar"),
+        ("foo", "foo/bar", "", "foobar"),
+        ("", "", "foo/bar", "foobar"),
     ],
 )
 def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
@@ -64,7 +69,12 @@ def test_ensure_ofe_name(internal, rdkit_name, name, expected, recwarn):
 
     out_name = _ensure_ofe_name(rdkit, name)
 
-    if {rdkit_name, internal} - {"foo", ""}:
+    if "bar" in expected:
+        # we should warn if we have sanitized the name
+        assert len(recwarn) == 1
+        assert f"Component name sanitized to: {expected}" in recwarn[0].message.args[0]
+
+    elif {rdkit_name, internal} - {"foo", ""}:
         # we should warn if rdkit properties are anything other than 'foo'
         # (expected) or the empty string (not set)
         assert len(recwarn) == 1
