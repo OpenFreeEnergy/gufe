@@ -62,6 +62,19 @@ jobs:
               - conda-forge
           init-shell: bash
 
+      - name: Cache Pooch data
+        uses: actions/cache@v4
+        with:
+          path: |
+            # linux cache location
+            ~/.cache/gufe
+            # osx cache location
+            ~/Library/Caches/gufe
+          # When files are added or changed in a pooch registry
+          # bump this key to create a new cache, for example if
+          # the key is pooch-${{ matrix.os }}-1 change it to pooch-${{ matrix.os }}-2
+          key: pooch-${{ matrix.os }}-0
+
       - id: run-tests
         name: run tests
         run: |
