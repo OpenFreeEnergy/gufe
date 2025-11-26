@@ -5,7 +5,7 @@ from importlib.metadata import version
 
 from . import tokenization, visualization
 from .chemicalsystem import ChemicalSystem
-from .components import Component, ProteinComponent, SmallMoleculeComponent, SolventComponent
+from .components import Component, ProteinComponent, ProteinMembraneComponent, SmallMoleculeComponent, SolventComponent
 from .ligandnetwork import LigandNetwork
 from .mapping import (
     AtomMapper,  # more specific to atom based components
