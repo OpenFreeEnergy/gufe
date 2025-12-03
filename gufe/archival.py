@@ -1,13 +1,13 @@
-from dataclasses import asdict, dataclass, field
 import json
+import warnings
+from dataclasses import asdict, dataclass, field
 from os import PathLike
 from typing import Any, TextIO
-import warnings
 
 import gufe
 from gufe.network import AlchemicalNetwork
 from gufe.protocols import ProtocolDAGResult
-from gufe.tokenization import GufeKey, KeyedChain, JSON_HANDLER, GufeTokenizable
+from gufe.tokenization import JSON_HANDLER, GufeKey, GufeTokenizable, KeyedChain
 
 
 @dataclass
