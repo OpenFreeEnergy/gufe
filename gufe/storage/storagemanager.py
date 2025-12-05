@@ -8,25 +8,31 @@ from .externalresource import ExternalStorage
 class StorageManager:
     """This class exists to be context manager for working with storage systems."""
 
-    def __init__(self, scratch_path: Path, storage: ExternalStorage):
+    def __init__(
+        self,
+        scratch_path: Path,
+        storage: ExternalStorage,
+        dag_label: str,
+        unit_label: str,
+    ):
         self.scratch_path = scratch_path
         self.storage = storage
         self.registry: set[str] = set()
+        self.namespace = f"{dag_label}/{unit_label}"
 
-    @property
-    def encoder(self):
-        """The method used for how to encode information to storage."""
-        raise NotImplemented
+    def _convert_to_namespace(self, filename: str) -> str:
+        # We opt _not_ to use Paths because these aren't actually path objects
+        return f"{self.namespace}/{filename}"
 
-    @property
-    def decoder(self):
-        """The method used for how to decode information to storage."""
-        raise NotImplemented
-
-    def _register(self, filename: str):
+    def register(self, filename: str):
         """Register a filename to a given store so it can be moved later."""
-        # TODO: Check if the handler already exists.
         self.registry.add(filename)
+
+    def load(self, filename: str) -> bytes:
+        """Load an item from external storage"""
+        with self.storage.load_stream(filename) as f:
+            stored = f.read()
+            return stored
 
     def __contains__(self, filename: str) -> bool:
         return filename in self.registry
@@ -39,7 +45,7 @@ class StorageManager:
             path = self.scratch_path / filename
             with open(path, "rb") as f:
                 data = f.read()
-                self.storage.store_bytes(filename, data)
+                self.storage.store_bytes(self._convert_to_namespace(filename), data)
 
     @contextmanager
     def running_unit(self, dag_label, unit_label):
