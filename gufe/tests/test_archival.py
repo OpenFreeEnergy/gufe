@@ -6,10 +6,18 @@ import gufe
 from gufe.archival import AlchemicalArchive
 
 
+def pdr_from_transformation(transformation):
+    return gufe.ProtocolDAGResult(protocol_units=[], protocol_unit_results=[], transformation_key=transformation.key)
+
+
 @pytest.fixture()
 def alchemical_archive(benzene_variants_star_map):
     alchemical_network = benzene_variants_star_map
-    transformation_results = {}
+    transformations = sorted(list(alchemical_network.edges))
+    # create fake results for the transformations
+    transformation_results = {
+        transformation.key: pdr_from_transformation(transformation) for transformation in transformations
+    }
     metadata = {"test_meta_key": "test_meta_value"}
     return AlchemicalArchive(
         network=alchemical_network, transformation_results_map=transformation_results, metadata=metadata
