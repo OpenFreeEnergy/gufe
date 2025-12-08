@@ -531,7 +531,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         except AttributeError:
             out_path = "<unknown>"
 
-        app.PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
+        PDBFile.writeFile(topology=openmm_top, positions=openmm_pos, file=out_file)
 
         if must_close:
             # we only close the file if we had to open it
