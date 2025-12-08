@@ -19,6 +19,20 @@ class AlchemicalArchive:
 
     @classmethod
     def from_json(cls, file: PathLike | TextIO | None = None, content: str | None = None):
+        """Create an ``AlchemicalArchive`` from JSON.
+
+        Parameters
+        ----------
+        file
+            A filepath or file-like object to read JSON from.
+
+        content
+            JSON content as a string.
+
+        Returns
+        -------
+        AlchemicalArchive
+        """
         if content is not None and file is not None:
             raise ValueError("Cannot specify both `content` and `file`; only one input allowed")
         elif content is None and file is None:
@@ -49,6 +63,19 @@ class AlchemicalArchive:
         return AlchemicalArchive(**deserialized)
 
     def to_json(self, file: PathLike | TextIO | None = None) -> None | str:
+        """Encode the ``AlchemicalArchive`` to JSON.
+
+        Parameters
+        ----------
+        file
+            A filepath or file-like object to write JSON to.
+
+        Returns
+        -------
+        str | None
+            The JSON encoded ``AlchemicalArchive`` if ``file`` was provided; otherwise ``None``.
+        """
+
         dct = asdict(self)
 
         dct["network"] = dct["network"].to_keyed_chain()
