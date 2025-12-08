@@ -18,7 +18,8 @@ from .test_tokenization import GufeTokenizableTestsMixin
 
 if OPENMM_VERSION:
     from openmm import unit
-    from openmm.app import pdbfile
+
+    from gufe.vendor.pdb_file import pdbfile
 
 
 @pytest.fixture
