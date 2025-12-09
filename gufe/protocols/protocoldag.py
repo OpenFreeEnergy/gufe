@@ -13,9 +13,12 @@ from typing import Any, Optional, Union
 
 import networkx as nx
 
+from gufe.storage.externalresource.base import ExternalStorage
+from gufe.storage.externalresource.filestorage import FileStorage
+
 from ..tokenization import GufeKey, GufeTokenizable
 from .errors import MissingUnitResultError, ProtocolUnitFailureError
-from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
+from .protocolunit import Context, NewContext, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
 
 class DAGMixin:
@@ -420,9 +423,11 @@ def execute_DAG(
     results: dict[GufeKey, ProtocolUnitResult] = {}
     all_results = []  # successes AND failures
     shared_paths = []
+    # Context manger instantiated
     for unit in protocoldag.protocol_units:
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
+        # TODO: Context
         inputs = _pu_to_pur(unit.inputs, results)
 
         attempt = 0
@@ -458,6 +463,85 @@ def execute_DAG(
 
             if not keep_scratch:
                 shutil.rmtree(scratch)
+
+            if result.ok():
+                # attach result to this `ProtocolUnit`
+                results[unit.key] = result
+                break
+            attempt += 1
+
+        if not result.ok():
+            break
+
+    if not keep_shared:
+        for shared_path in shared_paths:
+            shutil.rmtree(shared_path)
+
+    return ProtocolDAGResult(
+        name=protocoldag.name,
+        protocol_units=protocoldag.protocol_units,
+        protocol_unit_results=all_results,
+        transformation_key=protocoldag.transformation_key,
+        extends_key=protocoldag.extends_key,
+    )
+
+
+def execute_DAG_New(
+    protocoldag: ProtocolDAG,
+    *,
+    shared_basedir: Path,
+    scratch_basedir: Path,
+    stderr_basedir: Path | None = None,
+    stdout_basedir: Path | None = None,
+    keep_shared: bool = False,
+    keep_scratch: bool = False,
+    raise_error: bool = True,
+    n_retries: int = 0,
+):
+    if n_retries < 0:
+        raise ValueError("Must give positive number of retries")
+
+    # iterate in DAG order
+    results: dict[GufeKey, ProtocolUnitResult] = {}
+    all_results = []  # successes AND failures
+    shared_paths = []
+    # Context manger instantiated
+    for unit in protocoldag.protocol_units:
+        # translate each `ProtocolUnit` in input into corresponding
+        # `ProtocolUnitResult`
+        # TODO: Context
+        inputs = _pu_to_pur(unit.inputs, results)
+
+        attempt = 0
+        while attempt <= n_retries:
+            shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
+            shared_storage = FileStorage(shared)
+
+            perm = shared_basedir / f"perm_{str(unit.key)}_attempt_{attempt}"
+            perm_storage = FileStorage(perm)
+            # scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
+            # scratch.mkdir()
+
+            stderr = None
+            if stderr_basedir:
+                stderr = stderr_basedir / f"stderr_{str(unit.key)}_attempt_{attempt}"
+                stderr.mkdir()
+
+            stdout = None
+            if stdout_basedir:
+                stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
+                stdout.mkdir()
+
+            # execute
+            with NewContext(
+                dag_label=str(protocoldag.key),
+                unit_label=str(unit.key),
+                shared_storage=shared_storage,
+                permanent_storage=perm_storage,
+                scratch=scratch_basedir,
+            ) as ctx:
+                result = unit.execute(context=ctx, raise_error=raise_error, **inputs)
+                all_results.append(result)
 
             if result.ok():
                 # attach result to this `ProtocolUnit`
