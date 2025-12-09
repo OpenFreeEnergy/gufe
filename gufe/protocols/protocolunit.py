@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import abc
 import datetime
+import shutil
 import sys
 import tempfile
 import traceback
@@ -21,6 +22,9 @@ from os import PathLike
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from gufe.storage.externalresource.base import ExternalStorage
+
+from ..storage.storagemanager import StorageManager
 from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
 from .errors import ExecutionInterrupt
 
@@ -36,6 +40,45 @@ class Context:
     shared: Path
     stderr: Path | None = None
     stdout: Path | None = None
+
+
+class NewContext:
+    def __init__(
+        self,
+        dag_label: str,
+        unit_label: str,
+        scratch: Path,
+        shared_storage: ExternalStorage,
+        permanent_storage: ExternalStorage,
+        stderr: Optional[Path] = None,
+        stdout: Optional[Path] = None,
+    ):
+        self.scratch = scratch
+        self.shared = StorageManager(
+            scratch_path=scratch,
+            storage=shared_storage,
+            unit_label=unit_label,
+            dag_label=dag_label,
+        )
+        self.permanent = StorageManager(
+            scratch_path=scratch,
+            storage=permanent_storage,
+            unit_label=unit_label,
+            dag_label=dag_label,
+        )
+        self.stderr = stderr
+        self.stdout = stdout
+
+    def __enter__(self) -> NewContext:
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.shared._transfer()
+        self.permanent._transfer()
+        if self.stderr:
+            shutil.rmtree(self.stderr)
+        if self.stdout:
+            shutil.rmtree(self.stdout)
 
 
 def _list_dependencies(inputs, cls):

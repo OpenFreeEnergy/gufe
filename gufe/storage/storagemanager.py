@@ -46,8 +46,3 @@ class StorageManager:
             with open(path, "rb") as f:
                 data = f.read()
                 self.storage.store_bytes(self._convert_to_namespace(filename), data)
-
-    @contextmanager
-    def running_unit(self, dag_label, unit_label):
-        # TODO: This needs to yield the correct gufe Context object
-        raise NotImplemented
