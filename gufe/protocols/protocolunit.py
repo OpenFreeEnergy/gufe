@@ -29,20 +29,12 @@ from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
 from .errors import ExecutionInterrupt
 
 
-@dataclass
 class Context:
-    """Data class for passing around execution context components to
+    """Class for passing around execution context components to
     `ProtocolUnit._execute`.
 
     """
 
-    scratch: Path
-    shared: Path
-    stderr: Path | None = None
-    stdout: Path | None = None
-
-
-class NewContext:
     def __init__(
         self,
         dag_label: str,
@@ -69,7 +61,7 @@ class NewContext:
         self.stderr = stderr
         self.stdout = stdout
 
-    def __enter__(self) -> NewContext:
+    def __enter__(self) -> Context:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
