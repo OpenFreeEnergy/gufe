@@ -24,7 +24,7 @@ def shared_storage():
 
 
 @pytest.fixture
-def permenant_storage():
+def permanent_storage():
     yield MemoryStorage()
 
 
@@ -82,7 +82,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         assert u1.key != u2.key
 
     @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-    def test_execute(self, tmpdir, scratch_storage, shared_storage, permenant_storage, capture_stderr_stdout):
+    def test_execute(self, tmpdir, scratch_storage, shared_storage, permanent_storage, capture_stderr_stdout):
         unit = DummyUnit()
 
         if capture_stderr_stdout:
@@ -100,7 +100,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
                 stderr=stderr,
                 stdout=stdout,
                 shared_storage=shared_storage,
-                permanent_storage=permenant_storage,
+                permanent_storage=permanent_storage,
             )
         else:
             ctx = Context(
@@ -108,7 +108,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
                 dag_label="test",
                 unit_label=unit.key,
                 shared_storage=shared_storage,
-                permanent_storage=permenant_storage,
+                permanent_storage=permanent_storage,
             )
 
         u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
@@ -128,7 +128,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         with pytest.raises(ValueError, match="should always be 2"):
             unit.execute(context=ctx, raise_error=True, an_input=3)
 
-    def test_execute_ExecutionInterrupt(self, scratch_storage, shared_storage, permenant_storage):
+    def test_execute_ExecutionInterrupt(self, scratch_storage, shared_storage, permanent_storage):
         unit = DummyExecutionInterruptUnit()
 
         shared = Path("shared") / str(unit.key)
@@ -139,7 +139,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
         ctx = Context(
             shared_storage=shared_storage,
-            permanent_storage=permenant_storage,
+            permanent_storage=permanent_storage,
             dag_label="test",
             unit_label=unit.key,
             scratch=scratch_storage,
@@ -152,7 +152,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
         assert u.outputs == {"foo": "bar"}
 
-    def test_execute_KeyboardInterrupt(self, scratch_storage, permenant_storage, shared_storage):
+    def test_execute_KeyboardInterrupt(self, scratch_storage, permanent_storage, shared_storage):
         unit = DummyKeyboardInterruptUnit()
 
         shared = Path("shared") / str(unit.key)
@@ -163,7 +163,7 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
         ctx = Context(
             shared_storage=shared_storage,
-            permanent_storage=permenant_storage,
+            permanent_storage=permanent_storage,
             dag_label="test",
             unit_label=unit.key,
             scratch=scratch_storage,
@@ -221,11 +221,12 @@ class TestContext:
             assert context is ctx
             assert ctx.shared.scratch_path == scratch_dir
             assert ctx.permanent.scratch_path == scratch_dir
-            test_file = context.scratch / "test.txt"
+            filename = "test.txt"
+            test_file = context.scratch / filename
+            context.shared.register(filename)
+            context.permanent.register(filename)
             with test_file.open("b+w") as f:
                 f.write(file_text)
-            context.shared.register("test.txt")
-            context.permanent.register("test.txt")
 
         # Test __exit__ - should transfer the file to a namespaced location in shared_storage
         assert shared_storage.exists("test/test_unit/test.txt")
