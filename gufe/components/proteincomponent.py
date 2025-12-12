@@ -677,7 +677,7 @@ class ProteinMembraneComponent(ProteinComponent):
         self._periodic_box_vectors = periodic_box_vectors
 
     @classmethod
-    def from_pdb_file(cls, pdb_file: str, name: str = "", *args, box_vectors=None, infer_box_vectors=False, **kwargs):
+    def from_pdb_file(cls, pdb_file: PathLike | TextIO, name: str = "", *, box_vectors=None, infer_box_vectors=False):
         """
         Create ProteinMembraneComponent from a PDB file.
 
