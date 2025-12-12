@@ -490,7 +490,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 def execute_DAG(
     protocoldag: ProtocolDAG,
     *,
-    shared_basedir: Path,
+    shared_storage: ExternalStorage,
+    perm_storage: ExternalStorage,
     scratch_basedir: Path,
     stderr_basedir: Path | None = None,
     stdout_basedir: Path | None = None,
@@ -515,13 +516,8 @@ def execute_DAG(
 
         attempt = 0
         while attempt <= n_retries:
-            shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
-            shared_storage = FileStorage(shared)
-
-            perm = shared_basedir / f"perm_{str(unit.key)}_attempt_{attempt}"
-            perm_storage = FileStorage(perm)
-            # scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
-            # scratch.mkdir()
+            scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
+            scratch.mkdir()
 
             stderr = None
             if stderr_basedir:
@@ -539,13 +535,13 @@ def execute_DAG(
                 unit_label=str(unit.key),
                 shared_storage=shared_storage,
                 permanent_storage=perm_storage,
-                scratch=scratch_basedir,
+                scratch=scratch,
             ) as ctx:
                 result = unit.execute(context=ctx, raise_error=raise_error, **inputs)
                 all_results.append(result)
 
             if not keep_scratch:
-                shutil.rmtree(scratch_basedir)
+                shutil.rmtree(scratch)
 
             if result.ok():
                 # attach result to this `ProtocolUnit`
