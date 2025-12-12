@@ -732,13 +732,11 @@ class ProteinMembraneComponent(ProteinComponent):
 
         box = self._periodic_box_vectors
         if box is not None:
-            # Convert to OpenMM Quantity-safe structure
-            # Each vector = Quantity(Vec3 or array)
-            value = np.array([[float(c / box[0][0].unit) for c in v] for v in box])
+            value = serialize_numpy(box)
             unit_str = str(box[0][0].unit)
 
             d["periodic_box_vectors"] = {
-                "value": value.tolist(),
+                "value": value,
                 "unit": unit_str,
             }
         else:
@@ -759,8 +757,8 @@ class ProteinMembraneComponent(ProteinComponent):
         if box_data is not None:
             unit_str = box_data["unit"]
             unit_obj = getattr(omm_unit, unit_str, omm_unit.nanometer)
-            arr = np.array(box_data["value"])
-            box_vectors = [arr[i] * unit_obj for i in range(3)]
+            box_arr = deserialize_numpy(box_data["value"])
+            box_vectors = list(map(lambda x: np.array(x), box_arr)) * unit_obj
 
         return cls(
             rdkit=prot._rdkit,
