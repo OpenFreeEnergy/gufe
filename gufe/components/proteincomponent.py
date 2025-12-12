@@ -666,7 +666,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
 class ProteinMembraneComponent(ProteinComponent):
     """
-    Protein component with membrane periodic box vectors.
+    Protein component with membrane and periodic box vectors.
     """
 
     def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
