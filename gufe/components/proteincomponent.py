@@ -669,10 +669,11 @@ class ProteinMembraneComponent(ProteinComponent):
     Protein component with membrane periodic box vectors.
     """
 
-    def __init__(self, rdkit: Mol, name: str = "", periodic_box_vectors=None):
+    def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
+        if periodic_box_vectors is None:
+            raise ValueError("periodic_box_vectors must be provided")
         super().__init__(rdkit=rdkit, name=name)
         self._periodic_box_vectors = periodic_box_vectors
-
 
     @classmethod
     def from_pdb_file(cls, pdb_file: str, name: str = "", box_vectors=None, infer_box_vectors=False):
@@ -701,6 +702,10 @@ class ProteinMembraneComponent(ProteinComponent):
         else:
             box = _estimate_box(pdb_file)
 
+        if box is None:
+            raise ValueError(
+                "Could not determine periodic_box_vectors; please provide them explicitly.")
+
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
     @classmethod
@@ -722,6 +727,9 @@ class ProteinMembraneComponent(ProteinComponent):
         """
         prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
         box = openmm_PDBFile.topology.getPeriodicBoxVectors()
+        if box is None:
+            raise ValueError(
+                "Periodic box vectors are required but were not found.")
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
     def _to_dict(self):
@@ -752,6 +760,10 @@ class ProteinMembraneComponent(ProteinComponent):
         prot = ProteinComponent._from_dict(d, name=name)
 
         box_data = d.get("periodic_box_vectors")
+        if box_data is None:
+            raise ValueError(
+                "periodic_box_vectors must be present in the serialized dict")
+
         box_vectors = None
 
         if box_data is not None:
