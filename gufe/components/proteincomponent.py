@@ -9,6 +9,7 @@ from string import digits
 from typing import Optional, TextIO, Union
 
 import numpy as np
+import mdtraj as md
 from openmm import app
 from openmm import unit as omm_unit
 from openmm.unit import Quantity
@@ -131,6 +132,30 @@ ions_dict = {
     "Zr": 4,
 }
 
+
+def _estimate_box(pdb_file):
+    """
+    Estimate an orthorhombic bounding box using MDTraj (units: nm).
+    Returns three numpy arrays: (a, b, c).
+    """
+    traj = md.load(pdb_file)
+    # unwrap molecules (remove PBC splitting)
+    try:
+        traj = traj.image_molecules(box=traj.unitcell_vectors)
+    except Exception:
+        pass  # if no unitcell_vectors, just continue
+
+    coords = traj.xyz[0]  # nm
+
+    mins = coords.min(axis=0)
+    maxs = coords.max(axis=0)
+    lengths = maxs - mins
+
+    a = np.array([lengths[0], 0.0,       0.0])
+    b = np.array([0.0,       lengths[1], 0.0])
+    c = np.array([0.0,       0.0,        lengths[2]])
+
+    return (a, b, c)*omm_unit.nanometer
 
 class ProteinComponent(ExplicitMoleculeComponent):
     """
@@ -648,8 +673,9 @@ class ProteinMembraneComponent(ProteinComponent):
         super().__init__(rdkit=rdkit, name=name)
         self._periodic_box_vectors = periodic_box_vectors
 
+
     @classmethod
-    def from_pdb_file(cls, pdb_file: str, name: str = ""):
+    def from_pdb_file(cls, pdb_file: str, name: str = "", box_vectors=None, infer_box_vectors=False):
         """
         Create ProteinMembraneComponent from a PDB file.
 
@@ -667,8 +693,11 @@ class ProteinMembraneComponent(ProteinComponent):
         pdb = PDBFile(pdb_file)
         # Get base protein
         prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
-        # Get periodic box vectors if present
-        box = pdb.topology.getPeriodicBoxVectors()
+        # Get periodic box vectors
+        if infer_box_vectors is True:
+            box = _estimate_box(pdb_file)
+        else:
+            box = pdb.topology.getPeriodicBoxVectors()
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
     @classmethod
