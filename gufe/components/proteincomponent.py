@@ -694,10 +694,13 @@ class ProteinMembraneComponent(ProteinComponent):
         # Get base protein
         prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
         # Get periodic box vectors
-        if infer_box_vectors is True:
-            box = _estimate_box(pdb_file)
-        else:
+        if box_vectors is not None:
+            box = box_vectors
+        elif infer_box_vectors is False:
             box = pdb.topology.getPeriodicBoxVectors()
+        else:
+            box = _estimate_box(pdb_file)
+
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
     @classmethod
