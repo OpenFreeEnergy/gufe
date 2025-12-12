@@ -8,8 +8,8 @@ from os import PathLike
 from string import digits
 from typing import Optional, TextIO, Union
 
-import numpy as np
 import mdtraj as md
+import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
 from openmm.unit import Quantity
@@ -151,11 +151,12 @@ def _estimate_box(pdb_file):
     maxs = coords.max(axis=0)
     lengths = maxs - mins
 
-    a = np.array([lengths[0], 0.0,       0.0])
-    b = np.array([0.0,       lengths[1], 0.0])
-    c = np.array([0.0,       0.0,        lengths[2]])
+    a = np.array([lengths[0], 0.0, 0.0])
+    b = np.array([0.0, lengths[1], 0.0])
+    c = np.array([0.0, 0.0, lengths[2]])
 
-    return (a, b, c)*omm_unit.nanometer
+    return (a, b, c) * omm_unit.nanometer
+
 
 class ProteinComponent(ExplicitMoleculeComponent):
     """
@@ -703,8 +704,7 @@ class ProteinMembraneComponent(ProteinComponent):
             box = _estimate_box(pdb_file)
 
         if box is None:
-            raise ValueError(
-                "Could not determine periodic_box_vectors; please provide them explicitly.")
+            raise ValueError("Could not determine periodic_box_vectors; please provide them explicitly.")
 
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
@@ -728,8 +728,7 @@ class ProteinMembraneComponent(ProteinComponent):
         prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
         box = openmm_PDBFile.topology.getPeriodicBoxVectors()
         if box is None:
-            raise ValueError(
-                "Periodic box vectors are required but were not found.")
+            raise ValueError("Periodic box vectors are required but were not found.")
         return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
 
     def _to_dict(self):
@@ -761,8 +760,7 @@ class ProteinMembraneComponent(ProteinComponent):
 
         box_data = d.get("periodic_box_vectors")
         if box_data is None:
-            raise ValueError(
-                "periodic_box_vectors must be present in the serialized dict")
+            raise ValueError("periodic_box_vectors must be present in the serialized dict")
 
         box_vectors = None
 
