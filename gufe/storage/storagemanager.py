@@ -20,9 +20,10 @@ class StorageManager:
         self.registry: set[str] = set()
         self.namespace = f"{dag_label}/{unit_label}"
 
-    def _convert_to_namespace(self, filename: str) -> str:
+    @staticmethod
+    def _convert_to_namespace(namespace: str, filename: str) -> str:
         # We opt _not_ to use Paths because these aren't actually path objects
-        return f"{self.namespace}/{filename}"
+        return f"{namespace}/{filename}"
 
     def register(self, filename: str):
         """Register a filename to a given store so it can be moved later."""
@@ -45,4 +46,4 @@ class StorageManager:
             path = self.scratch_path / filename
             with open(path, "rb") as f:
                 data = f.read()
-                self.storage.store_bytes(self._convert_to_namespace(filename), data)
+                self.storage.store_bytes(self._convert_to_namespace(self.namespace, filename), data)
