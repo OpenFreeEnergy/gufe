@@ -4,6 +4,7 @@ channels:
 dependencies:
   - annotated-types
   - coverage
+  - mdtraj
   - msgpack-python
   - networkx
   - numpy
