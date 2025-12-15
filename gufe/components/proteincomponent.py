@@ -7,7 +7,6 @@ from collections import defaultdict
 from os import PathLike
 from string import digits
 from typing import Optional, TextIO, Union
-from openmm.unit import Quantity
 
 import mdtraj as md
 import numpy as np
