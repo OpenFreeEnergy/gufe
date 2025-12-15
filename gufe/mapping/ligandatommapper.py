@@ -1,4 +1,5 @@
-from typing import Iterable
+import abc
+from typing import Iterator
 
 from gufe import SmallMoleculeComponent
 
@@ -11,7 +12,7 @@ class LigandAtomMapper(AtomMapper):
     Suggest atom mappings between two :class:`SmallMoleculeComponent` instances.
 
     Subclasses will typically implement the ``_mappings_generator`` method,
-    which returns an iterable of :class:`.LigandAtomMapping` suggestions.
+    which returns an Iterator of :class:`.LigandAtomMapping` suggestions.
     """
 
     @abc.abstractmethod
@@ -19,7 +20,7 @@ class LigandAtomMapper(AtomMapper):
         self,
         componentA: SmallMoleculeComponent,
         componentB: SmallMoleculeComponent,
-    ) -> Iterable[dict[int, int]]:
+    ) -> Iterator[dict[int, int]]:
         """
         Suggest mapping options for the input molecules.
 
@@ -30,8 +31,8 @@ class LigandAtomMapper(AtomMapper):
 
         Returns
         -------
-        Iterable[dict[int, int]] :
-            an iterable over proposed mappings from componentA to componentB
+        Iterator[dict[int, int]] :
+            an Iterator over proposed mappings from componentA to componentB
         """
         ...
 
@@ -39,7 +40,7 @@ class LigandAtomMapper(AtomMapper):
         self,
         componentA: SmallMoleculeComponent,
         componentB: SmallMoleculeComponent,
-    ) -> Iterable[LigandAtomMapping]:
+    ) -> Iterator[LigandAtomMapping]:
         """
         Suggest :class:`.LigandAtomMapping` options for the input molecules.
 
@@ -50,8 +51,8 @@ class LigandAtomMapper(AtomMapper):
 
         Returns
         -------
-        Iterable[LigandAtomMapping] :
-            an iterable over proposed mappings
+        Iterator[LigandAtomMapping] :
+            an Iterator over proposed mappings
         """
         # For this base class, implementation is redundant with
         # _mappings_generator. However, we keep it separate so that abstract
