@@ -3,11 +3,10 @@ on:
   # Allow for workflows to be manuallly triggered
   workflow_dispatch:
   pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
+      - stable
   schedule:
     # At 07:00 UTC on Monday and Thursday.
     - cron: "0 7 * * *"
@@ -23,20 +22,20 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}
-    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🗃️${{ matrix.pydantic-version }}"
+    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🎨-${{ matrix.py3Dmol }}"
     strategy:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', macos-latest]
-        pydantic-version: [">1"]
+        py3Dmol: ["no"]
         python-version:
           - "3.11"
           - "3.12"
           - "3.13"
         include:
           - os: "ubuntu-latest"
-            python-version: "3.11"
-            pydantic-version: "<2"
+            python-version: "3.12"
+            py3Dmol: "yes"
 
     env:
       OE_LICENSE: ${{ github.workspace }}/oe_license.txt
@@ -58,6 +57,11 @@ jobs:
             python=${{ matrix.python-version }}
           init-shell: bash
 
+      - name: "Install py3Dmol (optional)"
+        if: ${{ matrix.py3Dmol == 'yes' }}
+        run: micromamba install py3Dmol
+
+
       - name: "Install"
         run: python -m pip install --no-deps -e .
 
@@ -70,6 +74,19 @@ jobs:
         run: |
           micromamba info
           micromamba list
+
+      - name: Cache Pooch data
+        uses: actions/cache@v4
+        with:
+          path: |
+            # linux cache location
+            ~/.cache/gufe
+            # osx cache location
+            ~/Library/Caches/gufe
+          # When files are added or changed in a pooch registry
+          # bump this key to create a new cache, for example if
+          # the key is pooch-${{ matrix.os }}-1 change it to pooch-${{ matrix.os }}-2
+          key: pooch-${{ matrix.os }}-0
 
       - name: "Run tests"
         run: |

@@ -1,11 +1,10 @@
 **Added:**
 
-* <news item>
+* Added ``__iter__`` to the ``ExternalStorage`` class. This makes it easier to iterate through all the files in a storage object.
 
 **Changed:**
 
-* The default small molecule force field version has been updated from
-  openff-2.1.1 to openff-2.2.1.
+* <news item>
 
 **Deprecated:**
 
