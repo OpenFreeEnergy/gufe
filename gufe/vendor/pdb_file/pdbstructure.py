@@ -165,13 +165,16 @@ class PdbStructure:
             if command == "ATOM  " or command == "HETATM":
                 self._add_atom(Atom(pdb_line, self, self.extraParticleIdentifier))
             elif command == "CONECT":
-                atoms = [_parse_atom_index(pdb_line[6:11])]
-                for pos in (11, 16, 21, 26):
-                    try:
-                        atoms.append(_parse_atom_index(pdb_line[pos : pos + 5]))
-                    except:
-                        pass
-                self._current_model.connects.append(atoms)
+                try:
+                    atoms = [_parse_atom_index(pdb_line[6:11])]
+                    for pos in (11, 16, 21, 26):
+                        try:
+                            atoms.append(_parse_atom_index(pdb_line[pos : pos + 5]))
+                        except:
+                            pass
+                    self._current_model.connects.append(atoms)
+                except:
+                    pass
             # Notice MODEL punctuation, for the next level of detail
             # in the structure->model->chain->residue->atom->position hierarchy
             elif pdb_line[:5] == "MODEL":
@@ -1064,8 +1067,11 @@ def _parse_atom_index(index):
     """Parse the string containing an atom index, which might be either decimal or hex."""
     try:
         return int(index)
-    except:
-        return int(index, 16) - 0xA0000 + 100000
+    except ValueError:
+        try:
+            return int(index, 16) - 0xA0000 + 100000
+        except ValueError as exc:
+            raise ValueError(f"Unable to parse atom index: '{index}'") from exc
 
 
 # run module directly for testing
