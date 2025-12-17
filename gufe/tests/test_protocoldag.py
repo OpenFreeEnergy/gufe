@@ -126,7 +126,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, writefile_dag: Protoco
     for pu in writefile_dag.protocol_units:
         identity = pu.inputs["identity"]
         # shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
-        shared_file = StorageManager._convert_to_namespace(f"{dag_label}/{pu.key}", f"unit_{identity}_shared.txt")
+        shared_file = StorageManager.convert_to_namespace(f"{dag_label}/{pu.key}", f"unit_{identity}_shared.txt")
         scratch_file = os.path.join(
             scratch,
             f"scratch_{str(pu.key)}_attempt_0",

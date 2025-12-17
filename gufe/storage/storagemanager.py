@@ -21,7 +21,7 @@ class StorageManager:
         self.namespace = f"{dag_label}/{unit_label}"
 
     @staticmethod
-    def _convert_to_namespace(namespace: str, filename: str) -> str:
+    def convert_to_namespace(namespace: str, filename: str) -> str:
         # We opt _not_ to use Paths because these aren't actually path objects
         return f"{namespace}/{filename}"
 
@@ -46,4 +46,4 @@ class StorageManager:
             path = self.scratch_path / filename
             with open(path, "rb") as f:
                 data = f.read()
-                self.storage.store_bytes(self._convert_to_namespace(self.namespace, filename), data)
+                self.storage.store_bytes(self.convert_to_namespace(self.namespace, filename), data)
