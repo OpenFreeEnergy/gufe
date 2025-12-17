@@ -443,6 +443,7 @@ def execute_DAG(
         inputs = _pu_to_pur(unit.inputs, results)
 
         attempt = 0
+        result = None
         while attempt <= n_retries:
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
             scratch.mkdir()
@@ -477,7 +478,7 @@ def execute_DAG(
                 break
             attempt += 1
 
-        if not result.ok():
+        if result is not None and not result.ok():
             break
 
     if not keep_shared:
