@@ -494,7 +494,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             protocol, dag, dagresult = protocol_dag
             return dag
 
-    class TestProtocolDAGResult(ProtocolDAGTestsMixin):
+    class TestProtocolDAGResult:
         cls = ProtocolDAGResult
         repr = None
 
@@ -544,7 +544,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             assert len(instance.protocol_unit_successes) == 23
             assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
 
-    class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
+    class TestProtocolDAGResultFailure:
         cls = ProtocolDAGResult
         repr = None
 
