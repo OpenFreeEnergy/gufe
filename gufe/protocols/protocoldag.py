@@ -368,6 +368,125 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
+# def execute_DAG(
+#     protocoldag: ProtocolDAG,
+#     *,
+#     shared_basedir: Path,
+#     scratch_basedir: Path,
+#     stderr_basedir: Path | None = None,
+#     stdout_basedir: Path | None = None,
+#     keep_shared: bool = False,
+#     keep_scratch: bool = False,
+#     raise_error: bool = True,
+#     n_retries: int = 0,
+# ) -> ProtocolDAGResult:
+#     """
+#     Locally execute a full :class:`ProtocolDAG` in serial and in-process.
+#
+#     Parameters
+#     ----------
+#     protocoldag : ProtocolDAG
+#         The :class:``ProtocolDAG`` to execute.
+#     shared_basedir : Path
+#         Filesystem path to use for shared space that persists across whole DAG
+#         execution. Used by a `ProtocolUnit` to pass file contents to dependent
+#         class:``ProtocolUnit`` instances.
+#     scratch_basedir : Path
+#         Filesystem path to use for `ProtocolUnit` `scratch` space.
+#     stderr_basedir : Path | None
+#         Filesystem path to use for `ProtocolUnit` `stderr` archiving.
+#     stdout_basedir : Path | None
+#         Filesystem path to use for `ProtocolUnit` `stdout` archiving.
+#     keep_shared : bool
+#         If True, don't remove shared directories for `ProtocolUnit`s after
+#         the `ProtocolDAG` is executed.
+#     keep_scratch : bool
+#         If True, don't remove scratch directories for a `ProtocolUnit` after
+#         it is executed.
+#     raise_error : bool
+#         If True, raise an exception if a ProtocolUnit fails, default True
+#         if False, any exceptions will be stored as `ProtocolUnitFailure`
+#         objects inside the returned `ProtocolDAGResult`
+#     n_retries : int
+#         the number of times to attempt, default 0, i.e. try once and only once
+#
+#     Returns
+#     -------
+#     ProtocolDAGResult
+#         The result of executing the `ProtocolDAG`.
+#
+#     """
+#     if n_retries < 0:
+#         raise ValueError("Must give positive number of retries")
+#
+#     # iterate in DAG order
+#     results: dict[GufeKey, ProtocolUnitResult] = {}
+#     all_results = []  # successes AND failures
+#     shared_paths = []
+#     # Context manger instantiated
+#     for unit in protocoldag.protocol_units:
+#         # translate each `ProtocolUnit` in input into corresponding
+#         # `ProtocolUnitResult`
+#         # TODO: Context
+#         inputs = _pu_to_pur(unit.inputs, results)
+#
+#         attempt = 0
+#         while attempt <= n_retries:
+#             shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
+#             shared_paths.append(shared)
+#             shared.mkdir()
+#
+#             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
+#             scratch.mkdir()
+#
+#             stderr = None
+#             if stderr_basedir:
+#                 stderr = stderr_basedir / f"stderr_{str(unit.key)}_attempt_{attempt}"
+#                 stderr.mkdir()
+#
+#             stdout = None
+#             if stdout_basedir:
+#                 stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
+#                 stdout.mkdir()
+#
+#             context = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+#
+#             # execute
+#             result = unit.execute(context=context, raise_error=raise_error, **inputs)
+#             all_results.append(result)
+#
+#             # clean up outputs
+#             if stderr:
+#                 shutil.rmtree(stderr)
+#             if stdout:
+#                 shutil.rmtree(stdout)
+#
+#             if not keep_scratch:
+#                 shutil.rmtree(scratch)
+#
+#             if result.ok():
+#                 # attach result to this `ProtocolUnit`
+#                 results[unit.key] = result
+#                 break
+#             attempt += 1
+#
+#         if not result.ok():
+#             break
+#
+#     if not keep_shared:
+#         for shared_path in shared_paths:
+#             shutil.rmtree(shared_path)
+#
+#     return ProtocolDAGResult(
+#         name=protocoldag.name,
+#         protocol_units=protocoldag.protocol_units,
+#         protocol_unit_results=all_results,
+#         transformation_key=protocoldag.transformation_key,
+#         extends_key=protocoldag.extends_key,
+#     )
+#
+
+
 def execute_DAG(
     protocoldag: ProtocolDAG,
     *,
