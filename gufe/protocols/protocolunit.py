@@ -30,9 +30,54 @@ from .errors import ExecutionInterrupt
 
 
 class Context:
-    """Class for passing around execution context components to
+    """
+    Class for passing around execution context components to
     `ProtocolUnit._execute`.
 
+    This class provides execution context information to ProtocolUnit subclasses
+    when executing their `_execute` method.
+
+    Parameters
+    ----------
+    dag_label : str
+        Label for the ProtocolDAG this unit belongs to.
+    unit_label : str
+        Label for this specific ProtocolUnit.
+    scratch : Path
+        Path to the scratch directory for temporary files.
+    shared_storage : ExternalStorage
+        Storage manager for shared resources that can be accessed by other units.
+    permanent_storage : ExternalStorage
+        Storage manager for permanent resources that persist after execution.
+    stderr : Path, optional
+        Path to directory for capturing stderr output.
+    stdout : Path, optional
+        Path to directory for capturing stdout output.
+
+    Attributes
+    ----------
+    scratch : Path
+        Path to the scratch directory for temporary files.
+    shared : StorageManager
+        Storage manager for shared resources.
+    permanent : StorageManager
+        Storage manager for permanent resources.
+    stderr : Path or None
+        Path to directory for capturing stderr output.
+    stdout : Path or None
+        Path to directory for capturing stdout output.
+
+    Notes
+    -----
+    This class implements the context manager protocol, automatically transferring
+    shared and permanent storage resources when exiting the context.
+
+    Examples
+    --------
+    >>> with Context(dag_label="my_dag", unit_label="unit1", scratch="/tmp/scratch",
+    ...             shared_storage=shared_store, permanent_storage=perm_store) as ctx:
+    ...     # use ctx within the ProtocolUnit._execute method
+    ...     pass
     """
 
     def __init__(
