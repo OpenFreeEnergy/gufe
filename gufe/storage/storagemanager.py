@@ -100,8 +100,6 @@ class StorageManager:
     def _transfer(self):
         """Transfer all the files from the files in the internal registry to its
         corresponding :class:`gufe.externalresource.ExternalStorage`.
-        """Transfer all the files from the files in the internal registry to its
-        corresponding :class:`gufe.externalresource.ExternalStorage`.
         """
         for filename in self.registry:
             path = self.scratch_path / filename

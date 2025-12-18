@@ -55,7 +55,8 @@ class TestStorageManager:
         assert manager.storage == memory_storage
         assert isinstance(manager.registry, set)
         assert len(manager.registry) == 0
-assert manager.namespace == "MEM/1"
+        assert manager.namespace == "MEM/1"
+
     def test_init_with_file_storage(self, tmp_scratch_path, file_storage):
         """Test StorageManager initialization with FileStorage."""
         manager = StorageManager(tmp_scratch_path, file_storage, dag_label="FILE", unit_label="1")
