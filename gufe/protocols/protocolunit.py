@@ -92,13 +92,13 @@ class Context:
     ):
         self.scratch = scratch
         self.shared = StorageManager(
-            scratch_path=scratch,
+            scratch_dir=scratch,
             storage=shared_storage,
             unit_label=unit_label,
             dag_label=dag_label,
         )
         self.permanent = StorageManager(
-            scratch_path=scratch,
+            scratch_dir=scratch,
             storage=permanent_storage,
             unit_label=unit_label,
             dag_label=dag_label,

@@ -14,7 +14,7 @@ class StorageManager:
 
     Parameters
     ----------
-    scratch_path : Path
+    scratch_dir : Path
         Path to the scratch directory where files are temporarily stored.
     storage : ExternalStorage
         External storage system for persistent file storage.
@@ -25,7 +25,7 @@ class StorageManager:
 
     Attributes
     ----------
-    scratch_path : Path
+    scratch_dir : Path
         Path to the scratch directory.
     storage : ExternalStorage
         External storage system.
@@ -37,12 +37,12 @@ class StorageManager:
 
     def __init__(
         self,
-        scratch_path: Path,
+        scratch_dir: Path,
         storage: ExternalStorage,
         dag_label: str,
         unit_label: str,
     ):
-        self.scratch_path = scratch_path
+        self.scratch_dir = scratch_dir
         self.storage = storage
         self.registry: set[str] = set()
         self.namespace = f"{dag_label}/{unit_label}"
@@ -102,7 +102,7 @@ class StorageManager:
         corresponding :class:`gufe.externalresource.ExternalStorage`.
         """
         for filename in self.registry:
-            path = self.scratch_path / filename
+            path = self.scratch_dir / filename
             with open(path, "rb") as f:
                 data = f.read()
                 self.storage.store_bytes(self.convert_to_namespace(self.namespace, filename), data)

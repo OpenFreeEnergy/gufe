@@ -14,7 +14,7 @@ from gufe.storage.storagemanager import StorageManager
 
 
 @pytest.fixture
-def tmp_scratch_path():
+def tmp_scratch_dir():
     """Create a temporary scratch directory."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         yield pathlib.Path(tmp_dir)
@@ -33,35 +33,35 @@ def file_storage(tmp_path):
 
 
 @pytest.fixture
-def storage_manager(tmp_scratch_path, memory_storage):
+def storage_manager(tmp_scratch_dir, memory_storage):
     """Create a StorageManager instance with MemoryStorage."""
-    return StorageManager(tmp_scratch_path, memory_storage, dag_label="MEM", unit_label="1")
+    return StorageManager(tmp_scratch_dir, memory_storage, dag_label="MEM", unit_label="1")
 
 
 @pytest.fixture
-def storage_manager_file_storage(tmp_scratch_path, file_storage):
+def storage_manager_file_storage(tmp_scratch_dir, file_storage):
     """Create a StorageManager instance with FileStorage."""
-    return StorageManager(tmp_scratch_path, file_storage, dag_label="FILE", unit_label="1")
+    return StorageManager(tmp_scratch_dir, file_storage, dag_label="FILE", unit_label="1")
 
 
 class TestStorageManager:
     """Test the StorageManager class."""
 
-    def test_init(self, tmp_scratch_path, memory_storage):
+    def test_init(self, tmp_scratch_dir, memory_storage):
         """Test StorageManager initialization."""
-        manager = StorageManager(tmp_scratch_path, memory_storage, dag_label="MEM", unit_label="1")
+        manager = StorageManager(tmp_scratch_dir, memory_storage, dag_label="MEM", unit_label="1")
 
-        assert manager.scratch_path == tmp_scratch_path
+        assert manager.scratch_dir == tmp_scratch_dir
         assert manager.storage == memory_storage
         assert isinstance(manager.registry, set)
         assert len(manager.registry) == 0
         assert manager.namespace == "MEM/1"
 
-    def test_init_with_file_storage(self, tmp_scratch_path, file_storage):
+    def test_init_with_file_storage(self, tmp_scratch_dir, file_storage):
         """Test StorageManager initialization with FileStorage."""
-        manager = StorageManager(tmp_scratch_path, file_storage, dag_label="FILE", unit_label="1")
+        manager = StorageManager(tmp_scratch_dir, file_storage, dag_label="FILE", unit_label="1")
 
-        assert manager.scratch_path == tmp_scratch_path
+        assert manager.scratch_dir == tmp_scratch_dir
         assert manager.storage == file_storage
         assert isinstance(manager.registry, set)
 
@@ -135,14 +135,14 @@ class TestStorageManager:
         # Storage should remain empty
         assert list(storage_manager.storage) == []
 
-    def test_transfer_with_files(self, storage_manager, tmp_scratch_path):
+    def test_transfer_with_files(self, storage_manager, tmp_scratch_dir):
         """Test _transfer with actual files."""
         # Create test files in scratch directory
         test_files = {"test1.txt": b"Hello World", "test2.txt": b"Another file", "subdir/test3.txt": b"Nested file"}
 
         # Create files and register them
         for filename, content in test_files.items():
-            file_path = tmp_scratch_path / filename
+            file_path = tmp_scratch_dir / filename
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_bytes(content)
             storage_manager.register(filename)
@@ -160,14 +160,14 @@ class TestStorageManager:
                 stored_content = f.read()
             assert stored_content == test_files[filename]
 
-    def test_transfer_with_file_storage(self, storage_manager_file_storage, tmp_scratch_path):
+    def test_transfer_with_file_storage(self, storage_manager_file_storage, tmp_scratch_dir):
         """Test _transfer with FileStorage."""
         # Create test file
         filename = "transfer_test.txt"
         content = b"Test content for file storage"
 
         # Create file in scratch directory
-        file_path = tmp_scratch_path / filename
+        file_path = tmp_scratch_dir / filename
         file_path.write_bytes(content)
         storage_manager_file_storage.register(filename)
 
@@ -194,12 +194,12 @@ class TestStorageManager:
         with pytest.raises(FileNotFoundError):
             storage_manager._transfer()
 
-    def test_registry_persistence(self, storage_manager, tmp_scratch_path):
+    def test_registry_persistence(self, storage_manager, tmp_scratch_dir):
         """Test that registry persists across operations."""
         filename = "persistent.txt"
 
         # Create the file first
-        file_path = tmp_scratch_path / filename
+        file_path = tmp_scratch_dir / filename
         file_path.write_bytes(b"test content")
 
         # Register file
@@ -212,9 +212,9 @@ class TestStorageManager:
         # Registry should still contain the file
         assert filename in storage_manager.registry
 
-    def test_load(self, storage_manager, tmp_scratch_path):
+    def test_load(self, storage_manager, tmp_scratch_dir):
         filename = "item.txt"
-        file_path = tmp_scratch_path / filename
+        file_path = tmp_scratch_dir / filename
         content = b"test content"
         file_path.write_bytes(content)
 
@@ -231,7 +231,7 @@ class TestStorageManager:
         out = storage_manager.load(namespaced_filename)
         assert out == content
 
-    def test_prepopulated_storage_load(self, file_storage: ExternalStorage, tmp_scratch_path):
+    def test_prepopulated_storage_load(self, file_storage: ExternalStorage, tmp_scratch_dir):
         # This test highlights a case where a unit wants to load something
         # from shared storage. We basically load content into the medium that we want to fetch later.
 
@@ -240,7 +240,7 @@ class TestStorageManager:
         name = "test.txt"
         file_storage.store_bytes(name, contents)
         # Provide this prepopulated storage to a manager
-        manager = StorageManager(tmp_scratch_path, storage=file_storage, dag_label="TEST", unit_label="1")
+        manager = StorageManager(tmp_scratch_dir, storage=file_storage, dag_label="TEST", unit_label="1")
         # Validate that content is loaded
         out = manager.load(name)
         assert out == contents

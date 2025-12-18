@@ -219,8 +219,8 @@ class TestContext:
         # Test __enter__
         with ctx as context:
             assert context is ctx
-            assert ctx.shared.scratch_path == scratch_dir
-            assert ctx.permanent.scratch_path == scratch_dir
+            assert ctx.shared.scratch_dir == scratch_dir
+            assert ctx.permanent.scratch_dir == scratch_dir
             filename = "test.txt"
             test_file = context.scratch / filename
             context.shared.register(filename)
