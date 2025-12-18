@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     import py3Dmol
 
 
-class LigandAtomMapping(AtomMapping):
+class LigandAtomMapping(AtomMapping[SmallMoleculeComponent]):
     """
     Container for an atom mapping between two small molecule components.
 

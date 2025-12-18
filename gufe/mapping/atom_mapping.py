@@ -9,9 +9,9 @@ import gufe
 from .componentmapping import ComponentMapping
 
 
-class AtomMapping(ComponentMapping, abc.ABC):
-    _componentA: gufe.Component
-    _componentB: gufe.Component
+class AtomMapping[T: gufe.Component](ComponentMapping):
+    _componentA: T
+    _componentB: T
 
     """A mapping between two different atom-based Components"""
 
