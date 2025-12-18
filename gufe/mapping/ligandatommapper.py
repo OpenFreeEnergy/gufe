@@ -38,8 +38,9 @@ class LigandAtomMapper(AtomMapper):
 
     def suggest_mappings(
         self,
-        componentA: SmallMoleculeComponent,
-        componentB: SmallMoleculeComponent,
+        # TODO: fix overrides when we move to min python 3.12 - see https://peps.python.org/pep-0695/#summary-examples
+        componentA: SmallMoleculeComponent,  # type: ignore[override]
+        componentB: SmallMoleculeComponent,  # type: ignore[override]
     ) -> Iterator[LigandAtomMapping]:
         """
         Suggest :class:`.LigandAtomMapping` options for the input molecules.
