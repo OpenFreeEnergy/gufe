@@ -92,7 +92,6 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
             stdout = Path("stdout") / str(unit.key)
             stdout.mkdir(parents=True)
 
-            # ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
             ctx = Context(
                 scratch=scratch_storage,
                 dag_label="test",
