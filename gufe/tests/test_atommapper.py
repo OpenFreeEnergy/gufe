@@ -12,7 +12,7 @@ def mol_from_smiles(smiles: str) -> Chem.Mol:
 
 
 @pytest.fixture(scope="session")
-def simple_mapping():
+def simple_mapping() -> LigandAtomMapping:
     """Disappearing oxygen on end
 
     C C O
@@ -28,7 +28,7 @@ def simple_mapping():
 
 
 @pytest.fixture(scope="session")
-def other_mapping():
+def other_mapping() -> LigandAtomMapping:
     """Disappearing middle carbon
 
     C C O
