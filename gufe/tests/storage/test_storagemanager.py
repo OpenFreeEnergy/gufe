@@ -68,7 +68,7 @@ class TestStorageManager:
     def test_convert_to_namespace(self):
         filename = "test_file.txt"
 
-        out = StorageManager.convert_to_namespace("MEM/1", filename)
+        out = StorageManager.append_to_namespace("MEM/1", filename)
         assert out == "MEM/1/test_file.txt"
 
     def test_register(self, storage_manager):
@@ -152,7 +152,7 @@ class TestStorageManager:
 
         # Check files are now in storage
         for filename in test_files:
-            namespaced_filename = StorageManager.convert_to_namespace(storage_manager.namespace, filename)
+            namespaced_filename = StorageManager.append_to_namespace(storage_manager.namespace, filename)
             assert storage_manager.storage.exists(namespaced_filename)
 
             # Verify content
@@ -175,7 +175,7 @@ class TestStorageManager:
         storage_manager_file_storage._transfer()
 
         # Check file exists in file storage
-        namespaced_filename = StorageManager.convert_to_namespace(storage_manager_file_storage.namespace, filename)
+        namespaced_filename = StorageManager.append_to_namespace(storage_manager_file_storage.namespace, filename)
         assert storage_manager_file_storage.storage.exists(namespaced_filename)
 
         # Verify content
@@ -227,7 +227,7 @@ class TestStorageManager:
 
         # Registry should still contain the file
         assert filename in storage_manager.registry
-        namespaced_filename = StorageManager.convert_to_namespace(storage_manager.namespace, filename)
+        namespaced_filename = StorageManager.append_to_namespace(storage_manager.namespace, filename)
         out = storage_manager.load(namespaced_filename)
         assert out == content
 

@@ -48,8 +48,8 @@ class StorageManager:
         self.namespace = f"{dag_label}/{unit_label}"
 
     @staticmethod
-    def convert_to_namespace(namespace: str, filename: str) -> str:
-        """Convert a namespace and filename into a storage path, mainly used to
+    def append_to_namespace(namespace: str, filename: str) -> str:
+        """Append a filenmae to a namespace, mainly used to
         make testing easier.
 
         Parameters
@@ -57,7 +57,7 @@ class StorageManager:
         namespace : str
             The namespace prefix for the file.
         filename : str
-            The filename to be combined with the namespace.
+            The filename to be appended to the namespace.
 
         Returns
         -------
@@ -105,4 +105,4 @@ class StorageManager:
             path = self.scratch_dir / filename
             with open(path, "rb") as f:
                 data = f.read()
-                self.storage.store_bytes(self.convert_to_namespace(self.namespace, filename), data)
+                self.storage.store_bytes(self.append_to_namespace(self.namespace, filename), data)
