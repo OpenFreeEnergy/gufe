@@ -434,11 +434,9 @@ def execute_DAG(
     results: dict[GufeKey, ProtocolUnitResult] = {}
     all_results = []  # successes AND failures
     shared_paths = []
-    # Context manger instantiated
     for unit in protocoldag.protocol_units:
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
-        # TODO: Context
         inputs = _pu_to_pur(unit.inputs, results)
 
         attempt = 0
