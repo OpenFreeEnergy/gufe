@@ -185,31 +185,14 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 class TestContext:
     """Test the Context class context manager functionality."""
 
-    @pytest.fixture
-    def scratch_dir(self, tmpdir):
-        """Fixture to provide a temporary scratch directory."""
-        scratch_dir = Path(tmpdir) / "scratch"
-        scratch_dir.mkdir(parents=True)
-        return Path(tmpdir) / "scratch"
-
-    @pytest.fixture
-    def shared_storage(self) -> MemoryStorage:
-        """Fixture to provide a shared storage."""
-        return MemoryStorage()
-
-    @pytest.fixture
-    def permanent_storage(self) -> MemoryStorage:
-        """Fixture to provide a permanent storage."""
-        return MemoryStorage()
-
     def test_context_manager_enter_exit(
-        self, scratch_dir, shared_storage: MemoryStorage, permanent_storage: MemoryStorage
+        self, scratch_storage, shared_storage: MemoryStorage, permanent_storage: MemoryStorage
     ):
         """Test that Context can be used as a context manager."""
         ctx = Context(
             dag_label="test",
             unit_label="test_unit",
-            scratch=scratch_dir,
+            scratch=scratch_storage,
             shared_storage=shared_storage,
             permanent_storage=permanent_storage,
         )
@@ -218,8 +201,8 @@ class TestContext:
         # Test __enter__
         with ctx as context:
             assert context is ctx
-            assert ctx.shared.scratch_dir == scratch_dir
-            assert ctx.permanent.scratch_dir == scratch_dir
+            assert ctx.shared.scratch_dir == scratch_storage
+            assert ctx.permanent.scratch_dir == scratch_storage
             filename = "test.txt"
             test_file = context.scratch / filename
             context.shared.register(filename)
