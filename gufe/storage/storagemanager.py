@@ -10,7 +10,7 @@ class StorageManager:
 
     This class provides a context manager for working with storage systems,
     allowing registration, loading, and transfer of files between scratch
-    storage and external storage.
+    directory and external storage.
 
     Parameters
     ----------
@@ -98,6 +98,8 @@ class StorageManager:
         return filename in self.registry
 
     def _transfer(self):
+        """Transfer all the files from the files in the internal registry to its
+        corresponding :class:`gufe.externalresource.ExternalStorage`.
         """Transfer all the files from the files in the internal registry to its
         corresponding :class:`gufe.externalresource.ExternalStorage`.
         """

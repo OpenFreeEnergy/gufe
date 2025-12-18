@@ -14,7 +14,6 @@ from typing import Any, Optional, Union
 import networkx as nx
 
 from gufe.storage.externalresource.base import ExternalStorage
-from gufe.storage.externalresource.filestorage import FileStorage
 
 from ..tokenization import GufeKey, GufeTokenizable
 from .errors import MissingUnitResultError, ProtocolUnitFailureError
@@ -380,7 +379,7 @@ def execute_DAG(
     keep_scratch: bool = False,
     raise_error: bool = True,
     n_retries: int = 0,
-):
+) -> ProtocolDAGResult:
     """
     Locally execute a full :class:`ProtocolDAG` in serial and in-process.
 

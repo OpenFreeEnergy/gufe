@@ -55,7 +55,7 @@ class TestStorageManager:
         assert manager.storage == memory_storage
         assert isinstance(manager.registry, set)
         assert len(manager.registry) == 0
-
+assert manager.namespace == "MEM/1"
     def test_init_with_file_storage(self, tmp_scratch_path, file_storage):
         """Test StorageManager initialization with FileStorage."""
         manager = StorageManager(tmp_scratch_path, file_storage, dag_label="FILE", unit_label="1")
@@ -87,7 +87,7 @@ class TestStorageManager:
 
     def test_register_multiple_files(self, storage_manager):
         """Test registering multiple filenames."""
-        files = ["file1.txt", "file2.txt", "file3.txt"]
+        files = ["file1.txt", "file2.txt", "dir/file3.txt"]
 
         for filename in files:
             storage_manager.register(filename)
