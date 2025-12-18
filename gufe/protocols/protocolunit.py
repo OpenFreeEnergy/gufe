@@ -43,7 +43,7 @@ class Context:
         Label for the ProtocolDAG this unit belongs to.
     unit_label : str
         Label for this specific ProtocolUnit.
-    scratch : Path
+    scratch_dir : Path
         Path to the scratch directory for temporary files.
     shared_storage : ExternalStorage
         Storage manager for shared resources that can be accessed by other units.
