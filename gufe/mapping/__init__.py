@@ -6,4 +6,5 @@ from .atom_mapper import AtomMapper
 from .atom_mapping import AtomMapping
 from .componentmapping import ComponentMapping
 from .errors import AtomMappingError
+from .ligandatommapper import LigandAtomMapper
 from .ligandatommapping import LigandAtomMapping

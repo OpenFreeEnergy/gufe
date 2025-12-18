@@ -11,6 +11,7 @@ from .mapping import (
     AtomMapper,  # more specific to atom based components
     AtomMapping,
     ComponentMapping,  # how individual Components relate
+    LigandAtomMapper,
     LigandAtomMapping,
 )
 from .network import AlchemicalNetwork
