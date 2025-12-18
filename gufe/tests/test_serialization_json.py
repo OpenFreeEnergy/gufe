@@ -10,7 +10,6 @@ import sys
 from uuid import uuid4
 
 import numpy as np
-import openff.units
 import pytest
 from numpy import testing as npt
 from openff.units import unit

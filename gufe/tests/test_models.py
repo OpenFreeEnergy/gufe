@@ -5,7 +5,6 @@ json round trip, and physical unit testing belongs here.
 """
 
 import json
-from typing import Iterable
 
 import numpy as np
 import pytest
