@@ -9,7 +9,7 @@ from ..tokenization import GufeTokenizable
 from .atom_mapping import AtomMapping
 
 
-class AtomMapper(GufeTokenizable):
+class AtomMapper[_Component: gufe.Component](GufeTokenizable):
     """A class for manufacturing mappings
 
     Implementations of this class can require an arbitrary and non-standardised
@@ -19,7 +19,7 @@ class AtomMapper(GufeTokenizable):
     """
 
     @abc.abstractmethod
-    def suggest_mappings(self, A: gufe.Component, B: gufe.Component) -> Iterator[AtomMapping]:
+    def suggest_mappings(self, A: _Component, B: _Component) -> Iterator[AtomMapping]:
         """Suggests possible mappings between two Components
 
         Suggests zero or more :class:`.AtomMapping` objects, which are possible
