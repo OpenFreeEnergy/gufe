@@ -1,12 +1,9 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import ast
 import io
-import json
-from collections import defaultdict
 from os import PathLike
 from string import digits
-from typing import Optional, TextIO, Union
+from typing import TextIO
 
 import numpy as np
 from openmm import app
