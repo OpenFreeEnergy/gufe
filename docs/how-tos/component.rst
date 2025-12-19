@@ -51,46 +51,72 @@ For example:
             Chem.AllChem.Compute2DCoords(mol)
             return CatMoleculeComponent(rdkit=mol, name="ethane")
 
-.. TODO: how to include a new attribute in dict while keeping parent class behavior?
 
-Step 3: Define the Required Methods
+Step 3: Define any Required Methods
 -----------------------------------
 
-- you will need to define anything that is an ``abstractmethod``, both in ``Component`` itself, as well as the ``abstractmethod``\s that it inherits from ``GufeTokenizable`` (since component is a subclass of GufeTokenizable)
-- this is a key benefit of instead inheriting from a class that is not an abstract base class, as many more methods will come pre-defined. For example, if you inherit from `ExplicitMoleculeComponent` you only have to define to/from  dict. For example:
+When inheriting from abstract base classes, such as ``Component``, you will need to define anything that is an ``abstractmethod``, both in ``Component`` itself, as well as the ``abstractmethod``\s that it inherits from ``GufeTokenizable`` (since component is a subclass of GufeTokenizable).
 
+In other cases, such as inheriting from ``ExplicitMoleculeComponent``, you will only need to define methods specifically not implemented - in this case ``to_dict()`` and ``from_dict()``.
+
+
+A key benefit of instead inheriting from a class that is already a completely implemented class, as shown next, since you will only need to implement the extra functionality you want.
 
 
 
 Step 4: Define Additional Functionality
 ---------------------------------------
 
-.. code-block:: python
-    :caption: catmoleculecomponent.py
 
-    class CatMoleculeComponent(SmallMoleculeComponent):
-        def __init__(self, rdkit: Chem.rdchem.Mol, name:str="", is_hydrophobic:bool=True):
-            self.is_hydrophobic = is_hydrophobic
+While the code in Step 2 is technically correct - it doesn't actually add anything new.
+To add functionality in addition to ``SmallMoleculeComponent``'s existing functionality, you can add
+
+.. code-block:: python
+    :caption: custom_component.py
+
+    from gufe import SmallMoleculeComponent
+    from rdkit import Chem
+
+
+    class CustomComponent(SmallMoleculeComponent):
+        def __init__(self, rdkit: Chem.rdchem.Mol, name: str = "", custom_attribute: int = 4):
+            self.custom_attribute = custom_attribute
             super().__init__(rdkit=rdkit, name=name)
 
+        def custom_functionality(self) -> str:
+            return f"my custom attribute is {self.custom_attribute}"
+
+
+Just make sure you test any added features!
+
 .. code-block:: python
-    :caption: test_catmoleculecomponent.py
+    :caption: test_custom_component.py
+    from gufe.tests import GufeTokenizableTestsMixin
+    from .custom_component import CustomComponent
+    import pytest
+    from rdkit import Chem
 
-    from .catcomponent import CatMoleculeComponent
 
-    @pytest.fixture
-    def cat_ethane():
-        mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
-        Chem.AllChem.Compute2DCoords(mol)
-        return CatMoleculeComponent(rdkit=mol, name="ethane")
-
-    class TestCatMoleculeComponent(GufeTokenizableTestsMixin):
-        cls = CatMoleculeComponent
-        repr = "CatMoleculeComponent(name=ethane)"
+    class TestCustomComponent(GufeTokenizableTestsMixin):
+        cls = CustomComponent
+        repr = "CustomComponent(name=ethane)"
 
         @pytest.fixture()
-        def instance(self, cat_ethane):
-            return cat_ethane
+        def instance(self):
+            mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
+            Chem.AllChem.Compute2DCoords(mol)
+            test_instance = CustomComponent(rdkit=mol, name="ethane")
+            return test_instance
 
-    def test_is_hydrophobic_default(cat_ethane):
-        assert cat_ethane.is_hydrophobic is True
+        def test_custom_functionality_default(self, instance):
+            # test using the instance fixture created above
+            assert instance.custom_functionality() == "my custom attribute is 4"
+
+        def test_custom_functionality_user_defined(self):
+            # test by creating a new instance
+            mol = Chem.AddHs(Chem.MolFromSmiles("CCC"))
+            Chem.AllChem.Compute2DCoords(mol)
+            custom_component = CustomComponent(
+                rdkit=mol, name="propane", custom_attribute=7
+            )
+            assert custom_component.custom_functionality() == "my custom attribute is 7"
