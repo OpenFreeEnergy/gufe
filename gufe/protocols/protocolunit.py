@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import abc
 import datetime
+import shutil
 import sys
 import tempfile
 import traceback
@@ -21,21 +22,100 @@ from os import PathLike
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from gufe.storage.externalresource.base import ExternalStorage
+
+from ..storage.storagemanager import StorageManager
 from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
 from .errors import ExecutionInterrupt
 
 
-@dataclass
 class Context:
-    """Data class for passing around execution context components to
+    """
+    Class for passing around execution context components to
     `ProtocolUnit._execute`.
 
+    This class provides execution context information to ProtocolUnit subclasses
+    when executing their `_execute` method.
+
+    Parameters
+    ----------
+    dag_label : str
+        Label for the ProtocolDAG this unit belongs to.
+    unit_label : str
+        Label for this specific ProtocolUnit.
+    scratch_dir : Path
+        Path to the scratch directory for temporary files.
+    shared_storage : ExternalStorage
+        Storage manager for shared resources that can be accessed by other units.
+    permanent_storage : ExternalStorage
+        Storage manager for permanent resources that persist after execution.
+    stderr : Path, optional
+        Path to directory for capturing stderr output.
+    stdout : Path, optional
+        Path to directory for capturing stdout output.
+
+    Attributes
+    ----------
+    scratch : Path
+        Path to the scratch directory for temporary files.
+    shared : StorageManager
+        Storage manager for shared resources.
+    permanent : StorageManager
+        Storage manager for permanent resources.
+    stderr : Path or None
+        Path to directory for capturing stderr output.
+    stdout : Path or None
+        Path to directory for capturing stdout output.
+
+    Notes
+    -----
+    This class implements the context manager protocol, automatically transferring
+    shared and permanent storage resources when exiting the context.
+
+    Examples
+    --------
+    >>> with Context(dag_label="my_dag", unit_label="unit1", scratch="/tmp/scratch",
+    ...             shared_storage=shared_store, permanent_storage=perm_store) as ctx:
+    ...     # use ctx within the ProtocolUnit._execute method
+    ...     pass
     """
 
-    scratch: Path
-    shared: Path
-    stderr: Path | None = None
-    stdout: Path | None = None
+    def __init__(
+        self,
+        dag_label: str,
+        unit_label: str,
+        scratch: Path,
+        shared_storage: ExternalStorage,
+        permanent_storage: ExternalStorage,
+        stderr: Optional[Path] = None,
+        stdout: Optional[Path] = None,
+    ):
+        self.scratch = scratch
+        self.shared = StorageManager(
+            scratch_dir=scratch,
+            storage=shared_storage,
+            unit_label=unit_label,
+            dag_label=dag_label,
+        )
+        self.permanent = StorageManager(
+            scratch_dir=scratch,
+            storage=permanent_storage,
+            unit_label=unit_label,
+            dag_label=dag_label,
+        )
+        self.stderr = stderr
+        self.stdout = stdout
+
+    def __enter__(self) -> Context:
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.shared._transfer()
+        self.permanent._transfer()
+        if self.stderr:
+            shutil.rmtree(self.stderr)
+        if self.stdout:
+            shutil.rmtree(self.stdout)
 
 
 def _list_dependencies(inputs, cls):
