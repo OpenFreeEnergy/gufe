@@ -57,7 +57,8 @@ lint.ignore = [
   "E722", # bare excepts (TODO: we should fix these in a follow-up PR)
   "E731", # lambda expressions (TODO: we should fix these)
   "F403",
-  "F405",
+  # "F405",
+  "F841", # vars assigned but not sued (TODO: fix these)
   "UP03", # pyupgrade linting (TODO: we should fix these)
 ]
 

@@ -13,7 +13,7 @@ from rdkit.Geometry.rdGeometry import Point3D
 from ..utils import requires_package
 
 if TYPE_CHECKING:
-    import py3Dmol
+    pass
 
 # highlight core element changes differently from unique atoms
 # RGBA color value needs to be between 0 and 1, so divide by 255
