@@ -220,3 +220,39 @@ class TestContext:
         with permanent_storage.load_stream("test/test_unit/test.txt") as item:
             out = item.read()
             assert out == file_text
+
+    def test_context_manager_cleanup_stdout_stderr(
+        self, scratch_storage, shared_storage: MemoryStorage, permanent_storage: MemoryStorage, tmp_path
+    ):
+        stdout: Path = tmp_path / "stdout"
+        stdout.mkdir()
+        # We write something into stdout
+        stderr: Path = tmp_path / "stderr"
+        stderr.mkdir()
+
+        ctx = Context(
+            dag_label="test",
+            unit_label="test_unit",
+            scratch=scratch_storage,
+            shared_storage=shared_storage,
+            permanent_storage=permanent_storage,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        # Validate the directory is empty
+        assert any(Path(stdout).iterdir()) == False
+        assert any(Path(stderr).iterdir()) == False
+        file_text = b"Hello world"
+        with ctx as context:
+            filename = "test.txt"
+            stdout_file = context.stdout / filename
+            stderr_file = context.stderr / filename
+            with stdout_file.open("b+w") as f:
+                f.write(file_text)
+            with stderr_file.open("b+w") as f:
+                f.write(file_text)
+            assert any(Path(stdout).iterdir()) == True
+            assert any(Path(stderr).iterdir()) == True
+        # Validate we cleanup
+        assert not Path(stderr).exists()
+        assert not Path(stdout).exists()
