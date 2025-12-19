@@ -91,6 +91,7 @@ Just make sure you test any added features!
 
 .. code-block:: python
     :caption: test_custom_component.py
+
     from gufe.tests import GufeTokenizableTestsMixin
     from .custom_component import CustomComponent
     import pytest
