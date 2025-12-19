@@ -2,6 +2,8 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 
+import importlib
+
 import pooch
 import pytest
 from openff.units import unit
