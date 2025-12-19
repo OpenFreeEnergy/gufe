@@ -48,7 +48,7 @@ lint.select = [
   "F", # Pyflakes
   "I", # isort
   "W", # pycodestyle warnings
-  # "E",  # pycodestyle errors
+  # "E", # pycodestyle errors
   # "C901"  # mccabe complexity  TODO: add this back in
   # "UP", # TODO: add this in
 ]
@@ -56,9 +56,9 @@ lint.ignore = [
   "E402", # module-level import not at top (conflicts w/ isort)
   "E722", # bare excepts (TODO: we should fix these in a follow-up PR)
   "E731", # lambda expressions (TODO: we should fix these)
-  "F403",
-  # "F405",
-  "F841", # vars assigned but not sued (TODO: fix these)
+  "F403", # undefined name (TODO: fix these)
+  "F405", # undefined imports (TODO: fix these)
+  "F841", # vars assigned but not used (TODO: fix these)
   "UP03", # pyupgrade linting (TODO: we should fix these)
 ]
 

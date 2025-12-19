@@ -580,7 +580,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 some_dict={"a": 2, "b": 12},
             )
 
-            return SimulationUnit(name=f"simulation", initialization=alpha)
+            return SimulationUnit(name="simulation", initialization=alpha)
 
         def test_key_stable(self, instance):
             # for the DAG system, keys for `ProtocolUnit`s are based on UUIDs,
