@@ -139,11 +139,6 @@ def _estimate_box(pdb_file):
     Returns three numpy arrays: (a, b, c).
     """
     traj = md.load(pdb_file)
-    # unwrap molecules (remove PBC splitting)
-    try:
-        traj = traj.image_molecules(box=traj.unitcell_vectors)
-    except Exception:
-        pass  # if no unitcell_vectors, just continue
 
     coords = traj.xyz[0]  # nm
 
