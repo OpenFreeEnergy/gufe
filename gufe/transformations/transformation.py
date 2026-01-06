@@ -5,7 +5,6 @@ import abc
 import json
 import warnings
 from collections.abc import Iterable
-from typing import Optional, Union
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping

@@ -13,7 +13,7 @@ from gufe.visualization.mapping_visualization import (
 )
 
 try:
-    import py3Dmol
+    import py3Dmol  # noqa: F401
 
     HAS_PY3DMOL = True
 except ImportError:

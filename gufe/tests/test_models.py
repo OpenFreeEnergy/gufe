@@ -5,7 +5,6 @@ json round trip, and physical unit testing belongs here.
 """
 
 import json
-from typing import Iterable
 
 import numpy as np
 import pytest
@@ -13,7 +12,7 @@ from openff.units import Quantity, unit
 
 from gufe.settings import SettingsBaseModel
 from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, ThermoSettings
-from gufe.settings.typing import BoxQuantity, GufeQuantity, NanometerArrayQuantity, NanometerQuantity
+from gufe.settings.typing import BoxQuantity, NanometerArrayQuantity
 
 
 def test_settings_schema():
