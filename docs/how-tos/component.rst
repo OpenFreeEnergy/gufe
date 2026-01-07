@@ -26,30 +26,30 @@ As when defining any new ``GufeTokenizable``, you are encouraged to use the ``Gu
 For example:
 
 .. code-block:: python
-    :caption: catmoleculecomponent.py
+    :caption: custom_component.py
 
     from gufe import SmallMoleculeComponent
 
     # this is all the code you need to get the GufeTokenizableTestsMixin to pass,
     # since SmallMoleculeComponent fully implemented
-    class CatMoleculeComponent(SmallMoleculeComponent):
+    class CustomComponent(SmallMoleculeComponent):
         pass
 
 .. code-block:: python
-    :caption: test_catmoleculecomponent.py
+    :caption: test_custom_component.py
 
-    from .catcomponent import CatMoleculeComponent
+    from .custom_component import CustomComponent
 
 
-    class TestCatMoleculeComponent(GufeTokenizableTestsMixin):
-        cls = CatMoleculeComponent
-        repr = "CatMoleculeComponent(name=ethane)"
+    class TestCustomComponent(GufeTokenizableTestsMixin):
+        cls = CustomComponent
+        repr = "CustomComponent(name=ethane)"
 
         @pytest.fixture()
         def instance(self):
             mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
             Chem.AllChem.Compute2DCoords(mol)
-            return CatMoleculeComponent(rdkit=mol, name="ethane")
+            return CustomComponent(rdkit=mol, name="ethane")
 
 
 Step 3: Define any Required Methods
