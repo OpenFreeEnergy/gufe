@@ -50,10 +50,10 @@ class AlchemicalArchive:
         # stale transformation keys
         tokenizable_map: dict[str, GufeTokenizable] = {}
         deserialized["network"] = KeyedChain(deserialized["network"]).to_gufe(tokenizable_map=tokenizable_map)
-        deserialized["transformation_results_map"] = {
-            tokenizable_map[k].key: ProtocolDAGResult.from_keyed_chain(v)
-            for k, v in deserialized["transformation_results_map"].items()
-        }
+        for key, results in deserialized["transformation_results_map"].items():
+            deserialized["transformation_results_map"][tokenizable_map[key].key] = [
+                ProtocolDAGResult.from_keyed_chain(v) for v in results
+            ]
 
         if gufe.__version__ != deserialized["version_gufe"]:
             version_gufe = deserialized["version_gufe"]
@@ -79,16 +79,15 @@ class AlchemicalArchive:
         dct = asdict(self)
 
         dct["network"] = dct["network"].to_keyed_chain()
-        dct["transformation_results_map"] = {
-            k: v.to_keyed_chain() for k, v in dct["transformation_results_map"].items()
-        }
+        for key, results in dct["transformation_results_map"].items():
+            dct["transformation_results_map"][key] = [result.to_keyed_chain() for result in results]
 
         if file is None:
-            return json.dumps(dct, cls=JSON_HANDLER.encoder)
+            return json.dumps(dct, sort_keys=True, cls=JSON_HANDLER.encoder)
 
         from gufe.utils import ensure_filelike
 
         with ensure_filelike(file, mode="w") as out:
-            json.dump(dct, out, cls=JSON_HANDLER.encoder)
+            json.dump(dct, out, sort_keys=True, cls=JSON_HANDLER.encoder)
 
         return None
