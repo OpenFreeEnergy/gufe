@@ -25,6 +25,8 @@ As when defining any new ``GufeTokenizable``, you are encouraged to use the ``Gu
 
 For example:
 
+.. TODO: if we expose the other testing mixins, reference ExplicitMoleculeComponentMixin here.
+
 .. code-block:: python
     :caption: custom_component.py
 
