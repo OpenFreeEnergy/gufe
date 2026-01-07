@@ -59,6 +59,7 @@ When inheriting from abstract base classes, such as ``Component``, you will need
 
 In other cases, such as inheriting from ``ExplicitMoleculeComponent``, you will only need to define methods specifically not implemented - in this case ``to_dict()`` and ``from_dict()``.
 
+.. TODO: point to gufe tokenizable how-to for to_dict, from_dict examples, and/or source code examples.
 
 A key benefit of instead inheriting from a class that is already a completely implemented class, as shown next, since you will only need to implement the extra functionality you want.
 
@@ -68,8 +69,8 @@ Step 4: Define Additional Functionality
 ---------------------------------------
 
 
-While the code in Step 2 is technically correct - it doesn't actually add anything new.
-To add functionality in addition to ``SmallMoleculeComponent``'s existing functionality, you can add
+While the code in Step 2 is technically correct, it doesn't actually add anything new.
+To add functionality in addition to ``SmallMoleculeComponent``'s existing functionality, you can add new attributes, such as ``custom_attribute``, and new methods, such as ``print_custom_attribute``:
 
 .. code-block:: python
     :caption: custom_component.py
@@ -83,7 +84,7 @@ To add functionality in addition to ``SmallMoleculeComponent``'s existing functi
             self.custom_attribute = custom_attribute
             super().__init__(rdkit=rdkit, name=name)
 
-        def custom_functionality(self) -> str:
+        def print_custom_attribute(self) -> str:
             return f"my custom attribute is {self.custom_attribute}"
 
 
@@ -109,15 +110,15 @@ Just make sure you test any added features!
             test_instance = CustomComponent(rdkit=mol, name="ethane")
             return test_instance
 
-        def test_custom_functionality_default(self, instance):
+        def test_print_custom_attribute_default(self, instance):
             # test using the instance fixture created above
-            assert instance.custom_functionality() == "my custom attribute is 4"
+            assert instance.print_custom_attribute() == "my custom attribute is 4"
 
-        def test_custom_functionality_user_defined(self):
+        def test_print_custom_attribute_user_defined(self):
             # test by creating a new instance
             mol = Chem.AddHs(Chem.MolFromSmiles("CCC"))
             Chem.AllChem.Compute2DCoords(mol)
             custom_component = CustomComponent(
                 rdkit=mol, name="propane", custom_attribute=7
             )
-            assert custom_component.custom_functionality() == "my custom attribute is 7"
+            assert custom_component.print_custom_attribute() == "my custom attribute is 7"
