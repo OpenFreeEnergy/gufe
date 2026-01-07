@@ -4,6 +4,7 @@
 import abc
 import os
 import shutil
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from copy import copy
@@ -468,9 +469,15 @@ def execute_DAG(
         if not result.ok():
             break
 
+    def retry_remove(func, path, excinfo):
+        """Retry removing a directory and its contents."""
+        warnings.warn(f"Directory removal for {excinfo.args[-1]} not successful, retrying.")
+        func(path)
+
     if not keep_shared:
         for shared_path in shared_paths:
-            shutil.rmtree(shared_path)
+            # see https://docs.python.org/3/library/shutil.html#shutil.rmtree
+            shutil.rmtree(shared_path, onexc=retry_remove)
 
     return ProtocolDAGResult(
         name=protocoldag.name,
