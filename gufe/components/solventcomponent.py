@@ -14,6 +14,7 @@ class BaseSolventComponent(Component):
     """
     Base class for components that are solvated.
     """
+
     ...
 
 
