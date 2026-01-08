@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,7 @@ def alchemical_archive(benzene_variants_star_map):
     transformation_results = {}
     for transformation in transformations:
         transformation_results[transformation.key] = [pdr_from_transformation(transformation)]
-    metadata = {"test_meta_key": "test_meta_value"}
+    metadata = {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
     return AlchemicalArchive(
         network=alchemical_network, transformation_results_map=transformation_results, metadata=metadata
     )
@@ -64,3 +65,14 @@ class TestArchival:
 
         with pytest.warns(UserWarning):
             reconstructed = AlchemicalArchive.from_json(content=json)
+
+    def test_md5sum(self, alchemical_archive, tmpdir):
+        output_file = tmpdir / "archive.json"
+        result = alchemical_archive.to_json(output_file)
+
+        with open(output_file, "rb") as f:
+            data = f.read()
+            assert hashlib.md5(data).hexdigest() == alchemical_archive.md5
+
+    def test_metadata(self, alchemical_archive):
+        assert alchemical_archive.metadata == {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}

@@ -1,6 +1,8 @@
+import hashlib
 import json
 import warnings
 from dataclasses import asdict, dataclass, field
+from functools import cached_property
 from os import PathLike
 from typing import Any, TextIO
 
@@ -10,12 +12,22 @@ from gufe.protocols import ProtocolDAGResult
 from gufe.tokenization import JSON_HANDLER, GufeKey, GufeTokenizable, KeyedChain
 
 
+def _dict_sort_values(dct):
+    for key, value in dct.items():
+        if isinstance(value, (list, tuple)):
+            dct[key] = tuple(sorted(value))
+
+
 @dataclass
 class AlchemicalArchive:
     network: AlchemicalNetwork
-    transformation_results_map: dict[GufeKey, list[ProtocolDAGResult]]
+    transformation_results_map: dict[GufeKey, tuple[ProtocolDAGResult]]
     metadata: dict[str, Any] = field(default_factory=dict)
     version_gufe: str = field(default=gufe.__version__)
+
+    def __post_init__(self):
+        # ensure that ProtocolDAGResults are always in order by gufe key
+        _dict_sort_values(self.transformation_results_map)
 
     @classmethod
     def from_json(cls, file: PathLike | TextIO | None = None, content: str | None = None):
@@ -91,3 +103,12 @@ class AlchemicalArchive:
             json.dump(dct, out, sort_keys=True, cls=JSON_HANDLER.encoder)
 
         return None
+
+    @cached_property
+    def md5(self):
+        dumped = self.to_json()
+        hasher = hashlib.md5(dumped.encode(), usedforsecurity=False)
+        return hasher.hexdigest()
+
+    def __hash__(self):
+        return hash(self.md5)
