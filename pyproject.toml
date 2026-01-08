@@ -59,6 +59,10 @@ lint.ignore = [
   "F401", # unused imports (TODO: we should fix these)
   "UP03", # pyupgrade linting (TODO: we should fix these)
 ]
+
+# ignore "unused import" error for all __init__.py files
+lint.per-file-ignores."__init__.py" = [ "E401" ]
+
 lint.isort.known-first-party = [ "gufe" ]
 
 [tool.coverage.run]
