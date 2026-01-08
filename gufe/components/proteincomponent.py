@@ -13,6 +13,7 @@ from openmm.unit import Quantity
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
+from .. import BaseSolventComponent
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
@@ -657,9 +658,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return d
 
 
-class ProteinMembraneComponent(ProteinComponent):
+class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
-    Protein component with membrane and periodic box vectors.
+    Base class for explicitly solvated components.
     """
 
     def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
@@ -671,7 +672,7 @@ class ProteinMembraneComponent(ProteinComponent):
     @classmethod
     def from_pdb_file(cls, pdb_file: PathLike | TextIO, name: str = "", *, box_vectors=None, infer_box_vectors=False):
         """
-        Create ProteinMembraneComponent from a PDB file.
+        Create SolvatedPDBComponent from a PDB file.
 
         Parameters
         ----------
@@ -681,7 +682,7 @@ class ProteinMembraneComponent(ProteinComponent):
             name of the input protein, by default ""
         Returns
         -------
-        ProteinMembraneComponent
+        SolvatedPDBComponent
             the deserialized molecule
         """
         pdb = PDBFile(pdb_file)
@@ -714,7 +715,7 @@ class ProteinMembraneComponent(ProteinComponent):
 
         Returns
         -------
-        ProteinMembraneComponent
+        SolvatedPDBComponent
             the deserialized molecule
         """
         prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
@@ -767,3 +768,9 @@ class ProteinMembraneComponent(ProteinComponent):
             name=prot.name,
             periodic_box_vectors=box_vectors,
         )
+
+class ProteinMembraneComponent(SolvatedPDBComponent):
+    """
+    Protein component with membrane and periodic box vectors.
+    """
+    ...
