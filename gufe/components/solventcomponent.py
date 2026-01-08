@@ -10,8 +10,16 @@ _CATIONS = {"Cs", "K", "Li", "Na", "Rb"}
 _ANIONS = {"Cl", "Br", "F", "I"}
 
 
+class BaseSolventComponent(Component):
+    """
+    Base class for components that are solvated.
+    """
+
+    ...
+
+
 # really wanted to make this a dataclass but then can't sort & strip ion input
-class SolventComponent(Component):
+class SolventComponent(BaseSolventComponent):
     """
     :class:`.Component` representing solvation in a chemical system.
 
