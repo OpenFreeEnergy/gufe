@@ -13,7 +13,7 @@ from openmm.unit import Quantity
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
-from .. import BaseSolventComponent
+from .solventcomponent import BaseSolventComponent
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
