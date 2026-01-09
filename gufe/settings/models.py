@@ -117,9 +117,6 @@ class ThermoSettings(SettingsBaseModel):
     redox_potential: VoltsQuantity | None = Field(
         None, description="Simulation redox potential in millivolts (mV). Compatible units will be converted to mV."
     )
-    membrane: bool = Field(
-        False, description="Whether to simulate a membrane system and use a MonteCarloMembraneBarostat."
-    )
 
 
 class BaseForceFieldSettings(SettingsBaseModel, abc.ABC):
