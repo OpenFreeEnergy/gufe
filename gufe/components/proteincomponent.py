@@ -13,12 +13,12 @@ from openmm.unit import Quantity
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
-from .solventcomponent import BaseSolventComponent
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
+from .solventcomponent import BaseSolventComponent
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
     1: BondType.SINGLE,
@@ -746,14 +746,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return d
 
-
     @classmethod
     def _from_dict(cls, d, name=""):
-
         box_data = d.get("periodic_box_vectors")
         if box_data is None:
-            raise ValueError(
-                "periodic_box_vectors must be present in the serialized dict")
+            raise ValueError("periodic_box_vectors must be present in the serialized dict")
 
         prot = ProteinComponent._from_dict(d, name=name)
 
@@ -769,8 +766,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             periodic_box_vectors=box_vectors,
         )
 
+
 class ProteinMembraneComponent(SolvatedPDBComponent):
     """
     Protein component with membrane and periodic box vectors.
     """
+
     ...

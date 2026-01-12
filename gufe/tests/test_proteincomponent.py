@@ -5,15 +5,15 @@ import io
 import os
 from unittest import mock
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_almost_equal
 from packaging.version import Version
 from rdkit import Chem
 
-from gufe import ProteinComponent, SolvatedPDBComponent, ProteinMembraneComponent
-from ..molhashing import serialize_numpy
+from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponent
 
+from ..molhashing import serialize_numpy
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
@@ -385,8 +385,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         assert vectors[0][0] == 6.9587 * unit.nanometer
 
     def test_requires_box_vectors(self, instance):
-        with pytest.raises(ValueError,
-                           match="periodic_box_vectors must be provided"):
+        with pytest.raises(ValueError, match="periodic_box_vectors must be provided"):
             self.cls(
                 rdkit=instance._rdkit,
                 name=instance.name,
@@ -454,11 +453,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         assert c[2] > 0 * unit.nanometer
 
     def test_box_vectors_affect_equality(self, instance):
-        v = np.array(
-            [[2.0, 0.0, 0.0],
-             [0.0, 2.0, 0.0],
-             [0.0, 0.0, 2.0]]
-        ) * unit.nanometer
+        v = np.array([[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 2.0]]) * unit.nanometer
 
         comp2 = instance.copy_with_replacements(
             periodic_box_vectors={
