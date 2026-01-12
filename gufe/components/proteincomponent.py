@@ -663,7 +663,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     Base class for explicitly solvated components.
     """
 
-    def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
+    def __init__(self, rdkit: Mol, periodic_box_vectors=None, name: str = ""):
         if periodic_box_vectors is None:
             raise ValueError("periodic_box_vectors must be provided")
         super().__init__(rdkit=rdkit, name=name)
@@ -731,37 +731,37 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         d = super()._to_dict()
 
         box = self._periodic_box_vectors
-        if box is not None:
-            value = serialize_numpy(box)
-            unit_str = str(box[0][0].unit)
-
-            d["periodic_box_vectors"] = {
-                "value": value,
-                "unit": unit_str,
-            }
-        else:
+        if box is None:
             d["periodic_box_vectors"] = None
+            return d
+
+        # convert Quantity to a numpy array in base unit
+        unit = box.unit
+        value = serialize_numpy(box.value_in_unit(unit))
+
+        d["periodic_box_vectors"] = {
+            "value": value,
+            "unit": unit.get_name(),
+        }
 
         return d
 
+
     @classmethod
     def _from_dict(cls, d, name=""):
-        """
-        Deserialize from dict, including periodic box vectors.
-        """
-        prot = ProteinComponent._from_dict(d, name=name)
 
         box_data = d.get("periodic_box_vectors")
         if box_data is None:
-            raise ValueError("periodic_box_vectors must be present in the serialized dict")
+            raise ValueError(
+                "periodic_box_vectors must be present in the serialized dict")
 
-        box_vectors = None
+        prot = ProteinComponent._from_dict(d, name=name)
 
-        if box_data is not None:
-            unit_str = box_data["unit"]
-            unit_obj = getattr(omm_unit, unit_str, omm_unit.nanometer)
-            box_arr = deserialize_numpy(box_data["value"])
-            box_vectors = list(map(lambda x: np.array(x), box_arr)) * unit_obj
+        unit_name = box_data["unit"]
+        unit_obj = getattr(omm_unit, unit_name, omm_unit.nanometer)
+
+        box_arr = deserialize_numpy(box_data["value"])
+        box_vectors = np.asarray(box_arr) * unit_obj
 
         return cls(
             rdkit=prot._rdkit,

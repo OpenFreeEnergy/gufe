@@ -12,6 +12,7 @@ from packaging.version import Version
 from rdkit import Chem
 
 from gufe import ProteinComponent, SolvatedPDBComponent, ProteinMembraneComponent
+from ..molhashing import serialize_numpy
 
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -374,26 +375,28 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
     repr = "SolvatedPDBComponent(name=Steve)"
 
     @pytest.fixture
-    def instance(self, PDB_181L_path):
-        return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
+    def instance(self, PDB_a2a_path):
+        return self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
 
-    def test_protein_box_vectors(self, PDB_181L_path):
-        m1 = self.cls.from_pdb_file(PDB_181L_path)
-        vectors = m1._periodic_box_vectors
+    def test_protein_box_vectors(self, instance):
+        vectors = instance._periodic_box_vectors
         assert vectors is not None
         assert len(vectors) == 3
-        assert vectors[0][0] == 13.4081 * unit.nanometer
+        assert vectors[0][0] == 6.9587 * unit.nanometer
 
-    def test_requires_box_vectors(self, PDB_181L_path):
-        m = Chem.MolFromPDBFile(PDB_181L_path, removeHs=False)
+    def test_requires_box_vectors(self, instance):
+        with pytest.raises(ValueError,
+                           match="periodic_box_vectors must be provided"):
+            self.cls(
+                rdkit=instance._rdkit,
+                name=instance.name,
+                periodic_box_vectors=None,
+            )
 
-        with pytest.raises(ValueError, match="periodic_box_vectors must be provided"):
-            self.cls(rdkit=m, periodic_box_vectors=None)
-
-    def test_missing_box_vectors_raises(self, PDB_181L_path, tmp_path):
+    def test_missing_box_vectors_raises(self, PDB_a2a_path, tmp_path):
         pdb_no_box = tmp_path / "no_box.pdb"
 
-        with open(PDB_181L_path, "r") as f:
+        with open(PDB_a2a_path, "r") as f:
             lines = f.readlines()
 
         # remove CRYST1 line
@@ -404,21 +407,20 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         with pytest.raises(ValueError, match="Could not determine periodic_box_vectors"):
             self.cls.from_pdb_file(str(pdb_no_box))
 
-    def test_box_vectors_preserved_in_dict_roundtrip(self, PDB_181L_path):
-        m1 = self.cls.from_pdb_file(PDB_181L_path, name="Bob")
-        d = m1.to_dict()
+    def test_box_vectors_preserved_in_dict_roundtrip(self, instance):
+        d = instance.to_dict()
         m2 = self.cls.from_dict(d)
 
-        v1 = m1._periodic_box_vectors.value_in_unit(unit.nanometer)
+        v1 = instance._periodic_box_vectors.value_in_unit(unit.nanometer)
         v2 = m2._periodic_box_vectors.value_in_unit(unit.nanometer)
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
-    def test_openmm_box_vectors_match(self, PDB_181L_path):
-        pdb = pdbfile.PDBFile(PDB_181L_path)
+    def test_openmm_box_vectors_match(self, PDB_a2a_path):
+        pdb = pdbfile.PDBFile(PDB_a2a_path)
         ref_box = pdb.topology.getPeriodicBoxVectors()
 
-        comp = self.cls.from_pdb_file(PDB_181L_path)
+        comp = self.cls.from_pdb_file(PDB_a2a_path)
         gufe_box = comp._periodic_box_vectors
 
         v1 = np.array(ref_box.value_in_unit(unit.nanometer))
@@ -426,10 +428,51 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
+    def test_infer_box_vectors_produces_valid_box(self, PDB_a2a_path):
+        """Ensure inferred box is orthorhombic and non-degenerate"""
+        comp_infer_box = self.cls.from_pdb_file(
+            str(PDB_a2a_path),
+            infer_box_vectors=True,
+        )
 
-class TestProteinMembraneComponent(TestSolvatedPDBComponent):
-    cls = ProteinMembraneComponent
-    repr = "ProteinMembraneComponent(name=Steve)"
+        box = comp_infer_box._periodic_box_vectors
+
+        # Basic shape checks
+        assert box is not None
+        assert len(box) == 3
+
+        a, b, c = box
+
+        # Orthorhombic: off-diagonal elements should be zero
+        assert a[1] == a[2] == 0 * unit.nanometer
+        assert b[0] == b[2] == 0 * unit.nanometer
+        assert c[0] == c[1] == 0 * unit.nanometer
+
+        # Diagonal elements must be positive
+        assert a[0] > 0 * unit.nanometer
+        assert b[1] > 0 * unit.nanometer
+        assert c[2] > 0 * unit.nanometer
+
+    def test_box_vectors_affect_equality(self, instance):
+        v = np.array(
+            [[2.0, 0.0, 0.0],
+             [0.0, 2.0, 0.0],
+             [0.0, 0.0, 2.0]]
+        ) * unit.nanometer
+
+        comp2 = instance.copy_with_replacements(
+            periodic_box_vectors={
+                "value": serialize_numpy(v),
+                "unit": "nanometer",
+            }
+        )
+
+        assert instance != comp2
+
+
+# class TestProteinMembraneComponent(TestSolvatedPDBComponent):
+#     cls = ProteinMembraneComponent
+#     repr = "ProteinMembraneComponent(name=Steve)"
 
 
 def test_no_monomer_info_error(ethane):

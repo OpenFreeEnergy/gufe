@@ -105,6 +105,12 @@ def PDB_181L_path():
 
 
 @pytest.fixture
+def PDB_a2a_path():
+    with importlib.resources.path("gufe.tests.data", "a2a.pdb") as f:
+        yield str(f)
+
+
+@pytest.fixture
 def offxml_settings_path():
     with importlib.resources.path("gufe.tests.data", "offxml_settings.json") as f:
         yield str(f)
