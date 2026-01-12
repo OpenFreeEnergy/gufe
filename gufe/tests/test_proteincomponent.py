@@ -10,7 +10,7 @@ from numpy.testing import assert_almost_equal
 from packaging.version import Version
 from rdkit import Chem
 
-from gufe import ProteinComponent, ProteinMembraneComponent
+from gufe import ProteinComponent, ExplicitSolventComponent
 
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -367,10 +367,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
                 self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
 
 
-class TestProteinMembraneComponent(GufeTokenizableTestsMixin):
-    cls = ProteinMembraneComponent
+class TestExplicitPDBComponent(GufeTokenizableTestsMixin):
+    cls = ExplicitPDBComponent
     # key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
-    repr = "ProteinMembraneComponent(name=Steve)"
+    repr = "ExplicitPDBComponent(name=Steve)"
 
     @pytest.fixture
     def instance(self, PDB_181L_path):
