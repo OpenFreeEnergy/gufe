@@ -2,7 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from collections import abc
-from typing import Optional
 
 from .components import Component
 from .tokenization import GufeTokenizable

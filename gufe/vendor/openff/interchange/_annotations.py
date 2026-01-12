@@ -1,7 +1,7 @@
 # Vendored from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/_annotations.py
 import functools
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Annotated
 
 import numpy
 from annotated_types import Gt

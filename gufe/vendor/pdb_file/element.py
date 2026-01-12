@@ -33,7 +33,6 @@ __author__ = "Christopher M. Bruns"
 __version__ = "1.0"
 
 import copyreg
-import sys
 from collections import OrderedDict
 
 from openmm.unit import daltons, is_quantity

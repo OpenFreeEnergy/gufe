@@ -1,15 +1,10 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import abc
-import os
 import shutil
 from collections import defaultdict
-from collections.abc import Iterable
-from copy import copy
-from os import PathLike
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import networkx as nx
 
