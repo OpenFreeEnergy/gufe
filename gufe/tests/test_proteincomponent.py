@@ -10,7 +10,7 @@ from numpy.testing import assert_almost_equal
 from packaging.version import Version
 from rdkit import Chem
 
-from gufe import ProteinComponent, ExplicitSolventComponent
+from gufe import ProteinComponent, ExplicitPDBComponent
 
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
