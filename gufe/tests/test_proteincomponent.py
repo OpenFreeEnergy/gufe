@@ -6,11 +6,12 @@ import os
 from unittest import mock
 
 import pytest
+import numpy as np
 from numpy.testing import assert_almost_equal
 from packaging.version import Version
 from rdkit import Chem
 
-from gufe import ProteinComponent, SolvatedPDBComponent
+from gufe import ProteinComponent, SolvatedPDBComponent, ProteinMembraneComponent
 
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -379,7 +380,56 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
     def test_protein_box_vectors(self, PDB_181L_path):
         m1 = self.cls.from_pdb_file(PDB_181L_path)
         vectors = m1._periodic_box_vectors
+        assert vectors is not None
+        assert len(vectors) == 3
         assert vectors[0][0] == 13.4081 * unit.nanometer
+
+    def test_requires_box_vectors(self, PDB_181L_path):
+        m = Chem.MolFromPDBFile(PDB_181L_path, removeHs=False)
+
+        with pytest.raises(ValueError, match="periodic_box_vectors must be provided"):
+            self.cls(rdkit=m, periodic_box_vectors=None)
+
+    def test_missing_box_vectors_raises(self, PDB_181L_path, tmp_path):
+        pdb_no_box = tmp_path / "no_box.pdb"
+
+        with open(PDB_181L_path, "r") as f:
+            lines = f.readlines()
+
+        # remove CRYST1 line
+        lines = [l for l in lines if not l.startswith("CRYST1")]
+
+        pdb_no_box.write_text("".join(lines))
+
+        with pytest.raises(ValueError, match="Could not determine periodic_box_vectors"):
+            self.cls.from_pdb_file(str(pdb_no_box))
+
+    def test_box_vectors_preserved_in_dict_roundtrip(self, PDB_181L_path):
+        m1 = self.cls.from_pdb_file(PDB_181L_path, name="Bob")
+        d = m1.to_dict()
+        m2 = self.cls.from_dict(d)
+
+        v1 = m1._periodic_box_vectors.value_in_unit(unit.nanometer)
+        v2 = m2._periodic_box_vectors.value_in_unit(unit.nanometer)
+
+        assert_almost_equal(actual=v1, desired=v2, decimal=6)
+
+    def test_openmm_box_vectors_match(self, PDB_181L_path):
+        pdb = pdbfile.PDBFile(PDB_181L_path)
+        ref_box = pdb.topology.getPeriodicBoxVectors()
+
+        comp = self.cls.from_pdb_file(PDB_181L_path)
+        gufe_box = comp._periodic_box_vectors
+
+        v1 = np.array(ref_box.value_in_unit(unit.nanometer))
+        v2 = np.array(gufe_box.value_in_unit(unit.nanometer))
+
+        assert_almost_equal(actual=v1, desired=v2, decimal=6)
+
+
+class TestProteinMembraneComponent(TestSolvatedPDBComponent):
+    cls = ProteinMembraneComponent
+    repr = "ProteinMembraneComponent(name=Steve)"
 
 
 def test_no_monomer_info_error(ethane):
