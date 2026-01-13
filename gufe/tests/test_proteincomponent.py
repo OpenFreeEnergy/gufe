@@ -21,7 +21,7 @@ from .test_tokenization import GufeTokenizableTestsMixin
 
 if OPENMM_VERSION:
     from openmm import unit
-    from openmm.app import pdbfile
+    from openmm.app import pdbfile, pdbxfile
 
 
 @pytest.fixture
@@ -440,9 +440,9 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
-    def test_infer_box_vectors_produces_valid_box(self, PDB_a2a_path):
+    def test_infer_box_vectors_produces_valid_box(self, PDB_181L_path):
         comp = self.cls.from_pdb_file(
-            PDB_a2a_path,
+            PDB_181L_path,
             infer_box_vectors=True,
         )
 
@@ -465,13 +465,34 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
 
         assert instance != comp2
 
-    def test_from_pdbx_file_without_box_vectors_raises(self, PDBx_a2a_path):
-        with pytest.raises(ValueError, match="Could not determine box_vectors"):
-            SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path)
+    def test_from_pdbx_file_user_box_vectors(self, PDBx_a2a_path):
+        b = np.eye(3) * 2.0 * offunit.nanometer
+        comp = SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path, box_vectors=b)
+        box = comp.box_vectors
+        assert box is not None
+        assert box.shape == (3, 3)
+        assert box.units.is_compatible_with(offunit.nanometer)
 
-    def test_from_pdbx_file_infer_box_vectors(self, PDBx_a2a_path):
+    def test_from_pdbx_file_uses_file_box_vectors(self, PDBx_a2a_path):
+        comp = SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path)
+
+        box = comp.box_vectors
+        pdbx = pdbxfile.PDBxFile(PDBx_a2a_path)
+        ref = pdbx.topology.getPeriodicBoxVectors()
+        assert_almost_equal(actual=box.m, desired=ref.value_in_unit(unit.nanometer), decimal=6)
+        # np.testing.assert_allclose(
+        #     box.m,
+        #     ref.value_in_unit(unit.nanometer),
+        #     rtol=1e-6,
+        # )
+
+    def test_from_pdbx_file_without_box_vectors_raises(self, PDBx_181L_path):
+        with pytest.raises(ValueError, match="Could not determine box_vectors"):
+            SolvatedPDBComponent.from_pdbx_file(PDBx_181L_path)
+
+    def test_from_pdbx_file_infer_box_vectors(self, PDBx_181L_path):
         comp = SolvatedPDBComponent.from_pdbx_file(
-            PDBx_a2a_path,
+            PDBx_181L_path,
             infer_box_vectors=True,
         )
         assert comp.box_vectors is not None

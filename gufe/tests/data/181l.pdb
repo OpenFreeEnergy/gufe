@@ -1,5 +1,4 @@
 REMARK   1 CREATED WITH OPENMM 8.2, 2025-04-25
-CRYST1  134.081  145.865  143.351  90.00  90.00  90.00 P 1           0
 HETATM    1  C   ACE A   1      44.004  -3.922  10.269  1.00  0.00           C  
 HETATM    2  O   ACE A   1      43.553  -3.405  11.300  1.00  0.00           O  
 HETATM    3  CH3 ACE A   1      44.579  -5.322  10.286  1.00  0.00           C  

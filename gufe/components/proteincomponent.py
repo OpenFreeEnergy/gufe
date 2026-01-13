@@ -702,11 +702,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             raise ValueError("box_vectors must be provided")
 
         # OpenFF Quantity check
-        # if not hasattr(box, "units"):
-        #     raise TypeError(
-        #         "box_vectors must be an OpenFF Quantity "
-        #         "(e.g. np.eye(3) * unit.nanometer)"
-        #     )
         _is_box_shape(box)
 
         # Reduced-form check
@@ -791,6 +786,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
 
+        # 1. Use the user supplied box
         if box_vectors is not None:
             return cls(
                 rdkit=prot._rdkit,
@@ -798,15 +794,13 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 box_vectors=box_vectors,
             )
 
-        box = pdb.topology.getPeriodicBoxVectors()
-        if box is not None:
-            box = from_openmm(box)
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box,
-            )
+        # 2. Try reading box vectors from file
+        try:
+            return cls._from_openmmPDBFile(pdb, name=name)
+        except ValueError:
+            pass
 
+        # 3. Inferred box vectors
         if infer_box_vectors:
             box = cls._estimate_box(pdb_file)
             return cls(
@@ -861,6 +855,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         prot = ProteinComponent._from_openmmPDBFile(pdbx, name=name)
 
+        # 1. Use the user supplied box
         if box_vectors is not None:
             return cls(
                 rdkit=prot._rdkit,
@@ -868,15 +863,13 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 box_vectors=box_vectors,
             )
 
-        box = pdbx.topology.getPeriodicBoxVectors()
-        if box is not None:
-            box = from_openmm(box)
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box,
-            )
+        # 2. Try reading box vectors from file
+        try:
+            return cls._from_openmmPDBFile(pdbx, name=name)
+        except ValueError:
+            pass
 
+        # 3. Inferred box vectors
         if infer_box_vectors:
             box = cls._estimate_box(pdbx_file)
             return cls(
@@ -923,7 +916,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
-            box_vectors=box,
+            box_vectors=from_openmm(box),
         )
 
     def _to_dict(self):
