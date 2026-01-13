@@ -98,13 +98,13 @@ def multi_molecule_sdf():
         yield str(f)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def PDB_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.pdb") as f:
         yield str(f)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def PDB_a2a_path():
     with importlib.resources.path("gufe.tests.data", "a2a.pdb") as f:
         yield str(f)

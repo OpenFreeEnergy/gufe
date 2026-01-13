@@ -111,7 +111,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     cls = ProteinComponent
     repr = "ProteinComponent(name=Steve)"
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def instance(self, PDB_181L_path):
         return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
 
@@ -370,12 +370,11 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
                 self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
 
 
-class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
+class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentMixin):
     cls = SolvatedPDBComponent
-    # key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
     repr = "SolvatedPDBComponent(name=Steve)"
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def instance(self, PDB_a2a_path):
         return self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
 
@@ -385,27 +384,20 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         assert box.shape == (3, 3)
         assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(6.9587)
 
-    def test_requires_box_vectors(self, instance):
+    def test_requires_box_vectors(self, PDB_a2a_path):
+        prot = ProteinComponent.from_pdb_file(PDB_a2a_path)
+
         with pytest.raises(ValueError, match="box_vectors must be provided"):
             self.cls(
-                rdkit=instance._rdkit,
-                name=instance.name,
+                rdkit=prot._rdkit,
+                name=prot.name,
                 box_vectors=None,
             )
 
-    def test_missing_box_vectors_raises(self, PDB_a2a_path, tmp_path):
-        pdb_no_box = tmp_path / "no_box.pdb"
-
-        with open(PDB_a2a_path, "r") as f:
-            lines = f.readlines()
-
-        # remove CRYST1 line
-        lines = [l for l in lines if not l.startswith("CRYST1")]
-
-        pdb_no_box.write_text("".join(lines))
+    def test_missing_box_vectors_raises(self, PDB_181L_path):
 
         with pytest.raises(ValueError, match="Could not determine box_vectors"):
-            self.cls.from_pdb_file(str(pdb_no_box))
+            self.cls.from_pdb_file(PDB_181L_path)
 
     def test_box_vectors_preserved_in_dict_roundtrip(self, instance):
         d = instance.to_dict()
@@ -480,11 +472,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         pdbx = pdbxfile.PDBxFile(PDBx_a2a_path)
         ref = pdbx.topology.getPeriodicBoxVectors()
         assert_almost_equal(actual=box.m, desired=ref.value_in_unit(unit.nanometer), decimal=6)
-        # np.testing.assert_allclose(
-        #     box.m,
-        #     ref.value_in_unit(unit.nanometer),
-        #     rtol=1e-6,
-        # )
 
     def test_from_pdbx_file_without_box_vectors_raises(self, PDBx_181L_path):
         with pytest.raises(ValueError, match="Could not determine box_vectors"):
