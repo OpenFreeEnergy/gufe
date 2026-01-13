@@ -131,26 +131,6 @@ ions_dict = {
 }
 
 
-def _estimate_box(pdb_file):
-    """
-    Estimate an orthorhombic bounding box using MDTraj (units: nm).
-    Returns three numpy arrays: (a, b, c).
-    """
-    traj = md.load(pdb_file)
-
-    coords = traj.xyz[0]  # nm
-
-    mins = coords.min(axis=0)
-    maxs = coords.max(axis=0)
-    lengths = maxs - mins
-
-    a = np.array([lengths[0], 0.0, 0.0])
-    b = np.array([0.0, lengths[1], 0.0])
-    c = np.array([0.0, 0.0, lengths[2]])
-
-    return (a, b, c) * omm_unit.nanometer
-
-
 class ProteinComponent(ExplicitMoleculeComponent):
     """
     :class:`Component` representing the contents of a PDB file, such as a protein.
@@ -663,66 +643,219 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     Base class for explicitly solvated components.
     """
 
-    def __init__(self, rdkit: Mol, periodic_box_vectors=None, name: str = ""):
+    def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
         if periodic_box_vectors is None:
             raise ValueError("periodic_box_vectors must be provided")
+        if not hasattr(periodic_box_vectors, "unit"):
+            raise TypeError("periodic_box_vectors must be an OpenMM Quantity")
         super().__init__(rdkit=rdkit, name=name)
         self._periodic_box_vectors = periodic_box_vectors
 
-    @classmethod
-    def from_pdb_file(cls, pdb_file: PathLike | TextIO, name: str = "", *, box_vectors=None, infer_box_vectors=False):
+
+    @staticmethod
+    def _estimate_box(pdb_file):
         """
-        Create SolvatedPDBComponent from a PDB file.
+        Estimate an orthorhombic periodic box from atomic coordinates.
+
+        The bounding box is computed from the minimum and maximum atomic
+        coordinates and returned as orthorhombic periodic box vectors.
 
         Parameters
         ----------
-        pdb_file : str
-            path to the pdb file.
+        pdb_file : PathLike or TextIO
+            Path to a PDB or PDBx file, or a file-like object, readable by MDTraj.
+
+        Returns
+        -------
+        openmm.unit.Quantity
+            A tuple of three vectors (a, b, c) with units of nanometers,
+            suitable for use as OpenMM periodic box vectors.
+        """
+        traj = md.load(pdb_file)
+
+        coords = traj.xyz[0]  # nm
+        mins = coords.min(axis=0)
+        maxs = coords.max(axis=0)
+        lengths = maxs - mins
+
+        a = np.array([lengths[0], 0.0, 0.0])
+        b = np.array([0.0, lengths[1], 0.0])
+        c = np.array([0.0, 0.0, lengths[2]])
+
+        return (a, b, c) * omm_unit.nanometer
+
+
+    @classmethod
+    def from_pdb_file(
+            cls,
+            pdb_file: PathLike | TextIO,
+            name: str = "",
+            *,
+            box_vectors=None,
+            infer_box_vectors: bool = False,
+    ):
+        """
+        Create a SolvatedPDBComponent from a PDB file.
+
+        This method loads a PDB file using OpenMM, constructs the underlying
+        protein representation, and attaches periodic box vectors. Periodic
+        box vectors may be provided explicitly, inferred from the coordinates,
+        or read directly from the PDB file.
+
+        Parameters
+        ----------
+        pdb_file : PathLike or TextIO
+            Path to the PDB file or a file-like object.
         name : str, optional
-            name of the input protein, by default ""
+            Name of the protein component.
+        box_vectors : openmm.unit.Quantity, optional
+            Explicit periodic box vectors to associate with the component.
+            If provided, these take precedence over any box vectors found
+            in the PDB file.
+        infer_box_vectors : bool, optional
+            If ``True``, estimate periodic box vectors from the atomic
+            coordinates when they are not present in the PDB file.
+            If ``False`` (default), periodic box vectors must be present
+            in the file or provided explicitly.
+
         Returns
         -------
         SolvatedPDBComponent
-            the deserialized molecule
+            The constructed solvated PDB component.
+
+        Raises
+        ------
+        ValueError
+            If periodic box vectors cannot be determined and are required.
         """
         pdb = PDBFile(pdb_file)
-        # Get base protein
+
         prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
-        # Get periodic box vectors
+
         if box_vectors is not None:
-            box = box_vectors
-        elif infer_box_vectors is False:
-            box = pdb.topology.getPeriodicBoxVectors()
-        else:
-            box = _estimate_box(pdb_file)
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                periodic_box_vectors=box_vectors,
+            )
 
-        if box is None:
-            raise ValueError("Could not determine periodic_box_vectors; please provide them explicitly.")
+        if infer_box_vectors:
+            box = cls._estimate_box(pdb_file)
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                periodic_box_vectors=box,
+            )
 
-        return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
+        return cls._from_openmmPDBFile(pdb, name=name)
+
+
+    @classmethod
+    def from_pdbx_file(
+            cls,
+            pdbx_file: PathLike | TextIO,
+            name: str = "",
+            *,
+            box_vectors=None,
+            infer_box_vectors: bool = False,
+    ):
+        """
+        Create a SolvatedPDBComponent from a PDBx/mmCIF file.
+
+        This method loads a PDBx (mmCIF) file using OpenMM and constructs
+        a solvated protein component with associated periodic box vectors.
+        Periodic box vectors may be provided explicitly, inferred from
+        coordinates, or read from the PDBx file if present.
+
+        Parameters
+        ----------
+        pdbx_file : PathLike or TextIO
+            Path to the PDBx/mmCIF file or a file-like object.
+        name : str, optional
+            Name of the protein component.
+        box_vectors : openmm.unit.Quantity, optional
+            Explicit periodic box vectors to associate with the component.
+            If provided, these take precedence over any box vectors found
+            in the PDBx file.
+        infer_box_vectors : bool, optional
+            If ``True``, estimate periodic box vectors from the atomic
+            coordinates when they are not present in the PDBx file.
+            If ``False`` (default), periodic box vectors must be present
+            in the file or provided explicitly.
+
+        Returns
+        -------
+        SolvatedPDBComponent
+            The constructed solvated protein component.
+
+        Raises
+        ------
+        ValueError
+            If periodic box vectors cannot be determined and are required.
+        """
+        pdbx = PDBxFile(pdbx_file)
+
+        prot = ProteinComponent._from_openmmPDBFile(pdbx, name=name)
+
+        if box_vectors is not None:
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                periodic_box_vectors=box_vectors,
+            )
+
+        if infer_box_vectors:
+            box = cls._estimate_box(pdbx_file)
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                periodic_box_vectors=box,
+            )
+
+        return cls._from_openmmPDBFile(pdbx, name=name)
+
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
         """
-        Converts to our internal representation (rdkit Mol)
+        Construct a SolvatedPDBComponent from an OpenMM PDBFile or PDBxFile.
+
+        This method converts an OpenMM structure into the internal RDKit-based
+        representation and extracts periodic box vectors from the OpenMM
+        topology. Periodic box vectors are required and must be present.
 
         Parameters
         ----------
-        openmm_PDBFile : PDBFile or PDBxFile
-            object of the protein
-        name : str
-            name of the protein
+        openmm_PDBFile : openmm.app.PDBFile or openmm.app.PDBxFile
+            OpenMM object containing topology, positions, and (optionally)
+            periodic box vectors.
+        name : str, optional
+            Name of the protein component.
 
         Returns
         -------
         SolvatedPDBComponent
-            the deserialized molecule
+            The constructed solvated protein component.
+
+        Raises
+        ------
+        ValueError
+            If periodic box vectors are not present in the OpenMM topology.
         """
         prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
+
         box = openmm_PDBFile.topology.getPeriodicBoxVectors()
         if box is None:
-            raise ValueError("Periodic box vectors are required but were not found.")
-        return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
+            raise ValueError(
+                "Periodic box vectors are required but were not found."
+            )
+
+        return cls(
+            rdkit=prot._rdkit,
+            name=prot.name,
+            periodic_box_vectors=box,
+        )
+
 
     def _to_dict(self):
         """
@@ -752,7 +885,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if box_data is None:
             raise ValueError("periodic_box_vectors must be present in the serialized dict")
 
-        prot = ProteinComponent._from_dict(d, name=name)
+        prot = ProteinComponent._from_dict(d.copy(), name=name)
 
         unit_name = box_data["unit"]
         unit_obj = getattr(omm_unit, unit_name, omm_unit.nanometer)

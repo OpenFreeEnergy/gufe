@@ -135,6 +135,12 @@ def PDBx_181L_path():
 
 
 @pytest.fixture
+def PDBx_a2a_path():
+    with importlib.resources.path("gufe.tests.data", "a2a.cif") as f:
+        yield str(f)
+
+
+@pytest.fixture
 def PDBx_181L_openMMClean_path():
     with importlib.resources.path("gufe.tests.data", "181l_openmmClean.cif") as f:
         yield str(f)

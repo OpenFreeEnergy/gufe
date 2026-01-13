@@ -403,8 +403,22 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
 
         pdb_no_box.write_text("".join(lines))
 
-        with pytest.raises(ValueError, match="Could not determine periodic_box_vectors"):
+        with pytest.raises(ValueError, match="Periodic box vectors are required"):
             self.cls.from_pdb_file(str(pdb_no_box))
+
+
+    def test_explicit_box_overrides_file_box(self, PDB_a2a_path):
+        explicit_box = np.eye(3) * 10.0 * unit.nanometer
+
+        comp = SolvatedPDBComponent.from_pdb_file(
+            PDB_a2a_path,
+            box_vectors=explicit_box,
+        )
+
+        assert np.allclose(
+            comp._periodic_box_vectors.value_in_unit(unit.nanometer),
+            explicit_box.value_in_unit(unit.nanometer),
+        )
 
     def test_box_vectors_preserved_in_dict_roundtrip(self, instance):
         d = instance.to_dict()
@@ -463,6 +477,19 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         )
 
         assert instance != comp2
+
+    def test_from_pdbx_file_without_box_vectors_raises(self, PDBx_a2a_path):
+        with pytest.raises(ValueError, match="Periodic box vectors are required"):
+            SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path)
+
+    def test_from_pdbx_file_infer_box_vectors(self, PDBx_a2a_path):
+        comp = SolvatedPDBComponent.from_pdbx_file(
+            PDBx_a2a_path,
+            infer_box_vectors=True,
+        )
+        assert comp._periodic_box_vectors is not None
+
+
 
 
 # class TestProteinMembraneComponent(TestSolvatedPDBComponent):
