@@ -643,27 +643,27 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
-    Protein component with explicit solvent and periodic boundary conditions.
+    Protein component with explicit solvent and box vectors.
 
     This class represents a protein structure that is associated with
-    explicit periodic box vectors. Unlike ``ProteinComponent``, instances
-    of this class always have periodic box vectors, which are treated as
+    explicit box vectors. Unlike ``ProteinComponent``, instances
+    of this class always have box vectors, which are treated as
     part of the component's identity (affecting equality and hashing).
 
     Notes
     -----
-    * ``periodic_box_vectors`` must be an OpenFF quantity with units.
+    * ``box_vectors`` must be an OpenFF quantity with units.
     * Box vectors are serialized and included in equality and hash checks.
     * Construction will fail if box vectors cannot be determined.
     """
 
-    def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
+    def __init__(self, rdkit: Mol, box_vectors, name: str = ""):
         """
         Parameters
         ----------
         rdkit : rdkit.Chem.Mol
             RDKit representation of the protein.
-        periodic_box_vectors : openff.units.Quantity
+        box_vectors : openff.units.Quantity
             Periodic box vectors with units of length, compatible with
             nanometers. Must be a (3, 3) array in reduced form.
         name : str, optional
@@ -672,18 +672,18 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         TypeError
-            If ``periodic_box_vectors`` is not an OpenFF Quantity.
+            If ``box_vectors`` is not an OpenFF Quantity.
         ValueError
-            If ``periodic_box_vectors`` are not valid box vectors.
+            If ``box_vectors`` are not valid box vectors.
         """
-        self._validate_box_vectors(periodic_box_vectors)
+        self._validate_box_vectors(box_vectors)
         super().__init__(rdkit=rdkit, name=name)
-        self._periodic_box_vectors = periodic_box_vectors
+        self.box_vectors = box_vectors
 
     @staticmethod
     def _validate_box_vectors(box):
         """
-        Validate periodic box vectors.
+        Validate box vectors.
 
         Parameters
         ----------
@@ -698,27 +698,27 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             If ``box`` does not represent valid reduced-form box vectors.
         """
         if box is None:
-            raise ValueError("periodic_box_vectors must be provided")
+            raise ValueError("box_vectors must be provided")
 
         # OpenFF Quantity check
         if not hasattr(box, "units"):
             raise TypeError(
-                "periodic_box_vectors must be an OpenFF Quantity "
+                "box_vectors must be an OpenFF Quantity "
                 "(e.g. np.eye(3) * unit.nanometer)"
             )
 
         # Reduced-form check
         if not _box_vectors_are_in_reduced_form(box):
             raise ValueError(
-                f"periodic_box_vectors: {box} are not in OpenMM reduced form"
+                f"box_vectors: {box} are not in OpenMM reduced form"
             )
 
     @staticmethod
     def _estimate_box(pdb_file):
         """
-        Estimate an orthorhombic periodic box from atomic coordinates.
+        Estimate an orthorhombic box from atomic coordinates.
         The bounding box is computed from the minimum and maximum atomic
-        coordinates and returned as orthorhombic periodic box vectors.
+        coordinates and returned as orthorhombic box vectors.
 
         Parameters
         ----------
@@ -761,8 +761,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Create a SolvatedPDBComponent from a PDB file.
 
         This method loads a PDB file using OpenMM, constructs the underlying
-        protein representation, and attaches periodic box vectors. Periodic
-        box vectors may be provided explicitly, inferred from the coordinates,
+        protein representation, and attaches box vectors.
+        Box vectors may be provided explicitly, inferred from the coordinates,
         or read directly from the PDB file.
 
         Parameters
@@ -772,7 +772,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         name : str, optional
             Name of the protein component.
         box_vectors : openff.units.Quantity, optional
-            Explicit periodic box vectors (OpenFF units).
+            Explicit box vectors (OpenFF units).
             If provided, these take precedence over any box vectors found
             in the PDB file.
         infer_box_vectors : bool, optional
@@ -786,7 +786,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         ValueError
-            If periodic box vectors cannot be determined.
+            If box vectors cannot be determined.
         """
         pdb = PDBFile(pdb_file)
 
@@ -796,7 +796,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
-                periodic_box_vectors=box_vectors,
+                box_vectors=box_vectors,
             )
 
         box = pdb.topology.getPeriodicBoxVectors()
@@ -805,7 +805,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
-                periodic_box_vectors=box,
+                box_vectors=box,
             )
 
         if infer_box_vectors:
@@ -813,11 +813,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
-                periodic_box_vectors=box,
+                box_vectors=box,
             )
 
         raise ValueError(
-            "Could not determine periodic_box_vectors; "
+            "Could not determine box_vectors; "
             "please provide them explicitly or enable infer_box_vectors"
         )
 
@@ -835,7 +835,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
 
         This method loads a PDBx (mmCIF) file using OpenMM and constructs
-        a solvated protein component with associated periodic box vectors.
+        a solvated protein component with associated box vectors.
         Periodic box vectors may be provided explicitly, inferred from
         coordinates, or read from the PDBx file if present.
 
@@ -846,7 +846,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         name : str, optional
             Name of the protein component.
         box_vectors : openmm.unit.Quantity, optional
-            Explicit periodic box vectors to associate with the component.
+            Explicit box vectors to associate with the component.
             If provided, these take precedence over any box vectors found
             in the PDBx file.
         infer_box_vectors : bool, optional
@@ -860,7 +860,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         ValueError
-            If periodic box vectors cannot be determined.
+            If box vectors cannot be determined.
         """
         pdbx = PDBxFile(pdbx_file)
 
@@ -870,7 +870,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
-                periodic_box_vectors=box_vectors,
+                box_vectors=box_vectors,
             )
 
         box = pdbx.topology.getPeriodicBoxVectors()
@@ -879,7 +879,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
-                periodic_box_vectors=box,
+                box_vectors=box,
             )
 
         if infer_box_vectors:
@@ -887,11 +887,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
-                periodic_box_vectors=box,
+                box_vectors=box,
             )
 
         raise ValueError(
-            "Could not determine periodic_box_vectors; "
+            "Could not determine box_vectors; "
             "please provide them explicitly or enable infer_box_vectors"
         )
 
@@ -901,14 +901,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Construct a SolvatedPDBComponent from an OpenMM PDBFile or PDBxFile.
 
         This method converts an OpenMM structure into the internal RDKit-based
-        representation and extracts periodic box vectors from the OpenMM
-        topology. Periodic box vectors are required and must be present.
+        representation and extracts box vectors from the OpenMM
+        topology. Box vectors are required and must be present.
 
         Parameters
         ----------
         openmm_PDBFile : openmm.app.PDBFile or openmm.app.PDBxFile
             OpenMM object containing topology, positions, and (optionally)
-            periodic box vectors.
+            box vectors.
         name : str, optional
             Name of the protein component.
 
@@ -920,18 +920,18 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         ValueError
-            If periodic box vectors are not present in the OpenMM topology.
+            If box vectors are not present in the OpenMM topology.
         """
         prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
 
         box = openmm_PDBFile.topology.getPeriodicBoxVectors()
         if box is None:
-            raise ValueError("Periodic box vectors are required but were not found.")
+            raise ValueError("Box vectors are required but were not found.")
 
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
-            periodic_box_vectors=box,
+            box_vectors=box,
         )
 
 
@@ -944,9 +944,9 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         d = super()._to_dict()
 
-        box = self._periodic_box_vectors.to("nanometer")
+        box = self.box_vectors.to("nanometer")
 
-        d["periodic_box_vectors"] = {
+        d["box_vectors"] = {
             "value": serialize_numpy(box.m),
             "unit": str(box.units),
         }
@@ -958,10 +958,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Deserialize from a dictionary.
         """
-        box_data = d.get("periodic_box_vectors")
+        box_data = d.get("box_vectors")
         if box_data is None:
             raise ValueError(
-                "periodic_box_vectors must be present in the serialized dict"
+                "box_vectors must be present in the serialized dict"
             )
 
         prot = ProteinComponent._from_dict(d.copy(), name=name)
@@ -979,13 +979,13 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
-            periodic_box_vectors=box,
+            box_vectors=box,
         )
 
 
 class ProteinMembraneComponent(SolvatedPDBComponent):
     """
-    Protein component with membrane and periodic box vectors.
+    Protein component with membrane and box vectors.
     """
 
     ...

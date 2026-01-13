@@ -380,17 +380,17 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         return self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
 
     def test_protein_box_vectors(self, instance):
-        box = instance._periodic_box_vectors
+        box = instance.box_vectors
         assert box is not None
         assert box.shape == (3, 3)
         assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(6.9587)
 
     def test_requires_box_vectors(self, instance):
-        with pytest.raises(ValueError, match="periodic_box_vectors must be provided"):
+        with pytest.raises(ValueError, match="box_vectors must be provided"):
             self.cls(
                 rdkit=instance._rdkit,
                 name=instance.name,
-                periodic_box_vectors=None,
+                box_vectors=None,
             )
 
     def test_missing_box_vectors_raises(self, PDB_a2a_path, tmp_path):
@@ -404,27 +404,27 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
 
         pdb_no_box.write_text("".join(lines))
 
-        with pytest.raises(ValueError, match="Could not determine periodic_box_vectors"):
+        with pytest.raises(ValueError, match="Could not determine box_vectors"):
             self.cls.from_pdb_file(str(pdb_no_box))
 
     def test_box_vectors_preserved_in_dict_roundtrip(self, instance):
         d = instance.to_dict()
         m2 = self.cls.from_dict(d)
 
-        v1 = instance._periodic_box_vectors.m
-        v2 = m2._periodic_box_vectors.m
+        v1 = instance.box_vectors.m
+        v2 = m2.box_vectors.m
 
         assert_almost_equal(actual=v1, desired=v2, decimal=6)
 
-    def test_from_dict_requires_periodic_box_vectors(self, instance):
+    def test_from_dict_requires_box_vectors(self, instance):
         d = instance.to_dict()
 
         # Remove box vectors to simulate invalid / legacy data
-        d.pop("periodic_box_vectors")
+        d.pop("box_vectors")
 
         with pytest.raises(
                 ValueError,
-                match="periodic_box_vectors must be present in the serialized dict",
+                match="box_vectors must be present in the serialized dict",
         ):
             instance.__class__.from_dict(d)
 
@@ -433,7 +433,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         ref_box = pdb.topology.getPeriodicBoxVectors()
 
         comp = self.cls.from_pdb_file(PDB_a2a_path)
-        gufe_box = comp._periodic_box_vectors
+        gufe_box = comp.box_vectors
 
         v1 = np.array(ref_box.value_in_unit(unit.nanometer))
         v2 = np.array(gufe_box.to(offunit.nanometer).magnitude)
@@ -446,7 +446,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
             infer_box_vectors=True,
         )
 
-        box = comp._periodic_box_vectors
+        box = comp.box_vectors
         assert box.shape == (3, 3)
 
         # orthorhombic
@@ -461,12 +461,12 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
 
-        comp2 = instance.copy_with_replacements(periodic_box_vectors=v)
+        comp2 = instance.copy_with_replacements(box_vectors=v)
 
         assert instance != comp2
 
     def test_from_pdbx_file_without_box_vectors_raises(self, PDBx_a2a_path):
-        with pytest.raises(ValueError, match="Could not determine periodic_box_vectors"):
+        with pytest.raises(ValueError, match="Could not determine box_vectors"):
             SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path)
 
     def test_from_pdbx_file_infer_box_vectors(self, PDBx_a2a_path):
@@ -474,11 +474,11 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
             PDBx_a2a_path,
             infer_box_vectors=True,
         )
-        assert comp._periodic_box_vectors is not None
+        assert comp.box_vectors is not None
 
     def test_explicit_box_vectors_override_file(self, PDB_a2a_path):
         ref = self.cls.from_pdb_file(PDB_a2a_path)
-        ref_box = ref._periodic_box_vectors
+        ref_box = ref.box_vectors
 
         override = np.eye(3) * 2.0 * offunit.nanometer
 
@@ -493,7 +493,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         )
 
         assert_almost_equal(
-            comp._periodic_box_vectors.m_as(offunit.nanometer),
+            comp.box_vectors.m_as(offunit.nanometer),
             override.m_as(offunit.nanometer),
             decimal=6,
         )
@@ -507,7 +507,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
 
         with pytest.raises(ValueError, match="reduced form"):
             instance.copy_with_replacements(
-                periodic_box_vectors=bad
+                box_vectors=bad
             )
 
 
