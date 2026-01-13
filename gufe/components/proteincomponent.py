@@ -10,6 +10,9 @@ import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
 from openmm.unit import Quantity
+from openff.interchange.components._packmol import _box_vectors_are_in_reduced_form
+from openff.units import unit as offunit
+from openff.units.openmm import from_openmm
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
@@ -640,22 +643,80 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
-    Base class for explicitly solvated components.
+    Protein component with explicit solvent and periodic boundary conditions.
+
+    This class represents a protein structure that is associated with
+    explicit periodic box vectors. Unlike ``ProteinComponent``, instances
+    of this class always have periodic box vectors, which are treated as
+    part of the component's identity (affecting equality and hashing).
+
+    Notes
+    -----
+    * ``periodic_box_vectors`` must be an OpenFF quantity with units.
+    * Box vectors are serialized and included in equality and hash checks.
+    * Construction will fail if box vectors cannot be determined.
     """
 
     def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
-        if periodic_box_vectors is None:
-            raise ValueError("periodic_box_vectors must be provided")
-        if not hasattr(periodic_box_vectors, "unit"):
-            raise TypeError("periodic_box_vectors must be an OpenMM Quantity")
+        """
+        Parameters
+        ----------
+        rdkit : rdkit.Chem.Mol
+            RDKit representation of the protein.
+        periodic_box_vectors : openff.units.Quantity
+            Periodic box vectors with units of length, compatible with
+            nanometers. Must be a (3, 3) array in reduced form.
+        name : str, optional
+            Name of the component.
+
+        Raises
+        ------
+        TypeError
+            If ``periodic_box_vectors`` is not an OpenFF Quantity.
+        ValueError
+            If ``periodic_box_vectors`` are not valid box vectors.
+        """
+        self._validate_box_vectors(periodic_box_vectors)
         super().__init__(rdkit=rdkit, name=name)
         self._periodic_box_vectors = periodic_box_vectors
+
+    @staticmethod
+    def _validate_box_vectors(box):
+        """
+        Validate periodic box vectors.
+
+        Parameters
+        ----------
+        box : openff.units.Quantity
+            Box vectors to validate.
+
+        Raises
+        ------
+        TypeError
+            If ``box`` is not an OpenFF Quantity.
+        ValueError
+            If ``box`` does not represent valid reduced-form box vectors.
+        """
+        if box is None:
+            raise ValueError("periodic_box_vectors must be provided")
+
+        # OpenFF Quantity check
+        if not hasattr(box, "units"):
+            raise TypeError(
+                "periodic_box_vectors must be an OpenFF Quantity "
+                "(e.g. np.eye(3) * unit.nanometer)"
+            )
+
+        # Reduced-form check
+        if not _box_vectors_are_in_reduced_form(box):
+            raise ValueError(
+                f"periodic_box_vectors: {box} are not in OpenMM reduced form"
+            )
 
     @staticmethod
     def _estimate_box(pdb_file):
         """
         Estimate an orthorhombic periodic box from atomic coordinates.
-
         The bounding box is computed from the minimum and maximum atomic
         coordinates and returned as orthorhombic periodic box vectors.
 
@@ -666,9 +727,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         Returns
         -------
-        openmm.unit.Quantity
-            A tuple of three vectors (a, b, c) with units of nanometers,
-            suitable for use as OpenMM periodic box vectors.
+        openff.units.Quantity
+            Orthorhombic box vectors with units of nanometers.
         """
         traj = md.load(pdb_file)
 
@@ -677,11 +737,16 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         maxs = coords.max(axis=0)
         lengths = maxs - mins
 
-        a = np.array([lengths[0], 0.0, 0.0])
-        b = np.array([0.0, lengths[1], 0.0])
-        c = np.array([0.0, 0.0, lengths[2]])
+        box = np.array(
+            [
+                [lengths[0], 0.0, 0.0],
+                [0.0, lengths[1], 0.0],
+                [0.0, 0.0, lengths[2]],
+            ]
+        )
 
-        return (a, b, c) * omm_unit.nanometer
+        return box * offunit.nanometer
+
 
     @classmethod
     def from_pdb_file(
@@ -706,15 +771,12 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             Path to the PDB file or a file-like object.
         name : str, optional
             Name of the protein component.
-        box_vectors : openmm.unit.Quantity, optional
-            Explicit periodic box vectors to associate with the component.
+        box_vectors : openff.units.Quantity, optional
+            Explicit periodic box vectors (OpenFF units).
             If provided, these take precedence over any box vectors found
             in the PDB file.
         infer_box_vectors : bool, optional
-            If ``True``, estimate periodic box vectors from the atomic
-            coordinates when they are not present in the PDB file.
-            If ``False`` (default), periodic box vectors must be present
-            in the file or provided explicitly.
+            If True, estimate box vectors when not present in file.
 
         Returns
         -------
@@ -724,7 +786,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         ValueError
-            If periodic box vectors cannot be determined and are required.
+            If periodic box vectors cannot be determined.
         """
         pdb = PDBFile(pdb_file)
 
@@ -737,6 +799,15 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 periodic_box_vectors=box_vectors,
             )
 
+        box = pdb.topology.getPeriodicBoxVectors()
+        if box is not None:
+            box = from_openmm(box)
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                periodic_box_vectors=box,
+            )
+
         if infer_box_vectors:
             box = cls._estimate_box(pdb_file)
             return cls(
@@ -745,12 +816,16 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 periodic_box_vectors=box,
             )
 
-        return cls._from_openmmPDBFile(pdb, name=name)
+        raise ValueError(
+            "Could not determine periodic_box_vectors; "
+            "please provide them explicitly or enable infer_box_vectors"
+        )
+
 
     @classmethod
     def from_pdbx_file(
         cls,
-        pdbx_file: PathLike | TextIO,
+        pdbx_file: str,
         name: str = "",
         *,
         box_vectors=None,
@@ -766,8 +841,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         Parameters
         ----------
-        pdbx_file : PathLike or TextIO
-            Path to the PDBx/mmCIF file or a file-like object.
+        pdbx_file : str
+            Name of the PDBx/mmCIF file.
         name : str, optional
             Name of the protein component.
         box_vectors : openmm.unit.Quantity, optional
@@ -775,10 +850,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             If provided, these take precedence over any box vectors found
             in the PDBx file.
         infer_box_vectors : bool, optional
-            If ``True``, estimate periodic box vectors from the atomic
-            coordinates when they are not present in the PDBx file.
-            If ``False`` (default), periodic box vectors must be present
-            in the file or provided explicitly.
+            If True, estimate box vectors when not present in file.
 
         Returns
         -------
@@ -788,7 +860,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         ValueError
-            If periodic box vectors cannot be determined and are required.
+            If periodic box vectors cannot be determined.
         """
         pdbx = PDBxFile(pdbx_file)
 
@@ -801,6 +873,15 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 periodic_box_vectors=box_vectors,
             )
 
+        box = pdbx.topology.getPeriodicBoxVectors()
+        if box is not None:
+            box = from_openmm(box)
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                periodic_box_vectors=box,
+            )
+
         if infer_box_vectors:
             box = cls._estimate_box(pdbx_file)
             return cls(
@@ -809,7 +890,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 periodic_box_vectors=box,
             )
 
-        return cls._from_openmmPDBFile(pdbx, name=name)
+        raise ValueError(
+            "Could not determine periodic_box_vectors; "
+            "please provide them explicitly or enable infer_box_vectors"
+        )
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
@@ -850,46 +934,52 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             periodic_box_vectors=box,
         )
 
+
     def _to_dict(self):
         """
-        Serialize to dict, including periodic box vectors safely.
+        Serialize the component to a dictionary.
+
+        Periodic box vectors are always serialized explicitly as a numeric
+        array plus unit string.
         """
         d = super()._to_dict()
 
-        box = self._periodic_box_vectors
-        if box is None:
-            d["periodic_box_vectors"] = None
-            return d
-
-        # convert Quantity to a numpy array in base unit
-        unit = box.unit
-        value = serialize_numpy(box.value_in_unit(unit))
+        box = self._periodic_box_vectors.to("nanometer")
 
         d["periodic_box_vectors"] = {
-            "value": value,
-            "unit": unit.get_name(),
+            "value": serialize_numpy(box.m),
+            "unit": str(box.units),
         }
 
         return d
 
     @classmethod
     def _from_dict(cls, d, name=""):
+        """
+        Deserialize from a dictionary.
+        """
         box_data = d.get("periodic_box_vectors")
         if box_data is None:
-            raise ValueError("periodic_box_vectors must be present in the serialized dict")
+            raise ValueError(
+                "periodic_box_vectors must be present in the serialized dict"
+            )
 
         prot = ProteinComponent._from_dict(d.copy(), name=name)
 
-        unit_name = box_data["unit"]
-        unit_obj = getattr(omm_unit, unit_name, omm_unit.nanometer)
+        # If it already is a Quantity (e.g. from copy_with_replacements)
+        if hasattr(box_data, "units"):
+            box = box_data
 
-        box_arr = deserialize_numpy(box_data["value"])
-        box_vectors = np.asarray(box_arr) * unit_obj
+        # If it comes from the serialized form (e.g. _to_dict)
+        else:
+            unit_name = box_data["unit"]
+            unit_obj = getattr(offunit, unit_name)
+            box = deserialize_numpy(box_data["value"]) * unit_obj
 
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
-            periodic_box_vectors=box_vectors,
+            periodic_box_vectors=box,
         )
 
 
