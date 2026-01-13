@@ -10,7 +10,6 @@ import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
 from openmm.unit import Quantity
-from openff.interchange.components._packmol import _box_vectors_are_in_reduced_form
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from rdkit import Chem, rdBase
@@ -20,6 +19,8 @@ from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from ..vendor.openff.interchange._annotations import _is_box_shape
+from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from .solventcomponent import BaseSolventComponent
 
@@ -701,11 +702,12 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             raise ValueError("box_vectors must be provided")
 
         # OpenFF Quantity check
-        if not hasattr(box, "units"):
-            raise TypeError(
-                "box_vectors must be an OpenFF Quantity "
-                "(e.g. np.eye(3) * unit.nanometer)"
-            )
+        # if not hasattr(box, "units"):
+        #     raise TypeError(
+        #         "box_vectors must be an OpenFF Quantity "
+        #         "(e.g. np.eye(3) * unit.nanometer)"
+        #     )
+        _is_box_shape(box)
 
         # Reduced-form check
         if not _box_vectors_are_in_reduced_form(box):
