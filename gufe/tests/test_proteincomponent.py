@@ -406,7 +406,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         with pytest.raises(ValueError, match="Periodic box vectors are required"):
             self.cls.from_pdb_file(str(pdb_no_box))
 
-
     def test_explicit_box_overrides_file_box(self, PDB_a2a_path):
         explicit_box = np.eye(3) * 10.0 * unit.nanometer
 
@@ -488,8 +487,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
             infer_box_vectors=True,
         )
         assert comp._periodic_box_vectors is not None
-
-
 
 
 # class TestProteinMembraneComponent(TestSolvatedPDBComponent):

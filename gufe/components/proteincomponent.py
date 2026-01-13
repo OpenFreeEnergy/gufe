@@ -651,7 +651,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         super().__init__(rdkit=rdkit, name=name)
         self._periodic_box_vectors = periodic_box_vectors
 
-
     @staticmethod
     def _estimate_box(pdb_file):
         """
@@ -684,15 +683,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return (a, b, c) * omm_unit.nanometer
 
-
     @classmethod
     def from_pdb_file(
-            cls,
-            pdb_file: PathLike | TextIO,
-            name: str = "",
-            *,
-            box_vectors=None,
-            infer_box_vectors: bool = False,
+        cls,
+        pdb_file: PathLike | TextIO,
+        name: str = "",
+        *,
+        box_vectors=None,
+        infer_box_vectors: bool = False,
     ):
         """
         Create a SolvatedPDBComponent from a PDB file.
@@ -749,15 +747,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return cls._from_openmmPDBFile(pdb, name=name)
 
-
     @classmethod
     def from_pdbx_file(
-            cls,
-            pdbx_file: PathLike | TextIO,
-            name: str = "",
-            *,
-            box_vectors=None,
-            infer_box_vectors: bool = False,
+        cls,
+        pdbx_file: PathLike | TextIO,
+        name: str = "",
+        *,
+        box_vectors=None,
+        infer_box_vectors: bool = False,
     ):
         """
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
@@ -814,7 +811,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return cls._from_openmmPDBFile(pdbx, name=name)
 
-
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
         """
@@ -846,16 +842,13 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         box = openmm_PDBFile.topology.getPeriodicBoxVectors()
         if box is None:
-            raise ValueError(
-                "Periodic box vectors are required but were not found."
-            )
+            raise ValueError("Periodic box vectors are required but were not found.")
 
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
             periodic_box_vectors=box,
         )
-
 
     def _to_dict(self):
         """
