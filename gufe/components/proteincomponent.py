@@ -924,13 +924,9 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         array plus unit string.
         """
         d = super()._to_dict()
-
         box = self.box_vectors.to("nanometer")
 
-        d["box_vectors"] = {
-            "value": serialize_numpy(box.m),
-            "unit": str(box.units),
-        }
+        d["box_vectors"] = box
 
         return d
 
@@ -939,26 +935,16 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Deserialize from a dictionary.
         """
-        box_data = d.get("box_vectors")
-        if box_data is None:
+        box_vectors = d.get("box_vectors")
+        if box_vectors is None:
             raise ValueError("box_vectors must be present in the serialized dict")
 
         prot = ProteinComponent._from_dict(d.copy(), name=name)
 
-        # If it already is a Quantity (e.g. from copy_with_replacements)
-        if hasattr(box_data, "units"):
-            box = box_data
-
-        # If it comes from the serialized form (e.g. _to_dict)
-        else:
-            unit_name = box_data["unit"]
-            unit_obj = getattr(offunit, unit_name)
-            box = deserialize_numpy(box_data["value"]) * unit_obj
-
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
-            box_vectors=box,
+            box_vectors=box_vectors,
         )
 
 
