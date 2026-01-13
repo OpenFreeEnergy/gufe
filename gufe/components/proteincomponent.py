@@ -7,20 +7,20 @@ from typing import TextIO
 
 import mdtraj as md
 import numpy as np
+from openff.units import unit as offunit
+from openff.units.openmm import from_openmm
 from openmm import app
 from openmm import unit as omm_unit
 from openmm.unit import Quantity
-from openff.units import unit as offunit
-from openff.units.openmm import from_openmm
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
-from ..vendor.pdb_file.pdbfile import PDBFile
-from ..vendor.pdb_file.pdbxfile import PDBxFile
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
+from ..vendor.pdb_file.pdbfile import PDBFile
+from ..vendor.pdb_file.pdbxfile import PDBxFile
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 from .solventcomponent import BaseSolventComponent
 
@@ -711,9 +711,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # Reduced-form check
         if not _box_vectors_are_in_reduced_form(box):
-            raise ValueError(
-                f"box_vectors: {box} are not in OpenMM reduced form"
-            )
+            raise ValueError(f"box_vectors: {box} are not in OpenMM reduced form")
 
     @staticmethod
     def _estimate_box(pdb_file):
@@ -748,7 +746,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         )
 
         return box * offunit.nanometer
-
 
     @classmethod
     def from_pdb_file(
@@ -818,11 +815,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 box_vectors=box,
             )
 
-        raise ValueError(
-            "Could not determine box_vectors; "
-            "please provide them explicitly or enable infer_box_vectors"
-        )
-
+        raise ValueError("Could not determine box_vectors; please provide them explicitly or enable infer_box_vectors")
 
     @classmethod
     def from_pdbx_file(
@@ -892,10 +885,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 box_vectors=box,
             )
 
-        raise ValueError(
-            "Could not determine box_vectors; "
-            "please provide them explicitly or enable infer_box_vectors"
-        )
+        raise ValueError("Could not determine box_vectors; please provide them explicitly or enable infer_box_vectors")
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
@@ -936,7 +926,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             box_vectors=box,
         )
 
-
     def _to_dict(self):
         """
         Serialize the component to a dictionary.
@@ -962,9 +951,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         box_data = d.get("box_vectors")
         if box_data is None:
-            raise ValueError(
-                "box_vectors must be present in the serialized dict"
-            )
+            raise ValueError("box_vectors must be present in the serialized dict")
 
         prot = ProteinComponent._from_dict(d.copy(), name=name)
 

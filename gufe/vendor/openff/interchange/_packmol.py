@@ -2,6 +2,7 @@
 import numpy
 from openff.toolkit import Quantity
 
+
 def _box_vectors_are_in_reduced_form(box_vectors: Quantity) -> bool:
     """
     Return ``True`` if the box is in OpenMM reduced form; ``False`` otherwise.

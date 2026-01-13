@@ -8,9 +8,9 @@ from unittest import mock
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
+from openff.units import unit as offunit
 from packaging.version import Version
 from rdkit import Chem
-from openff.units import unit as offunit
 
 from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponent
 
@@ -423,8 +423,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         d.pop("box_vectors")
 
         with pytest.raises(
-                ValueError,
-                match="box_vectors must be present in the serialized dict",
+            ValueError,
+            match="box_vectors must be present in the serialized dict",
         ):
             instance.__class__.from_dict(d)
 
@@ -499,16 +499,19 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin):
         )
 
     def test_box_vectors_not_reduced_form(self, instance):
-        bad = np.array(
-            [[2.0, 0.0, 0.0],
-             [3.0, 2.0, 0.0],  # invalid reduced form
-             [0.0, 0.0, 2.0]]
-        ) * offunit.nanometer
+        bad = (
+            np.array(
+                [
+                    [2.0, 0.0, 0.0],
+                    [3.0, 2.0, 0.0],  # invalid reduced form
+                    [0.0, 0.0, 2.0],
+                ]
+            )
+            * offunit.nanometer
+        )
 
         with pytest.raises(ValueError, match="reduced form"):
-            instance.copy_with_replacements(
-                box_vectors=bad
-            )
+            instance.copy_with_replacements(box_vectors=bad)
 
 
 # class TestProteinMembraneComponent(TestSolvatedPDBComponent):
