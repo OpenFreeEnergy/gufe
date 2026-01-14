@@ -17,6 +17,8 @@ from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponen
 
 from ..molhashing import serialize_numpy
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
+from ..vendor.openff.interchange._annotations import _is_box_shape
+from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -379,10 +381,10 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     def instance(self, PDB_a2a_path):
         return self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
 
-    def test_protein_box_vectors(self, instance):
+    def test_from_pdb_file_sets_box_vectors(self, instance):
         box = instance.box_vectors
-        assert box is not None
-        assert box.shape == (3, 3)
+        _is_box_shape(box)
+        assert _box_vectors_are_in_reduced_form(box)
         assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(6.9587)
 
     def test_requires_box_vectors(self, PDB_a2a_path):
@@ -395,9 +397,17 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
                 box_vectors=None,
             )
 
-    def test_missing_box_vectors_raises(self, PDB_181L_path):
+    @pytest.mark.parametrize(
+        "factory,path_fixture",
+        [
+            (SolvatedPDBComponent.from_pdb_file, "PDB_181L_path"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_181L_path"),
+        ],
+    )
+    def test_file_without_box_vectors_raises(self, factory, path_fixture, request):
+        path = request.getfixturevalue(path_fixture)
         with pytest.raises(ValueError, match="Could not determine box_vectors"):
-            self.cls.from_pdb_file(PDB_181L_path)
+            factory(path)
 
     def test_box_vectors_preserved_in_dict_roundtrip(self, instance):
         d = instance.to_dict()
@@ -420,35 +430,48 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         ):
             instance.__class__.from_dict(d)
 
-    def test_openmm_box_vectors_match(self, PDB_a2a_path):
-        pdb = pdbfile.PDBFile(PDB_a2a_path)
-        ref_box = pdb.topology.getPeriodicBoxVectors()
+    @pytest.mark.parametrize(
+        "factory,loader,path_fixture",
+        [
+            (
+                    SolvatedPDBComponent.from_pdb_file,
+                    pdbfile.PDBFile,
+                    "PDB_a2a_path",
+            ),
+            (
+                    SolvatedPDBComponent.from_pdbx_file,
+                    pdbxfile.PDBxFile,
+                    "PDBx_a2a_path",
+            ),
+        ],
+    )
+    def test_uses_file_box_vectors(self, factory, loader, path_fixture, request):
+        path = request.getfixturevalue(path_fixture)
 
-        comp = self.cls.from_pdb_file(PDB_a2a_path)
-        gufe_box = comp.box_vectors
+        comp = factory(path)
+        ref = loader(path).topology.getPeriodicBoxVectors()
 
-        v1 = np.array(ref_box.value_in_unit(unit.nanometer))
-        v2 = np.array(gufe_box.to(offunit.nanometer).magnitude)
+        actual = comp.box_vectors.m_as(offunit.nanometer)
+        expected = ref.value_in_unit(unit.nanometer)
 
-        assert_almost_equal(actual=v1, desired=v2, decimal=6)
+        assert_almost_equal(actual=actual, desired=expected, decimal=6)
 
-    def test_infer_box_vectors_produces_valid_box(self, PDB_181L_path):
-        comp = self.cls.from_pdb_file(
-            PDB_181L_path,
-            infer_box_vectors=True,
-        )
+    @pytest.mark.parametrize(
+        "factory,path_fixture",
+        [
+            (SolvatedPDBComponent.from_pdb_file, "PDB_181L_path"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_181L_path"),
+        ],
+    )
+    def test_infer_box_vectors_produces_valid_box(self, factory, path_fixture,
+                                                  request):
+        path = request.getfixturevalue(path_fixture)
 
+        comp = factory(path, infer_box_vectors=True)
         box = comp.box_vectors
-        assert box.shape == (3, 3)
 
-        # orthorhombic
-        assert box[0, 1].m == box[0, 2].m == 0.0
-        assert box[1, 0].m == box[1, 2].m == 0.0
-        assert box[2, 0].m == box[2, 1].m == 0.0
-
-        assert box[0, 0].m > 0
-        assert box[1, 1].m > 0
-        assert box[2, 2].m > 0
+        _is_box_shape(box)
+        assert _box_vectors_are_in_reduced_form(box)
 
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
@@ -457,43 +480,41 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
 
         assert instance != comp2
 
+    def test_from_openmmPDBFile_raises_without_box_vectors(self, PDB_181L_path):
+        pdb = pdbfile.PDBFile(PDB_181L_path)
+
+        with pytest.raises(ValueError, match="Box vectors are required"):
+            self.cls._from_openmmPDBFile(
+                pdb,
+                name="test",
+                box_vectors=None,
+            )
+
     def test_from_pdbx_file_user_box_vectors(self, PDBx_a2a_path):
         b = np.eye(3) * 2.0 * offunit.nanometer
-        comp = SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path, box_vectors=b)
+        comp = self.cls.from_pdbx_file(PDBx_a2a_path, box_vectors=b)
         box = comp.box_vectors
         assert box is not None
         assert box.shape == (3, 3)
         assert box.units.is_compatible_with(offunit.nanometer)
 
-    def test_from_pdbx_file_uses_file_box_vectors(self, PDBx_a2a_path):
-        comp = SolvatedPDBComponent.from_pdbx_file(PDBx_a2a_path)
 
-        box = comp.box_vectors
-        pdbx = pdbxfile.PDBxFile(PDBx_a2a_path)
-        ref = pdbx.topology.getPeriodicBoxVectors()
-        assert_almost_equal(actual=box.m, desired=ref.value_in_unit(unit.nanometer), decimal=6)
+    @pytest.mark.parametrize(
+        "factory,path_fixture",
+        [
+            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+        ],
+    )
+    def test_explicit_box_vectors_override_file_box(self, factory, path_fixture, request):
+        path = request.getfixturevalue(path_fixture)
 
-    def test_from_pdbx_file_without_box_vectors_raises(self, PDBx_181L_path):
-        with pytest.raises(ValueError, match="Could not determine box_vectors"):
-            SolvatedPDBComponent.from_pdbx_file(PDBx_181L_path)
-
-    def test_from_pdbx_file_infer_box_vectors(self, PDBx_181L_path):
-        comp = SolvatedPDBComponent.from_pdbx_file(
-            PDBx_181L_path,
-            infer_box_vectors=True,
-        )
-        assert comp.box_vectors is not None
-
-    def test_explicit_box_vectors_override_file(self, PDB_a2a_path):
-        ref = self.cls.from_pdb_file(PDB_a2a_path)
+        ref = factory(path)
         ref_box = ref.box_vectors
 
         override = np.eye(3) * 2.0 * offunit.nanometer
 
-        comp = self.cls.from_pdb_file(
-            PDB_a2a_path,
-            box_vectors=override,
-        )
+        comp = factory(path, box_vectors=override)
 
         assert not np.allclose(
             ref_box.m_as(offunit.nanometer),
@@ -521,7 +542,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         with pytest.raises(ValueError, match="reduced form"):
             instance.copy_with_replacements(box_vectors=bad)
 
-    def test_cryo_em_box_raises(self, PDB_181L_path, tmp_path):
+    def test_cryo_em_dummy_box_raises(self, PDB_181L_path, tmp_path):
 
         pdb_text = Path(PDB_181L_path).read_text()
 
@@ -536,10 +557,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         pdb = pdbfile.PDBFile(str(pdb_path))
 
         with pytest.raises(ValueError, match="box_vectors"):
-            SolvatedPDBComponent._resolve_box_vectors(
-                pdb,
-                infer_box_vectors=False,
-            )
+            SolvatedPDBComponent._resolve_box_vectors(pdb)
 
 
 # class TestProteinMembraneComponent(TestSolvatedPDBComponent):
