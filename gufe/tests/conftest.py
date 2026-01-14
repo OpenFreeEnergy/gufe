@@ -98,9 +98,21 @@ def multi_molecule_sdf():
         yield str(f)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def PDB_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.pdb") as f:
+        yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDB_a2a_path():
+    with importlib.resources.path("gufe.tests.data", "a2a.pdb") as f:
+        yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDB_a2a_single_fragment_path():
+    with importlib.resources.path("gufe.tests.data", "a2a_single_fragment.pdb") as f:
         yield str(f)
 
 
@@ -125,6 +137,12 @@ def PDB_thrombin_path():
 @pytest.fixture
 def PDBx_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.cif") as f:
+        yield str(f)
+
+
+@pytest.fixture
+def PDBx_a2a_path():
+    with importlib.resources.path("gufe.tests.data", "a2a.cif") as f:
         yield str(f)
 
 
