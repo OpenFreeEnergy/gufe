@@ -724,7 +724,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         openff.units.Quantity
             Orthorhombic box vectors with units of nanometers.
         """
-        coords_nm = (np.asarray(omm_structure.positions.value_in_unit(omm_unit.nanometer)))
+        coords_nm = np.asarray(omm_structure.positions.value_in_unit(omm_unit.nanometer))
 
         mins = coords_nm.min(axis=0)
         maxs = coords_nm.max(axis=0)
@@ -742,11 +742,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
     @classmethod
     def _resolve_box_vectors(
-            cls,
-            structure,
-            *,
-            box_vectors=None,
-            infer_box_vectors: bool = False,
+        cls,
+        structure,
+        *,
+        box_vectors=None,
+        infer_box_vectors: bool = False,
     ):
         """
         Resolve periodic box vectors from user input, file, or inference.
@@ -788,10 +788,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if infer_box_vectors:
             return cls._estimate_box(structure)
 
-        raise ValueError(
-            "Could not determine box_vectors; please provide them explicitly "
-            "or enable infer_box_vectors"
-        )
+        raise ValueError("Could not determine box_vectors; please provide them explicitly or enable infer_box_vectors")
 
     @classmethod
     def from_pdb_file(

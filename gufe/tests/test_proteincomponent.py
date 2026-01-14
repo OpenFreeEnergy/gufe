@@ -3,6 +3,7 @@
 import copy
 import io
 import os
+from pathlib import Path
 from unittest import mock
 
 import numpy as np
@@ -10,7 +11,6 @@ import pytest
 from numpy.testing import assert_almost_equal
 from openff.units import unit as offunit
 from packaging.version import Version
-from pathlib import Path
 from rdkit import Chem
 
 from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponent
@@ -543,14 +543,10 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             instance.copy_with_replacements(box_vectors=bad)
 
     def test_cryo_em_dummy_box_raises(self, PDB_181L_path, tmp_path):
-
         pdb_text = Path(PDB_181L_path).read_text()
 
         # Insert a CRYST1 record with a 1 Å box
-        cryo_em_cryst1 = (
-            "CRYST1    1.000    1.000    1.000  "
-            "90.00  90.00  90.00 P 1           1\n"
-        )
+        cryo_em_cryst1 = "CRYST1    1.000    1.000    1.000  90.00  90.00  90.00 P 1           1\n"
         pdb_path = tmp_path / "cryo_em.pdb"
         pdb_path.write_text(cryo_em_cryst1 + pdb_text)
 
