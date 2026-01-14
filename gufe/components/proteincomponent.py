@@ -826,7 +826,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         raise ValueError(
             "Could not determine box_vectors. Please provide them explicitly "
-            "via the ``box_vectors`` argument or enable ``infer_box_vectors``")
+            "via the ``box_vectors`` argument or enable ``infer_box_vectors``"
+        )
 
     @classmethod
     def from_pdb_file(
