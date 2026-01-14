@@ -663,6 +663,9 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         box_vectors : openff.units.Quantity
             Periodic box vectors with units of length, compatible with
             nanometers. Must be a (3, 3) array in reduced form.
+            Reduced form is a canonical representation of the unit cell and removes
+            ambiguity in periodic boundary conditions (see
+            https://docs.openmm.org/latest/userguide/theory/05_other_features.html).
         name : str, optional
             Name of the component.
 
