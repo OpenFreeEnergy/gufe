@@ -554,7 +554,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         with pytest.raises(ValueError, match="reduced form"):
             instance.copy_with_replacements(box_vectors=bad)
 
-    def test_cryo_em_dummy_box_raises(self, PDB_181L_path, tmp_path):
+    def test_cryo_em_dummy_box(self, PDB_181L_path, tmp_path):
         pdb_text = Path(PDB_181L_path).read_text()
 
         # Insert a CRYST1 record with a 1 Å box
@@ -564,8 +564,9 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
 
         pdb = pdbfile.PDBFile(str(pdb_path))
 
-        with pytest.raises(ValueError, match="box_vectors"):
-            SolvatedPDBComponent._resolve_box_vectors(pdb)
+        with pytest.warns(UserWarning, match="cryo-EM"):
+            with pytest.raises(ValueError, match="box_vectors"):
+                SolvatedPDBComponent._resolve_box_vectors(pdb)
 
 
 # class TestProteinMembraneComponent(TestSolvatedPDBComponent):

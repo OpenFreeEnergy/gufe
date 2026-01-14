@@ -6,6 +6,7 @@ from string import digits
 from typing import TextIO
 
 import numpy as np
+import warnings
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from openmm import app
@@ -800,7 +801,15 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             # Cryo-EM special case: unit cell present but meaningless (~1 Å³)
             # Treat this as "no box vectors"
             lengths = np.diag(box.to("nanometer").magnitude)
-            if not np.allclose(lengths, 0.1, atol=1e-3):
+            if np.allclose(lengths, 0.1, atol=1e-3):
+                warnings.warn(
+                    "Periodic box vectors of ~1 Å detected in the input structure. "
+                    "This can e.g. be observed in cryo-EM derived PDB files and does "
+                    "not represent a meaningful simulation box. The box vectors will "
+                    "be ignored.",
+                    UserWarning,
+                )
+            else:
                 return box
 
         # 3. Infer box vectors if requested
