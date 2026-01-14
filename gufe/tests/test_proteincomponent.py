@@ -478,11 +478,12 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     def test_infer_box_vectors_produces_valid_box(self, factory, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
 
-        comp = factory(path, infer_box_vectors=True)
-        box = comp.box_vectors
+        with pytest.warns(UserWarning, match="Box vectors were inferred"):
+            comp = factory(path, infer_box_vectors=True)
+            box = comp.box_vectors
 
-        _is_box_shape(box)
-        assert _box_vectors_are_in_reduced_form(box)
+            _is_box_shape(box)
+            assert _box_vectors_are_in_reduced_form(box)
 
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer

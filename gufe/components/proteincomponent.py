@@ -813,9 +813,16 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # 3. Infer box vectors if requested
         if infer_box_vectors:
-            return cls._estimate_box(structure)
+            box = cls._estimate_box(structure)
+            warnings.warn(
+                f"Box vectors were inferred from atomic coordinates:\n{box}",
+                UserWarning,
+            )
+            return box
 
-        raise ValueError("Could not determine box_vectors; please provide them explicitly or enable infer_box_vectors")
+        raise ValueError(
+            "Could not determine box_vectors. Please provide them explicitly "
+            "via the ``box_vectors`` argument or enable ``infer_box_vectors``")
 
     @classmethod
     def from_pdb_file(
