@@ -815,7 +815,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if infer_box_vectors:
             box = cls._estimate_box(structure)
             warnings.warn(
-                f"Box vectors were inferred from atomic coordinates:\n{box}",
+                "Box vectors were inferred from the atomic coordinates.\n"
+                "Note: This heuristic assumes that the coordinates reflect the true "
+                "periodic unit cell. It may produce incorrect box dimensions for "
+                "structures that were post-processed (e.g., unwrapped after MD).\n"
+                f"Inferred box vectors:\n{box}",
                 UserWarning,
             )
             return box
