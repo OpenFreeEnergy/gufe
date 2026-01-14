@@ -12,7 +12,10 @@ _ANIONS = {"Cl", "Br", "F", "I"}
 
 class BaseSolventComponent(Component):
     """
-    Base class for components that are solvated.
+    Base class for solvated components.
+
+    This base class is used both for explicitly solvated components and
+    "abstractly" solvated components (i.e. ``SolventComponent``).
     """
 
     ...
