@@ -1,12 +1,12 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import io
+import warnings
 from os import PathLike
 from string import digits
 from typing import TextIO
 
 import numpy as np
-import warnings
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from openmm import app
@@ -723,8 +723,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
         if len(frags) <= 1:
             raise ValueError(
-                "SolvatedPDBComponent requires multiple molecules "
-                "(e.g., protein + solvent). Found a single molecule."
+                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
             )
 
     @staticmethod

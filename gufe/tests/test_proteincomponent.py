@@ -16,9 +16,9 @@ from rdkit import Chem
 from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponent
 
 from ..molhashing import serialize_numpy
-from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
+from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -446,14 +446,14 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         "factory,loader,path_fixture",
         [
             (
-                    SolvatedPDBComponent.from_pdb_file,
-                    pdbfile.PDBFile,
-                    "PDB_a2a_path",
+                SolvatedPDBComponent.from_pdb_file,
+                pdbfile.PDBFile,
+                "PDB_a2a_path",
             ),
             (
-                    SolvatedPDBComponent.from_pdbx_file,
-                    pdbxfile.PDBxFile,
-                    "PDBx_a2a_path",
+                SolvatedPDBComponent.from_pdbx_file,
+                pdbxfile.PDBxFile,
+                "PDBx_a2a_path",
             ),
         ],
     )
@@ -475,8 +475,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             (SolvatedPDBComponent.from_pdbx_file, "PDBx_181L_path"),
         ],
     )
-    def test_infer_box_vectors_produces_valid_box(self, factory, path_fixture,
-                                                  request):
+    def test_infer_box_vectors_produces_valid_box(self, factory, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
 
         comp = factory(path, infer_box_vectors=True)
@@ -509,7 +508,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         assert box is not None
         assert box.shape == (3, 3)
         assert box.units.is_compatible_with(offunit.nanometer)
-
 
     @pytest.mark.parametrize(
         "factory,path_fixture",
