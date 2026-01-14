@@ -777,7 +777,12 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         # 2. Try reading box vectors from the file
         box = structure.topology.getPeriodicBoxVectors()
         if box is not None:
-            return from_openmm(box)
+            box = from_openmm(box)
+            # Cryo-EM special case: unit cell present but meaningless (~1 Å³)
+            # Treat this as "no box vectors"
+            lengths = np.diag(box.to("nanometer").magnitude)
+            if not np.allclose(lengths, 0.1, atol=1e-3):
+                return box
 
         # 3. Infer box vectors if requested
         if infer_box_vectors:
