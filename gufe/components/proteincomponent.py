@@ -5,7 +5,6 @@ from os import PathLike
 from string import digits
 from typing import TextIO
 
-import mdtraj as md
 import numpy as np
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
@@ -706,7 +705,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             raise ValueError(f"box_vectors: {box} are not in OpenMM reduced form")
 
     @staticmethod
-    def _estimate_box(pdb_file):
+    def _estimate_box(omm_structure):
         """
         Estimate an orthorhombic box from atomic coordinates.
         The bounding box is computed from the minimum and maximum atomic
@@ -714,19 +713,18 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         Parameters
         ----------
-        pdb_file : PathLike or TextIO
-            Path to a PDB or PDBx file, or a file-like object, readable by MDTraj.
+        omm_structure : PDBFile or PDBxFile
+            object of the protein
 
         Returns
         -------
         openff.units.Quantity
             Orthorhombic box vectors with units of nanometers.
         """
-        traj = md.load(pdb_file)
+        coords_nm = (np.asarray(omm_structure.positions.value_in_unit(omm_unit.nanometer)))
 
-        coords = traj.xyz[0]  # nm
-        mins = coords.min(axis=0)
-        maxs = coords.max(axis=0)
+        mins = coords_nm.min(axis=0)
+        maxs = coords_nm.max(axis=0)
         lengths = maxs - mins
 
         box = np.array(
@@ -799,7 +797,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # 3. Inferred box vectors
         if infer_box_vectors:
-            box = cls._estimate_box(pdb_file)
+            box = cls._estimate_box(pdb)
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
@@ -868,7 +866,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # 3. Inferred box vectors
         if infer_box_vectors:
-            box = cls._estimate_box(pdbx_file)
+            box = cls._estimate_box(pdbx)
             return cls(
                 rdkit=prot._rdkit,
                 name=prot.name,
