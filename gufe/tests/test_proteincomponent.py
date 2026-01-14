@@ -395,7 +395,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             )
 
     def test_missing_box_vectors_raises(self, PDB_181L_path):
-
         with pytest.raises(ValueError, match="Could not determine box_vectors"):
             self.cls.from_pdb_file(PDB_181L_path)
 
