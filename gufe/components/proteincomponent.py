@@ -741,6 +741,68 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         return box * offunit.nanometer
 
     @classmethod
+    def _from_openmm_structure(
+            cls,
+            structure,
+            *,
+            name: str = "",
+            box_vectors=None,
+            infer_box_vectors: bool = False,
+    ):
+        """
+        Construct a SolvatedPDBComponent from a loaded OpenMM structure.
+
+        Parameters
+        ----------
+        structure : PDBFile or PDBxFile
+            Loaded OpenMM structure.
+        name : str, optional
+            Name of the protein component.
+        box_vectors : openff.units.Quantity, optional
+            Explicit box vectors to associate with the component.
+        infer_box_vectors : bool, optional
+            If True, estimate box vectors when not present in file.
+
+        Returns
+        -------
+        SolvatedPDBComponent
+
+        Raises
+        ------
+        ValueError
+            If box vectors cannot be determined.
+        """
+        prot = ProteinComponent._from_openmmPDBFile(structure, name=name)
+
+        # 1. User-supplied box vectors win
+        if box_vectors is not None:
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                box_vectors=box_vectors,
+            )
+
+        # 2. Try reading box vectors from the file
+        try:
+            return cls._from_openmmPDBFile(structure, name=name)
+        except ValueError:
+            pass
+
+        # 3. Infer box vectors if requested
+        if infer_box_vectors:
+            box = cls._estimate_box(structure)
+            return cls(
+                rdkit=prot._rdkit,
+                name=prot.name,
+                box_vectors=box,
+            )
+
+        raise ValueError(
+            "Could not determine box_vectors; please provide them explicitly "
+            "or enable infer_box_vectors"
+        )
+
+    @classmethod
     def from_pdb_file(
         cls,
         pdb_file: PathLike | TextIO,
@@ -751,63 +813,15 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     ):
         """
         Create a SolvatedPDBComponent from a PDB file.
-
-        This method loads a PDB file using OpenMM, constructs the underlying
-        protein representation, and attaches box vectors.
-        Box vectors may be provided explicitly, inferred from the coordinates,
-        or read directly from the PDB file.
-
-        Parameters
-        ----------
-        pdb_file : PathLike or TextIO
-            Path to the PDB file or a file-like object.
-        name : str, optional
-            Name of the protein component.
-        box_vectors : openff.units.Quantity, optional
-            Explicit box vectors (OpenFF units).
-            If provided, these take precedence over any box vectors found
-            in the PDB file.
-        infer_box_vectors : bool, optional
-            If True, estimate box vectors when not present in file.
-
-        Returns
-        -------
-        SolvatedPDBComponent
-            The constructed solvated PDB component.
-
-        Raises
-        ------
-        ValueError
-            If box vectors cannot be determined.
         """
         pdb = PDBFile(pdb_file)
 
-        prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
-
-        # 1. Use the user supplied box
-        if box_vectors is not None:
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box_vectors,
-            )
-
-        # 2. Try reading box vectors from file
-        try:
-            return cls._from_openmmPDBFile(pdb, name=name)
-        except ValueError:
-            pass
-
-        # 3. Inferred box vectors
-        if infer_box_vectors:
-            box = cls._estimate_box(pdb)
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box,
-            )
-
-        raise ValueError("Could not determine box_vectors; please provide them explicitly or enable infer_box_vectors")
+        return cls._from_openmm_structure(
+            pdb,
+            name=name,
+            box_vectors=box_vectors,
+            infer_box_vectors=infer_box_vectors,
+        )
 
     @classmethod
     def from_pdbx_file(
@@ -820,63 +834,15 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     ):
         """
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
-
-        This method loads a PDBx (mmCIF) file using OpenMM and constructs
-        a solvated protein component with associated box vectors.
-        Periodic box vectors may be provided explicitly, inferred from
-        coordinates, or read from the PDBx file if present.
-
-        Parameters
-        ----------
-        pdbx_file : str
-            Name of the PDBx/mmCIF file.
-        name : str, optional
-            Name of the protein component.
-        box_vectors : openmm.unit.Quantity, optional
-            Explicit box vectors to associate with the component.
-            If provided, these take precedence over any box vectors found
-            in the PDBx file.
-        infer_box_vectors : bool, optional
-            If True, estimate box vectors when not present in file.
-
-        Returns
-        -------
-        SolvatedPDBComponent
-            The constructed solvated protein component.
-
-        Raises
-        ------
-        ValueError
-            If box vectors cannot be determined.
         """
         pdbx = PDBxFile(pdbx_file)
 
-        prot = ProteinComponent._from_openmmPDBFile(pdbx, name=name)
-
-        # 1. Use the user supplied box
-        if box_vectors is not None:
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box_vectors,
-            )
-
-        # 2. Try reading box vectors from file
-        try:
-            return cls._from_openmmPDBFile(pdbx, name=name)
-        except ValueError:
-            pass
-
-        # 3. Inferred box vectors
-        if infer_box_vectors:
-            box = cls._estimate_box(pdbx)
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box,
-            )
-
-        raise ValueError("Could not determine box_vectors; please provide them explicitly or enable infer_box_vectors")
+        return cls._from_openmm_structure(
+            pdbx,
+            name=name,
+            box_vectors=box_vectors,
+            infer_box_vectors=infer_box_vectors,
+        )
 
     @classmethod
     def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
