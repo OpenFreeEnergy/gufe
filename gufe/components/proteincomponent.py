@@ -717,7 +717,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Parameters
         ----------
         omm_structure : PDBFile or PDBxFile
-            object of the protein
+            OpenMM structure providing atomic positions.
 
         Returns
         -------
@@ -741,23 +741,20 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         return box * offunit.nanometer
 
     @classmethod
-    def _from_openmm_structure(
+    def _resolve_box_vectors(
             cls,
             structure,
             *,
-            name: str = "",
             box_vectors=None,
             infer_box_vectors: bool = False,
     ):
         """
-        Construct a SolvatedPDBComponent from a loaded OpenMM structure.
+        Resolve periodic box vectors from user input, file, or inference.
 
         Parameters
         ----------
         structure : PDBFile or PDBxFile
             Loaded OpenMM structure.
-        name : str, optional
-            Name of the protein component.
         box_vectors : openff.units.Quantity, optional
             Explicit box vectors to associate with the component.
         infer_box_vectors : bool, optional
@@ -765,37 +762,26 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         Returns
         -------
-        SolvatedPDBComponent
+        openff.units.Quantity
+            Box vectors with units of nanometers.
 
         Raises
         ------
         ValueError
             If box vectors cannot be determined.
         """
-        prot = ProteinComponent._from_openmmPDBFile(structure, name=name)
-
         # 1. User-supplied box vectors win
         if box_vectors is not None:
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box_vectors,
-            )
+            return box_vectors
 
         # 2. Try reading box vectors from the file
-        try:
-            return cls._from_openmmPDBFile(structure, name=name)
-        except ValueError:
-            pass
+        box = structure.topology.getPeriodicBoxVectors()
+        if box is not None:
+            return from_openmm(box)
 
         # 3. Infer box vectors if requested
         if infer_box_vectors:
-            box = cls._estimate_box(structure)
-            return cls(
-                rdkit=prot._rdkit,
-                name=prot.name,
-                box_vectors=box,
-            )
+            return cls._estimate_box(structure)
 
         raise ValueError(
             "Could not determine box_vectors; please provide them explicitly "
@@ -816,11 +802,16 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         pdb = PDBFile(pdb_file)
 
-        return cls._from_openmm_structure(
+        box = cls._resolve_box_vectors(
             pdb,
-            name=name,
             box_vectors=box_vectors,
             infer_box_vectors=infer_box_vectors,
+        )
+
+        return cls._from_openmmPDBFile(
+            pdb,
+            name=name,
+            box_vectors=box,
         )
 
     @classmethod
@@ -837,21 +828,31 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         pdbx = PDBxFile(pdbx_file)
 
-        return cls._from_openmm_structure(
+        box = cls._resolve_box_vectors(
             pdbx,
-            name=name,
             box_vectors=box_vectors,
             infer_box_vectors=infer_box_vectors,
         )
 
+        return cls._from_openmmPDBFile(
+            pdbx,
+            name=name,
+            box_vectors=box,
+        )
+
     @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
+    def _from_openmmPDBFile(
+        cls,
+        openmm_PDBFile,
+        *,
+        name="",
+        box_vectors,
+    ):
         """
         Construct a SolvatedPDBComponent from an OpenMM PDBFile or PDBxFile.
 
         This method converts an OpenMM structure into the internal RDKit-based
-        representation and extracts box vectors from the OpenMM
-        topology. Box vectors are required and must be present.
+        representation. Box vectors are required and must be present.
 
         Parameters
         ----------
@@ -860,6 +861,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             box vectors.
         name : str, optional
             Name of the protein component.
+        box_vectors: openff.units.Quantity
+            Box vectors with units of nanometers.
 
         Returns
         -------
@@ -869,18 +872,17 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Raises
         ------
         ValueError
-            If box vectors are not present in the OpenMM topology.
+            If ``box_vectors`` are not provided.
         """
-        prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
+        if box_vectors is None:
+            raise ValueError("Box vectors are required but were not provided.")
 
-        box = openmm_PDBFile.topology.getPeriodicBoxVectors()
-        if box is None:
-            raise ValueError("Box vectors are required but were not found.")
+        prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
 
         return cls(
             rdkit=prot._rdkit,
             name=prot.name,
-            box_vectors=from_openmm(box),
+            box_vectors=box_vectors,
         )
 
     def _to_dict(self):
