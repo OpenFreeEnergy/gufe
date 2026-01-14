@@ -675,9 +675,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             If ``box_vectors`` is not an OpenFF Quantity.
         ValueError
             If ``box_vectors`` are not valid box vectors.
+            If the Rdkit molecule contains only one disconnected fragment.
         """
         self._validate_box_vectors(box_vectors)
         super().__init__(rdkit=rdkit, name=name)
+        self._validate_multiple_molecules(rdkit)
         self.box_vectors = box_vectors
 
     @staticmethod
@@ -706,6 +708,22 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         # Reduced-form check
         if not _box_vectors_are_in_reduced_form(box):
             raise ValueError(f"box_vectors: {box} are not in OpenMM reduced form")
+
+    @staticmethod
+    def _validate_multiple_molecules(rdkit_mol):
+        """
+        Ensure the RDKit molecule contains more than one disconnected fragment.
+
+        SolvatedPDBComponent requires the presence of solvent (or other
+        additional molecules) and must not represent a single protein molecule
+        with box vectors only.
+        """
+        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
+        if len(frags) <= 1:
+            raise ValueError(
+                "SolvatedPDBComponent requires multiple molecules "
+                "(e.g., protein + solvent). Found a single molecule."
+            )
 
     @staticmethod
     def _estimate_box(omm_structure):

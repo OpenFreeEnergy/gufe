@@ -381,6 +381,18 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     def instance(self, PDB_a2a_path):
         return self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
 
+    def test_single_molecule_with_box_vectors_raises(self, PDB_a2a_single_fragment_path):
+        box = np.eye(3) * offunit.nanometer
+
+        prot = ProteinComponent.from_pdb_file(PDB_a2a_single_fragment_path)
+
+        with pytest.raises(ValueError, match="multiple molecules"):
+            SolvatedPDBComponent(
+                rdkit=prot._rdkit,
+                name="test",
+                box_vectors=box,
+            )
+
     def test_from_pdb_file_sets_box_vectors(self, instance):
         box = instance.box_vectors
         _is_box_shape(box)

@@ -109,6 +109,11 @@ def PDB_a2a_path():
     with importlib.resources.path("gufe.tests.data", "a2a.pdb") as f:
         yield str(f)
 
+@pytest.fixture(scope="session")
+def PDB_a2a_single_fragment_path():
+    with importlib.resources.path("gufe.tests.data", "a2a_single_fragment.pdb") as f:
+        yield str(f)
+
 
 @pytest.fixture
 def offxml_settings_path():
