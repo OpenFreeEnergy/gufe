@@ -158,10 +158,7 @@ def test_protocoldag_missing_dependency_unit():
     setup_unit = WriterUnit(identity=0, name="setup")
 
     # Create units that depend on the setup unit
-    dependent_units = [
-        WriterUnit(identity=i, setup=setup_unit, name=f"cycle_{i}")
-        for i in range(1, 4)
-    ]
+    dependent_units = [WriterUnit(identity=i, setup=setup_unit, name=f"cycle_{i}") for i in range(1, 4)]
 
     # Attempt to create a ProtocolDAG without including the setup_unit
     # This should raise a ProtocolDAGError
