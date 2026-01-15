@@ -438,7 +438,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         leaf = Leaf(10)
 
         results = stream.getvalue()
-        key = leaf.key.split("-")[-1]
+        key = str(leaf.key)
 
         initial_log = f"{name} - UNKNOWN - INFO - no key defined!\n"
         info_log = f"{name} - {key} - INFO - a=10\n"

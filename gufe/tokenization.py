@@ -124,7 +124,7 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
         extra = kwargs.get("extra", {})
         if (extra_dict := getattr(self, "_extra_dict", None)) is None:
             try:
-                gufekey = self.extra.key.split("-")[-1]
+                gufekey = str(self.extra.key)
             except Exception:
                 # no matter what happened, we have a bad key
                 gufekey = "UNKNOWN"

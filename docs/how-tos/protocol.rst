@@ -230,8 +230,7 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
     class SimulationUnit(ProtocolUnit):
         """Run an individual simulation."""
 
-        @staticmethod
-        def _execute(ctx: Context, *, setup_result, lambda_window, settings, **inputs):
+        def _execute(self, ctx: Context, *, setup_result, lambda_window, settings, **inputs):
             """Execute a single alchemical window simulation."""
             import pickle
 
@@ -259,8 +258,8 @@ These should inherit from :class:`~gufe.protocols.protocolunit.ProtocolUnit` and
             self.logger.info("Simulation complete.")
 
             # Write output files to shared directory
-            u_nk_file = ctx.shared / f"u_nk{window}.pkl"
-            final_coords_file = ctx.shared / f"final_coords_window_{window}.pkl"
+            u_nk_file = ctx.shared / f"u_nk{lambda_window}.pkl"
+            final_coords_file = ctx.shared / f"final_coords_window_{lambda_window}.pkl"
 
             with open(final_coords_file, 'wb') as f:
                 pickle.dump(final_coords, f)
@@ -604,6 +603,123 @@ Once implemented, your protocol can be used like any other **gufe** protocol:
     # final_result = protocol.gather([dag_result1, dag_result2, ...])
 
 
+Logging in Protocols
+--------------------
+
+Both ``Protocol`` and ``ProtocolUnit`` objects inherit from :class:`.GufeTokenizable` and therefore have access to the ``logger`` property.
+This logging mechanism is essential for debugging, monitoring execution progress, and understanding what happened during a calculation.
+
+Using the Logger in ProtocolUnits
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When writing your ``ProtocolUnit._execute`` methods, use ``self.logger`` to record important events:
+
+.. code-block:: python
+
+    class SimulationUnit(ProtocolUnit):
+        @staticmethod
+        def _execute(ctx: Context, **inputs):
+            # Note: in static methods, you can't use self.logger
+            # You'll need to make the method non-static or use a workaround
+            pass
+
+    # Better pattern - use instance method if you need logging
+    class SimulationUnit(ProtocolUnit):
+        def _execute(self, ctx: Context, **inputs):
+            self.logger.info("Starting simulation")
+            self.logger.debug(f"Lambda window: {inputs['lambda_window']}")
+
+            # Your simulation code here
+            try:
+                result = run_simulation(...)
+                self.logger.info("Simulation completed successfully")
+            except Exception as e:
+                self.logger.error(f"Simulation failed: {e}")
+                raise
+
+            return {"result": result}
+
+Choosing Appropriate Log Levels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use standard Python logging levels to categorize your messages:
+
+* **DEBUG**: Detailed diagnostic information useful during development (parameter values, intermediate results, loop iterations)
+* **INFO**: General progress updates that confirm things are working as expected (simulation started, finished, checkpoints reached)
+* **WARNING**: Something unexpected happened but execution can continue (using default values, recovering from errors)
+* **ERROR**: A serious problem that prevents a specific operation from completing
+* **CRITICAL**: A very serious error that may prevent the entire protocol from completing
+
+.. code-block:: python
+
+    def _execute(self, ctx: Context, **inputs):
+        self.logger.debug(f"Input parameters: {inputs}")
+
+        self.logger.info("Running equilibration")
+        equilibration_result = equilibrate(...)
+
+        if equilibration_result.converged:
+            self.logger.info("Equilibration converged")
+        else:
+            self.logger.warning("Equilibration did not fully converge, proceeding anyway")
+
+        self.logger.info("Running production simulation")
+        # ... production run ...
+
+Don't Check Verbosity - Let Logging Handle It
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Important**: Do not implement your own verbosity checking in protocol code.
+The execution engine or user will configure the logging level at runtime:
+
+.. code-block:: python
+
+    # Good - just log at the appropriate level
+    def _execute(self, ctx: Context, **inputs):
+        self.logger.debug("Detailed parameter information")
+        self.logger.info("Simulation progress update")
+
+    # Bad - don't do this
+    def _execute(self, ctx: Context, *, verbose=False, **inputs):
+        if verbose:
+            self.logger.info("Simulation progress update")
+
+This approach separates concerns: protocol authors focus on *what* to log, while users and execution engines control *which* messages to show.
+
+Logging Configuration for Protocol Users
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When running a protocol, configure logging to control what gets displayed:
+
+.. code-block:: python
+
+    import logging
+    import time
+
+    # Configure the root gufe logger
+    logger = logging.getLogger('gufekey')
+
+    # Create a formatter that includes the GufeKey
+    formatter = logging.Formatter(
+        "[%(asctime)s] [%(gufekey)s] [%(levelname)s] %(message)s"
+    )
+    formatter.converter = time.gmtime
+
+    # Set up the handler
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # Set level to control verbosity
+    logger.setLevel(logging.INFO)  # Shows INFO and above
+    # logger.setLevel(logging.DEBUG)  # Shows everything
+
+    # Now execute your protocol
+    dag = protocol.create(stateA, stateB, mapping)
+    # Execution engine runs the DAG and logs are captured
+
+For more details on the logging system, see :ref:`understanding_logging`.
+
 Best practices and tips
 -----------------------
 
@@ -624,6 +740,9 @@ Best practices and tips
 7. **Resource management**: Clean up temporary files in your ``_execute`` methods when possible.
 
 8. **Validate early**: Implement ``_validate`` to catch configuration problems before expensive computations begin.
+
+9. **Log effectively**: Use ``self.logger`` at appropriate levels (DEBUG, INFO, WARNING, ERROR) to provide visibility into protocol execution.
+   Don't implement your own verbosity checks - let the logging system handle message filtering.
 
 
 Testing your Protocol
