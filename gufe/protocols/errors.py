@@ -15,6 +15,10 @@ class ProtocolUnitExecutionError(GufeProtocolError):
     """Error when executing a protocol unit."""
 
 
+class ProtocolDAGError(GufeProtocolError):
+    """Error when constructing or validating a ProtocolDAG."""
+
+
 # Protocol Results Errors
 class ProtocolDAGResultError(GufeProtocolError):
     """Base error when dealing with DAG results."""
