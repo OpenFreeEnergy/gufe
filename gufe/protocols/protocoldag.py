@@ -14,7 +14,7 @@ from typing import Any, Optional, Union
 import networkx as nx
 
 from ..tokenization import GufeKey, GufeTokenizable
-from .errors import MissingUnitResultError, ProtocolUnitFailureError
+from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
 
@@ -346,6 +346,17 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
         # build graph from protocol units
         self._graph = self._build_graph(protocol_units)
+
+        # validate that all units in the graph were explicitly provided
+        provided_units = set(protocol_units)
+        graph_units = set(self._graph.nodes)
+        missing_units = graph_units - provided_units
+        if missing_units:
+            raise ProtocolDAGError(
+                f"ProtocolDAG contains units that were not explicitly provided: "
+                f"{missing_units}. All units must be passed explicitly via `protocol_units`, "
+                f"even if they are dependencies of other units."
+            )
 
     @classmethod
     def _defaults(cls):
