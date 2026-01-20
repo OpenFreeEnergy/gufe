@@ -59,12 +59,13 @@ class AlchemicalArchive:
                 deserialized = json.load(f, cls=JSON_HANDLER.decoder)
 
         # provide our own tokenization map for later updating possibly
-        # stale transformation keys
+        # stale transformation keys, it greatly increases
+        # deserialization performance
         tokenizable_map: dict[str, GufeTokenizable] = {}
         deserialized["network"] = KeyedChain(deserialized["network"]).to_gufe(tokenizable_map=tokenizable_map)
         for key, results in deserialized["transformation_results_map"].items():
             deserialized["transformation_results_map"][tokenizable_map[key].key] = [
-                ProtocolDAGResult.from_keyed_chain(v) for v in results
+                KeyedChain(v).to_gufe(tokenizable_map=tokenizable_map) for v in results
             ]
 
         if gufe.__version__ != deserialized["version_gufe"]:
