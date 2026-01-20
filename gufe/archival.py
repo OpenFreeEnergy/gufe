@@ -15,13 +15,13 @@ from gufe.tokenization import JSON_HANDLER, GufeKey, GufeTokenizable, KeyedChain
 def _dict_sort_values(dct):
     for key, value in dct.items():
         if isinstance(value, (list, tuple)):
-            dct[key] = tuple(sorted(value))
+            dct[key] = list(sorted(value))
 
 
 @dataclass
 class AlchemicalArchive:
     network: AlchemicalNetwork
-    transformation_results_map: dict[GufeKey, tuple[ProtocolDAGResult]]
+    transformation_results_map: dict[GufeKey, list[ProtocolDAGResult]]
     metadata: dict[str, Any] = field(default_factory=dict)
     version_gufe: str = field(default=gufe.__version__)
 
