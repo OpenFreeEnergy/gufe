@@ -49,7 +49,7 @@ GufeKey in Log Messages
 
 The logger adapter adds a ``gufekey`` field to each log record, containing the full :class:`.GufeKey` of the object (e.g., ``SolventComponent-26b4034ad9dbd9f908dfc298ea8d449f``).
 
-This allows you to use ``%(gufekey)s`` in your logging formatters to include the object's key in log messages.
+This allows you to use ``%(gufekey)s`` in your `logging formatters <https://docs.python.org/3/library/logging.html#logging.Formatter>`_ to include the object's key in log messages.
 
 Configuring Logging
 -------------------
