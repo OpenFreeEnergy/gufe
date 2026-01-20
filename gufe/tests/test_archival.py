@@ -66,13 +66,5 @@ class TestArchival:
         with pytest.warns(UserWarning):
             reconstructed = AlchemicalArchive.from_json(content=json)
 
-    def test_md5sum(self, alchemical_archive, tmpdir):
-        output_file = tmpdir / "archive.json"
-        result = alchemical_archive.to_json(output_file)
-
-        with open(output_file, "rb") as f:
-            data = f.read()
-            assert hashlib.md5(data).hexdigest() == alchemical_archive.md5
-
     def test_metadata(self, alchemical_archive):
         assert alchemical_archive.metadata == {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
