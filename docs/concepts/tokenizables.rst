@@ -191,11 +191,10 @@ To convert a ``GufeTokenizable`` ``obj`` into a dictionary that references inner
 That method replaces each ``GufeTokenizable`` by a ``dict`` with a single key, ``':gufe-key:'``, mapping to the ``GufeKey`` of the object.
 Of course, you'll also need to do the same for all inner ``GufeTokenizables``; to get a list of all of them, use :func:`.get_all_gufe_objs` on the outermost ``obj``.
 
-While you can implement this yourself, you can also use ``obj.to_keyed_chain()``.
-This handles iteration of the chain to and ensuring that all dependencies can be stored to disk.
-If you choose to do this, it is important to note that when reloading from the disk, you can't use ``obj.from_keyed_chain()`` because it requires
-that objects are already sorted from least-dependent to most-dependent. This cannot be guranteed when reading from disk.
-
+``obj.to_keyed_chain()`` does exactly that. It handles the correct serailzization of all subparts.
+It is important to not that functions like ``obj.to_json()`` and ``obj.to_msgpack()`` use this under the hood to make
+serialization to disk and over the network possible. When you want to load this object back into memory, you would use something
+like ``obj.from_json()`` or ``obj.to_json()`` to handle serialization back into the correct structure.
 .. TODO: add a tutorial for this in the tutorials section?
 
 
