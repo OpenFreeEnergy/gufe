@@ -406,10 +406,10 @@ def execute_DAG(
         while attempt <= n_retries:
             shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
             shared_paths.append(shared)
-            shared.mkdir()
+            shared.mkdir(exist_ok=True)
 
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
-            scratch.mkdir()
+            scratch.mkdir(exist_ok=True)
 
             context = Context(shared=shared, scratch=scratch)
 

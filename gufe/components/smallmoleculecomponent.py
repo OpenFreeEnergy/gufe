@@ -264,6 +264,8 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         output["molprops"] = self._rdkit.GetPropsAsDict(includePrivate=False)
 
+        output["smiles"] =  self.smiles
+
         return output
 
     @classmethod
