@@ -196,9 +196,6 @@ Then, to get a list of all objects, use :func:`.get_all_gufe_objs` on the outerm
 
 
 If you don't need the level of granularity that keyed dict representation offers, :ref:`keyed chain <keyed_chain>` does this recursive unpacking and handles the correct serialization of all nested objects.
-
-
-``obj.to_keyed_chain()`` does exactly that. It handles the correct serialization of all sub-objects.
 It is important to note that functions like ``obj.to_json()`` and ``obj.to_msgpack()`` use ``to_keyed_chain()``  under the hood to make
 serialization to disk and over the network possible. When you want to load this object back into memory, you would use something
 like ``obj.from_json()`` or ``obj.to_json()`` to handle serialization back into the correct structure.
