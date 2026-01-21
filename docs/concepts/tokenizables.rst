@@ -179,7 +179,7 @@ In practice, that leads to the following behavior, where ``Foo()`` is representa
 Deduplication on disk
 ~~~~~~~~~~~~~~~~~~~~~
 
-Deduplication on on disk can be handled by `:ref``keyed chain <keyed_chain>` by serializing and deduplicating an entire chain of tokenizable objects to disk in a single file.
+Deduplication on on disk can be handled by :ref:`keyed chain <keyed_chain>` by serializing and deduplicating an entire chain of tokenizable objects to disk in a single file.
 However, **gufe** provides no tooling for deduplicating across chains stored to disk and it is up to the storage system to implement its own registry for handling this.
 
 The main idea is to use the ``GufeKey`` to ensure uniqueness, and to use it as a label for the object's serialized representation.
@@ -195,7 +195,7 @@ You can use :ref:`keyed dict <keyed_dict>` to represent``GufeTokenizable`` ``obj
 Then, to get a list of all objects, use :func:`.get_all_gufe_objs` on the outermost ``obj``\s.
 
 
-If you don't need the level of granularity that keyed dict representation offers, `:ref:keyed chain <keyed_chain>` does this recursive unpacking and handles the correct serialization of all nested objects.
+If you don't need the level of granularity that keyed dict representation offers, :ref:`keyed chain <keyed_chain>` does this recursive unpacking and handles the correct serialization of all nested objects.
 
 
 ``obj.to_keyed_chain()`` does exactly that. It handles the correct serailzization of all subparts.
@@ -265,6 +265,7 @@ Any nested ``GufeTokenizable``\s are left as-is.
 This representation is most useful for iterating through the hierarchy of a ``GufeTokenizable`` one layer at a time.
 Because it leaves nested ``GufeTokenizable``\s untouched, it is generally unsuitable for serialization.
 
+.. _keyed_dict:
 
 c) keyed dictionary
 ~~~~~~~~~~~~~~~~~~~
