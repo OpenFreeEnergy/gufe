@@ -8,6 +8,7 @@ from unittest import mock
 
 import pytest
 
+from gufe.compression import zst_decompress
 from gufe.serialization.msgpack import packb, unpackb
 from gufe.tokenization import (
     JSON_HANDLER,
@@ -352,7 +353,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         msgpack_bytes = self.cont.to_msgpack()
         expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
 
-        assert unpackb(msgpack_bytes) == expected_keyed_chain
+        assert unpackb(zst_decompress(msgpack_bytes)) == expected_keyed_chain
 
     def test_from_msgpack_bytes(self):
         data = packb(self.cont.to_keyed_chain())
@@ -367,8 +368,9 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in msgpack so fix the expected result to use lists
         expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
+
         with file_path.open("rb") as f:
-            assert unpackb(f.read()) == expected_keyed_chain
+            assert unpackb(zst_decompress(f.read())) == expected_keyed_chain
 
     def test_from_msgpack_file(self, tmpdir):
         file_path = tmpdir / "container.messagepack"

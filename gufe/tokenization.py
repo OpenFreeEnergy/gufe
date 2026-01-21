@@ -19,8 +19,10 @@ from os import PathLike
 from typing import Any, BinaryIO, Callable, Dict, List, Optional, TextIO, Tuple, Union
 
 import networkx as nx
+from msgpack.exceptions import ExtraData
 from typing_extensions import Self
 
+from gufe.compression import zst_compress, zst_decompress
 from gufe.serialization.json import (
     BYTES_CODEC,
     DATETIME_CODEC,
@@ -727,7 +729,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
 
-    def to_msgpack(self, file: PathLike | BinaryIO | None = None) -> None | bytes:
+    def to_msgpack(self, file: PathLike | BinaryIO | None = None, compress: bool = True) -> None | bytes:
         """
         Generate a MessagePack keyed chain representation.
 
@@ -737,6 +739,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         ----------
         file
             A filepath or filelike object to write the encoded msgpack to.
+
+        compress
+            Whether or not to zstandard compress the serialized bytes.
+            The default is ``True``.
 
         Returns
         -------
@@ -748,13 +754,18 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         from_msgpack
         """
 
+        payload = packb(self.to_keyed_chain())
+
+        if compress:
+            payload = zst_compress(payload)
+
         if file is None:
-            return packb(self.to_keyed_chain())
+            return payload
 
         from gufe.utils import ensure_filelike
 
         with ensure_filelike(file, mode="w+b") as out:
-            out.write(packb(self.to_keyed_chain()))
+            out.write(payload)
 
         return None
 
@@ -782,7 +793,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             raise ValueError("Must specify either `content` and `file` for MessagePack input")
 
         if content is not None:
-            keyed_chain = unpackb(content)
+            try:
+                keyed_chain = unpackb(content)
+            except ExtraData:
+                keyed_chain = unpackb(zst_decompress(content))
         else:
             from gufe.utils import ensure_filelike
 
