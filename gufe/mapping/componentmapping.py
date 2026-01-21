@@ -1,12 +1,11 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import abc
 
 import gufe
 from gufe.tokenization import GufeTokenizable
 
 
-class ComponentMapping(GufeTokenizable, abc.ABC):
+class ComponentMapping(GufeTokenizable):
     """A relationship between two Components stating that they transform in some way
 
     For components that are atom-based is specialised to :class:`.AtomMapping`
