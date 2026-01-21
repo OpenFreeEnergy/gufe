@@ -90,42 +90,6 @@ The :class:`.MemoryStorage` implementation stores data in a Python dictionary. T
 .. warning::
     ``MemoryStorage`` is not intended for production use and all data is lost when the Python process exits.
 
-StorageManager
---------------
-
-The :class:`.StorageManager` class provides a higher-level interface for managing storage operations within a computational workflow.
-It handles the transfer of files between a scratch directory and external storage:
-
-.. code-block:: python
-
-    from pathlib import Path
-    from gufe.storage import StorageManager
-    from gufe.storage.externalresource import FileStorage
-
-    # Set up storage
-    storage = FileStorage(root_dir=Path("/path/to/storage"))
-    scratch_dir = Path("/path/to/scratch")
-
-    # Create a storage manager for a specific DAG and unit
-    manager = StorageManager(
-        scratch_dir=scratch_dir,
-        storage=storage,
-        dag_label="my_experiment",
-        unit_label="transformation_1"
-    )
-
-    # Register files for later transfer
-    manager.register("trajectory.dcd")
-    manager.register("results.json")
-
-    # Transfer all registered files to external storage
-    manager._transfer()
-
-    # Load files from external storage
-    trajectory_data = manager.load("my_experiment/transformation_1/trajectory.dcd")
-
-The ``StorageManager`` uses a namespace combining the ``dag_label`` and ``unit_label`` to organize files in the external storage backend.
-
 Implementing Custom Storage Backends
 -------------------------------------
 
@@ -181,6 +145,43 @@ To create a custom storage backend, subclass :class:`.ExternalStorage` and imple
 
 .. note::
     All storage methods should be blocking operations, even if the underlying storage backend supports asynchronous operations.
+
+StorageManager
+--------------
+
+The :class:`.StorageManager` class provides a higher-level interface for managing storage operations within a computational workflow.
+It handles the transfer of files between a scratch directory and external storage:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from gufe.storage import StorageManager
+    from gufe.storage.externalresource import FileStorage
+
+    # Set up storage
+    storage = FileStorage(root_dir=Path("/path/to/storage"))
+    scratch_dir = Path("/path/to/scratch")
+
+    # Create a storage manager for a specific DAG and unit
+    manager = StorageManager(
+        scratch_dir=scratch_dir,
+        storage=storage,
+        dag_label="my_experiment",
+        unit_label="transformation_1"
+    )
+
+    # Register files for later transfer
+    manager.register("trajectory.dcd")
+    manager.register("results.json")
+
+    # Transfer all registered files to external storage
+    manager._transfer()
+
+    # Load files from external storage
+    trajectory_data = manager.load("my_experiment/transformation_1/trajectory.dcd")
+
+The ``StorageManager`` uses a namespace combining the ``dag_label`` and ``unit_label`` to organize files in the external storage backend.
+
 
 Error Handling
 --------------
