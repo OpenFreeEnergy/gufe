@@ -14,9 +14,11 @@ def pdr_from_transformation(transformation):
 
 
 class TestArchival(GufeTokenizableTestsMixin):
+    cls = AlchemicalArchive
+    repr = None
 
     @pytest.fixture()
-    def instance(benzene_variants_star_map):
+    def instance(instance, benzene_variants_star_map):
         alchemical_network = benzene_variants_star_map
         transformations = sorted(list(alchemical_network.edges))
         # create fake results for the transformations
