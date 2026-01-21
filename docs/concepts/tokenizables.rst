@@ -191,11 +191,11 @@ To convert a ``GufeTokenizable`` ``obj`` into a dictionary that references inner
 That method replaces each ``GufeTokenizable`` by a ``dict`` with a single key, ``':gufe-key:'``, mapping to the ``GufeKey`` of the object.
 However, you take advantage of **gufe** functionality to facilitate system-specific deduplication.
 
-You can use `:ref:`keyed dict <keyed_dict>` to represent``GufeTokenizable`` ``obj`` as a ``dict`` that references inner ``GufeTokenizable``\s by their``GufeKey``\s, and repeat this recursively to store (with the disk storage method of your choosing) all objects by reference.
+You can use :ref:`keyed dict <keyed_dict>` to represent``GufeTokenizable`` ``obj`` as a ``dict`` that references inner ``GufeTokenizable``\s by their``GufeKey``\s, and repeat this recursively to store (with the disk storage method of your choosing) all objects by reference.
 Then, to get a list of all objects, use :func:`.get_all_gufe_objs` on the outermost ``obj``\s.
 
 
-If you don't need the level of granularity that keyed dict representation offers, `:ref:`keyed chain <keyed_chain>` does this recursive unpacking and handles the correct serialization of all nested objects.
+If you don't need the level of granularity that keyed dict representation offers, `:ref:keyed chain <keyed_chain>` does this recursive unpacking and handles the correct serialization of all nested objects.
 
 
 ``obj.to_keyed_chain()`` does exactly that. It handles the correct serailzization of all subparts.
