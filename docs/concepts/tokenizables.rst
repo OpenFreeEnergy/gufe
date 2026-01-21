@@ -179,13 +179,13 @@ In practice, that leads to the following behavior, where ``Foo()`` is representa
 Deduplication on disk
 ~~~~~~~~~~~~~~~~~~~~~
 
-Deduplication on on disk can be handled by :ref:`keyed chain <keyed_chain>` by serializing and deduplicating an entire chain of tokenizable objects to disk in a single file.
+Deduplication when writing a GufeTokenizable to disk can be handled by :ref:`keyed chain <keyed_chain>`, which serializes and de-duplicates an entire chain of tokenizable objects to disk in a single file.
 However, **gufe** provides no tooling for deduplicating across chains stored to disk and it is up to the storage system to implement its own registry for handling this.
 
 The main idea is to use the ``GufeKey`` to ensure uniqueness, and to use it as a label for the object's serialized representation.
 Additionally, the ``GufeKey``, which is simply a string, can be used as a stand-in for the object.
 When an outer ``GufeTokenizable`` contains an inner ``GufeTokenizable``, the outer can store the ``GufeKey`` in place of the inner object.
-That is, we can store by reference to the ``GufeKey``.
+
 
 To convert a ``GufeTokenizable`` ``obj`` into a dictionary that references inner ``GufeTokenizable``\s by ``GufeKey``, use ``obj.to_keyed_dict()``.
 That method replaces each ``GufeTokenizable`` by a ``dict`` with a single key, ``':gufe-key:'``, mapping to the ``GufeKey`` of the object.
