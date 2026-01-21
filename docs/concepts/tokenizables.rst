@@ -179,8 +179,8 @@ In practice, that leads to the following behavior, where ``Foo()`` is representa
 Deduplication on disk
 ~~~~~~~~~~~~~~~~~~~~~
 
-Deduplication on disk storage is fundamentally the responsibility of the specific storage system, which falls outside the scope of **gufe**.
-However, **gufe** provides some tools to facilitate implementation of a storage system.
+Deduplication on on disk can be handled by `:ref``keyed chain <keyed_chain>` by serializing and deduplicating an entire chain of tokenizable objects to disk in a single file.
+However, **gufe** provides no tooling for deduplicating across chains stored to disk and it is up to the storage system to implement its own registry for handling this.
 
 The main idea is to use the ``GufeKey`` to ensure uniqueness, and to use it as a label for the object's serialized representation.
 Additionally, the ``GufeKey``, which is simply a string, can be used as a stand-in for the object.
