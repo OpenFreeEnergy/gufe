@@ -148,7 +148,14 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # assert ser == reser
 
     def test_to_msgpack_roundtrip(self, instance):
-        ser = instance.to_msgpack()
+        ser = instance.to_msgpack(compress=False)
+        deser = self.cls.from_msgpack(content=ser)
+
+        assert instance == deser
+        assert instance is deser
+
+    def test_to_msgpack_roundtrip_compressed(self, instance):
+        ser = instance.to_msgpack(compress=True)
         deser = self.cls.from_msgpack(content=ser)
 
         assert instance == deser

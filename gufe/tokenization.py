@@ -793,10 +793,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             raise ValueError("Must specify either `content` and `file` for MessagePack input")
 
         if content is not None:
-            try:
-                keyed_chain = unpackb(content)
-            except ExtraData:
-                keyed_chain = unpackb(zst_decompress(content))
+            # TODO: since zst_decompress catches ZstdError, this will
+            # fail on uncompressed data once removed in v2.0.0. This
+            # behavior should be caught in the unit tests.
+            keyed_chain = unpackb(zst_decompress(content))
         else:
             from gufe.utils import ensure_filelike
 
