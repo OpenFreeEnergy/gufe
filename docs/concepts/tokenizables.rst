@@ -189,7 +189,7 @@ That is, we can store by reference to the ``GufeKey``.
 
 To convert a ``GufeTokenizable`` ``obj`` into a dictionary that references inner ``GufeTokenizable``\s by ``GufeKey``, use ``obj.to_keyed_dict()``.
 That method replaces each ``GufeTokenizable`` by a ``dict`` with a single key, ``':gufe-key:'``, mapping to the ``GufeKey`` of the object.
-However, you take advantage of **gufe** functionality to facilitate system-specific de-duplication.
+However, you take advantage of **gufe** functionality to facilitate system-specific deduplication.
 
 You can use `:ref:`keyed dict <keyed_dict>` to represent``GufeTokenizable`` ``obj`` as a ``dict`` that references inner ``GufeTokenizable``\s by their``GufeKey``\s, and repeat this recursively to store (with the disk storage method of your choosing) all objects by reference.
 Then, to get a list of all objects, use :func:`.get_all_gufe_objs` on the outermost ``obj``\s.
