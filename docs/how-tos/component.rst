@@ -52,7 +52,7 @@ For example:
             return CustomComponent(rdkit=mol, name="ethane")
 
 
-Step 3: Define any Required Methods
+Step 3: Define Required Methods
 -----------------------------------
 
 When inheriting from abstract base classes, such as ``Component``, you will need to define anything that is an ``abstractmethod``.
