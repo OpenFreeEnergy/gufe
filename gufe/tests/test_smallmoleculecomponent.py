@@ -1,8 +1,6 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import importlib
-import importlib.resources
 
 try:
     import openff.toolkit.topology
@@ -13,14 +11,12 @@ else:
     HAS_OFFTK = True
 import json
 import logging
-import os
 from unittest import mock
 
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-import gufe
 from gufe import SmallMoleculeComponent
 from gufe.components.explicitmoleculecomponent import _ensure_ofe_name
 from gufe.tokenization import TOKENIZABLE_REGISTRY

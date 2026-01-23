@@ -15,7 +15,7 @@ from gufe import LigandAtomMapping, SmallMoleculeComponent
 from .test_tokenization import GufeTokenizableTestsMixin
 
 try:
-    import py3Dmol
+    import py3Dmol  # noqa: F401
 
     HAS_PY3DMOL = True
 except ImportError:

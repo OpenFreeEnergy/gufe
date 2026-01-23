@@ -3,9 +3,8 @@
 import os
 import pathlib
 import shutil
-from typing import ContextManager, Tuple, Union
 
-from ..errors import ChangedExternalResourceError, MissingExternalResourceError
+from ..errors import MissingExternalResourceError
 from .base import ExternalStorage
 
 
