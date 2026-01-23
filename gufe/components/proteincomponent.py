@@ -960,7 +960,25 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
 class ProteinMembraneComponent(SolvatedPDBComponent):
     """
-    Protein component with membrane and box vectors.
+    Solvated protein component with an explicit membrane and periodic box.
+
+    This class inherits all behavior and
+    constraints from ``SolvatedPDBComponent`` and does not introduce any
+    additional data or methods.
+    The primary purpose of this subclass is semantic: it acts as a marker
+    indicating the presence of a membrane. Code elsewhere may use this
+    distinction (e.g., via ``isinstance`` checks or type annotations) to
+    enable membrane-specific behavior such as selecting a membrane-aware
+    barostat or simulation protocol.
+
+    Notes
+    -----
+    * This class inherits all behavior and requirements from
+      ``SolvatedPDBComponent``.
+    * This class does not add new fields or override behavior.
+    * All requirements and guarantees of ``SolvatedPDBComponent`` apply.
+    * The distinction between membrane and non-membrane systems is
+      conveyed solely through the component type.
     """
 
     ...
