@@ -3,13 +3,13 @@
 How storage is handled in **gufe**
 ==================================
 
-**gufe** abstracts storage into a reusable storage interface using the :class:`.ExternalStorage` abstract base class.
+**gufe** abstracts storage into a reusable interface using the :class:`.ExternalStorage` abstract base class.
 This abstraction enables the storage of any file or byte stream using various storage backends without changing application code.
 
 Overview
 --------
 
-The storage system is designed to handle (files or byte data) that need to be stored in some location.
+The storage system is designed to handle files (or byte data) that need to be stored in some location.
 Instead of embedding the data, objects can store a reference (a *location* string) to where the data is stored externally. This approach provides several benefits:
 
 * **Efficiency**: Large objects don't need to be serialized multiple times

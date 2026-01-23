@@ -1,9 +1,9 @@
-Context
+``ProtocolUnit`` execution ``Context``
 =======
 
 :class:`.Context` instances carry the execution environment for individual :class:`.ProtocolUnit` executions.
 They are created by the execution engine just before a unit is excuted and discarded once the unit returns.
-The class acts as a thin wrapper around two :class:`.StorageManager` objects and a scratch directory.
+The class acts as a thin wrapper around two :class:`.StorageManager` objects (shared and permanent) and a scratch directory.
 
 
 Why Context exists
@@ -29,7 +29,7 @@ Why Context exists
 
 ``stdout`` / ``stderr``
     Optional directories where the engine captures subprocess output triggered
-    by the unit.  The directories are removed automatically when the context
+    by the ``ProtocolUnit``.  The directories are removed automatically when the context
     closes.
 
 Keeping these handles bundled together and managed by a context manager lets
