@@ -683,6 +683,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         super().__init__(rdkit=rdkit, name=name)
         self._validate_multiple_molecules(rdkit)
         self.box_vectors = box_vectors
+        # Density sanity check (warning only)
+        self._warn_if_density_too_low()
 
     @staticmethod
     def _validate_box_vectors(box):
@@ -724,6 +726,46 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if len(frags) <= 1:
             raise ValueError(
                 "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
+            )
+
+    def compute_density(self) -> offunit.Quantity:
+        """
+        Estimate the system density in g/L from the RDKit molecule and box vectors.
+
+        Returns
+        -------
+        density : openff.units.Quantity
+            Estimated density in grams per liter.
+        """
+        # total mass
+        total_mass = sum(
+            atom.GetMass() for atom in self._rdkit.GetAtoms()) * offunit.dalton
+
+        # box volume
+        box_nm = self.box_vectors.to("nanometer").magnitude
+        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer ** 3
+        volume_L = volume_nm3.to("liter")
+
+        # density
+        density = total_mass.to("gram") / volume_L
+        return density
+
+    def _warn_if_density_too_low(self):
+        """
+        Give a warning if the estimated system density is below 500 g/l.
+        This is a heuristic check intended to catch issues such as missing
+        solvent or box vector that are too big.
+        """
+        density = self.compute_density()
+        min_density = 500 * offunit.gram / offunit.liter
+
+        if density < min_density:
+            warnings.warn(
+                "Estimated system density is very low.\n"
+                f"  Density: {density:.3f}\n"
+                "This usually indicates missing solvent or incorrect box "
+                "vectors.\n",
+                UserWarning,
             )
 
     @staticmethod

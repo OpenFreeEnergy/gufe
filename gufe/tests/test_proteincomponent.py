@@ -485,6 +485,45 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             _is_box_shape(box)
             assert _box_vectors_are_in_reduced_form(box)
 
+    @pytest.mark.parametrize(
+        "factory,path_fixture",
+        [
+            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+        ],
+    )
+    def test_realistic_system_density(self, factory, path_fixture, request):
+        """
+        Check that a properly solvated system produces a realistic density.
+        """
+        path = request.getfixturevalue(path_fixture)
+        comp = factory(path)
+
+        density = comp.compute_density()
+        print(density)
+        # Expect realistic protein + solvent density ~> 800-1200 g/L (0.8-1.2 g/mL)
+        assert density > 800 * offunit.gram / offunit.liter
+        assert density < 1200 * offunit.gram / offunit.liter
+
+    @pytest.mark.parametrize(
+        "factory,path_fixture",
+        [
+            (SolvatedPDBComponent.from_pdb_file, "PDB_181L_path"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_181L_path"),
+        ],
+    )
+    def test_low_density_triggers_warning(self, factory, path_fixture, request):
+        """
+        Check that an extremely low-density system triggers a warning.
+        That PDB only contains a protein, no solvent or membrane.
+        """
+        path = request.getfixturevalue(path_fixture)
+
+        with pytest.warns(UserWarning,
+                          match="Estimated system density is very low"):
+            _ = factory(path, infer_box_vectors=True)
+
+
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
 
@@ -566,11 +605,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         with pytest.warns(UserWarning, match="cryo-EM"):
             with pytest.raises(ValueError, match="box_vectors"):
                 SolvatedPDBComponent._resolve_box_vectors(pdb)
-
-
-# class TestProteinMembraneComponent(TestSolvatedPDBComponent):
-#     cls = ProteinMembraneComponent
-#     repr = "ProteinMembraneComponent(name=Steve)"
 
 
 def test_no_monomer_info_error(ethane):
