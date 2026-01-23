@@ -1,7 +1,6 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import os
-import pathlib
 
 import pytest
 from openff.units import unit

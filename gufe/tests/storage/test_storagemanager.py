@@ -3,10 +3,8 @@
 
 import pathlib
 import tempfile
-from unittest.mock import MagicMock, patch
 
 import pytest
-from pluggy import _manager
 
 from gufe.storage.externalresource import FileStorage, MemoryStorage
 from gufe.storage.externalresource.base import ExternalStorage
