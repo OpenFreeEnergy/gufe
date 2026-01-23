@@ -1,6 +1,4 @@
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Literal
 
 from .externalresource import ExternalStorage
 
