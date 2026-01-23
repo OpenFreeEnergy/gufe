@@ -2,10 +2,9 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import datetime
 import itertools
-import pathlib
 from collections import defaultdict
 from collections.abc import Iterable, Sized
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -588,7 +587,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 some_dict={"a": 2, "b": 12},
             )
 
-            return SimulationUnit(name=f"simulation", initialization=alpha)
+            return SimulationUnit(name="simulation", initialization=alpha)
 
         def test_key_stable(self, instance):
             # for the DAG system, keys for `ProtocolUnit`s are based on UUIDs,

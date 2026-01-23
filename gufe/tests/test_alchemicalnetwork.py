@@ -4,9 +4,8 @@
 import networkx as nx
 import pytest
 
-from gufe import AlchemicalNetwork, ChemicalSystem, Transformation
+from gufe import AlchemicalNetwork
 
-from .test_protocol import DummyProtocol, DummyProtocolResult
 from .test_tokenization import GufeTokenizableTestsMixin
 
 

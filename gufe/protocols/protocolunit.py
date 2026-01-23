@@ -11,21 +11,16 @@ from __future__ import annotations
 import abc
 import datetime
 import shutil
-import sys
-import tempfile
 import traceback
 import uuid
-from collections.abc import Iterable
 from copy import copy
-from dataclasses import dataclass
-from os import PathLike
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional
 
 from gufe.storage.externalresource.base import ExternalStorage
 
 from ..storage.storagemanager import StorageManager
-from ..tokenization import TOKENIZABLE_REGISTRY, GufeKey, GufeTokenizable
+from ..tokenization import GufeKey, GufeTokenizable
 from .errors import ExecutionInterrupt
 
 

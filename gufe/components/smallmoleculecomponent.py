@@ -195,7 +195,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             pass
         else:
             # TODO: less generic exception type here
-            raise RuntimeError(f"SDF contains more than 1 molecule")
+            raise RuntimeError("SDF contains more than 1 molecule")
 
         return cls(rdkit=mol)  # name is obtained automatically
 
