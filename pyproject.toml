@@ -42,7 +42,7 @@ fallback_version = "0.0.0"
 
 [tool.ruff]
 line-length = 120
-
+format.exclude = [ "gufe/vendor/*" ]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 lint.select = [
   "F", # Pyflakes
