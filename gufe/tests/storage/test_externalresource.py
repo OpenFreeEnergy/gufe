@@ -1,11 +1,6 @@
-import hashlib
-import os
-import pathlib
-from unittest import mock
-
 import pytest
 
-from gufe.storage.errors import ChangedExternalResourceError, MissingExternalResourceError
+from gufe.storage.errors import MissingExternalResourceError
 from gufe.storage.externalresource import FileStorage, MemoryStorage
 
 # NOTE: Tests for the abstract base are just part of the tests of its
