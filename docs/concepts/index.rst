@@ -14,3 +14,4 @@ utilize **gufe** APIs.
    serialization
    storage
    context
+   logging
