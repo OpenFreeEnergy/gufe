@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from collections.abc import Collection
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,9 +11,6 @@ from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
 from ..utils import requires_package
-
-if TYPE_CHECKING:
-    pass
 
 # highlight core element changes differently from unique atoms
 # RGBA color value needs to be between 0 and 1, so divide by 255
