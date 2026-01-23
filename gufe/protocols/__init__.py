@@ -3,6 +3,7 @@
 from .errors import (
     GufeProtocolError,
     MissingUnitResultError,
+    ProtocolDAGError,
     ProtocolDAGResultError,
     ProtocolUnitExecutionError,
     ProtocolUnitFailureError,
