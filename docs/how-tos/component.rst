@@ -39,7 +39,11 @@ For example:
 .. code-block:: python
     :caption: test_custom_component.py
 
+    from gufe.tests import GufeTokenizableTestsMixin
     from .custom_component import CustomComponent
+    import pytest
+    from rdkit import Chem
+
 
     class TestCustomComponent(GufeTokenizableTestsMixin):
         cls = CustomComponent
@@ -58,9 +62,9 @@ Step 3: Define Required Methods
 When inheriting from abstract base classes, such as ``Component``, you will need to define anything that is an ``abstractmethod``.
 This includes both in ``Component`` itself, as well as any ``abstractmethod``\s it inherits from ``GufeTokenizable`` (since component is a subclass of GufeTokenizable).
 
-In other cases, such as when inheriting from ``ExplicitMoleculeComponent``, you will only need to define methods specifically not implemented - in this case ``to_dict()`` and ``from_dict()``.
+In other cases, such as when inheriting from ``ExplicitMoleculeComponent``, you will only need to define methods specifically not implemented - in this case ``_to_dict()`` and ``_from_dict()``.
 
-.. TODO: point to gufe tokenizable how-to for to_dict, from_dict examples, and/or source code examples.
+.. TODO: point to gufe tokenizable how-to for _to_dict, _from_dict examples, and/or source code examples.
 
 .. note::
 
