@@ -738,12 +738,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             Estimated density in grams per liter.
         """
         # total mass
-        total_mass = sum(
-            atom.GetMass() for atom in self._rdkit.GetAtoms()) * offunit.dalton
+        total_mass = sum(atom.GetMass() for atom in self._rdkit.GetAtoms()) * offunit.dalton
 
         # box volume
         box_nm = self.box_vectors.to("nanometer").magnitude
-        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer ** 3
+        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer**3
         volume_L = volume_nm3.to("liter")
 
         # density
