@@ -3,7 +3,7 @@
 How to define a new ``Component``
 =================================
 
-The **gufe**  :ref:`Component<component>` is a GufeTokenizable intended to be used as an *extensible point* of the library, such that you can describe a simulated system in terms of GufeTokenizables that are compatible with **gufe** and the rest of the OpenFE ecosystem.
+The **gufe**  :ref:`Component <component>` is a :class:`.GufeTokenizable` intended to be used as an *extensible point* of the library, such that you can describe a simulated system in terms of GufeTokenizables that are compatible with **gufe** and the rest of the OpenFE ecosystem.
 
 Step 1: Choose a Component to Extend
 -------------------------------------
