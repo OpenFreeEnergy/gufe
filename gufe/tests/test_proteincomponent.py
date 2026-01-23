@@ -519,10 +519,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         """
         path = request.getfixturevalue(path_fixture)
 
-        with pytest.warns(UserWarning,
-                          match="Estimated system density is very low"):
+        with pytest.warns(UserWarning, match="Estimated system density is very low"):
             _ = factory(path, infer_box_vectors=True)
-
 
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
