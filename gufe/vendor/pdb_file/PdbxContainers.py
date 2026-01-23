@@ -492,7 +492,7 @@ class DataCategory(DataCategoryBase):
 
                 # extend the list if needed -
                 if ind >= ll:
-                    self._rowList[rowI].extend([None for ii in xrange(2 * ind - ll)])  # noqa: F821, but note that xrange is deprecated
+                    self._rowList[rowI].extend([None for ii in xrange(2 * ind - ll)])
                 self._rowList[rowI][ind] = value
             except IndexError:
                 self.__lfh.write(
@@ -543,14 +543,14 @@ class DataCategory(DataCategoryBase):
         #
         ind = self._attributeNameList.index(attributeName)
         if len(self._rowList) == 0:
-            row = [None for ii in xrange(len(self._attributeNameList) * 2)]  # noqa: F821, but note that xrange is deprecated
+            row = [None for ii in xrange(len(self._attributeNameList) * 2)]
             row[ind] = None
             self._rowList.append(row)
 
         for row in self._rowList:
             ll = len(row)
             if ind >= ll:
-                row.extend([None for ii in xrange(2 * ind - ll)])  # noqa: F821, but note that xrange is deprecated
+                row.extend([None for ii in xrange(2 * ind - ll)])
                 row[ind] = None
             exec(method.getInline())
             self.__currentRowIndex += 1
