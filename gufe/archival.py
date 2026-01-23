@@ -1,28 +1,37 @@
-import hashlib
-import json
 import warnings
-from dataclasses import asdict, dataclass, field
-from functools import cached_property
-from os import PathLike
-from typing import Any, TextIO
+from typing import Any
 
 import gufe
 from gufe.network import AlchemicalNetwork
 from gufe.protocols import ProtocolDAGResult
-from gufe.tokenization import JSON_HANDLER, GufeKey, GufeTokenizable, KeyedChain
-
-
-def _dict_sort_values(dct):
-    for key, value in dct.items():
-        if isinstance(value, (list, tuple)):
-            dct[key] = list(sorted(value))
+from gufe.tokenization import GufeKey, GufeTokenizable
 
 
 class AlchemicalArchive(GufeTokenizable):
-    def __init__(self, network, transformation_results_map, metadata, version_gufe=None):
+    def __init__(
+        self,
+        network: AlchemicalNetwork,
+        transformation_results_map: dict[GufeKey | str, list[ProtocolDAGResult]],
+        metadata: dict[str, Any],
+        version_gufe: str | None = None,
+    ):
         self.network = network
-        self.transformation_results_map = transformation_results_map
-        _dict_sort_values(self.transformation_results_map)
+        self.transformation_results_map = {}
+
+        network_transformation_keys = [str(edge.key) for edge in self.network.edges]
+
+        for transformation, results in transformation_results_map.items():
+            # check that all keys in transformation map are GufeKeys
+            if not isinstance(transformation, str):
+                raise ValueError(f"Keys of transformation_results_map must be instances of GufeKey or str")
+
+            # check that all transformation keys provided are also in
+            # the provided AlchemicalNetwork
+            if transformation not in network_transformation_keys:
+                raise ValueError(f"{transformation} was not found in {self.network}")
+
+            self.transformation_results_map[str(transformation)] = sorted(list(results))
+
         self.metadata = metadata
         self.version_gufe = version_gufe or gufe.__version__
 

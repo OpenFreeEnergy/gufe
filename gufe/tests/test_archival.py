@@ -5,6 +5,7 @@ import pytest
 
 import gufe
 from gufe.archival import AlchemicalArchive
+from gufe.transformations.transformation import TransformationBase
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -22,42 +23,13 @@ class TestArchival(GufeTokenizableTestsMixin):
         alchemical_network = benzene_variants_star_map
         transformations = sorted(list(alchemical_network.edges))
         # create fake results for the transformations
-        transformation_results = {}
+        transformation_results_map = {}
         for transformation in transformations:
-            transformation_results[transformation.key] = [pdr_from_transformation(transformation)]
+            transformation_results_map[str(transformation.key)] = [pdr_from_transformation(transformation)]
         metadata = {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
         return AlchemicalArchive(
-            network=alchemical_network, transformation_results_map=transformation_results, metadata=metadata
+            network=alchemical_network, transformation_results_map=transformation_results_map, metadata=metadata
         )
-
-    def test_roundtrip(self, instance):
-        json = instance.to_json()
-        reconstructed = AlchemicalArchive.from_json(content=json)
-
-        assert instance == reconstructed
-
-    def test_to_json(self, instance, tmpdir):
-        # returning a string
-        result = instance.to_json()
-        assert result is not None
-
-        # write to file
-        output_file = tmpdir / "archive.json"
-        result = instance.to_json(output_file)
-        assert result is None
-        assert output_file.exists()
-
-    def test_from_json(self, instance, tmpdir):
-        # encode to both a file and a string in memory
-        filename = tmpdir / "archive.json"
-        instance.to_json(filename)
-        content = instance.to_json()
-
-        assert AlchemicalArchive.from_json(file=filename) == instance
-        assert AlchemicalArchive.from_json(content=content) == instance
-
-        with pytest.raises(ValueError, match="Cannot specify both"):
-            AlchemicalArchive.from_json(content=content, file=filename)
 
     def test_version(self, instance):
         # fixture will generate correct version
@@ -72,3 +44,24 @@ class TestArchival(GufeTokenizableTestsMixin):
 
     def test_metadata(self, instance):
         assert instance.metadata == {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
+
+    def test_invalid_transformation_key(self, instance):
+        valid_transformations = sorted(list(instance.network.edges))
+        invalid_transformation = valid_transformations[0].copy_with_replacements(name="invalid_transformation")
+        invalid_pdr = pdr_from_transformation(invalid_transformation)
+
+        with pytest.raises(ValueError):
+            instance.copy_with_replacements(
+                transformation_results_map=instance.transformation_results_map
+                | {str(invalid_transformation.key): [invalid_pdr]}
+            )
+
+    def test_transformation_not_str_or_gufekey(self, instance):
+        transformations = sorted(list(instance.network.edges))
+        transformation_results_map = {}
+
+        for transformation in transformations:
+            transformation_results_map[transformation] = [pdr_from_transformation(transformation)]
+
+        with pytest.raises(ValueError, match="Keys of transformation_results_map must be instances of GufeKey or str"):
+            instance.copy_with_replacements(transformation_results_map=transformation_results_map)
