@@ -123,12 +123,13 @@ Follow this checklist when migrating old protocols:
 
 1. **Swap file paths to StorageManager APIs.**  Calls like ``ctx.shared /
    "filename"`` should be replaced with the helper methods offered by
-   :class:`StorageManager`.  For example::
+   :class:`StorageManager`.  For example:
 
 .. code-block:: python
 
-       path = ctx.shared.scratch_dir / "myfile.dat"
-       ctx.shared.register("myfile.dat")
+    path = ctx.shared.scratch_dir / "myfile.dat"
+    ctx.shared.register("myfile.dat")
+
 
 2. **Avoid storing heavy objects in Python outputs.**  Older protocols often
    returned raw ``Path`` objects pointing at scratch files.  Instead, register
