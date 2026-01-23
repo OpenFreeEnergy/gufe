@@ -71,7 +71,7 @@ Step 4: Define Additional Functionality
 ---------------------------------------
 
 While the code in Step 2 is technically correct, it doesn't actually add anything new; it merely creates a new class identical to ``SmallMoleculeComponent`` with a new name.
-To add functionality *in addition to*``SmallMoleculeComponent``'s existing functionality, you can add new attributes, such as ``custom_attribute``, and new methods, such as ``print_custom_attribute``:
+To add functionality *in addition to* ``SmallMoleculeComponent``'s existing functionality, you can add new attributes, such as ``custom_attribute``, and new methods, such as ``print_custom_attribute``:
 
 .. code-block:: python
     :caption: custom_component.py
