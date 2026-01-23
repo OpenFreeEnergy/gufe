@@ -16,7 +16,7 @@ import weakref
 from collections.abc import Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Callable, Dict, List, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Callable, TextIO
 
 import networkx as nx
 from typing_extensions import Self
@@ -124,7 +124,7 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
         extra = kwargs.get("extra", {})
         if (extra_dict := getattr(self, "_extra_dict", None)) is None:
             try:
-                gufekey = self.extra.key.split("-")[-1]
+                gufekey = str(self.extra.key)
             except Exception:
                 # no matter what happened, we have a bad key
                 gufekey = "UNKNOWN"
@@ -712,7 +712,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
                 return cls.from_keyed_chain(keyed_chain=deserialized)
             except ValueError:
                 # if the above fails, try to load as the dict representation
-                warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
+                warnings.warn("keyed-chain deserialization failed; falling back to deserializing dict representation")
                 return cls.from_dict(deserialized)
 
         from gufe.utils import ensure_filelike
@@ -724,7 +724,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             return cls.from_keyed_chain(keyed_chain=deserialized)
         except ValueError:
             # if the above fails, try to load as the dict representation
-            warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
+            warnings.warn("keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
 
     def to_msgpack(self, file: PathLike | BinaryIO | None = None) -> None | bytes:
