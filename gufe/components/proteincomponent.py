@@ -728,7 +728,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
             )
 
-    def compute_density(self) -> offunit.Quantity:
+    def compute_density(self):
         """
         Estimate the system density in g/L from the RDKit molecule and box vectors.
 
