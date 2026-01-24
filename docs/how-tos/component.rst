@@ -92,6 +92,14 @@ To add functionality *in addition to* ``SmallMoleculeComponent``'s existing func
         def print_custom_attribute(self) -> str:
             return f"my custom attribute is {self.custom_attribute}"
 
+        # Since we added a new attribute, must include that attribute in serialization
+        def _to_dict(self):
+            d = super()._to_dict()
+
+            d["custom_attribute"] = custom_attribute
+
+        def _from_dict(cls, d, name=""):
+            return cls(**d)
 
 Just make sure you test all of your new features!
 
