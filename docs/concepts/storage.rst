@@ -171,8 +171,9 @@ It handles the transfer of files between a scratch directory and external storag
     )
 
     # Register files for later transfer
-    manager.register("trajectory.dcd")
-    manager.register("results.json")
+    out = manager.register("trajectory.dcd")
+    out2 = manager.register("results.json")
+    # Note: out and out2 are pre-namespaced values that allow storage items to be passed around
 
     # Transfer all registered files to external storage
     manager._transfer()
