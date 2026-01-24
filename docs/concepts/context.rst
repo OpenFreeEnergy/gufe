@@ -18,12 +18,12 @@ Why Context exists
 
 ``shared``
     A :class:`.StorageManager` backed by
-    short–lived :class:`.ExternalStorage`.  Use
+    short–lived :class:`.ExternalStorage`. Use
     this to hand large files to downstream units without serializing the
     payloads through Python return values.
 
 ``permanent``
-    Another :class:`.StorageManager` targeting long–term storage.  Results saved here
+    Another :class:`.StorageManager` targeting long–term storage. Results saved here
     survive beyond the life of the :class:`.ProtocolDAG` run (for example for
     inspection or for reuse in future extensions).
 
@@ -46,7 +46,11 @@ Any ``stdout`` or ``stderr`` capture directories are also removed.
 
 .. _Python context manager: https://docs.python.org/3/reference/datamodel.html#context-managers
 
-This means a ``ProtocolUnit`` should treat ``ctx.shared`` and ``ctx.permanent`` as handles that stay valid only for the duration of execution; once the method returns, the engine is responsible for moving the files into their durable homes.
+This means each ``ProtocolUnit``'s ``shared`` and ``permanent`` object are not paths, and should not be treated as such.
+Both of these are registries that track if a file should be transferred from its location in ``scratch`` to its final location after completing a unit.
+
+If you want to use some from ``shared`` or ``permanent``, you can use ``ctx.shared.load`` or ``ctx.permanent.load``.
+This will allow your unit to fetch those objects from their storage for use.
 
 
 Using Context inside ProtocolUnits
@@ -67,19 +71,25 @@ first argument.  Typical usage looks like the example below.
             scratch_path.mkdir(exist_ok=True)
 
             # Read upstream artifacts from ctx.shared
-            system_file = setup_result.outputs["system_file"]
-            topology_file = setup_result.outputs["topology_file"]
+            system_file = ctx.shared.load(setup_result.outputs["system_file"])
+            topology_file = ctx.shared.load(setup_result.outputs["topology_file"])
 
-            # Produce large payloads into ctx.shared so downstream units can
-            # access them without serialization
-            result_path = ctx.shared / f"window_{lambda_window}.npz"
-            save_simulation_outputs(result_path)
+
+            result_path = ctx.scratch / "some_output.pdb"
+            # When you register the filename doesn't matter,
+            # just as long as you do it before you return
+            result_path_final_location = ctx.permanent.register(result_path)
+            # This is an example of running something that you want to save
+            simulate(output=result_path)
 
             # Return only lightweight metadata
             return {
                 "lambda_window": lambda_window,
-                "result_path": str(result_path),
+                # We use this because it is already namespaced and can be used between units.
+                "result_path": result_path_final_location,
             }
+
+The example above showcases how
 
 
 Choosing between shared and permanent storage
