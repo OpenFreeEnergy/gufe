@@ -27,7 +27,7 @@ class ExampleMapping(AtomMapping):
         return {
             "molA": self._componentA,
             "molB": self._componentB,
-            "mapping": self._mapping,
+            # "mapping": self._mapping,
         }
 
     @classmethod

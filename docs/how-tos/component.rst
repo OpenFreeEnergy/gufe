@@ -89,17 +89,25 @@ To add functionality *in addition to* ``SmallMoleculeComponent``'s existing func
             self.custom_attribute = custom_attribute
             super().__init__(rdkit=rdkit, name=name)
 
-        def print_custom_attribute(self) -> str:
+        def custom_functionality(self) -> str:
             return f"my custom attribute is {self.custom_attribute}"
 
         # Since we added a new attribute, must include that attribute in serialization
+        # by defining _to_dict and _from_dict
         def _to_dict(self):
+            # first, use the parent classes' implementation
             d = super()._to_dict()
 
-            d["custom_attribute"] = custom_attribute
+            # now, add our custom attribute
+            d["custom_attribute"] = self.custom_attribute
+            return d
 
-        def _from_dict(cls, d, name=""):
-            return cls(**d)
+        @classmethod
+        def _from_dict(cls, d:dict):
+            # first, use the parent classes' implementation
+            obj = super()._from_dict(d)
+            # now, pass through to construct our custom attribute
+            return cls(rdkit=obj._rdkit, name=obj.name, custom_attribute=d.get("custom_attribute"))
 
 Just make sure you test all of your new features!
 
@@ -120,7 +128,9 @@ Just make sure you test all of your new features!
         def instance(self):
             mol = Chem.AddHs(Chem.MolFromSmiles("CC"))
             Chem.AllChem.Compute2DCoords(mol)
-            test_instance = CustomComponent(rdkit=mol, name="ethane")
+
+            # it's important we test defining the custom attribute to make sure it round-trips correctly
+            test_instance = CustomComponent(rdkit=mol, name="ethane", custom_attribute=8)
             return test_instance
 
         def test_print_custom_attribute_default(self, instance):
