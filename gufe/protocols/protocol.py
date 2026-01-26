@@ -6,7 +6,7 @@
 import abc
 import warnings
 from collections.abc import Iterable, Sized
-from typing import Any, Optional, Union
+from typing import Any
 
 from openff.units import Quantity
 
