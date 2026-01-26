@@ -11,7 +11,6 @@ from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from openmm import app
 from openmm import unit as omm_unit
-from openmm.unit import Quantity
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
