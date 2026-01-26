@@ -3,7 +3,7 @@
 
 from collections import abc
 
-from .components import Component
+from .components.component import Component
 from .tokenization import GufeTokenizable
 
 
