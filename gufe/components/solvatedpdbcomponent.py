@@ -1,28 +1,22 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import io
 import warnings
 from os import PathLike
-from string import digits
 from typing import TextIO
 
 import numpy as np
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
-from openmm import app
 from openmm import unit as omm_unit
-from rdkit import Chem, rdBase
-from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
+from rdkit import Chem
+from rdkit.Chem.rdchem import Mol
 
-from ..custom_typing import RDKitMol
-from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
-from .explicitmoleculecomponent import ExplicitMoleculeComponent
-from .solventcomponent import BaseSolventComponent
 from .proteincomponent import ProteinComponent
+from .solventcomponent import BaseSolventComponent
 
 
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):

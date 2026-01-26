@@ -1,23 +1,18 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 import gzip
-import io
-import os
 from pathlib import Path
-from unittest import mock
 
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 from openff.units import unit as offunit
-from packaging.version import Version
-from rdkit import Chem
 
 from gufe import ProteinComponent, SolvatedPDBComponent
 
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
-from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
+from .conftest import OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
 from .test_tokenization import GufeTokenizableTestsMixin
 
