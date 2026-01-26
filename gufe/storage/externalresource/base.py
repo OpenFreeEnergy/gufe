@@ -6,8 +6,6 @@ import hashlib
 import pathlib
 from typing import ContextManager, Iterator
 
-from ..errors import MissingExternalResourceError
-
 
 @dataclasses.dataclass
 class Metadata:
