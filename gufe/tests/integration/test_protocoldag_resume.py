@@ -1,28 +1,30 @@
 import pathlib
-from gufe.protocols import execute_DAG
 from pathlib import Path
+from unittest.mock import patch
+
+from openfe.protocols import openmm_rfe
+from openfe.protocols.openmm_rfe import _rfe_utils
 from openff.units import unit
 from openmmtools import multistate
-from openfe.protocols.openmm_rfe import _rfe_utils
-from openfe.protocols import openmm_rfe
-from unittest.mock import patch
+
+from gufe.protocols import execute_DAG
 
 
 class MockUUID:
     """A mock UUID object that mimics uuid.UUID4 behavior"""
-    
+
     def __init__(self, value: int):
         self.value = value
-    
+
     @property
     def hex(self) -> str:
         """Return hex representation like a real UUID"""
         return f"hex-{self.value}"
-    
+
     def __int__(self) -> int:
         """Allow int() conversion for backward compatibility"""
         return self.value
-    
+
     def __str__(self) -> str:
         """String representation"""
         return f"MockUUID-{self.value}"
@@ -30,24 +32,22 @@ class MockUUID:
 
 class MonotonicUUID:
     """A mock UUID generator that returns monotonically increasing integers"""
-    
+
     def __init__(self, start=0):
         self.counter = start
-    
+
     def __call__(self) -> MockUUID:
         """Return a MockUUID object with current counter value and increment"""
         current = MockUUID(self.counter)
         self.counter += 1
         return current
-    
+
     def reset(self, start=0):
         """Reset the counter to a specific value"""
         self.counter = start
 
 
-def create_protocol_settings(
-    *, production_length
-) -> openmm_rfe.RelativeHybridTopologyProtocolSettings:
+def create_protocol_settings(*, production_length) -> openmm_rfe.RelativeHybridTopologyProtocolSettings:
     settings = openmm_rfe.RelativeHybridTopologyProtocol.default_settings()
     settings.simulation_settings.minimization_steps = 5000  # default is 5000
     settings.simulation_settings.equilibration_length = 10 * unit.picoseconds
@@ -62,16 +62,12 @@ def restore_sampler_from_checkpoint(
 ) -> _rfe_utils.multistate.HybridRepexSampler:
     nc = shared_basepath / "simulation.nc"
     chk = shared_basepath / "checkpoint.chk"
-    reporter = multistate.MultiStateReporter(
-        str(nc), checkpoint_storage=str(chk), open_mode="r"
-    )
+    reporter = multistate.MultiStateReporter(str(nc), checkpoint_storage=str(chk), open_mode="r")
     sampler = _rfe_utils.multistate.HybridRepexSampler.from_storage(reporter)
     return sampler
 
 
-def create_protocol_dag(
-    *, benzene_system, toluene_system, benzene_to_toluene_mapping, production_length
-):
+def create_protocol_dag(*, benzene_system, toluene_system, benzene_to_toluene_mapping, production_length):
     settings = create_protocol_settings(production_length=production_length)
 
     protocol = openmm_rfe.RelativeHybridTopologyProtocol(
@@ -86,7 +82,7 @@ def create_protocol_dag(
     return dag
 
 
-@patch('openfe.protocols.openmm_rfe.equil_rfe_methods.uuid.uuid4')
+@patch("openfe.protocols.openmm_rfe.equil_rfe_methods.uuid.uuid4")
 def test_protocol_dag_resume(mock_uuid, tmpdir, benzene_system, toluene_system, benzene_to_toluene_mapping):
     with tmpdir.as_cwd():
         # Start from 1000
