@@ -106,13 +106,13 @@ def PDB_181L_path():
 
 @pytest.fixture(scope="session")
 def PDB_a2a_path():
-    with importlib.resources.path("gufe.tests.data", "a2a.pdb") as f:
+    with importlib.resources.path("gufe.tests.data", "a2a.pdb.gz") as f:
         yield str(f)
 
 
 @pytest.fixture(scope="session")
 def PDB_a2a_single_fragment_path():
-    with importlib.resources.path("gufe.tests.data", "a2a_single_fragment.pdb") as f:
+    with importlib.resources.path("gufe.tests.data", "a2a_single_fragment.pdb.gz") as f:
         yield str(f)
 
 
@@ -142,7 +142,7 @@ def PDBx_181L_path():
 
 @pytest.fixture
 def PDBx_a2a_path():
-    with importlib.resources.path("gufe.tests.data", "a2a.cif") as f:
+    with importlib.resources.path("gufe.tests.data", "a2a.cif.gz") as f:
         yield str(f)
 
 

@@ -5,7 +5,7 @@ import io
 import os
 from pathlib import Path
 from unittest import mock
-
+import gzip
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -379,12 +379,14 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
 
     @pytest.fixture(scope="session")
     def instance(self, PDB_a2a_path):
-        return self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
+        with gzip.open(PDB_a2a_path, "rb") as gzf:
+            yield self.cls.from_pdb_file(gzf, name="Steve")
 
     def test_single_molecule_with_box_vectors_raises(self, PDB_a2a_single_fragment_path):
         box = np.eye(3) * offunit.nanometer
 
-        prot = ProteinComponent.from_pdb_file(PDB_a2a_single_fragment_path)
+        with gzip.open(PDB_a2a_single_fragment_path, "rb") as gzf:
+            prot = ProteinComponent.from_pdb_file(gzf)
 
         with pytest.raises(ValueError, match="multiple molecules"):
             SolvatedPDBComponent(
@@ -400,7 +402,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(6.9587)
 
     def test_requires_box_vectors(self, PDB_a2a_path):
-        prot = ProteinComponent.from_pdb_file(PDB_a2a_path)
+        with gzip.open(PDB_a2a_path, "rb") as gzf:
+            prot = ProteinComponent.from_pdb_file(gzf)
 
         with pytest.raises(ValueError, match="box_vectors must be provided"):
             self.cls(
@@ -460,8 +463,10 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     def test_uses_file_box_vectors(self, factory, loader, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
 
-        comp = factory(path)
-        ref = loader(path).topology.getPeriodicBoxVectors()
+        with gzip.open(path, "rt") as f:
+            comp = factory(f)
+        with gzip.open(path, "rt") as f2:
+            ref = loader(f2).topology.getPeriodicBoxVectors()
 
         actual = comp.box_vectors.m_as(offunit.nanometer)
         expected = ref.value_in_unit(unit.nanometer)
@@ -497,10 +502,10 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         Check that a properly solvated system produces a realistic density.
         """
         path = request.getfixturevalue(path_fixture)
-        comp = factory(path)
+        with gzip.open(path, "rt") as f:
+            comp = factory(f)
 
         density = comp.compute_density()
-        print(density)
         # Expect realistic protein + solvent density ~> 800-1200 g/L (0.8-1.2 g/mL)
         assert density > 800 * offunit.gram / offunit.liter
         assert density < 1200 * offunit.gram / offunit.liter
@@ -541,7 +546,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
 
     def test_from_pdbx_file_user_box_vectors(self, PDBx_a2a_path):
         b = np.eye(3) * 2.0 * offunit.nanometer
-        comp = self.cls.from_pdbx_file(PDBx_a2a_path, box_vectors=b)
+        with gzip.open(PDBx_a2a_path, "rt") as f:
+            comp = self.cls.from_pdbx_file(f, box_vectors=b)
         box = comp.box_vectors
         assert box is not None
         assert box.shape == (3, 3)
@@ -557,12 +563,12 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     def test_explicit_box_vectors_override_file_box(self, factory, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
 
-        ref = factory(path)
+        with gzip.open(path, "rt") as f:
+            ref = factory(f)
+        with gzip.open(path, "rt") as f2:
+            override = np.eye(3) * 2.0 * offunit.nanometer
+            comp = factory(f2, box_vectors=override)
         ref_box = ref.box_vectors
-
-        override = np.eye(3) * 2.0 * offunit.nanometer
-
-        comp = factory(path, box_vectors=override)
 
         assert not np.allclose(
             ref_box.m_as(offunit.nanometer),
