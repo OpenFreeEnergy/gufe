@@ -155,7 +155,7 @@ class PDBFile:
         if isinstance(file, PdbStructure):
             pdb = file
         elif isinstance(file, str) or isinstance(file, PosixPath) or isinstance(file, io.StringIO):
-            inputfile = str(file) if isinstance(file, PosixPath) else file 
+            inputfile = str(file) if isinstance(file, PosixPath) else file
             own_handle = False
             if isinstance(file, str):
                 inputfile = open(file)
