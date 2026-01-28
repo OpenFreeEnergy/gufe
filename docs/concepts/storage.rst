@@ -182,6 +182,7 @@ It handles the transfer of files between a scratch directory and external storag
     trajectory_data = manager.load("my_experiment/transformation_1/trajectory.dcd")
 
 The ``StorageManager`` uses a namespace combining the ``dag_label`` and ``unit_label`` to organize files in the external storage backend.
+To see how these work in practice see our documentation on :doc:`context`.
 
 
 Error Handling
