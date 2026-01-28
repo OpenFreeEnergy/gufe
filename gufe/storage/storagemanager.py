@@ -65,15 +65,21 @@ class StorageManager:
         # We opt _not_ to use Paths because these aren't actually path objects
         return f"{namespace}/{filename}"
 
-    def register(self, filename: str):
+    def register(self, filename: str) -> str:
         """Register a filename for later transfer to external storage.
 
         Parameters
         ----------
         filename : str
             The filename to register for transfer.
+
+        Returns
+        -------
+        str
+            The globally namespaced path to be used by other units
         """
         self.registry.add(filename)
+        return self.append_to_namespace(self.namespace, filename)
 
     def load(self, filename: str) -> bytes:
         """Load an item from external storage.

@@ -78,7 +78,8 @@ class TestStorageManager:
         assert filename not in storage_manager
 
         # Register the file
-        storage_manager.register(filename)
+        out = storage_manager.register(filename)
+        assert out == storage_manager.append_to_namespace(storage_manager.namespace, filename)
 
         # Check it's now in the registry
         assert filename in storage_manager.registry
