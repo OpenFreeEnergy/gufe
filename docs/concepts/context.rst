@@ -168,3 +168,5 @@ becomes:
    That pattern is obsolete because the constructor now requires ``ExternalStorage`` objects.
    Instead, rely on the execution backend to build contexts.
    For unit tests use the helpers in ``gufe.storage.externalresource`` (e.g., ``MemoryStorage``) to create the necessary storage instances.
+
+If you need more information on how to use these concepts, checkout out: :doc:`../how-tos/protocol`.
