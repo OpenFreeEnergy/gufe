@@ -78,7 +78,7 @@ class StorageManager:
         Returns
         -------
         str
-            The globaly namespaced path used by other units
+            The globally namespaced path to be used by other units
         """
         self.registry.add(filename)
         return self.append_to_namespace(self.namespace, filename)
