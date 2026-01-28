@@ -55,7 +55,7 @@ class ExplicitMoleculeComponent(Component):
 
         if not any(atom.GetAtomicNum() == 1 for atom in rdkit.GetAtoms()):
             warnings.warn(
-                "Molecule doesn't have any hydrogen atoms present. "
+                f"Molecule, {name}, doesn't have any hydrogen atoms present. "
                 "If this is unexpected, consider loading the molecule with `removeHs=False`"
             )
 
