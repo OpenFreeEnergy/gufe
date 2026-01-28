@@ -33,7 +33,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     * ``box_vectors`` must be an OpenFF quantity with units.
     * Box vectors are serialized and included in equality and hash checks.
     * Construction will fail if box vectors cannot be determined as well as
-      if the RDKit molecule only one disconnected fragment.
+      if the RDKit molecule has only one disconnected fragment.
     """
 
     def __init__(self, rdkit: Mol, box_vectors, name: str = ""):
