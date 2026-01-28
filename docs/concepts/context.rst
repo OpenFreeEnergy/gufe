@@ -1,5 +1,5 @@
 ``ProtocolUnit`` execution ``Context``
-=======
+======================================
 
 :class:`.Context` instances carry the execution environment for individual :class:`.ProtocolUnit` executions.
 They are created by the execution engine just before a unit is excuted and discarded once the unit returns.
@@ -138,6 +138,11 @@ Follow this checklist when migrating old protocols:
 .. code-block:: python
 
     path = ctx.shared.scratch_dir / "myfile.dat"
+
+becomes:
+
+.. code-block:: python
+
     ctx.shared.register("myfile.dat")
 
 
