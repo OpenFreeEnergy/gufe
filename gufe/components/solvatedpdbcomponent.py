@@ -7,6 +7,7 @@ from typing import TextIO
 import numpy as np
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
+from openff.toolkit import Quantity
 from openmm import unit as omm_unit
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
@@ -36,7 +37,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
       if the RDKit molecule only one disconnected fragment.
     """
 
-    def __init__(self, rdkit: Mol, box_vectors, name: str = ""):
+    def __init__(self, rdkit: Mol, box_vectors: Quantity, name: str = ""):
         """
         Parameters
         ----------
