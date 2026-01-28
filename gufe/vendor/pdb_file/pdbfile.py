@@ -36,6 +36,8 @@ import math
 import os
 import sys
 import xml.etree.ElementTree as etree
+import io
+from pathlib import PosixPath
 from copy import copy
 from datetime import date
 
@@ -99,7 +101,7 @@ class PDBFile:
 
         Parameters
         ----------
-        file : string or file
+        file : str, PosixPath, or file
             the name of the file to load.  Alternatively you can pass an open file object.
         extraParticleIdentifier : string='EP'
             if this value appears in the element column for an ATOM record, the Atom's element will be set to None to mark it as an extra particle
@@ -152,8 +154,8 @@ class PDBFile:
 
         if isinstance(file, PdbStructure):
             pdb = file
-        else:
-            inputfile = file
+        elif isinstance(file, str) or isinstance(file, PosixPath) or isinstance(file, io.StringIO):
+            inputfile = str(file) if isinstance(file, PosixPath) else file 
             own_handle = False
             if isinstance(file, str):
                 inputfile = open(file)
@@ -165,6 +167,8 @@ class PDBFile:
             )
             if own_handle:
                 inputfile.close()
+        else:
+            raise TypeError(f"Expected file types: PdbStructure, str, StringIO, or PosixPath. File, {file}, is type {type(file)}.")
         PDBFile._loadNameReplacementTables()
 
         # Build the topology
