@@ -155,7 +155,7 @@ The :class:`.StorageManager` class provides a higher-level interface for managin
     ``StorageManager`` is largely used by the :class:`.Context` class and should not be instantiated in protocols.
     In general, protocol developers will only use the ``register`` and ``load`` functions.
 
-It handles the transfer of files between a scratch directory and external storage (such as shared or permenant storage):
+It handles the transfer of files between a scratch directory and external storage (such as shared or permanent storage):
 
 .. code-block:: python
 
