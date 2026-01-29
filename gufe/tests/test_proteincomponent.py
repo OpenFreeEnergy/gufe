@@ -107,7 +107,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     cls = ProteinComponent
     repr = "ProteinComponent(name=Steve)"
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def instance(self, PDB_181L_path):
         return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
 
