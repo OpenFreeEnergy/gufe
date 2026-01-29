@@ -10,7 +10,7 @@ Overview
 --------
 
 The storage system is designed to handle files (or byte data) that need to be stored in some location.
-Instead of embedding the data, objects can store a reference (a *location* string) to where the data is stored externally. This approach provides several benefits:
+Instead of embedding the data, objects can store a reference (a unique string indicating the object's location, such as a path) to where the data is stored externally. This approach provides several benefits:
 
 * **Efficiency**: Large objects don't need to be serialized multiple times
 * **Flexibility**: Different storage backends (local filesystem, cloud storage, in-memory) can be used interchangeably
@@ -150,8 +150,11 @@ StorageManager
 --------------
 
 The :class:`.StorageManager` class provides a higher-level interface for managing storage operations within a computational workflow.
-This class is largely used by the :class:`.Context` class and should not be instantiated in protocols.
-In general, protocol developers will only use the register and load functions.
+.. note::
+
+    ``StorageManager`` is largely used by the :class:`.Context` class and should not be instantiated in protocols.
+    In general, protocol developers will only use the ``register`` and ``load`` functions.
+
 It handles the transfer of files between a scratch directory and external storage (such as shared or permenant storage):
 
 .. code-block:: python
