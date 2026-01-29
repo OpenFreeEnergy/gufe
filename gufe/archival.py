@@ -5,32 +5,37 @@ import gufe
 from gufe.network import AlchemicalNetwork
 from gufe.protocols import ProtocolDAGResult
 from gufe.tokenization import GufeKey, GufeTokenizable
+from gufe.transformations.transformation import TransformationBase
 
 
 class AlchemicalArchive(GufeTokenizable):
     def __init__(
         self,
         network: AlchemicalNetwork,
-        transformation_results_map: dict[GufeKey | str, list[ProtocolDAGResult]],
+        transformation_results: list[tuple[TransformationBase, list[ProtocolDAGResult]]],
         metadata: dict[str, Any],
         version_gufe: str | None = None,
     ):
         self.network = network
-        self.transformation_results_map = {}
 
-        network_transformation_keys = [str(edge.key) for edge in self.network.edges]
+        network_transformation_keys = {edge.key for edge in self.network.edges}
 
-        for transformation, results in transformation_results_map.items():
-            # check that all keys in transformation map are GufeKeys
-            if not isinstance(transformation, str):
-                raise ValueError(f"Keys of transformation_results_map must be instances of GufeKey or str")
-
+        _results: dict[TransformationBase, list[ProtocolDAGResult]] = {}
+        for transformation, pdrs in transformation_results:
             # check that all transformation keys provided are also in
             # the provided AlchemicalNetwork
-            if transformation not in network_transformation_keys:
+            if transformation.key not in network_transformation_keys:
                 raise ValueError(f"{transformation} was not found in {self.network}")
 
-            self.transformation_results_map[str(transformation)] = sorted(list(results))
+            # TODO: this needs more testing
+            if previous := _results.get(transformation):
+                _results[transformation] = sorted(set(previous + list(pdrs)))
+            else:
+                _results[transformation] = sorted(set(pdrs))
+
+        self.transformation_results = []
+        for transformation in sorted(_results.keys()):
+            self.transformation_results.append([transformation, _results[transformation]])
 
         self.metadata = metadata
         self.version_gufe = version_gufe or gufe.__version__
@@ -38,7 +43,7 @@ class AlchemicalArchive(GufeTokenizable):
     def _to_dict(self):
         return {
             "network": self.network,
-            "transformation_results_map": self.transformation_results_map,
+            "transformation_results": self.transformation_results,
             "metadata": self.metadata,
             "version_gufe": self.version_gufe,
         }

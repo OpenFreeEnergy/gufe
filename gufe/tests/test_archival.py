@@ -23,12 +23,12 @@ class TestArchival(GufeTokenizableTestsMixin):
         alchemical_network = benzene_variants_star_map
         transformations = sorted(list(alchemical_network.edges))
         # create fake results for the transformations
-        transformation_results_map = {}
+        transformation_results = []
         for transformation in transformations:
-            transformation_results_map[str(transformation.key)] = [pdr_from_transformation(transformation)]
+            transformation_results.append([transformation, [pdr_from_transformation(transformation)]])
         metadata = {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
         return AlchemicalArchive(
-            network=alchemical_network, transformation_results_map=transformation_results_map, metadata=metadata
+            network=alchemical_network, transformation_results=transformation_results, metadata=metadata
         )
 
     def test_version(self, instance):
@@ -50,18 +50,9 @@ class TestArchival(GufeTokenizableTestsMixin):
         invalid_transformation = valid_transformations[0].copy_with_replacements(name="invalid_transformation")
         invalid_pdr = pdr_from_transformation(invalid_transformation)
 
+        instance.transformation_results + [[invalid_transformation, [invalid_pdr]]]
+
         with pytest.raises(ValueError):
             instance.copy_with_replacements(
-                transformation_results_map=instance.transformation_results_map
-                | {str(invalid_transformation.key): [invalid_pdr]}
+                transformation_results=instance.transformation_results + [[invalid_transformation, [invalid_pdr]]]
             )
-
-    def test_transformation_not_str_or_gufekey(self, instance):
-        transformations = sorted(list(instance.network.edges))
-        transformation_results_map = {}
-
-        for transformation in transformations:
-            transformation_results_map[transformation] = [pdr_from_transformation(transformation)]
-
-        with pytest.raises(ValueError, match="Keys of transformation_results_map must be instances of GufeKey or str"):
-            instance.copy_with_replacements(transformation_results_map=transformation_results_map)
