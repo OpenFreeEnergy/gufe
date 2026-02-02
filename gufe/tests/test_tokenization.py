@@ -3,7 +3,6 @@ import datetime
 import io
 import json
 import logging
-from typing import Optional
 from unittest import mock
 
 import pytest
@@ -12,7 +11,6 @@ from gufe.compression import zst_decompress
 from gufe.serialization.msgpack import packb, unpackb
 from gufe.tokenization import (
     JSON_HANDLER,
-    TOKENIZABLE_CLASS_REGISTRY,
     TOKENIZABLE_REGISTRY,
     GufeKey,
     GufeTokenizable,
@@ -22,7 +20,6 @@ from gufe.tokenization import (
     gufe_objects_from_shallow_dict,
     gufe_to_digraph,
     import_qualname,
-    tokenize,
 )
 
 

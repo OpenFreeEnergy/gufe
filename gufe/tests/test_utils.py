@@ -2,7 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
 import io
-import pathlib
 
 import pytest
 
