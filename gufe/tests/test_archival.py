@@ -1,11 +1,7 @@
-import hashlib
-from pathlib import Path
-
 import pytest
 
 import gufe
 from gufe.archival import AlchemicalArchive
-from gufe.transformations.transformation import TransformationBase
 
 from .test_tokenization import GufeTokenizableTestsMixin
 

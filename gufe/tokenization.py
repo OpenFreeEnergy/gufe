@@ -19,7 +19,6 @@ from os import PathLike
 from typing import Any, BinaryIO, Callable, TextIO
 
 import networkx as nx
-from msgpack.exceptions import ExtraData
 from typing_extensions import Self
 
 from gufe.compression import zst_compress, zst_decompress
