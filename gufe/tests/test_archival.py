@@ -46,8 +46,6 @@ class TestArchival(GufeTokenizableTestsMixin):
         invalid_transformation = valid_transformations[0].copy_with_replacements(name="invalid_transformation")
         invalid_pdr = pdr_from_transformation(invalid_transformation)
 
-        instance.transformation_results + [[invalid_transformation, [invalid_pdr]]]
-
         with pytest.raises(ValueError):
             instance.copy_with_replacements(
                 transformation_results=instance.transformation_results + [[invalid_transformation, [invalid_pdr]]]
