@@ -1,3 +1,4 @@
+import bisect
 import warnings
 from typing import Any
 
@@ -17,28 +18,28 @@ class AlchemicalArchive(GufeTokenizable):
         version_gufe: str | None = None,
     ):
         self.network = network
-
-        network_transformation_keys = {edge.key for edge in self.network.edges}
-
-        _results: dict[TransformationBase, list[ProtocolDAGResult]] = {}
-        for transformation, pdrs in transformation_results:
-            # check that all transformation keys provided are also in
-            # the provided AlchemicalNetwork
-            if transformation.key not in network_transformation_keys:
-                raise ValueError(f"{transformation} was not found in {self.network}")
-
-            # TODO: this needs more testing
-            if previous := _results.get(transformation):
-                _results[transformation] = sorted(set(previous + list(pdrs)))
-            else:
-                _results[transformation] = sorted(set(pdrs))
-
-        self.transformation_results = []
-        for transformation in sorted(_results.keys()):
-            self.transformation_results.append([transformation, _results[transformation]])
+        self.transformation_results: list[tuple[TransformationBase, list[ProtocolDAGResult]]] = []
+        self._validate_transformation_results(transformation_results)
 
         self.metadata = metadata
         self.version_gufe = version_gufe or gufe.__version__
+
+    def _validate_transformation_results(self, transformation_results):
+        _processed_transformations: set[GufeKey] = set()
+        for transformation, pdrs in transformation_results:
+            # check that all transformation keys provided are also in
+            # the provided AlchemicalNetwork
+            if transformation not in self.network.edges:
+                raise ValueError(f"{transformation} was not found in {self.network}")
+
+            # only process results if the transformation has not been seen before
+            if transformation in _processed_transformations:
+                msg = f"Duplicate entry for {transformation.key} found in transformation_results"
+                raise ValueError(msg)
+
+            _processed_transformations.add(transformation.key)
+            entry = [transformation, sorted(set(pdrs))]
+            bisect.insort(self.transformation_results, entry, key=lambda e: e[0].key)
 
     def _to_dict(self):
         return {
