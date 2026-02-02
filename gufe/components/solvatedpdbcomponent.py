@@ -95,19 +95,65 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             raise ValueError(f"box_vectors: {box} are not in OpenMM reduced form")
 
     @staticmethod
-    def _validate_multiple_molecules(rdkit_mol):
+    def _is_water_fragment(mol: Mol) -> bool:
         """
-        Ensure the RDKit molecule contains more than one disconnected fragment.
+        Return True if this fragment looks like a water molecule (TIP3P/TIP4P/etc).
 
-        SolvatedPDBComponent requires the presence of solvent (or other
-        additional molecules) and must not represent a single protein molecule
-        with box vectors only.
+        Definition:
+        - exactly 1 oxygen
+        - exactly 2 hydrogens
+        Atoms with atomic number 0 (virtual sites) are ignored.
+        """
+        n_O = 0
+        n_H = 0
+
+        for atom in mol.GetAtoms():
+            Z = atom.GetAtomicNum()
+
+            if Z == 8:  # oxygen
+                n_O += 1
+            elif Z == 1:  # hydrogen
+                n_H += 1
+            elif Z == 0:
+                # virtual / dummy site: ignore
+                continue
+            else:
+                return False
+
+        return (n_O == 1) and (n_H == 2)
+
+    @classmethod
+    def _count_waters(cls, rdkit_mol: Mol) -> int:
+        """
+        Count water molecules by disconnected fragments.
+        """
+        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
+
+        return sum(cls._is_water_fragment(frag) for frag in frags)
+
+    @classmethod
+    def _validate_multiple_molecules(cls, rdkit_mol, *, min_waters: int = 50):
+        """
+        Ensure multiple fragments are present and warn if fewer than `min_waters`
+        waters are detected.
         """
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
         if len(frags) <= 1:
             raise ValueError(
-                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
+                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). "
+                "Found a single molecule."
             )
+
+        n_waters = cls._count_waters(rdkit_mol)
+
+        if n_waters < min_waters:
+            warnings.warn(
+                f"Only {n_waters} water molecules detected (expected ≥ {min_waters}). "
+                "This may indicate missing solvent or a non-aqueous system.",
+                UserWarning,
+            )
+
+
 
     def compute_density(self):
         """

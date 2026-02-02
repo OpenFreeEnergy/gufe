@@ -165,15 +165,19 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             (SolvatedPDBComponent.from_pdbx_file, "PDBx_181L_path"),
         ],
     )
-    def test_low_density_triggers_warning(self, factory, path_fixture, request):
+    def test_warning_low_density_few_waters(self, factory, path_fixture, request):
         """
-        Check that an extremely low-density system triggers a warning.
-        That PDB only contains a protein, no solvent or membrane.
+        Check that an extremely low-density/low-water molecule system triggers
+         a warning. That PDB only contains a protein, no solvent or membrane.
         """
         path = request.getfixturevalue(path_fixture)
 
-        with pytest.warns(UserWarning, match="Estimated system density is very low"):
+        with pytest.warns(UserWarning) as warnings:
             _ = factory(path, infer_box_vectors=True)
+        messages = [str(w.message) for w in warnings]
+
+        assert any("water molecules detected (expected" in m for m in messages)
+        assert any("Estimated system density is very low" in m for m in messages)
 
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
