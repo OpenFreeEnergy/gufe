@@ -107,10 +107,19 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if mol.GetNumAtoms() != 3:
             return False
 
-        n_H = sum(1 for a in mol.GetAtoms() if a.GetAtomicNum() == 1)
-        n_O = sum(1 for a in mol.GetAtoms() if a.GetAtomicNum() == 8)
+        n_H = 0
+        n_O = 0
 
-        return n_H == 2 and n_O == 1
+        for atom in mol.GetAtoms():
+            match atom.GetAtomicNum():
+                case 1:
+                    n_H += 1
+                case 8:
+                    n_O += 1
+                case _:
+                    return False
+
+        return (n_H == 2) and (n_O == 1)
 
 
     @classmethod
