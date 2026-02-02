@@ -104,23 +104,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         - exactly 2 hydrogens
         Atoms with atomic number 0 (virtual sites) are ignored.
         """
-        n_O = 0
-        n_H = 0
+        if mol.GetNumAtoms() != 3:
+            return False
 
-        for atom in mol.GetAtoms():
-            Z = atom.GetAtomicNum()
+        n_H = sum(1 for a in mol.GetAtoms() if a.GetAtomicNum() == 1)
+        n_O = sum(1 for a in mol.GetAtoms() if a.GetAtomicNum() == 8)
 
-            if Z == 8:  # oxygen
-                n_O += 1
-            elif Z == 1:  # hydrogen
-                n_H += 1
-            elif Z == 0:
-                # virtual / dummy site: ignore
-                continue
-            else:
-                return False
+        return n_H == 2 and n_O == 1
 
-        return (n_O == 1) and (n_H == 2)
 
     @classmethod
     def _count_waters(cls, rdkit_mol: Mol) -> int:
@@ -144,6 +135,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             )
 
         n_waters = cls._count_waters(rdkit_mol)
+        print(n_waters)
 
         if n_waters < min_waters:
             warnings.warn(
