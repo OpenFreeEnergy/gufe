@@ -140,8 +140,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
         if len(frags) <= 1:
             raise ValueError(
-                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). "
-                "Found a single molecule."
+                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
             )
 
         n_waters = cls._count_waters(rdkit_mol)
@@ -152,8 +151,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 "This may indicate missing solvent or a non-aqueous system.",
                 UserWarning,
             )
-
-
 
     def compute_density(self):
         """
