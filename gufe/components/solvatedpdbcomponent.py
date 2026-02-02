@@ -121,7 +121,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return (n_H == 2) and (n_O == 1)
 
-
     @classmethod
     def _count_waters(cls, rdkit_mol: Mol) -> int:
         """
