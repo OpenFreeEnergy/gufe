@@ -92,6 +92,9 @@ def assert_topology_equal(ref_top, top):
         assert ref_res.id == res.id
         assert ref_res.insertionCode == res.insertionCode
         assert ref_res.chain.id == res.chain.id
+        res_charge = sum([atom.formalCharge for atom in res.atoms() if atom.formalCharge is not None])
+        ref_res_charge = sum([atom.formalCharge for atom in ref_res.atoms() if atom.formalCharge is not None])
+        assert res_charge == ref_res_charge, f"mismatch in {ref_res.id=}"
 
     for ref_chain, chain in zip(ref_top.chains(), top.chains()):
         assert len(ref_chain) == len(chain)
