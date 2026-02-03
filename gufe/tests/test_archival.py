@@ -46,7 +46,17 @@ class TestArchival(GufeTokenizableTestsMixin):
         invalid_transformation = valid_transformations[0].copy_with_replacements(name="invalid_transformation")
         invalid_pdr = pdr_from_transformation(invalid_transformation)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"^.+ was not found in"):
             instance.copy_with_replacements(
                 transformation_results=instance.transformation_results + [[invalid_transformation, [invalid_pdr]]]
+            )
+
+    def test_repeated_transformation(self, instance):
+
+        new_results = instance.transformation_results.copy()
+        new_results += [new_results[-1]]
+
+        with pytest.raises(ValueError, match="Duplicate entry for"):
+            instance.copy_with_replacements(
+                transformation_results=new_results
             )

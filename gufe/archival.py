@@ -33,7 +33,7 @@ class AlchemicalArchive(GufeTokenizable):
                 raise ValueError(f"{transformation} was not found in {self.network}")
 
             # only process results if the transformation has not been seen before
-            if transformation in _processed_transformations:
+            if transformation.key in _processed_transformations:
                 msg = f"Duplicate entry for {transformation.key} found in transformation_results"
                 raise ValueError(msg)
 
