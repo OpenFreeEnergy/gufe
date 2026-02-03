@@ -191,16 +191,20 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             )
 
     @staticmethod
-    def _estimate_box(omm_structure):
+    def _estimate_box(omm_structure, padding=0.2*offunit.nanometer):
         """
-        Estimate an orthorhombic box from atomic coordinates.
+        Estimate an orthorhombic box from atomic coordinates, with optional padding.
+
         The bounding box is computed from the minimum and maximum atomic
-        coordinates and returned as orthorhombic box vectors.
+        coordinates, then expanded by `padding` along each axis, and returned
+        as orthorhombic box vectors.
 
         Parameters
         ----------
         omm_structure : PDBFile or PDBxFile
             OpenMM structure providing atomic positions.
+        padding : openff.units.Quantity, optional, default=0.2*nanometer
+            Extra padding to add to each box dimension (can have units, e.g., nm or angstroms).
 
         Returns
         -------
@@ -212,6 +216,9 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         mins = coords_nm.min(axis=0)
         maxs = coords_nm.max(axis=0)
         lengths = maxs - mins
+
+        padding_nm = padding.to(offunit.nanometer).magnitude
+        lengths += 2 * padding_nm
 
         box = np.array(
             [
@@ -230,6 +237,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         *,
         box_vectors=None,
         infer_box_vectors: bool = False,
+        box_padding: Quantity = 0.2 * offunit.nanometer,
     ):
         """
         Resolve periodic box vectors from user input, file, or inference.
@@ -242,6 +250,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             Explicit box vectors to associate with the component.
         infer_box_vectors : bool, optional
             If True, estimate box vectors when not present in file.
+        box_padding : openff.units.Quantity, optional
+            Extra padding to apply when inferring box vectors.
 
         Returns
         -------
@@ -277,13 +287,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # 3. Infer box vectors if requested
         if infer_box_vectors:
-            box = cls._estimate_box(structure)
+            box = cls._estimate_box(structure, padding=box_padding)
             warnings.warn(
                 "Box vectors were inferred from the atomic coordinates.\n"
                 "Note: This heuristic assumes that the coordinates reflect the true "
                 "periodic unit cell. It may produce incorrect box dimensions for "
                 "structures that were post-processed (e.g., unwrapped after MD).\n"
-                f"Inferred box vectors:\n{box}",
+                f"Inferred box vectors: {box}\n"
+                f"Applied padding: {box_padding}",
                 UserWarning,
             )
             return box
@@ -301,6 +312,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         *,
         box_vectors=None,
         infer_box_vectors: bool = False,
+        box_padding: Quantity = 0.2 * offunit.nanometer,
     ):
         """
         Create a SolvatedPDBComponent from a PDB file.
@@ -311,6 +323,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             pdb,
             box_vectors=box_vectors,
             infer_box_vectors=infer_box_vectors,
+            box_padding=box_padding,
         )
 
         return cls._from_openmmPDBFile(
@@ -327,6 +340,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         *,
         box_vectors=None,
         infer_box_vectors: bool = False,
+        box_padding: Quantity = 0.2 * offunit.nanometer,
     ):
         """
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
