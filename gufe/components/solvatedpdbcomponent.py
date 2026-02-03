@@ -106,7 +106,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         if mol.GetNumAtoms() != 3:
             return False
-
         n_H = 0
         n_O = 0
 

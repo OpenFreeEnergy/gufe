@@ -179,6 +179,20 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         assert any("water molecules detected (expected" in m for m in messages)
         assert any("Estimated system density is very low" in m for m in messages)
 
+    def test_is_water_fragment_unknown_atom(self):
+        # Build a fragment with 3 atoms: 1 O, 1 H, 1 C (C triggers `case _`)
+        mol = Chem.RWMol()
+        o = mol.AddAtom(Chem.Atom(8))  # oxygen
+        h = mol.AddAtom(Chem.Atom(1))  # hydrogen
+        c = mol.AddAtom(Chem.Atom(6))  # carbon
+
+        mol.AddBond(o, h, Chem.BondType.SINGLE)
+        mol.AddBond(o, c, Chem.BondType.SINGLE)
+
+        mol = mol.GetMol()
+
+        assert SolvatedPDBComponent._is_water_fragment(mol) is False
+
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
 
