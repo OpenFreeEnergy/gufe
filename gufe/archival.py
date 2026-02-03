@@ -1,3 +1,8 @@
+# This code is part of gufe and is licensed under the MIT license.
+# For details, see https://github.com/OpenFreeEnergy/gufe
+
+"""Long-term storage of ``AlchemicalNetwork`` objects and their results"""
+
 import bisect
 import warnings
 from typing import Any
@@ -10,6 +15,28 @@ from gufe.transformations.transformation import TransformationBase
 
 
 class AlchemicalArchive(GufeTokenizable):
+    """A data structure for long-term storage of :class:`.AlchemicalNetwork` objects and the :class:`.ProtocolDAGResult` objects associated with a network's :class:`.Transformation`.
+
+    Parameters
+    ----------
+    network
+        The :class:`.AlchemicalNetwork` being archived.
+
+    transformation_results
+        A list of result entries for :class:`.Transformation` objects
+        in the provided :class:`.AlchemicalNetwork`. Each entry should
+        have the form ``tuple[Transformation,
+        list[ProtocolDAGResult]]``.
+
+    metadata
+        A dictionary that contains arbitrary metadata associated with
+        the archive. This defaults to an empty dictionary.
+
+    version_gufe
+        The version of ``gufe`` that produced the archive. By default
+        this will be set the version currently installed.
+    """
+
     def __init__(
         self,
         network: AlchemicalNetwork,
