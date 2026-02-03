@@ -52,11 +52,15 @@ class TestArchival(GufeTokenizableTestsMixin):
             )
 
     def test_repeated_transformation(self, instance):
-
         new_results = instance.transformation_results.copy()
         new_results += [new_results[-1]]
 
         with pytest.raises(ValueError, match="Duplicate entry for"):
-            instance.copy_with_replacements(
-                transformation_results=new_results
-            )
+            instance.copy_with_replacements(transformation_results=new_results)
+
+    def test_transformation_ordering(self, instance):
+        new_results = instance.transformation_results[::-1]
+        reconstructed = instance.copy_with_replacements(transformation_results=new_results)
+
+        assert new_results != instance.transformation_results
+        assert instance == reconstructed
