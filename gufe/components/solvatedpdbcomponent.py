@@ -191,7 +191,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             )
 
     @staticmethod
-    def _estimate_box(omm_structure, padding=0.2*offunit.nanometer):
+    def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):
         """
         Estimate an orthorhombic box from atomic coordinates, with optional padding.
 
