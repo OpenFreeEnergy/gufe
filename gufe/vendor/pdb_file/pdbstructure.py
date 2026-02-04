@@ -163,7 +163,22 @@ class PdbStructure:
             command = pdb_line[:6]
             # Look for atoms
             if command == "ATOM  " or command == "HETATM":
-                self._add_atom(Atom(pdb_line, self, self.extraParticleIdentifier))
+                serial_str = pdb_line[6:11]
+                print(f"Reading ATOM line: {pdb_line.rstrip()}")
+                print(f"  Serial substring: '{serial_str}'")
+                try:
+                    serial_number = _parse_atom_index(serial_str)
+                    print(f"  Parsed serial number: {serial_number}")
+                except Exception as e:
+                    print(f"  Failed to parse serial '{serial_str}': {e}")
+                    serial_number = self._next_atom_number
+                    print(f"  Using fallback serial: {serial_number}")
+
+                atom = Atom(pdb_line, self, self.extraParticleIdentifier)
+                print(
+                    f"  Adding atom with serial: {atom.serial_number} name: {atom.name.strip()}")
+                self._add_atom(atom)
+                # self._add_atom(Atom(pdb_line, self, self.extraParticleIdentifier))
             elif command == "CONECT":
                 try:
                     atoms = [_parse_atom_index(pdb_line[6:11])]
@@ -299,7 +314,9 @@ class PdbStructure:
     def _add_atom(self, atom):
         """ """
         if self._current_model is None:
+            print("Adding first model")
             self._add_model(Model(0))
+        print(f"Adding atom serial {atom.serial_number} name {atom.name}")
         atom.model_number = self._current_model.number
         # Atom might be alternate position for existing atom
         self._current_model._add_atom(atom)
@@ -779,9 +796,10 @@ class Atom:
         self.record_name = pdb_line[0:6].strip()
         try:
             self.serial_number = _parse_atom_index(pdb_line[6:11])
-        except:
+        except ValueError:
             # Just give it the next number in sequence.
             self.serial_number = pdbstructure._next_atom_number
+        pdbstructure._next_atom_number = self.serial_number + 1
         self.name_with_spaces = pdb_line[12:16]
         alternate_location_indicator = pdb_line[16]
 
@@ -1063,15 +1081,47 @@ class Atom:
             return str(self.position)
 
 
-def _parse_atom_index(index):
-    """Parse the string containing an atom index, which might be either decimal or hex."""
+def _parse_atom_index(index: str) -> int:
+    """
+    Parse an atom serial index from a PDB file, supporting:
+      - Decimal numbers (e.g., 12345)
+      - Standard hex (0–9, A–F)
+      - Maestro-style extended hex (letters beyond F, e.g., A000G)
+
+    Returns
+    -------
+    int
+        The atom serial as an integer.
+
+    Raises
+    ------
+    ValueError
+        If the string cannot be parsed.
+    """
+    index = index.strip()
+    print(index)
     try:
-        return int(index)
+        return int(index)  # decimal
     except ValueError:
-        try:
-            return int(index, 16) - 0xA0000 + 100000
-        except ValueError as exc:
-            raise ValueError(f"Unable to parse atom index: '{index}'") from exc
+        pass
+
+    try:
+        val = int(index, 16)  # normal hex
+        if val >= 0xA0000:
+            val = val - 0xA0000 + 100000
+        return val
+    except ValueError:
+        pass
+
+    # Maestro extended hex (base 36)
+    try:
+        val = int(index, 36)
+        if val >= 0xA0000:
+            val = val - 0xA0000 + 100000
+        return val
+    except ValueError as exc:
+        raise ValueError(f"Unable to parse atom index: '{index}'") from exc
+
 
 
 # run module directly for testing
