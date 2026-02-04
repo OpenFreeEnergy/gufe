@@ -47,4 +47,3 @@ CONECT99999A000FA000G"""
         idx = _parse_atom_index(hex_serial)
         assert isinstance(idx, int)
         assert idx >= 100000  # confirms it went through hex -> int logic
-    assert 4==6
