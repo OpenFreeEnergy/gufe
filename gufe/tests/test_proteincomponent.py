@@ -1,6 +1,5 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
-import copy
 import io
 import os
 from unittest import mock
@@ -10,7 +9,7 @@ from numpy.testing import assert_almost_equal
 from packaging.version import Version
 from rdkit import Chem
 
-from gufe import ProteinComponent, ProteinMembraneComponent
+from gufe import ProteinComponent
 
 from .conftest import ALL_PDB_LOADERS, OPENMM_VERSION
 from .test_explicitmoleculecomponent import ExplicitMoleculeComponentMixin
@@ -108,7 +107,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     cls = ProteinComponent
     repr = "ProteinComponent(name=Steve)"
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def instance(self, PDB_181L_path):
         return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
 
@@ -365,21 +364,6 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         with pytest.raises(Chem.AtomValenceException, match="Could not set valence of atom id"):
             with mock.patch("rdkit.Chem.rdchem.PeriodicTable.GetValenceList", return_value=[10000000]):
                 self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
-
-
-class TestProteinMembraneComponent(GufeTokenizableTestsMixin):
-    cls = ProteinMembraneComponent
-    # key = "ProteinComponent-089f72c9fa2c9c18d53308038eeab5c9"
-    repr = "ProteinMembraneComponent(name=Steve)"
-
-    @pytest.fixture
-    def instance(self, PDB_181L_path):
-        return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
-
-    def test_protein_box_vectors(self, PDB_181L_path):
-        m1 = self.cls.from_pdb_file(PDB_181L_path)
-        vectors = m1._periodic_box_vectors
-        assert vectors[0][0] == 13.4081 * unit.nanometer
 
 
 def test_no_monomer_info_error(ethane):

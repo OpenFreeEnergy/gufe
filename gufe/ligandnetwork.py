@@ -6,7 +6,6 @@ import hashlib
 import json
 from collections.abc import Iterable
 from itertools import chain
-from typing import FrozenSet, Optional, Union
 
 import networkx as nx
 

@@ -4,7 +4,6 @@ channels:
 dependencies:
   - annotated-types
   - coverage
-  - mdtraj
   - msgpack-python
   - networkx
   - numpy
@@ -13,7 +12,7 @@ dependencies:
   - openmm
   - pint
   - pip
-  - pooch
+  - pooch >= 1.9.0  # min needed for https://github.com/fatiando/pooch/issues/502
   - pydantic >=2.0, <2.12
   - pytest
   - pytest-cov

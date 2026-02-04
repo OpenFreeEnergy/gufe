@@ -1,18 +1,13 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import ast
 import io
-import json
-from collections import defaultdict
 from os import PathLike
 from string import digits
-from typing import Optional, TextIO, Union
+from typing import TextIO
 
-import mdtraj as md
 import numpy as np
 from openmm import app
 from openmm import unit as omm_unit
-from openmm.unit import Quantity
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
@@ -72,7 +67,6 @@ ions_dict = {
     "Ce": 4,
     "Cl-": -1,
     "CL": -1,
-    "CLA": -1,
     "CO": 2,
     "Cr": 2,
     "CR": 3,
@@ -108,7 +102,6 @@ ions_dict = {
     "NI": 2,
     "PB": 2,
     "PD": 2,
-    "POT": 1,
     "PR": 3,
     "PT": 2,
     "Pu": 4,
@@ -117,7 +110,6 @@ ions_dict = {
     "Sm": 2,
     "SM": 3,
     "Sn": 2,
-    "SOD": 1,
     "SR": 2,
     "TB": 3,
     "Th": 4,
@@ -131,31 +123,6 @@ ions_dict = {
     "ZN": 2,
     "Zr": 4,
 }
-
-
-def _estimate_box(pdb_file):
-    """
-    Estimate an orthorhombic bounding box using MDTraj (units: nm).
-    Returns three numpy arrays: (a, b, c).
-    """
-    traj = md.load(pdb_file)
-    # unwrap molecules (remove PBC splitting)
-    try:
-        traj = traj.image_molecules(box=traj.unitcell_vectors)
-    except Exception:
-        pass  # if no unitcell_vectors, just continue
-
-    coords = traj.xyz[0]  # nm
-
-    mins = coords.min(axis=0)
-    maxs = coords.max(axis=0)
-    lengths = maxs - mins
-
-    a = np.array([lengths[0], 0.0, 0.0])
-    b = np.array([0.0, lengths[1], 0.0])
-    c = np.array([0.0, 0.0, lengths[2]])
-
-    return (a, b, c) * omm_unit.nanometer
 
 
 class ProteinComponent(ExplicitMoleculeComponent):
@@ -663,115 +630,3 @@ class ProteinComponent(ExplicitMoleculeComponent):
         }
 
         return d
-
-
-class ProteinMembraneComponent(ProteinComponent):
-    """
-    Protein component with membrane and periodic box vectors.
-    """
-
-    def __init__(self, rdkit: Mol, periodic_box_vectors, name: str = ""):
-        if periodic_box_vectors is None:
-            raise ValueError("periodic_box_vectors must be provided")
-        super().__init__(rdkit=rdkit, name=name)
-        self._periodic_box_vectors = periodic_box_vectors
-
-    @classmethod
-    def from_pdb_file(cls, pdb_file: PathLike | TextIO, name: str = "", *, box_vectors=None, infer_box_vectors=False):
-        """
-        Create ProteinMembraneComponent from a PDB file.
-
-        Parameters
-        ----------
-        pdb_file : str
-            path to the pdb file.
-        name : str, optional
-            name of the input protein, by default ""
-        Returns
-        -------
-        ProteinMembraneComponent
-            the deserialized molecule
-        """
-        pdb = PDBFile(pdb_file)
-        # Get base protein
-        prot = ProteinComponent._from_openmmPDBFile(pdb, name=name)
-        # Get periodic box vectors
-        if box_vectors is not None:
-            box = box_vectors
-        elif infer_box_vectors is False:
-            box = pdb.topology.getPeriodicBoxVectors()
-        else:
-            box = _estimate_box(pdb_file)
-
-        if box is None:
-            raise ValueError("Could not determine periodic_box_vectors; please provide them explicitly.")
-
-        return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
-
-    @classmethod
-    def _from_openmmPDBFile(cls, openmm_PDBFile, name=""):
-        """
-        Converts to our internal representation (rdkit Mol)
-
-        Parameters
-        ----------
-        openmm_PDBFile : PDBFile or PDBxFile
-            object of the protein
-        name : str
-            name of the protein
-
-        Returns
-        -------
-        ProteinMembraneComponent
-            the deserialized molecule
-        """
-        prot = ProteinComponent._from_openmmPDBFile(openmm_PDBFile, name=name)
-        box = openmm_PDBFile.topology.getPeriodicBoxVectors()
-        if box is None:
-            raise ValueError("Periodic box vectors are required but were not found.")
-        return cls(rdkit=prot._rdkit, name=prot.name, periodic_box_vectors=box)
-
-    def _to_dict(self):
-        """
-        Serialize to dict, including periodic box vectors safely.
-        """
-        d = super()._to_dict()
-
-        box = self._periodic_box_vectors
-        if box is not None:
-            value = serialize_numpy(box)
-            unit_str = str(box[0][0].unit)
-
-            d["periodic_box_vectors"] = {
-                "value": value,
-                "unit": unit_str,
-            }
-        else:
-            d["periodic_box_vectors"] = None
-
-        return d
-
-    @classmethod
-    def _from_dict(cls, d, name=""):
-        """
-        Deserialize from dict, including periodic box vectors.
-        """
-        prot = ProteinComponent._from_dict(d, name=name)
-
-        box_data = d.get("periodic_box_vectors")
-        if box_data is None:
-            raise ValueError("periodic_box_vectors must be present in the serialized dict")
-
-        box_vectors = None
-
-        if box_data is not None:
-            unit_str = box_data["unit"]
-            unit_obj = getattr(omm_unit, unit_str, omm_unit.nanometer)
-            box_arr = deserialize_numpy(box_data["value"])
-            box_vectors = list(map(lambda x: np.array(x), box_arr)) * unit_obj
-
-        return cls(
-            rdkit=prot._rdkit,
-            name=prot.name,
-            periodic_box_vectors=box_vectors,
-        )

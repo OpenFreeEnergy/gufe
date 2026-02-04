@@ -1,6 +1,7 @@
 """The building blocks for defining systems"""
 
 from .component import Component
-from .proteincomponent import ProteinComponent, ProteinMembraneComponent
+from .proteincomponent import ProteinComponent
 from .smallmoleculecomponent import SmallMoleculeComponent
-from .solventcomponent import SolventComponent
+from .solvatedpdbcomponent import ProteinMembraneComponent, SolvatedPDBComponent
+from .solventcomponent import BaseSolventComponent, SolventComponent

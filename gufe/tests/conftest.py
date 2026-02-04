@@ -1,7 +1,8 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
-import importlib.resources
+
+import importlib
 
 import pooch
 import pytest
@@ -98,9 +99,21 @@ def multi_molecule_sdf():
         yield str(f)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def PDB_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.pdb") as f:
+        yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDB_a2a_path():
+    with importlib.resources.path("gufe.tests.data", "a2a.pdb.gz") as f:
+        yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDB_a2a_single_fragment_path():
+    with importlib.resources.path("gufe.tests.data", "a2a_single_fragment.pdb.gz") as f:
         yield str(f)
 
 
@@ -125,6 +138,12 @@ def PDB_thrombin_path():
 @pytest.fixture
 def PDBx_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.cif") as f:
+        yield str(f)
+
+
+@pytest.fixture
+def PDBx_a2a_path():
+    with importlib.resources.path("gufe.tests.data", "a2a.cif.gz") as f:
         yield str(f)
 
 
