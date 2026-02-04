@@ -782,7 +782,6 @@ class Atom:
         except:
             # Just give it the next number in sequence.
             self.serial_number = pdbstructure._next_atom_number
-        # pdbstructure._next_atom_number = self.serial_number + 1
         self.name_with_spaces = pdb_line[12:16]
         alternate_location_indicator = pdb_line[16]
 
