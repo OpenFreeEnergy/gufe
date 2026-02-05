@@ -1,3 +1,5 @@
+import importlib
+
 import pytest
 
 import gufe
@@ -26,6 +28,21 @@ class TestArchival(GufeTokenizableTestsMixin):
         return AlchemicalArchive(
             network=alchemical_network, transformation_results=transformation_results, metadata=metadata
         )
+
+    def test_regression_archive_serialization(self):
+        with importlib.resources.path("gufe.tests.data", "alchemical_archive.json") as file:
+            filename = str(file)
+
+        archive = AlchemicalArchive.from_json(file=filename)
+
+        assert archive.metadata == {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
+        assert len(archive.network.edges) == len(archive.transformation_results) == 12
+
+        for transformation, pdrs in archive.transformation_results:
+            assert transformation in archive.network.edges
+            assert len(pdrs) == 1
+
+        assert archive.version_gufe == "1.7.1.dev46+gb75e1476f.d20260203"
 
     def test_version(self, instance):
         # fixture will generate correct version
