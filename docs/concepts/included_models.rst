@@ -19,13 +19,14 @@ Generally speaking, :ref:`ChemicalSystems <chemicalsystem>` can be thought of as
 .. note::
 
     Some of these classes are designed to be subclassed, and constitute the *extensible points* of the library.
-    These include the following; see the :ref:`howto-guides` for more information on how to extend from each:
+    These include (but are not limited to) the following; see the :ref:`howto-guides` for more information on how to extend from each:
 
     1. :ref:`Component <component>` : :ref:`howto-component`
     2. :ref:`Protocol <protocol>` : :ref:`howto-protocol`
-    3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
-    4. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
-    5. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
+
+    .. 3. :ref:`ComponentMapping <componentmapping>` : :ref:`howto-componentmapping`
+    .. 4. :ref:`AtomMapping <atommapping>` : :ref:`howto-atommapping`
+    .. 5. :ref:`AtomMapper <atommapper>` : :ref:`howto-atommapper`
 
 
 .. _component:
@@ -216,7 +217,8 @@ See :ref:`AtomMapping <atommapping>` for an extensible point that is more specif
 .. note::
     The :class:`.ComponentMapping` is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
-    For details on how to create your own :class:`.ComponentMapping` classes, see :ref:`howto-componentmapping`.
+
+    .. TODO: For details on how to create your own :class:`.ComponentMapping` classes, see :ref:`howto-componentmapping`.
 
 
 .. _atommapping:
@@ -235,7 +237,8 @@ A specialized example of an ``AtomMapping`` is a ``LigandAtomMapping``, which is
 .. note::
     The :class:`.AtomMapping` is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
-    For details on how to create your own :class:`.AtomMapping` classes, see :ref:`howto-atommapping`.
+
+    .. TODO: For details on how to create your own :class:`.AtomMapping` classes, see :ref:`howto-atommapping`.
 
 
 .. _atommapper:
@@ -254,7 +257,8 @@ A specialized example of an :class:`AtomMapper` is a :class:`LigandAtomMapper`, 
 .. note::
     The :class:`.AtomMapper` is an *extensible point* of the library,
     and is intended to be subclassed to enable new applications.
-    For details on how to create your own :class:`.AtomMapper` classes, see :ref:`howto-atommapper`.
+
+    .. TODO: For details on how to create your own :class:`.AtomMapper` classes, see :ref:`howto-atommapper`.
 
 
 .. _ligandnetwork:
