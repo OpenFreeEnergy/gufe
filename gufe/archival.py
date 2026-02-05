@@ -44,12 +44,28 @@ class AlchemicalArchive(GufeTokenizable):
         metadata: dict[str, Any],
         version_gufe: str | None = None,
     ):
-        self.network = network
-        self.transformation_results: list[tuple[TransformationBase, list[ProtocolDAGResult]]] = []
+        self._network = network
+        self._transformation_results: list[tuple[TransformationBase, list[ProtocolDAGResult]]] = []
         self._validate_transformation_results(transformation_results)
 
-        self.metadata = metadata
-        self.version_gufe = version_gufe or gufe.__version__
+        self._metadata = metadata
+        self._version_gufe = version_gufe or gufe.__version__
+
+    @property
+    def network(self):
+        return self._network
+
+    @property
+    def transformation_results(self):
+        return self._transformation_results
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @property
+    def version_gufe(self):
+        return self._version_gufe
 
     def _validate_transformation_results(self, transformation_results):
         _processed_transformations: set[GufeKey] = set()
@@ -66,7 +82,7 @@ class AlchemicalArchive(GufeTokenizable):
 
             _processed_transformations.add(transformation.key)
             entry = [transformation, sorted(set(pdrs))]
-            bisect.insort(self.transformation_results, entry, key=lambda e: e[0].key)
+            bisect.insort(self._transformation_results, entry, key=lambda e: e[0].key)
 
     def _to_dict(self):
         return {

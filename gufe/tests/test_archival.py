@@ -68,6 +68,10 @@ class TestArchival(GufeTokenizableTestsMixin):
         assert new_results != instance.transformation_results
         assert instance == reconstructed
 
+    def test_immutability(self, instance):
+        with pytest.raises(AttributeError, match="has no setter"):
+            instance.version_gufe = "25"
+
 
 def test_regression_archive_serialization():
     with importlib.resources.path("gufe.tests.data", "alchemical_archive.json") as file:
