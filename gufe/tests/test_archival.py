@@ -1,4 +1,5 @@
 import importlib
+import warnings
 
 import pytest
 
@@ -35,11 +36,29 @@ class TestArchival(GufeTokenizableTestsMixin):
         assert instance.version_gufe == gufe.__version__
 
     def test_version_warning(self, instance):
-        new_instance = instance.copy_with_replacements(version_gufe="0.0.0")
-        json = new_instance.to_json()
+        major, minor, patch = instance.version_gufe.split(".")[:3]
 
-        with pytest.warns(UserWarning):
+        def new_version_to_json(new_version):
+            new_instance = instance.copy_with_replacements(version_gufe=new_version)
+            return new_instance.to_json()
+
+        # differing major or minor versions issue warning
+        versions = ((major, str(int(minor) + 1), patch), (str(int(major) + 1), minor, patch))
+        for new_version in map(lambda vstr: ".".join(vstr), versions):
+            # new_instance = instance.copy_with_replacements(version_gufe=new_version)
+            json = new_version_to_json(new_version)
+
+            with pytest.warns(UserWarning):
+                _ = AlchemicalArchive.from_json(content=json)
+
+        # differing patch raises no warning
+        new_version = ".".join((major, minor, str(int(patch) + 1)))
+        json = new_version_to_json(new_version)
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             _ = AlchemicalArchive.from_json(content=json)
+            assert len(w) == 0
 
     def test_metadata(self, instance):
         assert instance.metadata == {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
