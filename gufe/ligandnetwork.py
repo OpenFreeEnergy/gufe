@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import warnings
 from collections.abc import Iterable
 from itertools import chain
 
@@ -270,6 +271,10 @@ class LigandNetwork(GufeTokenizable):
             The label for the component undergoing an alchemical transformation
             (default ``'ligand'``).
         """
+        warnings.warn(
+            ("_to_rfe_alchemical_network is deprecated and will be removed in the next minor release of gufe."),
+            DeprecationWarning,
+        )
         transformations = []
         for edge in self.edges:
             for leg_name, labels in leg_labels.items():
