@@ -41,14 +41,14 @@ class AlchemicalArchive(GufeTokenizable):
         self,
         network: AlchemicalNetwork,
         transformation_results: list[tuple[TransformationBase, list[ProtocolDAGResult]]],
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
         version_gufe: str | None = None,
     ):
         self._network = network
         self._transformation_results: list[tuple[TransformationBase, list[ProtocolDAGResult]]] = []
         self._validate_transformation_results(transformation_results)
 
-        self._metadata = metadata
+        self._metadata = metadata or {}
         self._version_gufe = version_gufe or gufe.__version__
 
     @property
