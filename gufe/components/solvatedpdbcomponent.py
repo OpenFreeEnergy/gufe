@@ -66,7 +66,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         self._density = None
         self._n_waters = None
 
-
     @staticmethod
     def _validate_box_vectors(box):
         """
@@ -142,13 +141,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Estimated system density in g/L.
         """
-        total_mass = (
-                sum(atom.GetMass() for atom in
-                    self._rdkit.GetAtoms()) * offunit.dalton
-        )
+        total_mass = sum(atom.GetMass() for atom in self._rdkit.GetAtoms()) * offunit.dalton
 
         box_nm = self.box_vectors.to("nanometer").magnitude
-        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer ** 3
+        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer**3
         volume_L = volume_nm3.to("liter")
 
         self._density = total_mass.to("gram") / volume_L
@@ -156,10 +152,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         return self._density
 
     def validate(
-            self,
-            *,
-            min_waters: int = 50,
-            min_density: Quantity = 500 * offunit.gram / offunit.liter,
+        self,
+        *,
+        min_waters: int = 50,
+        min_density: Quantity = 500 * offunit.gram / offunit.liter,
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -176,16 +172,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # waters
         if self.n_waters < min_waters:
-            errors.append(
-                f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters})."
-            )
+            errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
 
         # density
         if self.density < min_density:
-            errors.append(
-                "Estimated system density is very low.\n"
-                f"  Density: {self.density:.3f}"
-            )
+            errors.append(f"Estimated system density is very low.\n  Density: {self.density:.3f}")
 
         if errors:
             raise ValueError(
@@ -193,7 +184,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 + "\n".join(f"- {e}" for e in errors)
                 + "\nThis usually indicates missing solvent or incorrect box vectors."
             )
-
 
     @staticmethod
     def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):
