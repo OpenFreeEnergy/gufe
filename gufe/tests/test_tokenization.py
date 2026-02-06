@@ -181,6 +181,13 @@ class GufeTokenizableTestsMixin(abc.ABC):
         else:
             assert repr(instance) == self.repr
 
+    def test_immutability(self, instance):
+        keys = instance.to_dict().keys()
+        tmp_instance = instance.copy()
+        for key in keys:
+            with pytest.raises(AttributeError, match=key):
+                setattr(tmp_instance, key, 5)
+
 
 class TestGufeTokenizable(GufeTokenizableTestsMixin):
     cls = Container
