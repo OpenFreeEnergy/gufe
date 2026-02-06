@@ -63,8 +63,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         self._validate_box_vectors(box_vectors)
         super().__init__(rdkit=rdkit, name=name)
         self.box_vectors = box_vectors
-        self._density = None
-        self._n_waters = None
 
     @staticmethod
     def _validate_box_vectors(box):
@@ -124,9 +122,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Number of detected water molecules.
         """
-        if self._n_waters is None:
-            self._n_waters = self._count_waters(self._rdkit)
-        return self._n_waters
+        return self._count_waters(self._rdkit)
 
     @staticmethod
     def _count_waters(rdkit_mol: Mol) -> int:
