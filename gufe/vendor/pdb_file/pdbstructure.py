@@ -1069,39 +1069,20 @@ def _parse_atom_index(index: str) -> int:
       - Decimal numbers (e.g., 12345)
       - Standard hex (0–9, A–F)
       - Maestro-style extended hex (letters beyond F, e.g., A000G)
-
-    Returns
-    -------
-    int
-        The atom serial as an integer.
-
-    Raises
-    ------
-    ValueError
-        If the string cannot be parsed.
     """
     index = index.strip()
-    try:
-        return int(index)  # decimal
-    except ValueError:
-        pass
 
-    try:
-        val = int(index, 16)  # normal hex
-        if val >= 0xA0000:
-            val = val - 0xA0000 + 100000
-        return val
-    except ValueError:
-        pass
+    # Try decimal, then hex, then Maestro base36
+    for base in (10, 16, 36):
+        try:
+            val = int(index, base)
+            if val >= 0xA0000:
+                val = val - 0xA0000 + 100000
+            return val
+        except ValueError:
+            continue
 
-    # Maestro extended hex (base 36)
-    try:
-        val = int(index, 36)
-        if val >= 0xA0000:
-            val = val - 0xA0000 + 100000
-        return val
-    except ValueError as exc:
-        raise ValueError(f"Unable to parse atom index: '{index}'") from exc
+    raise ValueError(f"Unable to parse atom index: '{index}'")
 
 
 
