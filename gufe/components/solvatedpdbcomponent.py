@@ -62,10 +62,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         self._validate_box_vectors(box_vectors)
         super().__init__(rdkit=rdkit, name=name)
-        self._validate_multiple_molecules(rdkit)
         self.box_vectors = box_vectors
-        # Density sanity check (warning only)
-        self._warn_if_density_too_low()
+        self._density = None
+        self._n_waters = None
+
 
     @staticmethod
     def _validate_box_vectors(box):
@@ -120,75 +120,80 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return (n_H == 2) and (n_O == 1)
 
-    @classmethod
-    def _count_waters(cls, rdkit_mol: Mol) -> int:
+    @property
+    def n_waters(self) -> int:
+        """
+        Number of detected water molecules.
+        """
+        if self._n_waters is None:
+            self._n_waters = self._count_waters(self._rdkit)
+        return self._n_waters
+
+    @staticmethod
+    def _count_waters(rdkit_mol: Mol) -> int:
         """
         Count water molecules by disconnected fragments.
         """
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
+        return sum(SolvatedPDBComponent._is_water_fragment(frag) for frag in frags)
 
-        return sum(cls._is_water_fragment(frag) for frag in frags)
-
-    @classmethod
-    def _validate_multiple_molecules(cls, rdkit_mol, *, min_waters: int = 50):
+    @property
+    def density(self) -> Quantity:
         """
-        Ensure multiple fragments are present and warn if fewer than `min_waters`
-        waters are detected.
+        Estimated system density in g/L.
         """
-        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
-        if len(frags) <= 1:
-            raise ValueError(
-                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
-            )
+        total_mass = (
+                sum(atom.GetMass() for atom in
+                    self._rdkit.GetAtoms()) * offunit.dalton
+        )
 
-        n_waters = cls._count_waters(rdkit_mol)
-        print(n_waters)
-
-        if n_waters < min_waters:
-            warnings.warn(
-                f"Only {n_waters} water molecules detected (expected ≥ {min_waters}). "
-                "This may indicate missing solvent or a non-aqueous system.",
-                UserWarning,
-            )
-
-    def compute_density(self):
-        """
-        Estimate the system density in g/L from the RDKit molecule and box vectors.
-
-        Returns
-        -------
-        density : openff.units.Quantity
-            Estimated density in grams per liter.
-        """
-        # total mass
-        total_mass = sum(atom.GetMass() for atom in self._rdkit.GetAtoms()) * offunit.dalton
-
-        # box volume
         box_nm = self.box_vectors.to("nanometer").magnitude
-        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer**3
+        volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer ** 3
         volume_L = volume_nm3.to("liter")
 
-        # density
-        density = total_mass.to("gram") / volume_L
-        return density
+        self._density = total_mass.to("gram") / volume_L
 
-    def _warn_if_density_too_low(self):
-        """
-        Give a warning if the estimated system density is below 500 g/l.
-        This is a heuristic check intended to catch issues such as missing
-        solvent or box vector that are too big.
-        """
-        density = self.compute_density()
-        min_density = 500 * offunit.gram / offunit.liter
+        return self._density
 
-        if density < min_density:
-            warnings.warn(
-                "Estimated system density is very low.\n"
-                f"  Density: {density:.3f}\n"
-                "This usually indicates missing solvent or incorrect box "
-                "vectors.\n",
-                UserWarning,
+    def validate(
+            self,
+            *,
+            min_waters: int = 50,
+            min_density: Quantity = 500 * offunit.gram / offunit.liter,
+    ):
+        """
+        Run heuristic validation checks on the solvated system.
+
+        Parameters
+        ----------
+        min_waters : int
+            Minimum expected number of waters.
+        min_density : openff.units.Quantity
+            Minimum acceptable density.
+        """
+
+        errors = []
+
+        # waters
+        if self.n_waters < min_waters:
+            errors.append(
+                f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters})."
             )
+
+        # density
+        if self.density < min_density:
+            errors.append(
+                "Estimated system density is very low.\n"
+                f"  Density: {self.density:.3f}"
+            )
+
+        if errors:
+            raise ValueError(
+                "SolvatedPDBComponent validation failed:\n"
+                + "\n".join(f"- {e}" for e in errors)
+                + "\nThis usually indicates missing solvent or incorrect box vectors."
+            )
+
 
     @staticmethod
     def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):
