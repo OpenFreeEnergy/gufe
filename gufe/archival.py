@@ -99,7 +99,11 @@ class AlchemicalArchive(GufeTokenizable):
     @classmethod
     def _from_dict(cls, dct):
         returned_instance = cls(**dct)
-        if gufe.__version__ != returned_instance.version_gufe:
+
+        def semver_tuple(version, depth=2):
+            return tuple(version.split(".")[:depth])
+
+        if semver_tuple(gufe.__version__) != semver_tuple(returned_instance.version_gufe):
             version_gufe = returned_instance.version_gufe
             msg = f"Archive was produced with version {version_gufe} and is being loaded with version {gufe.__version__}. If results are unusual, try loading with version {version_gufe}."
             warnings.warn(msg)
