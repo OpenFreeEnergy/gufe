@@ -9,11 +9,11 @@ v1.8.0
 
 **Added:**
 
-* Added ``__iter__`` to the ``ExternalStorage`` class. This makes it easier to iterate through all the files in a storage object.
-* ``AlchemicalArchive`` for exporting ``AlchemicalNetwork``\s and their ``Transformation`` ``ProtocolDAGResult``\s
-* Added ``BaseSolventComponent``, a base class for solvated components.
-* ``KeyedChain.decode_subchains(func)`` allows decoding constituent ``GufeTokenizable`` objects whenever the passed function evaluates to a truthy value when operating on the keyed dicts of those gufe tokenizables within the ``KeyedChain``.
-* ``KeyedChain.to_gufe`` now optionally accepts a dict-like object used for ``GufeTokenizable`` caching when decoding the ``KeyedChain``. This is useful when decoding multiple constituent ``GufeTokenizable`` objects from the same ``KeyedChain``. It is recommended to use ``KeyedChain.decode_subchains``, which automatically takes advantage of this feature, instead of this mechanism directly.
+* Added ``__iter__`` to the ``ExternalStorage`` class. This makes it easier to iterate through all the files in a storage object (`PR #657 <https://github.com/OpenFreeEnergy/gufe/pull/657>`_).
+* ``AlchemicalArchive`` for exporting ``AlchemicalNetwork``\s and their ``Transformation`` ``ProtocolDAGResult``\s (`PR #687 <https://github.com/OpenFreeEnergy/gufe/pull/687>`_).
+* Added ``BaseSolventComponent``, a base class for solvated components (`PR #704 <https://github.com/OpenFreeEnergy/gufe/pull/704>`_).
+* ``KeyedChain.decode_subchains(func)`` allows decoding constituent ``GufeTokenizable`` objects whenever the passed function evaluates to a truthy value when operating on the keyed dicts of those gufe tokenizables within the ``KeyedChain`` (`PR #634 <https://github.com/OpenFreeEnergy/gufe/pull/634>`_).
+* ``KeyedChain.to_gufe`` now optionally accepts a dict-like object used for ``GufeTokenizable`` caching when decoding the ``KeyedChain``. This is useful when decoding multiple constituent ``GufeTokenizable`` objects from the same ``KeyedChain``. It is recommended to use ``KeyedChain.decode_subchains``, which automatically takes advantage of this feature, instead of this mechanism directly (`PR #634 <https://github.com/OpenFreeEnergy/gufe/pull/634>`_).
 
 **Deprecated:**
 
@@ -21,8 +21,8 @@ v1.8.0
 
 **Fixed:**
 
-* Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization.
-* a ``ProtocolDAG`` created with ``ProtocolUnit``\s not explicitly represented on init now raises ``ProtocolDAGError`` (#583)
+* Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization (`PR #666 <https://github.com/OpenFreeEnergy/gufe/pull/666>`_).
+* a ``ProtocolDAG`` created with ``ProtocolUnit``\s not explicitly represented on init now raises ``ProtocolDAGError`` (`PR #583 <https://github.com/OpenFreeEnergy/gufe/pull/583>`_).
 
 
 
