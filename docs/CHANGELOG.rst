@@ -4,6 +4,28 @@ CHANGELOG
 
 .. current developments
 
+v1.8.0
+====================
+
+**Added:**
+
+* Added ``__iter__`` to the ``ExternalStorage`` class. This makes it easier to iterate through all the files in a storage object.
+* ``AlchemicalArchive`` for exporting ``AlchemicalNetwork``\s and their ``Transformation`` ``ProtocolDAGResult``\s
+* Added ``BaseSolventComponent``, a base class for solvated components.
+* ``KeyedChain.decode_subchains(func)`` allows decoding constituent ``GufeTokenizable`` objects whenever the passed function evaluates to a truthy value when operating on the keyed dicts of those gufe tokenizables within the ``KeyedChain``.
+* ``KeyedChain.to_gufe`` now optionally accepts a dict-like object used for ``GufeTokenizable`` caching when decoding the ``KeyedChain``. This is useful when decoding multiple constituent ``GufeTokenizable`` objects from the same ``KeyedChain``. It is recommended to use ``KeyedChain.decode_subchains``, which automatically takes advantage of this feature, instead of this mechanism directly.
+
+**Deprecated:**
+
+* ``LigandNetwork.to_rbfe_alchemical_network()`` has been deprecated and will be removed in gufe v1.10.0 (`PR #726 <https://github.com/OpenFreeEnergy/gufe/pull/726>`_).
+
+**Fixed:**
+
+* Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization.
+* a ``ProtocolDAG`` created with ``ProtocolUnit``\s not explicitly represented on init now raises ``ProtocolDAGError`` (#583)
+
+
+
 v1.7.0
 ====================
 
