@@ -333,7 +333,7 @@ class LigandNetwork(GufeTokenizable):
         """
 
         warnings.warn(
-            ("to_rbfe_alchemical_network() is deprecated and will be removed in the next minor release of gufe."),
+            ("to_rbfe_alchemical_network() is deprecated and will be removed in version 2.0."),
             DeprecationWarning,
         )
         components = {"protein": protein, "solvent": solvent, **other_components}

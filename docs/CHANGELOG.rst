@@ -17,7 +17,7 @@ v1.8.0
 
 **Deprecated:**
 
-* ``LigandNetwork.to_rbfe_alchemical_network()`` has been deprecated and will be removed in gufe v1.10.0 (`PR #726 <https://github.com/OpenFreeEnergy/gufe/pull/726>`_).
+* ``LigandNetwork.to_rbfe_alchemical_network()`` has been deprecated and will be removed in gufe v2.0 (`PR #726 <https://github.com/OpenFreeEnergy/gufe/pull/726>`_).
 
 **Fixed:**
 
