@@ -150,7 +150,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     def validate(
         self,
         *,
-        min_waters: int = 50,
         min_density: Quantity = 500 * offunit.gram / offunit.liter,
     ):
         """
@@ -158,27 +157,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         Parameters
         ----------
-        min_waters : int
-            Minimum expected number of waters.
         min_density : openff.units.Quantity
             Minimum acceptable density.
         """
-
-        errors = []
-
-        # waters
-        if self.n_waters < min_waters:
-            errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
-
-        # density
         if self.density < min_density:
-            errors.append(f"Estimated system density is very low.\n  Density: {self.density:.3f}")
-
-        if errors:
             raise ValueError(
-                "SolvatedPDBComponent validation failed:\n"
-                + "\n".join(f"- {e}" for e in errors)
-                + "\nThis usually indicates missing solvent or incorrect box vectors."
+                "Estimated system density is very low.\n  "
+                f"Density: {self.density:.3f} (expected ≥ {min_density}). "
+                "This usually indicates missing solvent or incorrect box vectors."
             )
 
     @staticmethod
@@ -450,4 +436,40 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
       conveyed solely through the component type.
     """
 
-    ...
+    def validate(
+        self,
+        *,
+        min_waters: int = 50,
+        min_density: Quantity = 500 * offunit.gram / offunit.liter,
+    ):
+        """
+        Run heuristic validation checks on the solvated system.
+
+        Parameters
+        ----------
+        min_waters: int
+            Minimum number of water molecules
+        min_density : openff.units.Quantity
+            Minimum acceptable density.
+        """
+        errors = []
+
+        # 1. Density check
+        try:
+            super().validate(min_density=min_density)
+        except ValueError as e:
+            errors.append(str(e))
+
+        # 2. Water count check
+        if self.n_waters < min_waters:
+            errors.append(
+                f"Only {self.n_waters} water molecules detected "
+                f"(expected ≥ {min_waters})."
+            )
+
+        if errors:
+            raise ValueError(
+                "ProteinMembraneComponent validation failed:\n"
+                + "\n".join(f"- {e}" for e in errors)
+                + "\nThis usually indicates missing solvent or incorrect box vectors."
+            )
