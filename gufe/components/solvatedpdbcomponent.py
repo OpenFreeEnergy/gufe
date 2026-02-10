@@ -462,10 +462,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
 
         # 2. Water count check
         if self.n_waters < min_waters:
-            errors.append(
-                f"Only {self.n_waters} water molecules detected "
-                f"(expected ≥ {min_waters})."
-            )
+            errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
 
         if errors:
             raise ValueError(

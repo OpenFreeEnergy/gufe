@@ -9,7 +9,7 @@ from numpy.testing import assert_almost_equal
 from openff.units import unit as offunit
 from rdkit import Chem
 
-from gufe import ProteinComponent, SolvatedPDBComponent, ProteinMembraneComponent
+from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponent
 
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
@@ -290,16 +290,14 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
         comp.validate(min_waters=50)
 
     def test_validate_few_waters_raises(self, PDB_181L_path):
-        comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path,
-                                                  infer_box_vectors=True)
+        comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path, infer_box_vectors=True)
         # Only 8 Xray waters, not properly solvated
         assert comp.n_waters == 8
         with pytest.raises(ValueError, match="water molecules detected"):
             comp.validate(min_waters=50)
 
     def test_validate_few_waters_and_low_density_raises(self, PDB_181L_path):
-        comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path,
-                                                  infer_box_vectors=True)
+        comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path, infer_box_vectors=True)
 
         with pytest.raises(ValueError) as excinfo:
             comp.validate()
