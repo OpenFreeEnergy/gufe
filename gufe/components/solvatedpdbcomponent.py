@@ -150,7 +150,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     def validate(
         self,
         *,
-        min_density: Quantity = 500 * offunit.gram / offunit.liter,
+        min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -158,7 +158,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Parameters
         ----------
         min_density : openff.units.Quantity
-            Minimum acceptable density.
+            Minimum acceptable density. Default: 0.7 g/ml
         """
         if self.density < min_density:
             raise ValueError(
@@ -440,7 +440,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         self,
         *,
         min_waters: int = 50,
-        min_density: Quantity = 500 * offunit.gram / offunit.liter,
+        min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -448,9 +448,9 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         Parameters
         ----------
         min_waters: int
-            Minimum number of water molecules
+            Minimum number of water molecules. Default: 50
         min_density : openff.units.Quantity
-            Minimum acceptable density.
+            Minimum acceptable density. Default: 0.7 g/ml
         """
         errors = []
 
