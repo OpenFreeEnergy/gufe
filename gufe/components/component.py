@@ -28,3 +28,15 @@ class Component(GufeTokenizable):
     def total_charge(self) -> int | None:
         """Net formal charge for the ``Component``, if defined."""
         ...
+
+    def validate(self, **kwargs):
+        """
+        Validate this Component.
+
+        This method may be overridden by subclasses to implement
+        component-specific consistency or sanity checks.
+
+        Implementations should raise an exception if validation fails.
+        The base implementation performs no checks.
+        """
+        pass
