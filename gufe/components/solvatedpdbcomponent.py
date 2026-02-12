@@ -5,7 +5,7 @@ from os import PathLike
 from typing import TextIO
 
 import numpy as np
-from openff.toolkit import Quantity
+from openff.units import Quantity
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from openmm import unit as omm_unit
@@ -24,7 +24,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
     PDB component with explicit solvent and box vectors.
 
-    This class represents a Component that is associated with
+    This class represents an explicit component structure that is associated with
     explicit box vectors. Unlike ``ProteinComponent``, instances
     of this class always have box vectors, which are treated as
     part of the component's identity (affecting equality and hashing).
