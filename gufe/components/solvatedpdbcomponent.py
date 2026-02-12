@@ -99,9 +99,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer**3
         volume_L = volume_nm3.to("liter")
 
-        self._density = total_mass.to("gram") / volume_L
-
-        return self._density
+        return total_mass.to("gram") / volume_L
 
     def validate(
         self,
