@@ -24,7 +24,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
     Protein component with explicit solvent and box vectors.
 
-    This class represents a protein structure that is associated with
+    This class represents an explicit component structure that is associated with
     explicit box vectors. Unlike ``ProteinComponent``, instances
     of this class always have box vectors, which are treated as
     part of the component's identity (affecting equality and hashing).
