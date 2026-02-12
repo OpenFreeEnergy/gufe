@@ -116,7 +116,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
         """
-        if self.density < min_density:
+        if self.density < min_density: # type: ignore
             raise ValueError(
                 "Estimated system density is very low.\n  "
                 f"Density: {self.density:.3f} (expected ≥ {min_density}). "
