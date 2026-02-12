@@ -374,14 +374,14 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
     embedded in an explicit membrane (e.g., lipid bilayer). This type
     serves as a semantic marker enabling membrane-specific simulation
     behavior. Code elsewhere may use this distinction (e.g., via ``isinstance``
-     checks) to enable membrane-specific behavior such as selecting a
+    checks) to enable membrane-specific behavior such as selecting a
     membrane-aware barostat or simulation protocol.
 
     Extends parent validation with a heuristic minimum water-count check.
 
     Notes
     -----
-    * All requirements and guarantees of ``SolvatedPDBComponent`` apply.
+    * All requirements and guarantees of :class:`SolvatedPDBComponent` apply.
     * The membrane distinction is conveyed solely through the component type.
     * Validation includes density and minimum water-count checks.
     """
