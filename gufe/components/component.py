@@ -29,7 +29,7 @@ class Component(GufeTokenizable):
         """Net formal charge for the ``Component``, if defined."""
         ...
 
-    def validate(self, **kwargs):
+    def validate(self):
         """
         Validate this Component.
 
