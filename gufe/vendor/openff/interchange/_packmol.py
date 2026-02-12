@@ -1,6 +1,6 @@
 # Vendored from https://github.com/openforcefield/openff-interchange/blob/main/openff/interchange/components/_packmol.py
 import numpy
-from openff.toolkit import Quantity
+from openff.units import Quantity  # import from units so we don't have to build toolkit just for docs
 
 
 def _box_vectors_are_in_reduced_form(box_vectors: Quantity) -> bool:
