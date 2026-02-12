@@ -5,7 +5,7 @@ from os import PathLike
 from typing import TextIO
 
 import numpy as np
-from openff.toolkit import Quantity
+from openff.units import Quantity
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from openmm import unit as omm_unit
