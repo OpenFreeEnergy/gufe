@@ -168,20 +168,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         with pytest.raises(ValueError, match="density is very low"):
             instance.validate(min_density=500 * offunit.gram / offunit.liter)
 
-    def test_is_water_fragment_unknown_atom(self):
-        # Build a fragment with 3 atoms: 1 O, 1 H, 1 C (C triggers `case _`)
-        mol = Chem.RWMol()
-        o = mol.AddAtom(Chem.Atom(8))  # oxygen
-        h = mol.AddAtom(Chem.Atom(1))  # hydrogen
-        c = mol.AddAtom(Chem.Atom(6))  # carbon
-
-        mol.AddBond(o, h, Chem.BondType.SINGLE)
-        mol.AddBond(o, c, Chem.BondType.SINGLE)
-
-        mol = mol.GetMol()
-
-        assert SolvatedPDBComponent._is_water_fragment(mol) is False
-
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
 
@@ -288,6 +274,20 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
             comp = factory(f)
         # Should not raise for properly solvated system
         comp.validate(min_waters=50)
+
+    def test_is_water_fragment_unknown_atom(self):
+        # Build a fragment with 3 atoms: 1 O, 1 H, 1 C (C triggers `case _`)
+        mol = Chem.RWMol()
+        o = mol.AddAtom(Chem.Atom(8))  # oxygen
+        h = mol.AddAtom(Chem.Atom(1))  # hydrogen
+        c = mol.AddAtom(Chem.Atom(6))  # carbon
+
+        mol.AddBond(o, h, Chem.BondType.SINGLE)
+        mol.AddBond(o, c, Chem.BondType.SINGLE)
+
+        mol = mol.GetMol()
+
+        assert ProteinMembraneComponent._is_water_fragment(mol) is False
 
     def test_validate_few_waters_raises(self, PDB_181L_path):
         comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path, infer_box_vectors=True)

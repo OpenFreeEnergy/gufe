@@ -426,7 +426,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         """
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
         return sum(
-            SolvatedPDBComponent._is_water_fragment(frag) for frag in frags)
+            ProteinMembraneComponent._is_water_fragment(frag) for frag in frags)
 
     def validate(
         self,
