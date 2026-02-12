@@ -116,7 +116,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
         """
-        if self.density < min_density: # type: ignore
+        if self.density < min_density:  # type: ignore
             raise ValueError(
                 "Estimated system density is very low.\n  "
                 f"Density: {self.density:.3f} (expected ≥ {min_density}). "
@@ -425,8 +425,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         Count water molecules by disconnected fragments.
         """
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
-        return sum(
-            ProteinMembraneComponent._is_water_fragment(frag) for frag in frags)
+        return sum(ProteinMembraneComponent._is_water_fragment(frag) for frag in frags)
 
     def validate(
         self,
