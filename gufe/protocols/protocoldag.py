@@ -438,7 +438,7 @@ def execute_DAG(
 
     if unitresults_basedir is not None:
         unitresults_path = unitresults_basedir / f"unitresults_{str(protocoldag.key)}"
-        unitresults_path.mkdir(exist_ok=True)
+        unitresults_path.mkdir(exist_ok=True, parents=True)
 
         for file in unitresults_path.rglob("*.json"):
             try:
