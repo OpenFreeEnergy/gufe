@@ -3,9 +3,9 @@
 
 import shutil
 from collections import defaultdict
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
-from json import JSONDecodeError
 
 import networkx as nx
 
@@ -449,7 +449,6 @@ def execute_DAG(
                 # Is source key stable enough?
                 # We probably don't want to resume if gufe stability has changed
                 results[unit_result.source_key] = unit_result
-        
 
     # iterate in DAG order
     all_results = []  # successes AND failures
