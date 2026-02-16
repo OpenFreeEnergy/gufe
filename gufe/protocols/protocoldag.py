@@ -456,6 +456,7 @@ def execute_DAG(
     for unit in protocoldag.protocol_units:
         # If we already have results, skip execution
         if unit.key in results:
+            all_results.append(results[unit.key])
             continue
 
         # translate each `ProtocolUnit` in input into corresponding
