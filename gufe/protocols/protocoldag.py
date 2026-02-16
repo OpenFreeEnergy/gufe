@@ -5,6 +5,7 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+from json import JSONDecodeError
 
 import networkx as nx
 
@@ -376,10 +377,12 @@ def execute_DAG(
     *,
     shared_basedir: Path,
     scratch_basedir: Path,
+    unitresults_basedir: Path | None = None,
     stderr_basedir: Path | None = None,
     stdout_basedir: Path | None = None,
     keep_shared: bool = False,
     keep_scratch: bool = False,
+    keep_unitresults: bool = False,
     raise_error: bool = True,
     n_retries: int = 0,
 ) -> ProtocolDAGResult:
@@ -396,6 +399,11 @@ def execute_DAG(
         class:``ProtocolUnit`` instances.
     scratch_basedir : Path
         Filesystem path to use for `ProtocolUnit` `scratch` space.
+    unitresults_basedir : Path | None = None
+        Filesystem path to use for `ProtocolUnitResult` archiving during
+        execution. If ``None`` (default), results will not be archived
+        and it will not be able to resume DAG execution from the last
+        succesfully finished `ProtocolUnit`.
     stderr_basedir : Path | None
         Filesystem path to use for `ProtocolUnit` `stderr` archiving.
     stdout_basedir : Path | None
@@ -406,6 +414,9 @@ def execute_DAG(
     keep_scratch : bool
         If True, don't remove scratch directories for a `ProtocolUnit` after
         it is executed.
+    keep_unitresults : bool
+        If True, don't remove the unitresults directory which contains
+        the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`.
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
         if False, any exceptions will be stored as `ProtocolUnitFailure`
@@ -422,11 +433,32 @@ def execute_DAG(
     if n_retries < 0:
         raise ValueError("Must give positive number of retries")
 
-    # iterate in DAG order
+    # handle results & optionally archiving
     results: dict[GufeKey, ProtocolUnitResult] = {}
+
+    if unitresults_basedir is not None:
+        unitresults_path = unitresults_basedir / f"unitresults_{str(protocoldag.key)}"
+        unitresults_path.mkdir(exist_ok=True)
+
+        for file in unitresults_path.rglob("*.json"):
+            try:
+                unit_result = ProtocolUnitResult.from_json(file)
+            except JSONDecodeError:
+                pass
+            else:
+                # Is source key stable enough?
+                # We probably don't want to resume if gufe stability has changed
+                results[unit_result.source_key] = unit_result
+        
+
+    # iterate in DAG order
     all_results = []  # successes AND failures
     shared_paths = []
     for unit in protocoldag.protocol_units:
+        # If we already have results, skip execution
+        if unit.key in results:
+            continue
+
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
@@ -435,20 +467,20 @@ def execute_DAG(
         while attempt <= n_retries:
             shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
             shared_paths.append(shared)
-            shared.mkdir()
+            shared.mkdir(exist_ok=True)
 
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
-            scratch.mkdir()
+            scratch.mkdir(exist_ok=True)
 
             stderr = None
             if stderr_basedir:
                 stderr = stderr_basedir / f"stderr_{str(unit.key)}_attempt_{attempt}"
-                stderr.mkdir()
+                stderr.mkdir(exist_ok=True)
 
             stdout = None
             if stdout_basedir:
                 stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
-                stdout.mkdir()
+                stdout.mkdir(exist_ok=True)
 
             context = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
 
@@ -468,6 +500,11 @@ def execute_DAG(
             if result.ok():
                 # attach result to this `ProtocolUnit`
                 results[unit.key] = result
+
+                # Serialize results if requested
+                if unitresults_basedir is not None:
+                    result.to_json(unitresults_path / f"{str(result.key)}.json")
+
                 break
             attempt += 1
 
@@ -477,6 +514,9 @@ def execute_DAG(
     if not keep_shared:
         for shared_path in shared_paths:
             shutil.rmtree(shared_path)
+
+    if not keep_unitresults and unitresults_basedir is not None:
+        shutil.rmtree(unitresults_path)
 
     return ProtocolDAGResult(
         name=protocoldag.name,
