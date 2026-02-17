@@ -2,7 +2,7 @@
 ======================================
 
 :class:`.Context` instances carry the execution environment for individual :class:`.ProtocolUnit` executions.
-They are created by the execution engine just before a unit is excuted and discarded once the unit returns.
+They are created by the execution engine just before a unit is executed and discarded once the unit returns.
 The class acts as a thin wrapper around two :class:`.StorageManager` objects (shared and permanent) and a scratch directory.
 
 
@@ -41,12 +41,12 @@ Lifecycle
 ---------
 
 ``Context`` implements a `Python context manager`_.
-When the context is exited, ``shared`` and ``permanent`` storage managers flushed tracked files back to their underlying :class:``ExternalStorage``.
+When the context is exited, ``shared`` and ``permanent`` storage managers flushed tracked files back to their underlying :class:`ExternalStorage`.
 Any ``stdout`` or ``stderr`` capture directories are also removed.
 
 .. _Python context manager: https://docs.python.org/3/reference/datamodel.html#context-managers
 
-This means each ``ProtocolUnit``'s ``shared`` and ``permanent`` object are not paths, and should not be treated as such.
+This means each ``ProtocolUnit``'s ``shared`` and ``permanent`` objects are not paths, and should not be treated as such.
 Both of these are registries that track if a file should be transferred from its location in ``scratch`` to its final location after completing a unit.
 
 To access data from ``shared`` or ``permanent``, you can use ``ctx.shared.load`` or ``ctx.permanent.load``.
