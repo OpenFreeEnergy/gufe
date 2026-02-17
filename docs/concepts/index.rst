@@ -11,7 +11,7 @@ utilize **gufe** APIs.
 
    tokenizables
    included_models
-   serialization
    storage
    context
    logging
+   serialization
