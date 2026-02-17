@@ -150,8 +150,8 @@ StorageManager
 --------------
 
 The :class:`.StorageManager` class provides a higher-level interface for managing storage operations within a computational workflow.
-.. note::
 
+.. note::
     ``StorageManager`` is largely used by the :class:`.Context` class and should not be instantiated in protocols.
     In general, protocol developers will only use the ``register`` and ``load`` functions.
 
