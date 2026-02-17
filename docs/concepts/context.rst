@@ -49,7 +49,7 @@ Any ``stdout`` or ``stderr`` capture directories are also removed.
 This means each ``ProtocolUnit``'s ``shared`` and ``permanent`` object are not paths, and should not be treated as such.
 Both of these are registries that track if a file should be transferred from its location in ``scratch`` to its final location after completing a unit.
 
-If you want to use some from ``shared`` or ``permanent``, you can use ``ctx.shared.load`` or ``ctx.permanent.load``.
+To access data from ``shared`` or ``permanent``, you can use ``ctx.shared.load`` or ``ctx.permanent.load``.
 This will allow your unit to fetch those objects from their storage for use.
 
 
