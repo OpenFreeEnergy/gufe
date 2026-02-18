@@ -1,6 +1,6 @@
 **Added:**
 
-* Added ``BaseSolventComponent``, a base class for solvated components.
+* Adds a .validate() method to gufe Components
 
 **Changed:**
 

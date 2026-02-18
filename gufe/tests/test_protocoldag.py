@@ -161,3 +161,25 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, writefile_dag: Protoco
     # check that our shared and scratch basedirs are left behind
     assert shared.exists()
     assert scratch.exists()
+
+
+def test_protocoldag_missing_dependency_unit():
+    """Test that ProtocolDAG raises an error when units with dependencies
+    are provided but their dependencies are not explicitly included.
+
+    This test addresses issue #583: Protocol._create should return all units,
+    not rely on implicit dependency discovery.
+    """
+    # Create a setup unit that other units depend on
+    setup_unit = WriterUnit(identity=0, name="setup")
+
+    # Create units that depend on the setup unit
+    dependent_units = [WriterUnit(identity=i, setup=setup_unit, name=f"cycle_{i}") for i in range(1, 4)]
+
+    # Attempt to create a ProtocolDAG without including the setup_unit
+    # This should raise a ProtocolDAGError
+    with pytest.raises(gufe.protocols.ProtocolDAGError, match="units that were not explicitly provided"):
+        gufe.ProtocolDAG(
+            protocol_units=dependent_units,  # Missing setup_unit!
+            transformation_key=None,
+        )
