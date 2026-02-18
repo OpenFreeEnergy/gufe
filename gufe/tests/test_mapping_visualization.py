@@ -12,13 +12,6 @@ from gufe.visualization.mapping_visualization import (
     draw_unhighlighted_molecule,
 )
 
-try:
-    import py3Dmol  # noqa: F401
-
-    HAS_PY3DMOL = True
-except ImportError:
-    HAS_PY3DMOL = False
-
 # default colors currently used
 _HIGHLIGHT_COLOR = (220 / 255, 50 / 255, 32 / 255, 1)
 _CHANGED_ELEMENTS_COLOR = (0, 90 / 255, 181 / 255, 1)

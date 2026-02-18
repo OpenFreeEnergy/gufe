@@ -19,4 +19,5 @@ API
    gufe.molhashing
    gufe.network
    gufe.tokenization
+   gufe.archival
    gufe.utils
