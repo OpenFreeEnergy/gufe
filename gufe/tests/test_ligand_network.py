@@ -394,9 +394,10 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             others = {}
 
         protocol = DummyProtocol(DummyProtocol.default_settings())
-        rbfe = real_molecules_network.to_rbfe_alchemical_network(
-            solvent=solv_comp, protein=prot_comp, protocol=protocol, **others
-        )
+        with pytest.warns(DeprecationWarning, match="to_rbfe_alchemical_network"):
+            rbfe = real_molecules_network.to_rbfe_alchemical_network(
+                solvent=solv_comp, protein=prot_comp, protocol=protocol, **others
+            )
 
         expected_names = {
             "easy_rbfe_benzene_solvent_toluene_solvent",
@@ -436,25 +437,27 @@ class TestLigandNetwork(GufeTokenizableTestsMixin):
             assert edge.mapping in real_molecules_network.edges
 
     def test_to_rbfe_alchemical_network_autoname_false(self, real_molecules_network, prot_comp, solv_comp):
-        rbfe = real_molecules_network.to_rbfe_alchemical_network(
-            solvent=solv_comp,
-            protein=prot_comp,
-            protocol=DummyProtocol(DummyProtocol.default_settings()),
-            autoname=False,
-        )
+        with pytest.warns(DeprecationWarning, match="to_rbfe_alchemical_network"):
+            rbfe = real_molecules_network.to_rbfe_alchemical_network(
+                solvent=solv_comp,
+                protein=prot_comp,
+                protocol=DummyProtocol(DummyProtocol.default_settings()),
+                autoname=False,
+            )
         for edge in rbfe.edges:
             assert edge.name == ""
             for sys in [edge.stateA, edge.stateB]:
                 assert sys.name == ""
 
     def test_to_rbfe_alchemical_network_autoname_true(self, real_molecules_network, prot_comp, solv_comp):
-        rbfe = real_molecules_network.to_rbfe_alchemical_network(
-            solvent=solv_comp,
-            protein=prot_comp,
-            protocol=DummyProtocol(DummyProtocol.default_settings()),
-            autoname=True,
-            autoname_prefix="",
-        )
+        with pytest.warns(DeprecationWarning, match="to_rbfe_alchemical_network"):
+            rbfe = real_molecules_network.to_rbfe_alchemical_network(
+                solvent=solv_comp,
+                protein=prot_comp,
+                protocol=DummyProtocol(DummyProtocol.default_settings()),
+                autoname=True,
+                autoname_prefix="",
+            )
         expected_names = {
             "benzene_complex_toluene_complex",
             "benzene_solvent_toluene_solvent",
