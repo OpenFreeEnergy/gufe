@@ -13,14 +13,20 @@ In many cases, you will likely want your custom ``Component`` to inherit from on
 * :class:`.ExplicitMoleculeComponent`
 * :class:`.ProteinComponent`
 * :class:`.SmallMoleculeComponent`
+* :class:`.BaseSolventComponent`
 * :class:`.SolventComponent`
 
-In the rare case where you want to as much custom implementation as possible, you could inherit directly from :class:`.Component` itself.
+In the rare case where you want as much custom implementation as possible, you could inherit directly from :class:`.Component` itself.
+However, many OpenFE ``Protocols`` require specific Component types, in which case sub-classing from a compatible class is recommended.
 
 Step 2: Write Tests for Expected Behavior
 -----------------------------------------
 
 As when defining any new ``GufeTokenizable``, you are encouraged to use the ``GufeTokenizableTestsMixin`` pytest fixture to ensure that your new ``Component`` works as intended.
+
+.. note::
+
+    A key benefit of inheriting from a fully implemented class, such as ``SmallMoleculeComponent`` in this example, is that you only need to implement *new* functionality.
 
 For example:
 
@@ -65,10 +71,6 @@ This includes both in ``Component`` itself, as well as any ``abstractmethod``\s 
 In other cases, such as when inheriting from ``ExplicitMoleculeComponent``, you will only need to define methods specifically not implemented - in this case ``_to_dict()`` and ``_from_dict()``.
 
 .. TODO: point to gufe tokenizable how-to for _to_dict, _from_dict examples, and/or source code examples.
-
-.. note::
-
-    A key benefit of inheriting from a fully implemented class, such as ``ExplicitMoleculeComponent`` in this example, is that you only need to implement *new* functionality.
 
 
 Step 4: Define Additional Functionality
