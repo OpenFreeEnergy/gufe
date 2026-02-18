@@ -8,8 +8,10 @@ How-To Guides
 
    serialization
    component
-   componentmapping
-   atommapping
-   atommapper
    protocol
    custom_quantities
+
+.. TODO:
+.. componentmapping
+.. atommapping
+.. atommapper
