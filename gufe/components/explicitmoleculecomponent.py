@@ -33,10 +33,12 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
 
 
 class ExplicitMoleculeComponent(Component):
-    """Base class for explicit molecules.
+    """
+    Base class for explicit molecules.
+    Assumes that the molecule can be represented as an rdkit.Chem.Mol object.
 
-    This provides basic serialization and conversion to different
-    representations. Specific file formats, such as SDF for small molecules
+    Provides basic serialization and conversion to different representations.
+    Specific file formats, such as SDF for small molecules
     or PDB for proteins, should be implemented in subclasses.
     """
 
