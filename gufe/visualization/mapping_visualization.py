@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -311,7 +311,7 @@ def draw_unhighlighted_molecule(mol, d2d=None):
     )
 
 
-def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[np.float64]]) -> Chem.Mol:
+def _translate(mol: Chem.Mol, shift: tuple[float, float, float] | NDArray[np.float64]) -> Chem.Mol:
     """
         shifts the molecule by the shift vector
 
@@ -337,7 +337,7 @@ def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[n
 
 
 @requires_package("py3Dmol")
-def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
+def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: dict[int, int]) -> None:
     """
         will add spheres according to mapping to the view. (inplace!)
 
@@ -407,10 +407,10 @@ def _get_max_dist_in_x(atom_mapping) -> float:
 @requires_package("py3Dmol")
 def display_mapping_3d(
     mapping: AtomMapping,
-    spheres: Optional[bool] = True,
-    show_atomIDs: Optional[bool] = False,
-    style: Optional[str] = "stick",
-    shift: Optional[Union[Tuple[float, float, float], NDArray[np.float64]]] = None,
+    spheres: bool | None = True,
+    show_atomIDs: bool | None = False,
+    style: str | None = "stick",
+    shift: tuple[float, float, float] | NDArray[np.float64] | None = None,
 ) -> py3Dmol.view:
     """
     Render relative transformation edge in 3D using py3Dmol.
