@@ -1,8 +1,10 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+from __future__ import annotations
+
 from collections.abc import Collection
 from itertools import chain
-from typing import Any, Dict, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,12 +12,18 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
+from ..mapping import AtomMapping
 from ..utils import requires_package
 
 # highlight core element changes differently from unique atoms
 # RGBA color value needs to be between 0 and 1, so divide by 255
 RED = (220 / 255, 50 / 255, 32 / 255, 1.0)
 BLUE = (0.0, 90 / 255, 181 / 255, 1.0)
+
+
+if TYPE_CHECKING:
+    import py3Dmol
+    from ipywidgets.widgets import widgets
 
 
 def _match_elements(mol1: Chem.Mol, idx1: int, mol2: Chem.Mol, idx2: int) -> bool:
@@ -394,3 +402,161 @@ def _get_max_dist_in_x(atom_mapping) -> float:
 
     estm = float(np.round(max(max_d), 1))
     return estm if (estm > 5) else 5
+
+
+@requires_package("py3Dmol")
+def display_mapping_3d(
+    mapping: AtomMapping,
+    spheres: Optional[bool] = True,
+    show_atomIDs: Optional[bool] = False,
+    style: Optional[str] = "stick",
+    shift: Optional[Union[Tuple[float, float, float], NDArray[np.float64]]] = None,
+) -> py3Dmol.view:
+    """
+    Render relative transformation edge in 3D using py3Dmol.
+
+    By default matching atoms will be annotated using colored spheres.
+
+    py3Dmol is an optional dependency, it can be installed with:
+        pip install py3Dmol
+
+    Parameters
+    ----------
+    mapping : LigandAtomMapping
+        The ligand transformation edge to visualize.
+    spheres : bool, optional
+        Whether or not to show matching atoms as spheres.
+    show_atomIDs: bool, optional
+        Whether or not to show atom ids in the mapping visualization
+    style : str, optional
+        Style in which to represent the molecules in py3Dmol.
+    shift : Tuple of floats, optional
+        Amount to shift molB by in order to visualize the two ligands.
+        If None, the default shift will be estimated as the largest
+        intraMol distance of both mols.
+
+    Returns
+    -------
+    view : py3Dmol.view
+        View of the system containing both molecules in the edge.
+    """
+    import py3Dmol
+
+    if shift is None:
+        shift = np.array([_get_max_dist_in_x(mapping) * 1.5, 0, 0])
+    else:
+        shift = np.array(shift)
+
+    molA = mapping.componentA.to_rdkit()
+    molB = mapping.componentB.to_rdkit()
+
+    # 0 * shift is the centrepoint
+    # shift either side of the mapping +- a shift to clear the centre view
+    lmol = _translate(molA, -1 * shift)
+    rmol = _translate(molB, +1 * shift)
+
+    view = py3Dmol.view(width=600, height=600)
+    view.addModel(Chem.MolToMolBlock(lmol), "molA")
+    view.addModel(Chem.MolToMolBlock(rmol), "molB")
+
+    if spheres:
+        _add_spheres(view, lmol, rmol, mapping.componentA_to_componentB)
+
+    if show_atomIDs:
+        view.addPropertyLabels(
+            "index",
+            {"not": {"resn": ["molA_overlay", "molA_overlay"]}},
+            {
+                "fontColor": "black",
+                "font": "sans-serif",
+                "fontSize": "10",
+                "showBackground": "false",
+                "alignment": "center",
+            },
+        )
+
+    # middle fig
+    view.addModel(Chem.MolToMolBlock(molA), "molA_overlay")
+    view.addModel(Chem.MolToMolBlock(molB), "molB_overlay")
+
+    view.setStyle({style: {}})
+
+    view.zoomTo()
+    return view
+
+
+@requires_package("ipywidgets")
+def display_mappings_3d(mappingSet: AtomMapping | list[AtomMapping]) -> widgets.VBox:
+    """Jupyter Visualization Widget
+    This function is visualizing the provided list of mappings. It shows in the
+    middle an overlay of the coordinates of the molecues, and left and right
+    the mapping of the atoms (color of the spheres indicates partners).
+    This function is tested in jupyter notebooks.
+
+    Parameters
+    ----------
+    mappingSet:Union[AtomMapping, List[AtomMapping]]
+        a list of atom mappings (gufe.AtomMapping objects)
+
+    Returns
+    -------
+    widgets.Vbox:
+        returns a widget, with the visualization and control elements.
+
+    """
+
+    from ipywidgets import widgets
+
+    # Input Parse
+    if isinstance(mappingSet, AtomMapping):
+        mappingSet = [mappingSet]
+
+    # helper for drawing edges
+    def display_edge(index) -> None:
+        print(f"MolA: {mappingSet[index].componentA.name}")
+        print(f"MolB: {mappingSet[index].componentB.name}")
+        print(f"Mapping MolA->MolB: {mappingSet[index].componentA_to_componentB}")
+        if hasattr(mappingSet[index], "score"):
+            print(f"Mapping Score: {getattr(mappingSet[index])} score")
+        else:
+            print()
+        view = display_mapping_3d(mappingSet[index], spheres=True, show_atomIDs=True)  # shift=(0.1, 0, 0))
+        view.show()
+
+    # Int slider for selecting mapping from set
+    slider = widgets.IntSlider(
+        tooltip="select mapping",
+        description=str(len(mappingSet)) + " mappings",
+        min=0,
+        max=len(mappingSet) - 1,
+        step=1,
+        value=0,
+    )
+
+    # jump one mapping forward/backwards
+    nextButton = widgets.Button(tooltip="next structure", icon="caret-right")
+
+    def increment(fu) -> None:
+        if slider.value == slider.max:
+            slider.value = 0
+        else:
+            slider.value += 1
+
+    nextButton.on_click(increment)
+
+    previousButton = widgets.Button(tooltip="previous structure", icon="caret-left")
+
+    def decrement(fu) -> None:
+        if slider.value == 0:
+            slider.value = slider.max
+        else:
+            slider.value -= 1
+
+    previousButton.on_click(decrement)
+
+    # Aligning control elements and visualization
+    hbox = widgets.HBox([previousButton, nextButton, slider])
+    inter = widgets.interactive_output(display_edge, {"index": slider})
+    vbox = widgets.VBox([hbox, inter])
+
+    return vbox
