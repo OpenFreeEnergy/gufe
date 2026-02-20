@@ -10,11 +10,10 @@ from numpy.typing import NDArray
 from rdkit import Chem
 
 from gufe.components import SmallMoleculeComponent
-from gufe.visualization.mapping_visualization import draw_mapping
+from gufe.visualization.mapping_visualization import display_mapping_3d, draw_mapping
 
 from ..tokenization import JSON_HANDLER
 from ..utils import requires_package
-from ..visualization import mapping_visualization as viz
 from . import AtomMapping
 
 if TYPE_CHECKING:
@@ -234,49 +233,8 @@ class LigandAtomMapping(AtomMapping):
         view : py3Dmol.view
             View of the system containing both molecules in the edge.
         """
-        import py3Dmol
 
-        if shift is None:
-            shift = np.array([viz._get_max_dist_in_x(self) * 1.5, 0, 0])
-        else:
-            shift = np.array(shift)
-
-        molA = self.componentA.to_rdkit()
-        molB = self.componentB.to_rdkit()
-
-        # 0 * shift is the centrepoint
-        # shift either side of the mapping +- a shift to clear the centre view
-        lmol = viz._translate(molA, -1 * shift)
-        rmol = viz._translate(molB, +1 * shift)
-
-        view = py3Dmol.view(width=600, height=600)
-        view.addModel(Chem.MolToMolBlock(lmol), "molA")
-        view.addModel(Chem.MolToMolBlock(rmol), "molB")
-
-        if spheres:
-            viz._add_spheres(view, lmol, rmol, self.componentA_to_componentB)
-
-        if show_atomIDs:
-            view.addPropertyLabels(
-                "index",
-                {"not": {"resn": ["molA_overlay", "molA_overlay"]}},
-                {
-                    "fontColor": "black",
-                    "font": "sans-serif",
-                    "fontSize": "10",
-                    "showBackground": "false",
-                    "alignment": "center",
-                },
-            )
-
-        # middle fig
-        view.addModel(Chem.MolToMolBlock(molA), "molA_overlay")
-        view.addModel(Chem.MolToMolBlock(molB), "molB_overlay")
-
-        view.setStyle({style: {}})
-
-        view.zoomTo()
-        return view
+        return display_mapping_3d(self, spheres=spheres, show_atomIDs=show_atomIDs, style=style, shift=shift)
 
     def with_annotations(self, annotations: dict[str, Any]) -> LigandAtomMapping:
         """Create a new mapping based on this one with extra annotations.
@@ -316,7 +274,6 @@ class LigandAtomMapping(AtomMapping):
         int:
             The difference in formal charge between the end states.
         """
-        from rdkit import Chem
 
         charge_a = Chem.rdmolops.GetFormalCharge(self.componentA.to_rdkit())
         charge_b = Chem.rdmolops.GetFormalCharge(self.componentB.to_rdkit())
