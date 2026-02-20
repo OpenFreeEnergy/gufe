@@ -12,6 +12,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 import gufe
+from gufe import LigandAtomMapping, SmallMoleculeComponent
 from gufe.tests.test_protocol import DummyProtocol
 
 # Support OpenMM as a soft dep
@@ -336,3 +337,30 @@ def benzene_variants_star_map(benzene_variants_star_map_transformations):
 def benzene_variants_ligand_star_map(benzene_variants_star_map_transformations):
     solvated_ligand_transformations, _ = benzene_variants_star_map_transformations
     return gufe.AlchemicalNetwork(solvated_ligand_transformations)
+
+
+def mol_from_smiles(smiles: str):
+    rdmols = [Chem.MolFromSmiles(s) for s in smiles]
+    rdmols = [Chem.AddHs(m, addCoords=True) for m in rdmols]
+    [Chem.rdDistGeom.EmbedMolecule(m, useRandomCoords=False, randomSeed=0) for m in rdmols]
+    return rdmols
+
+
+def stereo_chem_mols():
+    smiles = [
+        "C[C@H](F)Br",
+        "C[C@@H](F)Br",
+    ]
+
+    rdmols = mol_from_smiles(smiles)
+    Chem.rdMolAlign.AlignMol(rdmols[0], rdmols[1])
+    mols = [SmallMoleculeComponent(m) for m in rdmols]
+    return mols
+
+
+@pytest.fixture(scope="session")
+def stereo_chem_mapping():
+    mols = stereo_chem_mols()
+    expected_mapping = {4: 4, 5: 5, 6: 6, 0: 0, 1: 1, 3: 3}
+
+    return LigandAtomMapping(mols[0], mols[1], expected_mapping)
