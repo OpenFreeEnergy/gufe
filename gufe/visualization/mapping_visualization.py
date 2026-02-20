@@ -12,7 +12,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
-from ..mapping import AtomMapping, LigandAtomMapping
+from ..mapping import AtomMapping
 from ..utils import requires_package
 
 # highlight core element changes differently from unique atoms
@@ -24,6 +24,8 @@ BLUE = (0.0, 90 / 255, 181 / 255, 1.0)
 if TYPE_CHECKING:
     import py3Dmol
     from ipywidgets.widgets import widgets
+
+    from ..mapping import LigandAtomMapping
 
 
 def _match_elements(mol1: Chem.Mol, idx1: int, mol2: Chem.Mol, idx2: int) -> bool:
