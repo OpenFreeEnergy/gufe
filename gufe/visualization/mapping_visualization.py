@@ -12,7 +12,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
-from ..mapping import AtomMapping
+from ..mapping import AtomMapping, LigandAtomMapping
 from ..utils import requires_package
 
 # highlight core element changes differently from unique atoms
@@ -406,7 +406,7 @@ def _get_max_dist_in_x(atom_mapping) -> float:
 
 @requires_package("py3Dmol")
 def display_mapping_3d(
-    mapping: AtomMapping,
+    mapping: LigandAtomMapping,
     spheres: bool | None = True,
     show_atomIDs: bool | None = False,
     style: str | None = "stick",
@@ -517,7 +517,7 @@ def display_mappings_3d(mappingSet: AtomMapping | list[AtomMapping]) -> widgets.
         print(f"MolB: {mappingSet[index].componentB.name}")
         print(f"Mapping MolA->MolB: {mappingSet[index].componentA_to_componentB}")
         if hasattr(mappingSet[index], "score"):
-            print(f"Mapping Score: {getattr(mappingSet[index])} score")
+            print(f"Mapping Score: {getattr(mappingSet[index], 'score')} score")
         else:
             print()
         view = display_mapping_3d(mappingSet[index], spheres=True, show_atomIDs=True)  # shift=(0.1, 0, 0))
