@@ -102,11 +102,32 @@ class StorageManager:
         return filename in self.registry
 
     def _transfer(self):
-        """Transfer all the files from the files in the internal registry to its
-        corresponding :class:`gufe.externalresource.ExternalStorage`.
+        """Transfer all registered files to external storage.
+
+        Transfers each filename currently registered on this manager into the
+        configured external storage backend using this manager's namespace.
+
+        Raises
+        ------
+        FileNotFoundError
+            If any registered file does not exist in ``scratch_dir``.
         """
         for filename in self.registry:
-            path = self.scratch_dir / filename
-            with open(path, "rb") as f:
-                data = f.read()
-                self.storage.store_bytes(self.append_to_namespace(self.namespace, filename), data)
+            self.transfer_file(filename)
+
+    def transfer_file(self, filename: str) -> None:
+        """Transfer a single file from scratch space to external storage.
+
+        Parameters
+        ----------
+        filename : str
+            Relative filename (within ``scratch_dir``) to transfer.
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``filename`` does not exist in ``scratch_dir``.
+        """
+        path = self.scratch_dir / filename
+        location = self.append_to_namespace(self.namespace, filename)
+        self.storage.store_path(location, path)
