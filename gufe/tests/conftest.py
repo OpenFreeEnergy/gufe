@@ -360,6 +360,8 @@ def stereo_chem_mols():
 
 @pytest.fixture(scope="session")
 def stereo_chem_mapping():
+    # This fixture is only needed for viz testing
+    pytest.importorskip("py3Dmol")
     mols = stereo_chem_mols()
     expected_mapping = {4: 4, 5: 5, 6: 6, 0: 0, 1: 1, 3: 3}
 
