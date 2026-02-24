@@ -7,6 +7,8 @@ from rdkit import Chem
 from gufe.visualization.mapping_visualization import (
     _get_unique_bonds_and_atoms,
     _match_elements,
+    display_mapping_3d,
+    display_mappings_3d,
     draw_mapping,
     draw_one_molecule_mapping,
     draw_unhighlighted_molecule,
@@ -243,3 +245,25 @@ def test_draw_unhighlighted_molecule_integration_smoke(benzene_transforms):
     # integration test/smoke test to catch errors if the upstream drawing
     # code changes
     draw_unhighlighted_molecule(benzene_transforms["benzene"].to_rdkit())
+
+
+def test_score_mappings_rmsd(stereo_chem_mapping) -> None:
+    """
+    Currently a smoke test
+    """
+    pytest.importorskip("py3Dmol")
+    from py3Dmol import view
+
+    v = display_mapping_3d(stereo_chem_mapping)
+    assert isinstance(v, view)
+
+
+def test_view_mapping(stereo_chem_mapping) -> None:
+    """
+    Currently a smoke test
+    """
+    pytest.importorskip("ipywidgets")
+    from ipywidgets.widgets.widget_box import VBox
+
+    view = display_mappings_3d([stereo_chem_mapping, stereo_chem_mapping])
+    assert isinstance(view, VBox)
