@@ -409,9 +409,9 @@ def _get_max_dist_in_x(atom_mapping) -> float:
 @requires_package("py3Dmol")
 def display_mapping_3d(
     mapping: LigandAtomMapping,
-    spheres: bool | None = True,
-    show_atomIDs: bool | None = False,
-    style: str | None = "stick",
+    spheres: bool = True,
+    show_atomIDs: bool = False,
+    style: str = "stick",
     shift: tuple[float, float, float] | NDArray[np.float64] | None = None,
 ) -> py3Dmol.view:
     """
@@ -426,13 +426,13 @@ def display_mapping_3d(
     ----------
     mapping : LigandAtomMapping
         The ligand transformation edge to visualize.
-    spheres : bool, optional
+    spheres : bool, default=True
         Whether or not to show matching atoms as spheres.
-    show_atomIDs: bool, optional
+    show_atomIDs: bool, default=False
         Whether or not to show atom ids in the mapping visualization
-    style : str, optional
+    style : str, default='stick'
         Style in which to represent the molecules in py3Dmol.
-    shift : Tuple of floats, optional
+    shift : Tuple of floats, default=None
         Amount to shift molB by in order to visualize the two ligands.
         If None, the default shift will be estimated as the largest
         intraMol distance of both mols.
