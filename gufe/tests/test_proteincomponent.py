@@ -107,7 +107,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     cls = ProteinComponent
     repr = "ProteinComponent(name=Steve)"
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def instance(self, PDB_181L_path):
         return self.cls.from_pdb_file(PDB_181L_path, name="Steve")
 
@@ -364,6 +364,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         with pytest.raises(Chem.AtomValenceException, match="Could not set valence of atom id"):
             with mock.patch("rdkit.Chem.rdchem.PeriodicTable.GetValenceList", return_value=[10000000]):
                 self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
+
+    def test_empty_validate(self, instance):
+        """Should pass"""
+        instance.validate()
 
 
 def test_no_monomer_info_error(ethane):
