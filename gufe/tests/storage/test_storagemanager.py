@@ -126,6 +126,39 @@ class TestStorageManager:
         # Check a non-existent file
         assert "nonexistent.txt" not in storage_manager
 
+    def test_transfer_file(self, tmp_scratch_dir, storage_manager):
+        """Test the transfer_file method."""
+        filename = "somefile.txt"
+        data = b"Hello World!"
+
+        path = tmp_scratch_dir / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+
+        storage_manager.register(filename)
+
+        assert filename in storage_manager
+        storage_manager.transfer_file(filename)
+
+        # Check for this file
+        namespaced_filename = StorageManager.append_to_namespace(storage_manager.namespace, filename)
+        assert storage_manager.storage.exists(namespaced_filename)
+
+        with storage_manager.storage.load_stream(namespaced_filename) as f:
+            stored_content = f.read()
+            assert stored_content == data
+
+    def test_transfer_file_not_found(self, tmp_scratch_dir, storage_manager):
+        """Test _transfer when registered file doesn't exist."""
+        filename = "nonexistent.txt"
+
+        # Register non-existent file
+        storage_manager.register(filename)
+
+        # Should raise FileNotFoundError when trying to transfer
+        with pytest.raises(FileNotFoundError):
+            storage_manager.transfer_file(filename)
+
     def test_transfer_empty_registry(self, storage_manager):
         """Test _transfer with empty registry."""
         # Should not raise any errors
@@ -182,7 +215,7 @@ class TestStorageManager:
         assert expected_path.exists()
         assert expected_path.read_bytes() == content
 
-    def test_transfer_file_not_found(self, storage_manager):
+    def test_transfer_not_found(self, storage_manager):
         """Test _transfer when registered file doesn't exist."""
         filename = "nonexistent.txt"
 
