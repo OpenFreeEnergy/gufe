@@ -29,7 +29,7 @@ The :class:`.ExternalStorage` abstract base class defines the interface that all
 
 * **Store operations**: ``store_bytes()`` and ``store_path()`` to store data
 * **Load operations**: ``load_stream()`` to retrieve data as a stream
-* **Management**: ``exists()``, ``delete()``, and ``iter_contents()`` for managing stored data
+* **Management**: ``exists()``, ``delete()``, ``transfer_file()``,  and ``iter_contents()`` for managing stored data
 
 All storage operations use a *location* string as an identifier for the stored data.
 

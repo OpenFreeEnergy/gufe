@@ -90,7 +90,7 @@ first argument.  Typical usage looks like the example below.
             }
 
 The example above showcases how you are to register files.
-It is important to note that the ``result_path`` is diffent from the ``result_path_final_location``.
+It is important to note that the ``result_path`` is different from the ``result_path_final_location``.
 The ``result_path`` exists as a normal path, but ``result_path_final_location`` is a handle used to be passed between units.
 The final location is for the execution engine to correctly namespace files and provide them back to subsequent units.
 
