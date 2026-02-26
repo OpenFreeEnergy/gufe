@@ -266,7 +266,6 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
         with gzip.open(PDBx_a2a_path, "rt") as gzf:
             yield self.cls.from_pdbx_file(gzf, name="Steve")
 
-
     @pytest.mark.parametrize(
         "component_fixture",
         [
@@ -277,7 +276,6 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
     def test_validate_passes(self, component_fixture, request):
         comp = request.getfixturevalue(component_fixture)
         comp.validate(min_waters=50)
-
 
     def test_is_water_fragment_unknown_atom(self):
         # Build a fragment with 3 atoms: 1 O, 1 H, 1 C (C triggers `case _`)
