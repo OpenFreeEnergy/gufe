@@ -261,19 +261,23 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
         with gzip.open(PDB_a2a_path, "rb") as gzf:
             yield self.cls.from_pdb_file(gzf, name="Steve")
 
+    @pytest.fixture(scope="function")
+    def a2a_pdbx(self, PDBx_a2a_path):
+        with gzip.open(PDBx_a2a_path, "rt") as gzf:
+            yield self.cls.from_pdbx_file(gzf, name="Steve")
+
+
     @pytest.mark.parametrize(
-        "factory,path_fixture",
+        "component_fixture",
         [
-            (ProteinMembraneComponent.from_pdb_file, "PDB_a2a_path"),
-            (ProteinMembraneComponent.from_pdbx_file, "PDBx_a2a_path"),
+            "instance",
+            "a2a_pdbx",
         ],
     )
-    def test_validate_passes(self, factory, path_fixture, request):
-        path = request.getfixturevalue(path_fixture)
-        with gzip.open(path, "rt") as f:
-            comp = factory(f)
-        # Should not raise for properly solvated system
+    def test_validate_passes(self, component_fixture, request):
+        comp = request.getfixturevalue(component_fixture)
         comp.validate(min_waters=50)
+
 
     def test_is_water_fragment_unknown_atom(self):
         # Build a fragment with 3 atoms: 1 O, 1 H, 1 C (C triggers `case _`)
