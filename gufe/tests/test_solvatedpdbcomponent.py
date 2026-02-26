@@ -27,18 +27,18 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     repr = "SolvatedPDBComponent(name=Steve)"
 
     @pytest.fixture(scope="session")
-    def instance(self, PDB_a2a_path):
-        with gzip.open(PDB_a2a_path, "rb") as gzf:
+    def instance(self, PDB_hif2a_solvated_ligands):
+        with gzip.open(PDB_hif2a_solvated_ligands, "rb") as gzf:
             yield self.cls.from_pdb_file(gzf, name="Steve")
 
     def test_from_pdb_file_sets_box_vectors(self, instance):
         box = instance.box_vectors
         _is_box_shape(box)
         assert _box_vectors_are_in_reduced_form(box)
-        assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(6.9587)
+        assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(3)
 
-    def test_requires_box_vectors(self, PDB_a2a_path):
-        with gzip.open(PDB_a2a_path, "rb") as gzf:
+    def test_requires_box_vectors(self, PDB_hif2a_solvated_ligands):
+        with gzip.open(PDB_hif2a_solvated_ligands, "rb") as gzf:
             prot = ProteinComponent.from_pdb_file(gzf)
 
         with pytest.raises(ValueError, match="box_vectors must be provided"):
@@ -87,12 +87,12 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             (
                 SolvatedPDBComponent.from_pdb_file,
                 pdbfile.PDBFile,
-                "PDB_a2a_path",
+                "PDB_hif2a_solvated_ligands",
             ),
             (
                 SolvatedPDBComponent.from_pdbx_file,
                 pdbxfile.PDBxFile,
-                "PDBx_a2a_path",
+                "PDBx_hif2a_solvated_ligands",
             ),
         ],
     )
@@ -129,8 +129,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     @pytest.mark.parametrize(
         "factory,path_fixture",
         [
-            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
-            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+            (SolvatedPDBComponent.from_pdb_file, "PDB_hif2a_solvated_ligands"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_hif2a_solvated_ligands"),
         ],
     )
     def test_realistic_system_density(self, factory, path_fixture, request):
@@ -149,8 +149,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     @pytest.mark.parametrize(
         "factory,path_fixture",
         [
-            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
-            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+            (SolvatedPDBComponent.from_pdb_file, "PDB_hif2a_solvated_ligands"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_hif2a_solvated_ligands"),
         ],
     )
     def test_validate_passes(self, factory, path_fixture, request):
@@ -185,9 +185,9 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
                 box_vectors=None,
             )
 
-    def test_from_pdbx_file_user_box_vectors(self, PDBx_a2a_path):
+    def test_from_pdbx_file_user_box_vectors(self, PDBx_hif2a_solvated_ligands):
         b = np.eye(3) * 2.0 * offunit.nanometer
-        with gzip.open(PDBx_a2a_path, "rt") as f:
+        with gzip.open(PDBx_hif2a_solvated_ligands, "rt") as f:
             comp = self.cls.from_pdbx_file(f, box_vectors=b)
         box = comp.box_vectors
         assert box is not None
@@ -197,8 +197,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     @pytest.mark.parametrize(
         "factory,path_fixture",
         [
-            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
-            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+            (SolvatedPDBComponent.from_pdb_file, "PDB_hif2a_solvated_ligands"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_hif2a_solvated_ligands"),
         ],
     )
     def test_explicit_box_vectors_override_file_box(self, factory, path_fixture, request):
