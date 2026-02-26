@@ -290,8 +290,9 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
         mol.AddBond(o, c, Chem.BondType.SINGLE)
 
         mol = mol.GetMol()
+        fragment_indices = (0, 1, 2)
 
-        assert ProteinMembraneComponent._is_water_fragment(mol) is False
+        assert ProteinMembraneComponent._is_water_fragment(mol, fragment_indices) is False
 
     def test_validate_few_waters_raises(self, PDB_181L_path):
         comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path, infer_box_vectors=True)
