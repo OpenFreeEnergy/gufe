@@ -182,7 +182,8 @@ It handles the transfer of files between a scratch directory and external storag
 
     # Transfer all registered files to external storage
     manager._transfer()
-
+# Explicitly transfer a specific file. This is useful for checkpointing and other instances where you want to ensure a file is transferred to storage at a specific time in the protocol.
+manager.transfer_file("trajectory.dcd")
     # Load files from external storage
     trajectory_data = manager.load(out)
     results_json = manager.load(out2)
