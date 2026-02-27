@@ -292,19 +292,26 @@ def benzene_variants_star_map_transformations(
     styrene,
     prot_comp,
     solv_comp,
-):
+) -> tuple[list[gufe.Transformation], list[gufe.Transformation]]:
+    """
+    Transformations corresponding to two separate star maps:
+    one for solvent transformations, once for complex transformations.
+    """
     variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde, styrene]
 
-    # define the solvent chemical systems and transformations between
-    # benzene and the others
+    # define the solvent chemical systems and transformations between benzene and the others
     solvated_ligands = {}
     solvated_ligand_transformations = {}
 
-    solvated_ligands["benzene"] = gufe.ChemicalSystem({"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent")
+    solvated_ligands["benzene"] = gufe.ChemicalSystem(
+        {"solvent": solv_comp, "ligand": benzene},
+        name="benzene-solvent",
+    )
 
     for ligand in variants:
         solvated_ligands[ligand.name] = gufe.ChemicalSystem(
-            {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvent"
+            {"solvent": solv_comp, "ligand": ligand},
+            name=f"{ligand.name}-solvent",
         )
         solvated_ligand_transformations[("benzene", ligand.name)] = gufe.Transformation(
             solvated_ligands["benzene"],
@@ -313,8 +320,7 @@ def benzene_variants_star_map_transformations(
             mapping=None,
         )
 
-    # define the complex chemical systems and transformations between
-    # benzene and the others
+    # define the complex chemical systems and transformations between benzene and the others
     solvated_complexes = {}
     solvated_complex_transformations = {}
 
@@ -339,12 +345,14 @@ def benzene_variants_star_map_transformations(
 
 
 @pytest.fixture
-def benzene_variants_star_map(benzene_variants_star_map_transformations):
+def alchem_network_benzene_variants(benzene_variants_star_map_transformations) -> gufe.AlchemicalNetwork:
+    """Alchemical network containing two separate star maps for ligand and complex transformations."""
     solvated_ligand_transformations, solvated_complex_transformations = benzene_variants_star_map_transformations
     return gufe.AlchemicalNetwork(solvated_ligand_transformations + solvated_complex_transformations)
 
 
 @pytest.fixture
-def benzene_variants_ligand_star_map(benzene_variants_star_map_transformations):
+def alchem_network_benzene_variants_solvent_only(benzene_variants_star_map_transformations) -> gufe.AlchemicalNetwork:
+    """Alchemical network containing a single star map for ligand transformations."""
     solvated_ligand_transformations, _ = benzene_variants_star_map_transformations
     return gufe.AlchemicalNetwork(solvated_ligand_transformations)
