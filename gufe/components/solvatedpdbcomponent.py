@@ -389,10 +389,19 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         """
         Return True if this fragment looks like a water molecule (TIP3P/TIP4P/etc).
 
-        Definition:
-        - exactly 1 oxygen
-        - exactly 2 hydrogens
-        Atoms with atomic number 0 (virtual sites) are ignored.
+        Parameters
+        ----------
+        mol : rdkit.Chem.Mol
+          The parent RDKit molecule.
+        atom_indices : tuple[int, ...]
+          Atom indices belonging to a single disconnected fragment
+          (e.g. as returned by ``Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)``).
+
+        Returns
+        -------
+        bool
+          True if the fragment consists of exactly three atoms
+          (1 oxygen and 2 hydrogens)
         """
         if len(atom_indices) != 3:
             return False
