@@ -385,22 +385,32 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
     """
 
     @staticmethod
-    def _is_water_fragment(mol: Mol) -> bool:
+    def _is_water_fragment(mol: Mol, atom_indices: tuple[int, ...]) -> bool:
         """
         Return True if this fragment looks like a water molecule (TIP3P/TIP4P/etc).
 
-        Definition:
-        - exactly 1 oxygen
-        - exactly 2 hydrogens
-        Atoms with atomic number 0 (virtual sites) are ignored.
+        Parameters
+        ----------
+        mol : rdkit.Chem.Mol
+          The parent RDKit molecule.
+        atom_indices : tuple[int, ...]
+          Atom indices belonging to a single disconnected fragment
+          (e.g. as returned by ``Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)``).
+
+        Returns
+        -------
+        bool
+          True if the fragment consists of exactly three atoms
+          (1 oxygen and 2 hydrogens)
         """
-        if mol.GetNumAtoms() != 3:
+        if len(atom_indices) != 3:
             return False
         n_H = 0
         n_O = 0
 
-        for atom in mol.GetAtoms():
-            match atom.GetAtomicNum():
+        for idx in atom_indices:
+            atomic_num = mol.GetAtomWithIdx(idx).GetAtomicNum()
+            match atomic_num:
                 case 1:
                     n_H += 1
                 case 8:
@@ -422,8 +432,8 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         """
         Count water molecules by disconnected fragments.
         """
-        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
-        return sum(ProteinMembraneComponent._is_water_fragment(frag) for frag in frags)
+        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
+        return sum(ProteinMembraneComponent._is_water_fragment(rdkit_mol, frag) for frag in frags)
 
     def validate(
         self,
