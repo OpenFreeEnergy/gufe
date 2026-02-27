@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Speedup the counting of the number of water molecules. Tests for the SolvatedPDBComponent are now using a PDB test file with solvated ligands to speedup tests.
+* Sped up the counting of the number of water molecules in a SolvatedPDBComponent.
 
 **Deprecated:**
 
