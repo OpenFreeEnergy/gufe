@@ -117,6 +117,18 @@ def PDB_a2a_single_fragment_path():
         yield str(f)
 
 
+@pytest.fixture(scope="session")
+def PDB_hif2a_solvated_ligands():
+    with importlib.resources.path("gufe.tests.data", "hif2a_solvent_1_155.pdb.gz") as f:
+        yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDBx_hif2a_solvated_ligands():
+    with importlib.resources.path("gufe.tests.data", "hif2a_solvent_1_155.cif.gz") as f:
+        yield str(f)
+
+
 @pytest.fixture
 def offxml_settings_path():
     with importlib.resources.path("gufe.tests.data", "offxml_settings.json") as f:
