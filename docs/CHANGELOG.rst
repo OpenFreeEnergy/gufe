@@ -4,14 +4,17 @@ CHANGELOG
 
 .. current developments
 
+.. NOTE: merge this into v1.9.0 changelog when v1.9.0 is released
 v1.9.0-alpha
 ====================
+
+This is an experimental release that includes new Components to enable prototyping of membrane support.
 
 **Added:**
 
 * Added a how-to guide for defining a custom ``Component``.
 * Adds a .validate() method to gufe Components
-* Adds two new Components, a `SolvatedPDBComponent` for explicitly solvated systems, including periodic box vectors, and a ProteinMembraneComponent that inherits from SolvatedPDBComponent and can be used downstream for type checking of solvated protein membrane appropriate settings.
+* Adds two new Components, a ``SolvatedPDBComponent`` for explicitly solvated systems, including periodic box vectors, and a ``ProteinMembraneComponent`` that inherits from SolvatedPDBComponent and can be used downstream for type checking of solvated protein membrane appropriate settings.
 
 **Changed:**
 
