@@ -4,6 +4,21 @@ CHANGELOG
 
 .. current developments
 
+v1.9.0-alpha
+====================
+
+**Added:**
+
+* Added a how-to guide for defining a custom ``Component``.
+* Adds a .validate() method to gufe Components
+* Adds two new Components, a `SolvatedPDBComponent` for explicitly solvated systems, including periodic box vectors, and a ProteinMembraneComponent that inherits from SolvatedPDBComponent and can be used downstream for type checking of solvated protein membrane appropriate settings.
+
+**Changed:**
+
+* Sped up the counting of the number of water molecules in a SolvatedPDBComponent.
+
+
+
 v1.8.0
 ====================
 
