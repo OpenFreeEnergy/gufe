@@ -14,11 +14,11 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
     repr = None
 
     @pytest.fixture
-    def instance(self, benzene_variants_star_map):
-        return benzene_variants_star_map
+    def instance(self, alchem_network_benzene_variants):
+        return alchem_network_benzene_variants
 
-    def test_init(self, benzene_variants_star_map):
-        alnet = benzene_variants_star_map
+    def test_init(self, alchem_network_benzene_variants):
+        alnet = alchem_network_benzene_variants
 
         assert len(alnet.edges) == 12
         assert len(alnet.nodes) == 14
@@ -28,11 +28,11 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
         assert not nx.is_weakly_connected(alnet.graph)
         assert nx.number_weakly_connected_components(alnet.graph) == 2
 
-    def test_hashable(self, benzene_variants_star_map):
-        {benzene_variants_star_map}
+    def test_hashable(self, alchem_network_benzene_variants):
+        {alchem_network_benzene_variants}
 
-    def test_connectivity(self, benzene_variants_star_map):
-        alnet = benzene_variants_star_map
+    def test_connectivity(self, alchem_network_benzene_variants):
+        alnet = alchem_network_benzene_variants
 
         # test connectivity from benzene nodes
         for node in alnet.nodes:
@@ -46,11 +46,11 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
                 edges = alnet.graph.edges(node)
                 assert len(edges) == 0
 
-    def test_connected_subgraphs_multiple_subgraphs(self, benzene_variants_star_map):
+    def test_connected_subgraphs_multiple_subgraphs(self, alchem_network_benzene_variants):
         """Identify two separate networks and one floating nodes as subgraphs."""
         # remove an edge to create a network w/ two subnetworks and one floating node
-        edge_list = [e for e in benzene_variants_star_map.edges]
-        alnet = benzene_variants_star_map.copy_with_replacements(edges=edge_list[:-1])
+        edge_list = [e for e in alchem_network_benzene_variants.edges]
+        alnet = alchem_network_benzene_variants.copy_with_replacements(edges=edge_list[:-1])
 
         subgraphs = [subgraph for subgraph in alnet.connected_subgraphs()]
 
@@ -65,8 +65,8 @@ class TestAlchemicalNetwork(GufeTokenizableTestsMixin):
             else:
                 assert set(components) == {frozenset({"solvent", "ligand"})}
 
-    def test_connected_subgraphs_one_subgraph(self, benzene_variants_ligand_star_map):
+    def test_connected_subgraphs_one_subgraph(self, alchem_network_benzene_variants_solvent_only):
         """Return the same network if it only contains one connected component."""
-        alnet = benzene_variants_ligand_star_map
+        alnet = alchem_network_benzene_variants_solvent_only
         subgraphs = [subgraph for subgraph in alnet.connected_subgraphs()]
         assert subgraphs == [alnet]

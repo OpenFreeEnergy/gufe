@@ -33,10 +33,12 @@ def _ensure_ofe_name(mol: RDKitMol, name: str) -> str:
 
 
 class ExplicitMoleculeComponent(Component):
-    """Base class for explicit molecules.
+    """
+    Base class for explicit molecules.
+    Assumes that the molecule can be represented as an rdkit.Chem.Mol object.
 
-    This provides basic serialization and conversion to different
-    representations. Specific file formats, such as SDF for small molecules
+    Provides basic serialization and conversion to different representations.
+    Specific file formats, such as SDF for small molecules
     or PDB for proteins, should be implemented in subclasses.
     """
 
@@ -55,7 +57,7 @@ class ExplicitMoleculeComponent(Component):
 
         if not any(atom.GetAtomicNum() == 1 for atom in rdkit.GetAtoms()):
             warnings.warn(
-                "Molecule doesn't have any hydrogen atoms present. "
+                f"Molecule (name='{name}') doesn't have any hydrogen atoms present. "
                 "If this is unexpected, consider loading the molecule with `removeHs=False`"
             )
 
