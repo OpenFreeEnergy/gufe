@@ -572,11 +572,11 @@ def test_gufe_objects_from_shallow_dict(solvated_complex):
 
 
 class TestKeyedChain:
-    def test_from_gufe(self, benzene_variants_star_map):
-        contained_objects = list(get_all_gufe_objs(benzene_variants_star_map))
+    def test_from_gufe(self, alchem_network_benzene_variants):
+        contained_objects = list(get_all_gufe_objs(alchem_network_benzene_variants))
         expected_len = len(contained_objects)
 
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
 
         assert len(kc) == expected_len
 
@@ -592,19 +592,19 @@ class TestKeyedChain:
             assert key in kc_gufe_keys
             assert keyed_dict in kc_keyed_dicts
 
-    def test_to_gufe(self, benzene_variants_star_map):
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
-        assert hash(kc.to_gufe()) == hash(benzene_variants_star_map)
+    def test_to_gufe(self, alchem_network_benzene_variants):
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
+        assert hash(kc.to_gufe()) == hash(alchem_network_benzene_variants)
 
-    def test_get_item(self, benzene_variants_star_map):
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+    def test_get_item(self, alchem_network_benzene_variants):
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
 
         assert kc[0] == kc._keyed_chain[0]
         assert kc[-1] == kc._keyed_chain[-1]
         assert kc[:] == kc._keyed_chain[:]
 
-    def test_decode_subchains(self, benzene_variants_star_map):
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+    def test_decode_subchains(self, alchem_network_benzene_variants):
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
 
         # decode all chemical systems, which are just the network nodes
         assert set(kc.decode_subchains(lambda kd: kd["__qualname__"] == "ChemicalSystem")) == set(kc.to_gufe().nodes)
