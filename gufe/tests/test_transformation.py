@@ -9,6 +9,7 @@ import pytest
 import gufe
 from gufe.protocols.errors import ProtocolValidationError
 from gufe.protocols.protocoldag import execute_DAG
+from gufe.storage.externalresource import MemoryStorage
 from gufe.transformations import NonTransformation, Transformation
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
@@ -47,33 +48,33 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert tnf.stateA is solvated_ligand
         assert tnf.stateB is solvated_complex
 
-    def test_protocol(self, absolute_transformation, tmpdir):
+    def test_protocol(self, absolute_transformation, tmp_path):
         tnf = absolute_transformation
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
         protocoldag = tnf.create()
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = pathlib.Path("scratch")
+        scratch.mkdir(parents=True, exist_ok=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = tmp_path / "stderr"
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = tmp_path / "stdout"
+        stdout.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_storage=shared,
+            perm_storage=perm,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -112,41 +113,42 @@ class TestTransformation(GufeTokenizableTestsMixin):
                 validate=True,
             )
 
-    def test_protocol_extend(self, absolute_transformation, tmpdir):
+    def test_protocol_extend(self, absolute_transformation, tmp_path):
         tnf = absolute_transformation
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = tmp_path / "scratch"
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = tmp_path / "stderr"
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = tmp_path / "stdout"
+        stdout.mkdir(parents=True)
 
-            protocoldag = tnf.create()
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldag = tnf.create()
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_storage=shared,
+            perm_storage=perm,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
-            protocoldag2 = tnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(
-                protocoldag2,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldag2 = tnf.create(extends=protocoldagresult)
+        protocoldagresult2 = execute_DAG(
+            protocoldag2,
+            shared_storage=shared,
+            perm_storage=perm,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
         protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -215,33 +217,33 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         assert ntnf.system is solvated_complex
 
-    def test_protocol(self, complex_equilibrium, tmpdir):
+    def test_protocol(self, complex_equilibrium, tmp_path):
         ntnf = complex_equilibrium
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
         protocoldag = ntnf.create()
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = tmp_path / "scratch"
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = tmp_path / "stderr"
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = tmp_path / "stdout"
+        stdout.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_storage=shared,
+            perm_storage=perm,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
         protocolresult = ntnf.gather([protocoldagresult])
 
@@ -273,39 +275,40 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
                 validate=True,
             )
 
-    def test_protocol_extend(self, complex_equilibrium, tmpdir):
+    def test_protocol_extend(self, complex_equilibrium, tmp_path):
         ntnf = complex_equilibrium
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = tmp_path / "scratch"
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = tmp_path / "stderr"
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = tmp_path / "stdout"
+        stdout.mkdir(parents=True)
 
-            protocoldag = ntnf.create()
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldag = ntnf.create()
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_storage=shared,
+            perm_storage=perm,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
-            protocoldag2 = ntnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(
-                protocoldag2,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-            )
+        protocoldag2 = ntnf.create(extends=protocoldagresult)
+        protocoldagresult2 = execute_DAG(
+            protocoldag2,
+            scratch_basedir=scratch,
+            shared_storage=shared,
+            perm_storage=perm,
+        )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
 
