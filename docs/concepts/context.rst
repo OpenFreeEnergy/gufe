@@ -17,10 +17,10 @@ Why Context exists
     soon as the unit finishes.
 
 ``shared``
-    A :class:`.StorageManager` backed by
-    short–lived :class:`.ExternalStorage`. Use
-    this to hand large files to downstream units without serializing the
-    payloads through Python return values.
+
+    A :class:`.StorageManager` backed by :class:`.ExternalStorage`. 
+    The specific lifetime of ``shared`` is determined by the execution engine, but standard convention it that ``shared`` is to be used to hand large files to downstream units without serializing the payloads through Python return values.
+    
 
 ``permanent``
     Another :class:`.StorageManager` targeting long–term storage. Results saved here

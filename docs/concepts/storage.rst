@@ -31,7 +31,7 @@ The :class:`.ExternalStorage` abstract base class defines the interface that all
 * **Load operations**: ``load_stream()`` to retrieve data as a stream
 * **Management**: ``exists()``, ``delete()``, ``transfer_file()``,  and ``iter_contents()`` for managing stored data
 
-All storage operations use a *location* string as an identifier for the stored data.
+All storage operations use a string as a location identifier for the stored data. Convention is often to used path-like formatting, such as `"datasets/sample1.txt"`, but any unique string can be used.
 
 Storage Implementations
 -----------------------
