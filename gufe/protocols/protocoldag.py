@@ -416,7 +416,7 @@ def execute_DAG(
         it is executed.
     keep_unitresults : bool
         If True, don't remove the unitresults directory which contains
-        the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`.
+        the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`/s.
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
         if False, any exceptions will be stored as `ProtocolUnitFailure`
@@ -443,6 +443,7 @@ def execute_DAG(
         for file in unitresults_path.rglob("*.json"):
             try:
                 unit_result = ProtocolUnitResult.from_json(file)
+                # TODO: any additional criteria to check here?
             except JSONDecodeError:
                 pass
             else:
@@ -453,12 +454,14 @@ def execute_DAG(
     # iterate in DAG order
     all_results = []  # successes AND failures
     shared_paths = []
-    for unit in protocoldag.protocol_units:
+    for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
         # If we already have results, skip execution
         if unit.key in results:
             all_results.append(results[unit.key])
             continue
-
+        else:
+            # TODO: Drop any downstream protocol_units from results
+            pass
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
@@ -504,7 +507,6 @@ def execute_DAG(
                 # Serialize results if requested
                 if unitresults_basedir is not None:
                     result.to_json(unitresults_path / f"{str(result.key)}.json")
-
                 break
             attempt += 1
 
@@ -546,6 +548,7 @@ def _pu_to_pur(
     replaced with its corresponding `ProtocolUnitResult`.
 
     """
+
     if isinstance(inputs, dict):
         return {key: _pu_to_pur(value, mapping) for key, value in inputs.items()}
     elif isinstance(inputs, list):

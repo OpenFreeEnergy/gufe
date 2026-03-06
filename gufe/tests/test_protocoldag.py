@@ -77,14 +77,18 @@ def writefile_dag():
 
 @pytest.mark.parametrize("keep_shared", [False, True])
 @pytest.mark.parametrize("keep_scratch", [False, True])
+@pytest.mark.parametrize("keep_unitresults", [False, True])
 @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag, capture_stderr_stdout):
+def test_execute_dag(tmpdir, keep_shared, keep_scratch, keep_unitresults, writefile_dag, capture_stderr_stdout):
     with tmpdir.as_cwd():
         shared = pathlib.Path("shared")
         shared.mkdir(parents=True)
 
         scratch = pathlib.Path("scratch")
         scratch.mkdir(parents=True)
+
+        unit_results_cache = pathlib.Path("unit_results_cache")
+        unit_results_cache.mkdir(parents=True)
 
         stderr = None
         stdout = None
@@ -99,10 +103,12 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag, capture_s
             writefile_dag,
             shared_basedir=shared,
             scratch_basedir=scratch,
+            unitresults_basedir=unit_results_cache,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
             keep_shared=keep_shared,
             keep_scratch=keep_scratch,
+            keep_unitresults=keep_unitresults,
         )
 
         # check outputs are as expected
@@ -115,6 +121,8 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag, capture_s
                 f"scratch_{str(pu.key)}_attempt_0",
                 f"unit_{identity}_scratch.txt",
             )
+            # TODO: add result key.json
+            unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
 
             if capture_stderr_stdout:
                 stderr_file = os.path.join(
@@ -141,10 +149,71 @@ def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag, capture_s
                 assert os.path.exists(scratch_file)
             else:
                 assert not os.path.exists(scratch_file)
+            if keep_unitresults:
+                assert os.path.exists(unit_result_file)
+            else:
+                assert not os.path.exists(unit_result_file)
 
         # check that our shared and scratch basedirs are left behind
         assert shared.exists()
         assert scratch.exists()
+
+
+def test_execute_DAG_unitresults(tmpdir):
+    """Test that execute_DAG will re-run based on unitresults_basedir where only a terminal node is missing results."""
+
+    # Create a setup unit that other units depend on
+    setup_unit = WriterUnit(identity=0, name="setup")
+
+    # Create units that depend on the setup unit
+    dependent_units = [WriterUnit(identity=i, setup=setup_unit, name=f"cycle_{i}") for i in range(1, 4)]
+
+    dep_dag = gufe.ProtocolDAG(
+        protocol_units=dependent_units + [setup_unit],
+        transformation_key=None,
+    )
+
+    # run all unit_results
+    with tmpdir.as_cwd():
+        shared = pathlib.Path("shared")
+        shared.mkdir(parents=True)
+
+        scratch = pathlib.Path("scratch")
+        scratch.mkdir(parents=True)
+
+        unit_results_dir = pathlib.Path("unitresults_cache")
+        protocol_result = execute_DAG(
+            dep_dag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            unitresults_basedir=unit_results_dir,
+            stderr_basedir=None,
+            stdout_basedir=None,
+            keep_shared=False,
+            keep_scratch=False,
+            keep_unitresults=True,
+        )
+
+        for pur in protocol_result.protocol_unit_results:
+            assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur.key)}.json"))
+
+        pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
+        # TODO: just make this an invalid json, no need to rm
+        os.remove(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"))
+
+        protocol_result_rerun = execute_DAG(
+            dep_dag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            unitresults_basedir=unit_results_dir,
+            stderr_basedir=None,
+            stdout_basedir=None,
+            keep_shared=False,
+            keep_scratch=False,
+            keep_unitresults=True,
+        )
+        # TODO: add better check here
+        assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
 
 def test_protocoldag_missing_dependency_unit():
