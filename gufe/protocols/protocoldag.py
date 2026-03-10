@@ -3,6 +3,7 @@
 
 import shutil
 from collections import defaultdict
+from collections.abc import Iterable
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
@@ -370,6 +371,22 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
     @classmethod
     def _from_dict(cls, dct: dict):
         return cls(**dct)
+
+
+def create_cached_results_dag(protocoldag: ProtocolDAG, unit_results: Iterable[ProtocolUnitResult]):
+    protocol_unit_keys_with_valid_results = [u.source_key for u in unit_results]
+    units_to_skip = []
+    units_to_run = []
+
+    for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
+        if unit.key in protocol_unit_keys_with_valid_results:
+            units_to_skip.append(unit)
+        else:
+            units_to_run.append(unit)
+            for downstream_unit in nx.ancestors(protocoldag.graph, unit):
+                protocol_unit_keys_with_valid_results.remove(downstream_unit.key)
+
+    return (units_to_run, units_to_skip)
 
 
 def execute_DAG(

@@ -7,7 +7,7 @@ import pytest
 from openff.units import unit
 
 import gufe
-from gufe.protocols import execute_DAG
+from gufe.protocols import execute_DAG, protocoldag
 
 
 class WriterUnit(gufe.ProtocolUnit):
@@ -236,3 +236,44 @@ def test_protocoldag_missing_dependency_unit():
             protocol_units=dependent_units,  # Missing setup_unit!
             transformation_key=None,
         )
+
+
+def test_create_cached_results_dag(tmpdir):
+    # Create a setup unit that other units depend on
+    setup_unit = WriterUnit(identity=0, name="setup")
+
+    # Create units that depend on the setup unit
+    dependent_units = [WriterUnit(identity=i, setup=setup_unit, name=f"cycle_{i}") for i in range(1, 4)]
+    dep_dag = gufe.ProtocolDAG(
+        protocol_units=dependent_units + [setup_unit],
+        transformation_key=None,
+    )
+    with tmpdir.as_cwd():
+        shared = pathlib.Path("shared")
+        shared.mkdir(parents=True)
+
+        scratch = pathlib.Path("scratch")
+        scratch.mkdir(parents=True)
+
+        unit_results_dir = pathlib.Path("unitresults_cache")
+        protocol_result = execute_DAG(
+            dep_dag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            unitresults_basedir=unit_results_dir,
+            stderr_basedir=None,
+            stdout_basedir=None,
+            keep_shared=False,
+            keep_scratch=False,
+            keep_unitresults=True,
+        )
+    cached_unit_results = protocol_result.protocol_unit_results
+
+    # all results are available, so nothing should be rerun
+    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=cached_unit_results)
+    assert to_run == [], set(to_skip) == set([setup_unit] + dependent_units)
+
+    # drop the setup unit, so everything should need to be rerun
+    cached_unit_results.pop(0)
+    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=cached_unit_results)
+    assert set([setup_unit] + dependent_units), to_skip == []
