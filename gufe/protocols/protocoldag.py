@@ -374,7 +374,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
 
 
 def create_cached_results_dag(protocoldag: ProtocolDAG, unit_results: Iterable[ProtocolUnitResult]):
-    protocol_unit_keys_with_valid_results = [u.source_key for u in unit_results]
+    """Given a ProtocolDAG and a set of unit_results, determine which protocol_units of the DAG can be skipped during execution."""
+    protocol_unit_keys_with_valid_results = set(u.source_key for u in unit_results)
     units_to_skip = []
     units_to_run = []
 
@@ -384,7 +385,7 @@ def create_cached_results_dag(protocoldag: ProtocolDAG, unit_results: Iterable[P
         else:
             units_to_run.append(unit)
             for downstream_unit in nx.ancestors(protocoldag.graph, unit):
-                protocol_unit_keys_with_valid_results.remove(downstream_unit.key)
+                protocol_unit_keys_with_valid_results.discard(downstream_unit.key)
 
     return (units_to_run, units_to_skip)
 

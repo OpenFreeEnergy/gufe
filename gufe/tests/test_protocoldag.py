@@ -239,13 +239,28 @@ def test_protocoldag_missing_dependency_unit():
 
 
 def test_create_cached_results_dag(tmpdir):
+    """
+    Create a graph of dependencies that looks like this:
+    A->B, B->C, B->D, B->E, D->F, E->F
+    or:
+        A
+        B
+      C D E
+         F
+    """
     # Create a setup unit that other units depend on
-    setup_unit = WriterUnit(identity=0, name="setup")
 
+    unit_A = WriterUnit(identity="A", name="unit_A")
+    unit_B = WriterUnit(identity="B", name="unit_B", needs=[unit_A])
+    unit_C = WriterUnit(identity="C", name="unit_C", needs=[unit_B])
+    unit_D = WriterUnit(identity="D", name="unit_D", needs=[unit_B])
+    unit_E = WriterUnit(identity="E", name="unit_E", needs=[unit_B])
+    unit_F = WriterUnit(identity="F", name="unit_F", needs=[unit_D, unit_E])
+
+    all_protocol_units = {unit_A, unit_B, unit_C, unit_D, unit_E, unit_F}
     # Create units that depend on the setup unit
-    dependent_units = [WriterUnit(identity=i, setup=setup_unit, name=f"cycle_{i}") for i in range(1, 4)]
     dep_dag = gufe.ProtocolDAG(
-        protocol_units=dependent_units + [setup_unit],
+        protocol_units=all_protocol_units,
         transformation_key=None,
     )
     with tmpdir.as_cwd():
@@ -267,13 +282,18 @@ def test_create_cached_results_dag(tmpdir):
             keep_scratch=False,
             keep_unitresults=True,
         )
-    cached_unit_results = protocol_result.protocol_unit_results
+    all_cached_unit_results = protocol_result.protocol_unit_results
 
     # all results are available, so nothing should be rerun
-    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=cached_unit_results)
-    assert to_run == [], set(to_skip) == set([setup_unit] + dependent_units)
+    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=all_cached_unit_results)
+    assert to_run == [], set(to_skip) == all_protocol_units
 
-    # drop the setup unit, so everything should need to be rerun
-    cached_unit_results.pop(0)
-    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=cached_unit_results)
-    assert set([setup_unit] + dependent_units), to_skip == []
+    # drop the top-most unit, so everything should need to be rerun
+    unit_results_drop_A = [u for u in all_cached_unit_results if u.name != "unit_A"]
+    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=unit_results_drop_A)
+    assert set(to_run) == all_protocol_units, to_skip == []
+
+    # drop terminal nodes, only the terminal nodes need to be rerun
+    unit_results_drop_C_F = [u for u in all_cached_unit_results if u.name not in ("unit_C", "unit_F")]
+    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=unit_results_drop_C_F)
+    assert set(to_run) == {unit_C, unit_F}, set(to_skip) == {unit_A, unit_B, unit_D, unit_E}
