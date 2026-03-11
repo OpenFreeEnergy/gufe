@@ -379,6 +379,8 @@ def _get_valid_unit_results(
     """Given a ProtocolDAG and a set of unit_results, determine which protocol_units of the DAG can be skipped during execution."""
 
     # handle results & optionally archiving
+    # Is source key stable enough?
+    # We probably don't want to resume if gufe stability has changed
     result_pu_key_to_pur: dict[GufeKey, ProtocolUnitResult] = {ur.source_key: ur for ur in unit_results}
 
     for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
@@ -465,19 +467,16 @@ def execute_DAG(
             except JSONDecodeError:
                 pass
             else:
-                # Is source key stable enough?
-                # We probably don't want to resume if gufe stability has changed
                 all_cached_results.append(unit_result)
 
     # handle results & optionally archiving
     results: dict[GufeKey, ProtocolUnitResult] = _get_valid_unit_results(protocoldag, all_cached_results)
     all_results = []  # successes AND failures
     shared_paths = []
-
     for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
         # If we already have results, skip execution
-        if unit in results:
-            all_results.append(all_cached_results[unit.key])
+        if unit.key in results:
+            all_results.append(results[unit.key])
             continue
         else:
             pass

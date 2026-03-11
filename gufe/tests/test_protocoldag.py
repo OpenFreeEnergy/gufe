@@ -235,7 +235,8 @@ def test_execute_DAG_cached_unitresults(tmpdir):
             keep_scratch=False,
             keep_unitresults=True,
         )
-        # TODO: add better check here
+        # TODO: this only checks that the removed edge was re-run,
+        # but we should check that the rest of the edges were properly skipped
         assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
 
