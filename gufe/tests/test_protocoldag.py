@@ -219,9 +219,10 @@ def test_execute_DAG_cached_unitresults(tmpdir):
         for pur in protocol_result.protocol_unit_results:
             assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur.key)}.json"))
 
+        # choose a terminal result so that only one node is rerun
         pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
 
-        # TODO: just make this an invalid json, no need to rm
+        # # TODO: just make this an invalid json, no need to rm
         os.remove(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"))
 
         protocol_result_rerun = execute_DAG(
@@ -235,8 +236,11 @@ def test_execute_DAG_cached_unitresults(tmpdir):
             keep_scratch=False,
             keep_unitresults=True,
         )
-        # TODO: this only checks that the removed edge was re-run,
-        # but we should check that the rest of the edges were properly skipped
+
+        assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
+        # if the cache isn't used, these would be identical
+
+        assert protocol_result.protocol_unit_results != protocol_result_rerun.protocol_unit_results
         assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
 
