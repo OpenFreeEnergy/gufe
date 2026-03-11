@@ -425,7 +425,7 @@ def execute_DAG(
         Filesystem path to use for `ProtocolUnitResult` archiving during
         execution. If ``None`` (default), results will not be archived
         and it will not be able to resume DAG execution from the last
-        succesfully finished `ProtocolUnit`.
+        successfully finished `ProtocolUnit`.
     stderr_basedir : Path | None
         Filesystem path to use for `ProtocolUnit` `stderr` archiving.
     stdout_basedir : Path | None
