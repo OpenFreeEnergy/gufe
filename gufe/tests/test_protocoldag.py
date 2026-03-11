@@ -222,8 +222,10 @@ def test_execute_DAG_cached_unitresults(tmpdir):
         # choose a terminal result so that only one node is rerun
         pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
 
-        # # TODO: just make this an invalid json, no need to rm
-        os.remove(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"))
+        with open(
+            os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"), "a"
+        ) as f:
+            f.write("string that will break JSON.")
 
         protocol_result_rerun = execute_DAG(
             dep_dag,
@@ -239,7 +241,6 @@ def test_execute_DAG_cached_unitresults(tmpdir):
 
         assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
         # if the cache isn't used, these would be identical
-
         assert protocol_result.protocol_unit_results != protocol_result_rerun.protocol_unit_results
         assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
