@@ -377,7 +377,7 @@ def create_cached_results_dag(protocoldag: ProtocolDAG, unit_results: Iterable[P
     """Given a ProtocolDAG and a set of unit_results, determine which protocol_units of the DAG can be skipped during execution."""
     protocol_unit_keys_with_valid_results = set(u.source_key for u in unit_results)
     units_to_skip = []
-    units_to_run = []
+    units_to_run = []  # TODO: we don't actually need to track to_run and to_skip, this is just for dev
 
     for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
         if unit.key in protocol_unit_keys_with_valid_results:
@@ -451,9 +451,7 @@ def execute_DAG(
     if n_retries < 0:
         raise ValueError("Must give positive number of retries")
 
-    # handle results & optionally archiving
-    results: dict[GufeKey, ProtocolUnitResult] = {}
-
+    cached_results = []
     if unitresults_basedir is not None:
         unitresults_path = unitresults_basedir / f"unitresults_{str(protocoldag.key)}"
         unitresults_path.mkdir(exist_ok=True, parents=True)
@@ -467,14 +465,17 @@ def execute_DAG(
             else:
                 # Is source key stable enough?
                 # We probably don't want to resume if gufe stability has changed
-                results[unit_result.source_key] = unit_result
+                cached_results.append(unit_result)
 
-    # iterate in DAG order
+    _, to_skip = create_cached_results_dag(protocoldag, cached_results)
+
+    results: dict[GufeKey, ProtocolUnitResult] = {}  # handle results & optionally archiving
     all_results = []  # successes AND failures
     shared_paths = []
+
     for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
         # If we already have results, skip execution
-        if unit.key in results:
+        if unit in to_skip:
             all_results.append(results[unit.key])
             continue
         else:
