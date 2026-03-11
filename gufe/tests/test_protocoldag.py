@@ -220,6 +220,7 @@ def test_execute_DAG_cached_unitresults(tmpdir):
             assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur.key)}.json"))
 
         pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
+
         # TODO: just make this an invalid json, no need to rm
         os.remove(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"))
 
@@ -238,7 +239,7 @@ def test_execute_DAG_cached_unitresults(tmpdir):
         assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
 
-def test_create_cached_results_dag(tmpdir):
+def test_get_valid_unit_results(tmpdir):
     """
     Create a graph of dependencies that looks like this:
     A<-B, B<-C, B<-D, B<-E, D<-F, E<-F
@@ -283,16 +284,20 @@ def test_create_cached_results_dag(tmpdir):
         )
     all_cached_unit_results = protocol_result.protocol_unit_results
 
-    # all results are available, so nothing should be rerun
-    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=all_cached_unit_results)
-    assert to_run == [], set(to_skip) == all_protocol_units
+    # cache is empty, so nothing should be skipped
+    units_to_skip = protocoldag.get_valid_unit_results(protocoldag=dep_dag, unit_results=[])
+    assert len(units_to_skip.keys()) == 0
 
-    # drop the top-most unit, so everything should need to be rerun
+    # all results are available, so everything should be skipped
+    units_to_skip = protocoldag.get_valid_unit_results(protocoldag=dep_dag, unit_results=all_cached_unit_results)
+    assert set(units_to_skip.keys()) == {u.key for u in all_protocol_units}
+
+    # drop the top-most unit, so nothing should be skipped
     unit_results_drop_A = [u for u in all_cached_unit_results if u.name != "unit_A"]
-    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=unit_results_drop_A)
-    assert set(to_run) == all_protocol_units, to_skip == []
+    units_to_skip = protocoldag.get_valid_unit_results(protocoldag=dep_dag, unit_results=unit_results_drop_A)
+    assert len(units_to_skip.keys()) == 0
 
-    # drop terminal nodes, only the terminal nodes need to be rerun
+    # drop terminal nodes, so everything *but* the terminal nodes can be skipped
     unit_results_drop_C_F = [u for u in all_cached_unit_results if u.name not in ("unit_C", "unit_F")]
-    (to_run, to_skip) = protocoldag.create_cached_results_dag(protocoldag=dep_dag, unit_results=unit_results_drop_C_F)
-    assert set(to_run) == {unit_C, unit_F}, set(to_skip) == {unit_A, unit_B, unit_D, unit_E}
+    units_to_skip = protocoldag.get_valid_unit_results(protocoldag=dep_dag, unit_results=unit_results_drop_C_F)
+    assert set(units_to_skip.keys()) == {u.key for u in (unit_A, unit_B, unit_D, unit_E)}
