@@ -78,73 +78,72 @@ def writefile_dag():
 @pytest.mark.parametrize("keep_shared", [False, True])
 @pytest.mark.parametrize("keep_scratch", [False, True])
 @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-def test_execute_dag(tmpdir, keep_shared, keep_scratch, writefile_dag, capture_stderr_stdout):
-    with tmpdir.as_cwd():
-        shared = pathlib.Path("shared")
-        shared.mkdir(parents=True)
+def test_execute_dag(tmp_path, keep_shared, keep_scratch, writefile_dag, capture_stderr_stdout):
+    shared = pathlib.Path(tmp_path / "shared")
+    shared.mkdir(parents=True)
 
-        scratch = pathlib.Path("scratch")
-        scratch.mkdir(parents=True)
+    scratch = pathlib.Path(tmp_path / "scratch")
+    scratch.mkdir(parents=True)
 
-        stderr = None
-        stdout = None
-        if capture_stderr_stdout:
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+    stderr = None
+    stdout = None
+    if capture_stderr_stdout:
+        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr.mkdir(parents=True)
+        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout.mkdir(parents=True)
 
-        # run dag
-        execute_DAG(
-            writefile_dag,
-            shared_basedir=shared,
-            scratch_basedir=scratch,
-            stderr_basedir=stderr,
-            stdout_basedir=stdout,
-            keep_shared=keep_shared,
-            keep_scratch=keep_scratch,
+    # run dag
+    execute_DAG(
+        writefile_dag,
+        shared_basedir=shared,
+        scratch_basedir=scratch,
+        stderr_basedir=stderr,
+        stdout_basedir=stdout,
+        keep_shared=keep_shared,
+        keep_scratch=keep_scratch,
+    )
+
+    # check outputs are as expected
+    # will have produced 4 files in scratch and shared directory
+    for pu in writefile_dag.protocol_units:
+        identity = pu.inputs["identity"]
+        shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
+        scratch_file = os.path.join(
+            scratch,
+            f"scratch_{str(pu.key)}_attempt_0",
+            f"unit_{identity}_scratch.txt",
         )
 
-        # check outputs are as expected
-        # will have produced 4 files in scratch and shared directory
-        for pu in writefile_dag.protocol_units:
-            identity = pu.inputs["identity"]
-            shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
-            scratch_file = os.path.join(
-                scratch,
-                f"scratch_{str(pu.key)}_attempt_0",
-                f"unit_{identity}_scratch.txt",
+        if capture_stderr_stdout:
+            stderr_file = os.path.join(
+                stderr,
+                f"stderr_{str(pu.key)}_attempt_0",
+                f"unit_{identity}_stderr",
+            )
+            stdout_file = os.path.join(
+                stdout,
+                f"stdout_{str(pu.key)}_attempt_0",
+                f"unit_{identity}_stdout",
             )
 
-            if capture_stderr_stdout:
-                stderr_file = os.path.join(
-                    stderr,
-                    f"stderr_{str(pu.key)}_attempt_0",
-                    f"unit_{identity}_stderr",
-                )
-                stdout_file = os.path.join(
-                    stdout,
-                    f"stdout_{str(pu.key)}_attempt_0",
-                    f"unit_{identity}_stdout",
-                )
+            # stderr and stdout are always removed since their
+            # contents are included in the unit results
+            assert not os.path.exists(stderr_file)
+            assert not os.path.exists(stdout_file)
 
-                # stderr and stdout are always removed since their
-                # contents are included in the unit results
-                assert not os.path.exists(stderr_file)
-                assert not os.path.exists(stdout_file)
+        if keep_shared:
+            assert os.path.exists(shared_file)
+        else:
+            assert not os.path.exists(shared_file)
+        if keep_scratch:
+            assert os.path.exists(scratch_file)
+        else:
+            assert not os.path.exists(scratch_file)
 
-            if keep_shared:
-                assert os.path.exists(shared_file)
-            else:
-                assert not os.path.exists(shared_file)
-            if keep_scratch:
-                assert os.path.exists(scratch_file)
-            else:
-                assert not os.path.exists(scratch_file)
-
-        # check that our shared and scratch basedirs are left behind
-        assert shared.exists()
-        assert scratch.exists()
+    # check that our shared and scratch basedirs are left behind
+    assert shared.exists()
+    assert scratch.exists()
 
 
 def test_protocoldag_missing_dependency_unit():

@@ -316,8 +316,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_to_json_file(self, tmpdir):
-        file_path = tmpdir / "container.json"
+    def test_to_json_file(self, tmp_path):
+        file_path = tmp_path / "container.json"
         self.cont.to_json(file=file_path)
 
         # tuples are converted to lists in JSON so fix the expected result to use lists
@@ -325,8 +325,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         with file_path.open(mode="r") as f:
             assert json.load(f, cls=JSON_HANDLER.decoder) == expected_key_chain
 
-    def test_from_json_file(self, tmpdir):
-        file_path = tmpdir / "container.json"
+    def test_from_json_file(self, tmp_path):
+        file_path = tmp_path / "container.json"
         with file_path.open(mode="w") as f:
             json.dump(
                 self.expected_keyed_chain,
@@ -338,9 +338,9 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_from_json_file_dict(self, tmpdir):
+    def test_from_json_file_dict(self, tmp_path):
         """Test that we can still load json-serialized dict representations from files."""
-        file_path = tmpdir / "container.json"
+        file_path = tmp_path / "container.json"
         with file_path.open(mode="w") as f:
             json.dump(
                 self.expected_deep,
@@ -366,8 +366,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_to_msgpack_file(self, tmpdir):
-        file_path = tmpdir / "container.messagepack"
+    def test_to_msgpack_file(self, tmp_path):
+        file_path = tmp_path / "container.messagepack"
         self.cont.to_msgpack(file=file_path)
 
         # tuples are converted to lists in msgpack so fix the expected result to use lists
@@ -376,8 +376,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         with file_path.open("rb") as f:
             assert unpackb(zst_decompress(f.read())) == expected_keyed_chain
 
-    def test_from_msgpack_file(self, tmpdir):
-        file_path = tmpdir / "container.messagepack"
+    def test_from_msgpack_file(self, tmp_path):
+        file_path = tmp_path / "container.messagepack"
 
         with open(file_path, "wb") as f:
             f.write(packb(self.expected_keyed_chain))
