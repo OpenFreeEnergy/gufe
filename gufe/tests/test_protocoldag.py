@@ -241,7 +241,14 @@ def test_execute_DAG_cached_unitresults(tmpdir):
 
         assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
         # if the cache isn't used, these would be identical
-        assert protocol_result.protocol_unit_results != protocol_result_rerun.protocol_unit_results
+
+        rerun_keys = {r.key for r in protocol_result_rerun.protocol_unit_results}
+        original_keys = {r.key for r in protocol_result.protocol_unit_results}
+
+        # Only one result should differ (the corrupted one)
+        assert len(rerun_keys.symmetric_difference(original_keys)) == 2
+        assert len(rerun_keys.intersection(original_keys)) == len(protocol_result.protocol_unit_results) - 1
+
         assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
 
