@@ -464,8 +464,8 @@ def execute_DAG(
             try:
                 unit_result = ProtocolUnitResult.from_json(file)
                 # TODO: any additional criteria to check here?
-            except JSONDecodeError:
-                pass
+            except JSONDecodeError as e:
+                logger.warning(f"Skipping file {file}: {e}")
             else:
                 all_cached_results.append(unit_result)
 
@@ -478,8 +478,6 @@ def execute_DAG(
         if unit.key in results:
             all_results.append(results[unit.key])
             continue
-        else:
-            pass
         # translate each `ProtocolUnit` in input into corresponding
         # `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
