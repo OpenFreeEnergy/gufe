@@ -62,81 +62,78 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         assert u1.key != u2.key
 
     @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-    def test_execute(self, tmpdir, capture_stderr_stdout):
-        with tmpdir.as_cwd():
-            unit = DummyUnit()
+    def test_execute(self, tmp_path, capture_stderr_stdout):
+        unit = DummyUnit()
 
-            shared = Path("shared") / str(unit.key)
-            shared.mkdir(parents=True)
+        shared = Path(tmp_path / "shared") / str(unit.key)
+        shared.mkdir(parents=True)
 
-            scratch = Path("scratch") / str(unit.key)
-            scratch.mkdir(parents=True)
+        scratch = Path(tmp_path / "scratch") / str(unit.key)
+        scratch.mkdir(parents=True)
 
-            if capture_stderr_stdout:
-                stderr = Path("stderr") / str(unit.key)
-                stderr.mkdir(parents=True)
+        if capture_stderr_stdout:
+            stderr = Path(tmp_path / "stderr") / str(unit.key)
+            stderr.mkdir(parents=True)
 
-                stdout = Path("stdout") / str(unit.key)
-                stdout.mkdir(parents=True)
+            stdout = Path(tmp_path / "stdout") / str(unit.key)
+            stdout.mkdir(parents=True)
 
-                ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
-            else:
-                ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+        else:
+            ctx = Context(shared=shared, scratch=scratch)
 
-            u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
-            assert u.exception[0] == "ValueError"
+        u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
+        assert u.exception[0] == "ValueError"
 
-            for output_type in ("stderr", "stdout"):
-                data = getattr(u, output_type)
-                if not capture_stderr_stdout:
-                    assert data == {}
-                    continue
-                for process_number in range(1, 3):
-                    entry = f"dummy_execute_{output_type}_process_{process_number}"
-                    output = f"Sample {output_type} from process {process_number}".encode()
-                    assert data[entry] == output
+        for output_type in ("stderr", "stdout"):
+            data = getattr(u, output_type)
+            if not capture_stderr_stdout:
+                assert data == {}
+                continue
+            for process_number in range(1, 3):
+                entry = f"dummy_execute_{output_type}_process_{process_number}"
+                output = f"Sample {output_type} from process {process_number}".encode()
+                assert data[entry] == output
 
-            # now try actually letting the error raise on execute
-            with pytest.raises(ValueError, match="should always be 2"):
-                unit.execute(context=ctx, raise_error=True, an_input=3)
+        # now try actually letting the error raise on execute
+        with pytest.raises(ValueError, match="should always be 2"):
+            unit.execute(context=ctx, raise_error=True, an_input=3)
 
-    def test_execute_ExecutionInterrupt(self, tmpdir):
-        with tmpdir.as_cwd():
-            unit = DummyExecutionInterruptUnit()
+    def test_execute_ExecutionInterrupt(self, tmp_path):
+        unit = DummyExecutionInterruptUnit()
 
-            shared = Path("shared") / str(unit.key)
-            shared.mkdir(parents=True)
+        shared = Path(tmp_path / "shared") / str(unit.key)
+        shared.mkdir(parents=True)
 
-            scratch = Path("scratch") / str(unit.key)
-            scratch.mkdir(parents=True)
+        scratch = Path(tmp_path / "scratch") / str(unit.key)
+        scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+        ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
-            with pytest.raises(ExecutionInterrupt):
-                unit.execute(context=ctx, an_input=3)
+        with pytest.raises(ExecutionInterrupt):
+            unit.execute(context=ctx, an_input=3)
 
-            u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
+        u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
 
-            assert u.outputs == {"foo": "bar"}
+        assert u.outputs == {"foo": "bar"}
 
-    def test_execute_KeyboardInterrupt(self, tmpdir):
-        with tmpdir.as_cwd():
-            unit = DummyKeyboardInterruptUnit()
+    def test_execute_KeyboardInterrupt(self, tmp_path):
+        unit = DummyKeyboardInterruptUnit()
 
-            shared = Path("shared") / str(unit.key)
-            shared.mkdir(parents=True)
+        shared = Path(tmp_path / "shared") / str(unit.key)
+        shared.mkdir(parents=True)
 
-            scratch = Path("scratch") / str(unit.key)
-            scratch.mkdir(parents=True)
+        scratch = Path(tmp_path / "scratch") / str(unit.key)
+        scratch.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+        ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
 
-            with pytest.raises(KeyboardInterrupt):
-                unit.execute(context=ctx, an_input=3)
+        with pytest.raises(KeyboardInterrupt):
+            unit.execute(context=ctx, an_input=3)
 
-            u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
+        u: ProtocolUnitResult = unit.execute(context=ctx, an_input=2)
 
-            assert u.outputs == {"foo": "bar"}
+        assert u.outputs == {"foo": "bar"}
 
     def test_normalize(self, instance):
         thingy = instance.key

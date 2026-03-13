@@ -47,33 +47,32 @@ class TestTransformation(GufeTokenizableTestsMixin):
         assert tnf.stateA is solvated_ligand
         assert tnf.stateB is solvated_complex
 
-    def test_protocol(self, absolute_transformation, tmpdir):
+    def test_protocol(self, absolute_transformation, tmp_path):
         tnf = absolute_transformation
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
         protocoldag = tnf.create()
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = pathlib.Path(tmp_path / "shared")
+        shared.mkdir(parents=True)
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
         protocolresult = tnf.gather([protocoldagresult])
 
@@ -92,7 +91,11 @@ class TestTransformation(GufeTokenizableTestsMixin):
             validate=True,
         )
 
-    def test_validation_bad_state(self, solvated_ligand, solvated_complex, tmpdir):
+    def test_validation_bad_state(
+        self,
+        solvated_ligand,
+        solvated_complex,
+    ):
         # show that instantiation without validation is possible (even though it's wrong)
         Transformation(
             solvated_ligand,
@@ -112,41 +115,40 @@ class TestTransformation(GufeTokenizableTestsMixin):
                 validate=True,
             )
 
-    def test_protocol_extend(self, absolute_transformation, tmpdir):
+    def test_protocol_extend(self, absolute_transformation, tmp_path):
         tnf = absolute_transformation
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = pathlib.Path(tmp_path / "shared")
+        shared.mkdir(parents=True)
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout.mkdir(parents=True)
 
-            protocoldag = tnf.create()
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldag = tnf.create()
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
-            protocoldag2 = tnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(
-                protocoldag2,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldag2 = tnf.create(extends=protocoldagresult)
+        protocoldagresult2 = execute_DAG(
+            protocoldag2,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
         protocolresult = tnf.gather([protocoldagresult, protocoldagresult2])
 
@@ -215,33 +217,32 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         assert ntnf.system is solvated_complex
 
-    def test_protocol(self, complex_equilibrium, tmpdir):
+    def test_protocol(self, complex_equilibrium, tmp_path):
         ntnf = complex_equilibrium
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
         protocoldag = ntnf.create()
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = pathlib.Path(tmp_path / "shared")
+        shared.mkdir(parents=True)
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout.mkdir(parents=True)
 
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
         protocolresult = ntnf.gather([protocoldagresult])
 
@@ -257,7 +258,7 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         )
 
-    def test_validation_bad_state(self, solvated_ligand, solvated_complex, tmpdir):
+    def test_validation_bad_state(self, solvated_ligand, solvated_complex):
         # show that instantiation without validation is possible (even though it's wrong)
         NonTransformation(
             None,
@@ -273,39 +274,38 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
                 validate=True,
             )
 
-    def test_protocol_extend(self, complex_equilibrium, tmpdir):
+    def test_protocol_extend(self, complex_equilibrium, tmp_path):
         ntnf = complex_equilibrium
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
-        with tmpdir.as_cwd():
-            shared = pathlib.Path("shared")
-            shared.mkdir(parents=True)
+        shared = pathlib.Path(tmp_path / "shared")
+        shared.mkdir(parents=True)
 
-            scratch = pathlib.Path("scratch")
-            scratch.mkdir(parents=True)
+        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch.mkdir(parents=True)
 
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
+        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr.mkdir(parents=True)
 
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout.mkdir(parents=True)
 
-            protocoldag = ntnf.create()
-            protocoldagresult = execute_DAG(
-                protocoldag,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-                stderr_basedir=stderr,
-                stdout_basedir=stdout,
-            )
+        protocoldag = ntnf.create()
+        protocoldagresult = execute_DAG(
+            protocoldag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+        )
 
-            protocoldag2 = ntnf.create(extends=protocoldagresult)
-            protocoldagresult2 = execute_DAG(
-                protocoldag2,
-                shared_basedir=shared,
-                scratch_basedir=scratch,
-            )
+        protocoldag2 = ntnf.create(extends=protocoldagresult)
+        protocoldagresult2 = execute_DAG(
+            protocoldag2,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+        )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])
 

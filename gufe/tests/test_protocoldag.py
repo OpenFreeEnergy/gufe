@@ -79,84 +79,83 @@ def writefile_dag():
 @pytest.mark.parametrize("keep_scratch", [False, True])
 @pytest.mark.parametrize("keep_unitresults", [False, True])
 @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-def test_execute_dag(tmpdir, keep_shared, keep_scratch, keep_unitresults, writefile_dag, capture_stderr_stdout):
-    with tmpdir.as_cwd():
-        shared = pathlib.Path("shared")
-        shared.mkdir(parents=True)
+def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writefile_dag, capture_stderr_stdout):
+    shared = pathlib.Path(tmp_path / "shared")
+    shared.mkdir(parents=True)
 
-        scratch = pathlib.Path("scratch")
-        scratch.mkdir(parents=True)
+    scratch = pathlib.Path(tmp_path / "scratch")
+    scratch.mkdir(parents=True)
 
-        unit_results_cache = pathlib.Path("unit_results_cache")
-        unit_results_cache.mkdir(parents=True)
+    unit_results_cache = pathlib.Path(tmp_path / "unit_results_cache")
+    unit_results_cache.mkdir(parents=True)
 
-        stderr = None
-        stdout = None
-        if capture_stderr_stdout:
-            stderr = pathlib.Path("stderr")
-            stderr.mkdir(parents=True)
-            stdout = pathlib.Path("stdout")
-            stdout.mkdir(parents=True)
+    stderr = None
+    stdout = None
+    if capture_stderr_stdout:
+        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr.mkdir(parents=True)
+        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout.mkdir(parents=True)
 
-        # run dag
-        execute_DAG(
-            writefile_dag,
-            shared_basedir=shared,
-            scratch_basedir=scratch,
-            unitresults_basedir=unit_results_cache,
-            stderr_basedir=stderr,
-            stdout_basedir=stdout,
-            keep_shared=keep_shared,
-            keep_scratch=keep_scratch,
-            keep_unitresults=keep_unitresults,
+    # run dag
+    execute_DAG(
+        writefile_dag,
+        shared_basedir=shared,
+        scratch_basedir=scratch,
+        unitresults_basedir=unit_results_cache,
+        stderr_basedir=stderr,
+        stdout_basedir=stdout,
+        keep_shared=keep_shared,
+        keep_scratch=keep_scratch,
+        keep_unitresults=keep_unitresults,
+    )
+    # check outputs are as expected
+    # will have produced 4 files in scratch and shared directory
+    for pu in writefile_dag.protocol_units:
+        identity = pu.inputs["identity"]
+        shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
+        scratch_file = os.path.join(
+            scratch,
+            f"scratch_{str(pu.key)}_attempt_0",
+            f"unit_{identity}_scratch.txt",
         )
+        # TODO: add result key.json
+        unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
 
-        # check outputs are as expected
-        # will have produced 4 files in scratch and shared directory
-        for pu in writefile_dag.protocol_units:
-            identity = pu.inputs["identity"]
-            shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
-            scratch_file = os.path.join(
-                scratch,
-                f"scratch_{str(pu.key)}_attempt_0",
-                f"unit_{identity}_scratch.txt",
+        if capture_stderr_stdout:
+            stderr_file = os.path.join(
+                stderr,
+                f"stderr_{str(pu.key)}_attempt_0",
+                f"unit_{identity}_stderr",
+            )
+            stdout_file = os.path.join(
+                stdout,
+                f"stdout_{str(pu.key)}_attempt_0",
+                f"unit_{identity}_stdout",
             )
             # TODO: add result key.json
             unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
 
-            if capture_stderr_stdout:
-                stderr_file = os.path.join(
-                    stderr,
-                    f"stderr_{str(pu.key)}_attempt_0",
-                    f"unit_{identity}_stderr",
-                )
-                stdout_file = os.path.join(
-                    stdout,
-                    f"stdout_{str(pu.key)}_attempt_0",
-                    f"unit_{identity}_stdout",
-                )
+            # stderr and stdout are always removed since their
+            # contents are included in the unit results
+            assert not os.path.exists(stderr_file)
+            assert not os.path.exists(stdout_file)
 
-                # stderr and stdout are always removed since their
-                # contents are included in the unit results
-                assert not os.path.exists(stderr_file)
-                assert not os.path.exists(stdout_file)
-
-            if keep_shared:
-                assert os.path.exists(shared_file)
-            else:
-                assert not os.path.exists(shared_file)
-            if keep_scratch:
-                assert os.path.exists(scratch_file)
-            else:
-                assert not os.path.exists(scratch_file)
-            if keep_unitresults:
-                assert os.path.exists(unit_result_file)
-            else:
-                assert not os.path.exists(unit_result_file)
-
-        # check that our shared and scratch basedirs are left behind
-        assert shared.exists()
-        assert scratch.exists()
+        if keep_shared:
+            assert os.path.exists(shared_file)
+        else:
+            assert not os.path.exists(shared_file)
+        if keep_scratch:
+            assert os.path.exists(scratch_file)
+        else:
+            assert not os.path.exists(scratch_file)
+        if keep_unitresults:
+            assert os.path.exists(unit_result_file)
+        else:
+            assert not os.path.exists(unit_result_file)
+    # check that our shared and scratch basedirs are left behind
+    assert shared.exists()
+    assert scratch.exists()
 
 
 def test_protocoldag_missing_dependency_unit():
@@ -181,7 +180,7 @@ def test_protocoldag_missing_dependency_unit():
         )
 
 
-def test_execute_DAG_cached_unitresults(tmpdir):
+def test_execute_DAG_cached_unitresults(tmp_path):
     """Test that execute_DAG will re-run based on unitresults_basedir where only a terminal node is missing results."""
 
     # Create a setup unit that other units depend on
@@ -196,63 +195,62 @@ def test_execute_DAG_cached_unitresults(tmpdir):
     )
 
     # run all unit_results
-    with tmpdir.as_cwd():
-        shared = pathlib.Path("shared")
-        shared.mkdir(parents=True)
+    shared = pathlib.Path(tmp_path / "shared")
+    shared.mkdir(parents=True)
 
-        scratch = pathlib.Path("scratch")
-        scratch.mkdir(parents=True)
+    scratch = pathlib.Path(tmp_path / "scratch")
+    scratch.mkdir(parents=True)
 
-        unit_results_dir = pathlib.Path("unitresults_cache")
-        protocol_result = execute_DAG(
-            dep_dag,
-            shared_basedir=shared,
-            scratch_basedir=scratch,
-            unitresults_basedir=unit_results_dir,
-            stderr_basedir=None,
-            stdout_basedir=None,
-            keep_shared=False,
-            keep_scratch=False,
-            keep_unitresults=True,
-        )
+    unit_results_dir = pathlib.Path(tmp_path / "unitresults_cache")
+    protocol_result = execute_DAG(
+        dep_dag,
+        shared_basedir=shared,
+        scratch_basedir=scratch,
+        unitresults_basedir=unit_results_dir,
+        stderr_basedir=None,
+        stdout_basedir=None,
+        keep_shared=False,
+        keep_scratch=False,
+        keep_unitresults=True,
+    )
 
-        for pur in protocol_result.protocol_unit_results:
-            assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur.key)}.json"))
+    for pur in protocol_result.protocol_unit_results:
+        assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur.key)}.json"))
 
-        # choose a terminal result so that only one node is rerun
-        pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
+    # choose a terminal result so that only one node is rerun
+    pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
 
-        with open(
-            os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"), "a"
-        ) as f:
-            f.write("string that will break JSON.")
+    with open(
+        os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"), "a"
+    ) as f:
+        f.write("string that will break JSON.")
 
-        protocol_result_rerun = execute_DAG(
-            dep_dag,
-            shared_basedir=shared,
-            scratch_basedir=scratch,
-            unitresults_basedir=unit_results_dir,
-            stderr_basedir=None,
-            stdout_basedir=None,
-            keep_shared=False,
-            keep_scratch=False,
-            keep_unitresults=True,
-        )
+    protocol_result_rerun = execute_DAG(
+        dep_dag,
+        shared_basedir=shared,
+        scratch_basedir=scratch,
+        unitresults_basedir=unit_results_dir,
+        stderr_basedir=None,
+        stdout_basedir=None,
+        keep_shared=False,
+        keep_scratch=False,
+        keep_unitresults=True,
+    )
 
-        assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
-        # if the cache isn't used, these would be identical
+    assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
+    # if the cache isn't used, these would be identical
 
-        rerun_keys = {r.key for r in protocol_result_rerun.protocol_unit_results}
-        original_keys = {r.key for r in protocol_result.protocol_unit_results}
+    rerun_keys = {r.key for r in protocol_result_rerun.protocol_unit_results}
+    original_keys = {r.key for r in protocol_result.protocol_unit_results}
 
-        # Only one result should differ (the corrupted one)
-        assert len(rerun_keys.symmetric_difference(original_keys)) == 2
-        assert len(rerun_keys.intersection(original_keys)) == len(protocol_result.protocol_unit_results) - 1
+    # Only one result should differ (the corrupted one)
+    assert len(rerun_keys.symmetric_difference(original_keys)) == 2
+    assert len(rerun_keys.intersection(original_keys)) == len(protocol_result.protocol_unit_results) - 1
 
-        assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
+    assert protocol_result_rerun.graph.edges == protocol_result.graph.edges
 
 
-def test_get_valid_unit_results(tmpdir):
+def test_get_valid_unit_results(tmp_path):
     """
     Create a graph of dependencies that looks like this:
     A<-B, B<-C, B<-D, B<-E, D<-F, E<-F
@@ -276,25 +274,24 @@ def test_get_valid_unit_results(tmpdir):
         protocol_units=all_protocol_units,
         transformation_key=None,
     )
-    with tmpdir.as_cwd():
-        shared = pathlib.Path("shared")
-        shared.mkdir(parents=True)
+    shared = pathlib.Path(tmp_path / "shared")
+    shared.mkdir(parents=True)
 
-        scratch = pathlib.Path("scratch")
-        scratch.mkdir(parents=True)
+    scratch = pathlib.Path(tmp_path / "scratch")
+    scratch.mkdir(parents=True)
 
-        unit_results_dir = pathlib.Path("unitresults_cache")
-        protocol_result = execute_DAG(
-            dep_dag,
-            shared_basedir=shared,
-            scratch_basedir=scratch,
-            unitresults_basedir=unit_results_dir,
-            stderr_basedir=None,
-            stdout_basedir=None,
-            keep_shared=False,
-            keep_scratch=False,
-            keep_unitresults=True,
-        )
+    unit_results_dir = pathlib.Path(tmp_path / "unitresults_cache")
+    protocol_result = execute_DAG(
+        dep_dag,
+        shared_basedir=shared,
+        scratch_basedir=scratch,
+        unitresults_basedir=unit_results_dir,
+        stderr_basedir=None,
+        stdout_basedir=None,
+        keep_shared=False,
+        keep_scratch=False,
+        keep_unitresults=True,
+    )
     all_cached_unit_results = protocol_result.protocol_unit_results
 
     # cache is empty, so nothing should be skipped
