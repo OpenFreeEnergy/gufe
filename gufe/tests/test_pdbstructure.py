@@ -1,6 +1,7 @@
-import pytest
 from io import StringIO
+
 from gufe.vendor.pdb_file.pdbstructure import PdbStructure, _parse_atom_index
+
 
 def test_hex_conect_parsing():
     pdb_snippet = """ATOM  99999  C   LIG A   1       0.000  0.000  0.000  1.00 0.00           C
@@ -12,8 +13,7 @@ CONECT99999A000FA000G"""
     pdb = PdbStructure(f, load_all_models=True)
 
     # Collect all atom serial numbers, including Maestro-style
-    atom_serials = [atom.serial_number for atom in
-                    pdb.iter_atoms(use_all_models=True)]
+    atom_serials = [atom.serial_number for atom in pdb.iter_atoms(use_all_models=True)]
 
     # There should be 3 atoms
     assert len(atom_serials) == 3
