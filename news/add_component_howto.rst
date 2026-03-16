@@ -1,6 +1,6 @@
 **Added:**
 
-* Added ``__iter__`` to the ``ExternalStorage`` class. This makes it easier to iterate through all the files in a storage object.
+* Added a how-to guide for defining a custom ``Component``.
 
 **Changed:**
 

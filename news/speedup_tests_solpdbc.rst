@@ -1,10 +1,10 @@
 **Added:**
 
-* Added ``BaseSolventComponent``, a base class for solvated components.
+* <news item>
 
 **Changed:**
 
-* <news item>
+* Sped up the counting of the number of water molecules in a SolvatedPDBComponent.
 
 **Deprecated:**
 

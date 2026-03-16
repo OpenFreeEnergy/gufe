@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Adds a .validate() method to gufe Components
 
 **Changed:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* a ``ProtocolDAG`` created with ``ProtocolUnit``\s not explicitly represented on init now raises ``ProtocolDAGError`` (#583)
+* <news item>
 
 **Security:**
 

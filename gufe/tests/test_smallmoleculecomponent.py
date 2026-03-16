@@ -151,13 +151,13 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComp
         assert SmallMoleculeComponent.from_sdf_string(sdf_str) == named_ethane
 
     @pytest.mark.xfail
-    def test_from_sdf_file(self, named_ethane, ethane_sdf, tmpdir):
+    def test_from_sdf_file(self, named_ethane, ethane_sdf, tmp_path):
         with open(ethane_sdf) as f:
             sdf_str = f.read()
-        with open(tmpdir / "temp.sdf", mode="w") as tmpf:
+        with open(tmp_path / "temp.sdf", mode="w") as tmpf:
             tmpf.write(sdf_str)
 
-        assert SmallMoleculeComponent.from_sdf_file(tmpdir / "temp.sdf") == named_ethane
+        assert SmallMoleculeComponent.from_sdf_file(tmp_path / "temp.sdf") == named_ethane
 
     def test_from_sdf_file_junk(self, toluene_mol2_path):
         with pytest.raises(ValueError):
@@ -386,8 +386,8 @@ class TestSmallMoleculeSerialization:
             assert (x == y).all()
 
     @pytest.mark.xfail
-    def test_bounce_off_file(self, toluene, tmpdir):
-        fname = str(tmpdir / "mol.json")
+    def test_bounce_off_file(self, toluene, tmp_path):
+        fname = str(tmp_path / "mol.json")
 
         with open(fname, "w") as f:
             f.write(toluene.to_json())

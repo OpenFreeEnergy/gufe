@@ -365,6 +365,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
             with mock.patch("rdkit.Chem.rdchem.PeriodicTable.GetValenceList", return_value=[10000000]):
                 self.cls.from_pdb_file(ALL_PDB_LOADERS["3tzr_rna"]())
 
+    def test_empty_validate(self, instance):
+        """Should pass"""
+        instance.validate()
+
 
 def test_no_monomer_info_error(ethane):
     with pytest.raises(TypeError):

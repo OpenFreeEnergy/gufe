@@ -5,7 +5,7 @@ from os import PathLike
 from typing import TextIO
 
 import numpy as np
-from openff.toolkit import Quantity
+from openff.units import Quantity
 from openff.units import unit as offunit
 from openff.units.openmm import from_openmm
 from openmm import unit as omm_unit
@@ -22,9 +22,9 @@ from .solventcomponent import BaseSolventComponent
 
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
-    Protein component with explicit solvent and box vectors.
+    PDB component with explicit solvent and box vectors.
 
-    This class represents a protein structure that is associated with
+    This class represents an explicit component structure that is associated with
     explicit box vectors. Unlike ``ProteinComponent``, instances
     of this class always have box vectors, which are treated as
     part of the component's identity (affecting equality and hashing).
@@ -32,9 +32,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     Notes
     -----
     * ``box_vectors`` must be an OpenFF quantity with units.
-    * Box vectors are serialized and included in equality and hash checks.
-    * Construction will fail if box vectors cannot be determined as well as
-      if the RDKit molecule has only one disconnected fragment.
+    * Construction will fail if box vectors cannot be determined.
     """
 
     def __init__(self, rdkit: Mol, box_vectors: Quantity, name: str = ""):
@@ -42,7 +40,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Parameters
         ----------
         rdkit : rdkit.Chem.Mol
-            RDKit representation of the protein.
+            RDKit representation of the solvated Component.
         box_vectors : openff.units.Quantity
             Periodic box vectors with units of length, compatible with
             nanometers. Must be a (3, 3) array in reduced form.
@@ -58,14 +56,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             If ``box_vectors`` is not an OpenFF Quantity.
         ValueError
             If ``box_vectors`` are not valid box vectors.
-            If the RDKit molecule contains only one disconnected fragment.
         """
         self._validate_box_vectors(box_vectors)
         super().__init__(rdkit=rdkit, name=name)
-        self._validate_multiple_molecules(rdkit)
         self.box_vectors = box_vectors
-        # Density sanity check (warning only)
-        self._warn_if_density_too_low()
 
     @staticmethod
     def _validate_box_vectors(box):
@@ -94,100 +88,37 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if not _box_vectors_are_in_reduced_form(box):
             raise ValueError(f"box_vectors: {box} are not in OpenMM reduced form")
 
-    @staticmethod
-    def _is_water_fragment(mol: Mol) -> bool:
+    @property
+    def density(self) -> Quantity:
         """
-        Return True if this fragment looks like a water molecule (TIP3P/TIP4P/etc).
-
-        Definition:
-        - exactly 1 oxygen
-        - exactly 2 hydrogens
-        Atoms with atomic number 0 (virtual sites) are ignored.
+        Estimated system density in g/L.
         """
-        if mol.GetNumAtoms() != 3:
-            return False
-        n_H = 0
-        n_O = 0
-
-        for atom in mol.GetAtoms():
-            match atom.GetAtomicNum():
-                case 1:
-                    n_H += 1
-                case 8:
-                    n_O += 1
-                case _:
-                    return False
-
-        return (n_H == 2) and (n_O == 1)
-
-    @classmethod
-    def _count_waters(cls, rdkit_mol: Mol) -> int:
-        """
-        Count water molecules by disconnected fragments.
-        """
-        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
-
-        return sum(cls._is_water_fragment(frag) for frag in frags)
-
-    @classmethod
-    def _validate_multiple_molecules(cls, rdkit_mol, *, min_waters: int = 50):
-        """
-        Ensure multiple fragments are present and warn if fewer than `min_waters`
-        waters are detected.
-        """
-        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
-        if len(frags) <= 1:
-            raise ValueError(
-                "SolvatedPDBComponent requires multiple molecules (e.g., protein + solvent). Found a single molecule."
-            )
-
-        n_waters = cls._count_waters(rdkit_mol)
-        print(n_waters)
-
-        if n_waters < min_waters:
-            warnings.warn(
-                f"Only {n_waters} water molecules detected (expected ≥ {min_waters}). "
-                "This may indicate missing solvent or a non-aqueous system.",
-                UserWarning,
-            )
-
-    def compute_density(self):
-        """
-        Estimate the system density in g/L from the RDKit molecule and box vectors.
-
-        Returns
-        -------
-        density : openff.units.Quantity
-            Estimated density in grams per liter.
-        """
-        # total mass
         total_mass = sum(atom.GetMass() for atom in self._rdkit.GetAtoms()) * offunit.dalton
 
-        # box volume
         box_nm = self.box_vectors.to("nanometer").magnitude
         volume_nm3 = abs(np.linalg.det(box_nm)) * offunit.nanometer**3
         volume_L = volume_nm3.to("liter")
 
-        # density
-        density = total_mass.to("gram") / volume_L
-        return density
+        return total_mass.to("gram") / volume_L
 
-    def _warn_if_density_too_low(self):
+    def validate(
+        self,
+        *,
+        min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
+    ):
         """
-        Give a warning if the estimated system density is below 500 g/l.
-        This is a heuristic check intended to catch issues such as missing
-        solvent or box vector that are too big.
-        """
-        density = self.compute_density()
-        min_density = 500 * offunit.gram / offunit.liter
+        Run heuristic validation checks on the solvated system.
 
-        if density < min_density:
-            warnings.warn(
-                "Estimated system density is very low.\n"
-                f"  Density: {density:.3f}\n"
-                "This usually indicates missing solvent or incorrect box "
-                "vectors.\n",
-                UserWarning,
+        Parameters
+        ----------
+        min_density : openff.units.Quantity
+            Minimum acceptable density. Default: 0.7 g/ml
+        """
+        if self.density < min_density:  # type: ignore
+            raise ValueError(
+                "Estimated system density is very low.\n  "
+                f"Density: {self.density:.3f} (expected ≥ {min_density}). "
+                "This usually indicates missing solvent or incorrect box vectors."
             )
 
     @staticmethod
@@ -379,14 +310,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             OpenMM object containing topology, positions, and (optionally)
             box vectors.
         name : str, optional
-            Name of the protein component.
+            Name of the SolvatedPDBComponent.
         box_vectors: openff.units.Quantity
             Box vectors with units of nanometers.
 
         Returns
         -------
         SolvatedPDBComponent
-            The constructed solvated protein component.
+            The constructed solvated PDB component.
 
         Raises
         ------
@@ -407,9 +338,6 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     def _to_dict(self):
         """
         Serialize the component to a dictionary.
-
-        Periodic box vectors are always serialized explicitly as a numeric
-        array plus unit string.
         """
         d = super()._to_dict()
         box = self.box_vectors.to("nanometer")
@@ -438,25 +366,112 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
 class ProteinMembraneComponent(SolvatedPDBComponent):
     """
-    Solvated protein component with an explicit membrane and periodic box.
+    Solvated PDB component with an explicit membrane and periodic box.
 
-    This class inherits all behavior and
-    constraints from ``SolvatedPDBComponent`` and does not introduce any
-    additional data or methods.
-    The primary purpose of this subclass is semantic: it acts as a marker
-    indicating the presence of a membrane. Code elsewhere may use this
-    distinction (e.g., via ``isinstance`` checks or type annotations) to
-    enable membrane-specific behavior such as selecting a membrane-aware
-    barostat or simulation protocol.
+    Subclass of :class:`SolvatedPDBComponent` representing a protein
+    embedded in an explicit membrane (e.g., lipid bilayer). This type
+    serves as a semantic marker enabling membrane-specific simulation
+    behavior. Code elsewhere may use this distinction (e.g., via ``isinstance``
+    checks) to enable membrane-specific behavior such as selecting a
+    membrane-aware barostat or simulation protocol.
+
+    Extends parent validation with a heuristic minimum water-count check.
 
     Notes
     -----
-    * This class inherits all behavior and requirements from
-      ``SolvatedPDBComponent``.
-    * This class does not add new fields or override behavior.
-    * All requirements and guarantees of ``SolvatedPDBComponent`` apply.
-    * The distinction between membrane and non-membrane systems is
-      conveyed solely through the component type.
+    * All requirements and guarantees of :class:`SolvatedPDBComponent` apply.
+    * The membrane distinction is conveyed solely through the component type.
+    * Validation includes density and minimum water-count checks.
     """
 
-    ...
+    @staticmethod
+    def _is_water_fragment(mol: Mol, atom_indices: tuple[int, ...]) -> bool:
+        """
+        Return True if this fragment looks like a water molecule (TIP3P/TIP4P/etc).
+
+        Parameters
+        ----------
+        mol : rdkit.Chem.Mol
+          The parent RDKit molecule.
+        atom_indices : tuple[int, ...]
+          Atom indices belonging to a single disconnected fragment
+          (e.g. as returned by ``Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)``).
+
+        Returns
+        -------
+        bool
+          True if the fragment consists of exactly three atoms
+          (1 oxygen and 2 hydrogens)
+        """
+        if len(atom_indices) != 3:
+            return False
+        n_H = 0
+        n_O = 0
+
+        for idx in atom_indices:
+            atomic_num = mol.GetAtomWithIdx(idx).GetAtomicNum()
+            match atomic_num:
+                case 1:
+                    n_H += 1
+                case 8:
+                    n_O += 1
+                case _:
+                    return False
+
+        return (n_H == 2) and (n_O == 1)
+
+    @property
+    def n_waters(self) -> int:
+        """
+        Number of detected water molecules.
+        """
+        return self._count_waters(self._rdkit)
+
+    @staticmethod
+    def _count_waters(rdkit_mol: Mol) -> int:
+        """
+        Count water molecules by disconnected fragments.
+        """
+        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
+        return sum(ProteinMembraneComponent._is_water_fragment(rdkit_mol, frag) for frag in frags)
+
+    def validate(
+        self,
+        *,
+        min_waters: int = 50,
+        min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
+    ):
+        """
+        Run heuristic validation checks on the solvated system.
+
+        Parameters
+        ----------
+        min_waters: int
+            Minimum number of water molecules. Default: 50
+        min_density : openff.units.Quantity
+            Minimum acceptable density. Default: 0.7 g/ml
+
+        Raises
+        ------
+        ValueError
+            If one or more validation checks fail. All detected validation
+            errors are aggregated and reported together.
+        """
+        errors = []
+
+        # 1. Density check
+        try:
+            super().validate(min_density=min_density)
+        except ValueError as e:
+            errors.append(str(e))
+
+        # 2. Water count check
+        if self.n_waters < min_waters:
+            errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
+
+        if errors:
+            raise ValueError(
+                "ProteinMembraneComponent validation failed:\n"
+                + "\n".join(f"- {e}" for e in errors)
+                + "\nThis usually indicates missing solvent or incorrect box vectors."
+            )
