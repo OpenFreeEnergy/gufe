@@ -112,13 +112,9 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writ
     # check outputs are as expected
     # will have produced 4 files in scratch and shared directory
     for pu in writefile_dag.protocol_units:
-        identity = pu.inputs["identity"]
-        shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
-        scratch_file = os.path.join(
-            scratch,
-            f"scratch_{str(pu.key)}_attempt_0",
-            f"unit_{identity}_scratch.txt",
-        )
+        id = pu.inputs["identity"]
+        shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{id}_shared.txt")
+        scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{id}_scratch.txt")
         # TODO: add result key.json
         unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
 
@@ -126,13 +122,9 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writ
             stderr_file = os.path.join(
                 stderr,
                 f"stderr_{str(pu.key)}_attempt_0",
-                f"unit_{identity}_stderr",
+                f"unit_{id}_stderr",
             )
-            stdout_file = os.path.join(
-                stdout,
-                f"stdout_{str(pu.key)}_attempt_0",
-                f"unit_{identity}_stdout",
-            )
+            stdout_file = os.path.join(stdout, f"stdout_{str(pu.key)}_attempt_0", f"unit_{id}_stdout")
             # TODO: add result key.json
             unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
 
