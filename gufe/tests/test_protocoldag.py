@@ -294,10 +294,13 @@ def test_get_valid_unit_results(tmp_path):
     units_to_skip = protocoldag._get_valid_unit_results(protocoldag=dep_dag, unit_results=all_cached_unit_results)
     assert set(units_to_skip.keys()) == {u.key for u in all_protocol_units}
 
-    # drop the top-most unit, so nothing should be skipped
+    # drop the top-most unit, so having disconnected results should cause an error to be raised
     unit_results_drop_A = [u for u in all_cached_unit_results if u.name != "unit_A"]
-    units_to_skip = protocoldag._get_valid_unit_results(protocoldag=dep_dag, unit_results=unit_results_drop_A)
-    assert len(units_to_skip.keys()) == 0
+    with pytest.raises(RuntimeError) as excinfo:
+        _ = protocoldag._get_valid_unit_results(protocoldag=dep_dag, unit_results=unit_results_drop_A)
+
+    for string in ["WriterUnit(unit_A)"] + [str(u) for u in unit_results_drop_A]:
+        assert string in str(excinfo.value)
 
     # drop terminal nodes, so everything *but* the terminal nodes can be skipped
     unit_results_drop_C_F = [u for u in all_cached_unit_results if u.name not in ("unit_C", "unit_F")]
