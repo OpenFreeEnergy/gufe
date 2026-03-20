@@ -400,12 +400,12 @@ def execute_DAG(
     *,
     shared_basedir: Path,
     scratch_basedir: Path,
-    unitresults_basedir: Path | None = None,
+    cache_basedir: Path | None = None,
     stderr_basedir: Path | None = None,
     stdout_basedir: Path | None = None,
     keep_shared: bool = False,
     keep_scratch: bool = False,
-    keep_unitresults: bool = False,
+    cache_unitresults: bool = False,
     raise_error: bool = True,
     n_retries: int = 0,
 ) -> ProtocolDAGResult:
@@ -422,9 +422,9 @@ def execute_DAG(
         class:``ProtocolUnit`` instances.
     scratch_basedir : Path
         Filesystem path to use for `ProtocolUnit` `scratch` space.
-    unitresults_basedir : Path | None = None
-        Filesystem path to use for `ProtocolUnitResult` archiving during
-        execution. If ``None`` (default), results will not be archived
+    cache_basedir : Path | None = None
+        Filesystem path to use for `ProtocolUnitResult` caching during
+        execution. If ``None`` (default), results will not be cached
         and it will not be able to resume DAG execution from the last
         successfully finished `ProtocolUnit`.
     stderr_basedir : Path | None
@@ -437,7 +437,7 @@ def execute_DAG(
     keep_scratch : bool
         If True, don't remove scratch directories for a `ProtocolUnit` after
         it is executed.
-    keep_unitresults : bool
+    cache_unitresults : bool
         If True, don't remove the unitresults directory which contains
         the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`/s.
     raise_error : bool
@@ -457,11 +457,11 @@ def execute_DAG(
         raise ValueError("Must give positive number of retries")
 
     all_cached_results: list[ProtocolUnitResult] = []  # store all unitresults found in the cache
-    if unitresults_basedir is not None:
-        unitresults_path = unitresults_basedir / f"unitresults_{str(protocoldag.key)}"
-        unitresults_path.mkdir(exist_ok=True, parents=True)
+    if cache_basedir is not None:
+        dag_unitresults_dir = cache_basedir / f"unitresults_{str(protocoldag.key)}"
+        dag_unitresults_dir.mkdir(exist_ok=True, parents=True)
 
-        for file in unitresults_path.rglob("*.json"):
+        for file in dag_unitresults_dir.rglob("*.json"):
             try:
                 unit_result = ProtocolUnitResult.from_json(file)
                 # TODO: any additional criteria to check here?
@@ -470,7 +470,7 @@ def execute_DAG(
             else:
                 all_cached_results.append(unit_result)
 
-    # handle results & optionally archiving
+    # handle results & optionally caching
     results: dict[GufeKey, ProtocolUnitResult] = _get_valid_unit_results(protocoldag, all_cached_results)
     all_results = []  # successes AND failures
     shared_paths = []
@@ -521,8 +521,8 @@ def execute_DAG(
                 results[unit.key] = result
 
                 # Serialize results if requested
-                if unitresults_basedir is not None:
-                    result.to_json(unitresults_path / f"{str(result.key)}.json")
+                if cache_basedir is not None:
+                    result.to_json(dag_unitresults_dir / f"{str(result.key)}.json")
                 break
             attempt += 1
 
@@ -533,8 +533,8 @@ def execute_DAG(
         for shared_path in shared_paths:
             shutil.rmtree(shared_path)
 
-    if not keep_unitresults and unitresults_basedir is not None:
-        shutil.rmtree(unitresults_path)
+    if not cache_unitresults and cache_basedir is not None:
+        shutil.rmtree(dag_unitresults_dir)
 
     return ProtocolDAGResult(
         name=protocoldag.name,

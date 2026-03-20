@@ -77,17 +77,17 @@ def writefile_dag():
 
 @pytest.mark.parametrize("keep_shared", [False, True])
 @pytest.mark.parametrize("keep_scratch", [False, True])
-@pytest.mark.parametrize("keep_unitresults", [False, True])
+@pytest.mark.parametrize("cache_unitresults", [False, True])
 @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writefile_dag, capture_stderr_stdout):
+def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, writefile_dag, capture_stderr_stdout):
     shared = pathlib.Path(tmp_path / "shared")
     shared.mkdir(parents=True)
 
     scratch = pathlib.Path(tmp_path / "scratch")
     scratch.mkdir(parents=True)
 
-    unit_results_cache = pathlib.Path(tmp_path / "unit_results_cache")
-    unit_results_cache.mkdir(parents=True)
+    cache_basedir = pathlib.Path(tmp_path / "openfe_cache")
+    cache_basedir.mkdir(parents=True)
 
     stderr = None
     stdout = None
@@ -102,12 +102,12 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writ
         writefile_dag,
         shared_basedir=shared,
         scratch_basedir=scratch,
-        unitresults_basedir=unit_results_cache,
+        cache_basedir=cache_basedir,
         stderr_basedir=stderr,
         stdout_basedir=stdout,
         keep_shared=keep_shared,
         keep_scratch=keep_scratch,
-        keep_unitresults=keep_unitresults,
+        cache_unitresults=cache_unitresults,
     )
     # check outputs are as expected
     # will have produced 4 files in scratch and shared directory
@@ -116,7 +116,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writ
         shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{id}_shared.txt")
         scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{id}_scratch.txt")
         # TODO: add result key.json
-        unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
+        unit_result_file = os.path.join(cache_basedir, f"unitresults_{str(writefile_dag.key)}")
 
         if capture_stderr_stdout:
             stderr_file = os.path.join(
@@ -126,7 +126,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writ
             )
             stdout_file = os.path.join(stdout, f"stdout_{str(pu.key)}_attempt_0", f"unit_{id}_stdout")
             # TODO: add result key.json
-            unit_result_file = os.path.join(unit_results_cache, f"unitresults_{str(writefile_dag.key)}")
+            unit_result_file = os.path.join(cache_basedir, f"unitresults_{str(writefile_dag.key)}")
 
             # stderr and stdout are always removed since their
             # contents are included in the unit results
@@ -141,7 +141,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_unitresults, writ
             assert os.path.exists(scratch_file)
         else:
             assert not os.path.exists(scratch_file)
-        if keep_unitresults:
+        if cache_unitresults:
             assert os.path.exists(unit_result_file)
         else:
             assert not os.path.exists(unit_result_file)
@@ -173,7 +173,7 @@ def test_protocoldag_missing_dependency_unit():
 
 
 def test_execute_DAG_cached_unitresults(tmp_path):
-    """Test that execute_DAG will re-run based on unitresults_basedir where only a terminal node is missing results."""
+    """Test that execute_DAG will re-run based on cache_basedir where only a terminal node is missing results."""
 
     # Create a setup unit that other units depend on
     setup_unit = WriterUnit(identity=0, name="setup")
@@ -198,12 +198,12 @@ def test_execute_DAG_cached_unitresults(tmp_path):
         dep_dag,
         shared_basedir=shared,
         scratch_basedir=scratch,
-        unitresults_basedir=unit_results_dir,
+        cache_basedir=unit_results_dir,
         stderr_basedir=None,
         stdout_basedir=None,
         keep_shared=False,
         keep_scratch=False,
-        keep_unitresults=True,
+        cache_unitresults=True,
     )
 
     for pur in protocol_result.protocol_unit_results:
@@ -221,12 +221,12 @@ def test_execute_DAG_cached_unitresults(tmp_path):
         dep_dag,
         shared_basedir=shared,
         scratch_basedir=scratch,
-        unitresults_basedir=unit_results_dir,
+        cache_basedir=unit_results_dir,
         stderr_basedir=None,
         stdout_basedir=None,
         keep_shared=False,
         keep_scratch=False,
-        keep_unitresults=True,
+        cache_unitresults=True,
     )
 
     assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
@@ -277,12 +277,12 @@ def test_get_valid_unit_results(tmp_path):
         dep_dag,
         shared_basedir=shared,
         scratch_basedir=scratch,
-        unitresults_basedir=unit_results_dir,
+        cache_basedir=unit_results_dir,
         stderr_basedir=None,
         stdout_basedir=None,
         keep_shared=False,
         keep_scratch=False,
-        keep_unitresults=True,
+        cache_unitresults=True,
     )
     all_cached_unit_results = protocol_result.protocol_unit_results
 
