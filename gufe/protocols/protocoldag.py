@@ -12,7 +12,7 @@ from typing import Any
 import networkx as nx
 
 from ..tokenization import GufeKey, GufeTokenizable
-from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolUnitFailureError
+from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolDAGExecutionError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
 
@@ -393,7 +393,7 @@ def _get_valid_unit_results(
                     invalid_results.append(p)
 
         if invalid_results:
-            raise RuntimeError(
+            raise ProtocolDAGExecutionError(
                 f"The following results have been found in the cache, but are invalid due to missing upstream results for {pu}: {invalid_results}.\nPlease remove the cache and rerun this transformation."
             )
 
@@ -456,6 +456,11 @@ def execute_DAG(
     -------
     ProtocolDAGResult
         The result of executing the `ProtocolDAG`.
+
+    Raises
+    ------
+    ProtocolDAGExecutionError
+        If the `ProtocolDAG` cannot be executed due to an invalid cache state.
 
     """
     if n_retries < 0:
