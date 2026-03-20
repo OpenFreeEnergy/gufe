@@ -384,12 +384,12 @@ def _get_valid_unit_results(
     # We probably don't want to resume if gufe stability has changed
     result_pu_key_to_pur: dict[GufeKey, ProtocolUnitResult] = {ur.source_key: ur for ur in unit_results}
 
-    for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
-        if unit.key in result_pu_key_to_pur:  # units we want to skip during execution
+    for pu in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
+        if pu.key in result_pu_key_to_pur:  # units we want to skip during execution
             pass
         else:  # units we want to run (or re-run) during execution
             # if this unit needs to be run, then everything downstream of it needs to be re-run as well
-            for downstream_unit in nx.ancestors(protocoldag.graph, unit):
+            for downstream_unit in nx.ancestors(protocoldag.graph, pu):
                 result_pu_key_to_pur.pop(downstream_unit.key, "None")
 
     return result_pu_key_to_pur
