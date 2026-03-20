@@ -464,7 +464,6 @@ def execute_DAG(
         for file in dag_unitresults_dir.rglob("*.json"):
             try:
                 unit_result = ProtocolUnitResult.from_json(file)
-                # TODO: any additional criteria to check here?
             except JSONDecodeError as e:
                 warnings.warn(f"Unable to read file, skipping {file}: {e}")
             else:

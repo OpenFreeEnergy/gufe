@@ -115,8 +115,9 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, wri
         id = pu.inputs["identity"]
         shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{id}_shared.txt")
         scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{id}_scratch.txt")
-        # TODO: add result key.json
-        unit_result_file = os.path.join(cache_basedir, f"{str(writefile_dag.key)}_cache")
+        unit_result_file = os.path.join(
+            cache_basedir, f"{str(writefile_dag.key)}_cache", f"{str(pu.key)}_unitresults.json"
+        )
 
         if capture_stderr_stdout:
             stderr_file = os.path.join(
@@ -125,8 +126,6 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, wri
                 f"unit_{id}_stderr",
             )
             stdout_file = os.path.join(stdout, f"stdout_{str(pu.key)}_attempt_0", f"unit_{id}_stdout")
-            # TODO: add result key.json
-            unit_result_file = os.path.join(cache_basedir, f"{str(writefile_dag.key)}_cache")
 
             # stderr and stdout are always removed since their
             # contents are included in the unit results
