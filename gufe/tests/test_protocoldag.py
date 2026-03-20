@@ -206,15 +206,13 @@ def test_execute_DAG_cached_unitresults(tmp_path):
         cache_unitresults=True,
     )
 
-    for pur in protocol_result.protocol_unit_results:
-        assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur.key)}.json"))
+    for pu in dep_dag.protocol_units:
+        assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pu.key)}.json"))
 
     # choose a terminal result so that only one node is rerun
-    pur_to_corrupt = protocol_result.terminal_protocol_unit_results[0]
+    pu_to_corrupt = dependent_units[0]
 
-    with open(
-        os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pur_to_corrupt.key)}.json"), "a"
-    ) as f:
+    with open(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pu_to_corrupt.key)}.json"), "a") as f:
         f.write("string that will break JSON.")
 
     protocol_result_rerun = execute_DAG(

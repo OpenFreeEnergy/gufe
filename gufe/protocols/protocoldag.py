@@ -522,7 +522,7 @@ def execute_DAG(
 
                 # Serialize results if requested
                 if cache_basedir is not None:
-                    result.to_json(dag_unitresults_dir / f"{str(result.key)}.json")
+                    result.to_json(dag_unitresults_dir / f"{str(unit.key)}.json")
                 break
             attempt += 1
 
