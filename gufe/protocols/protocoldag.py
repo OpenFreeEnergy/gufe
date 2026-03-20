@@ -410,7 +410,7 @@ def execute_DAG(
     stdout_basedir: Path | None = None,
     keep_shared: bool = False,
     keep_scratch: bool = False,
-    cache_unitresults: bool = False,
+    keep_cache: bool = False,
     raise_error: bool = True,
     n_retries: int = 0,
 ) -> ProtocolDAGResult:
@@ -442,8 +442,8 @@ def execute_DAG(
     keep_scratch : bool
         If True, don't remove scratch directories for a `ProtocolUnit` after
         it is executed.
-    cache_unitresults : bool
-        If True, don't remove the unitresults directory which contains
+    keep_cache : bool
+        If True, don't remove the cache directory which contains
         the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`/s.
     raise_error : bool
         If True, raise an exception if a ProtocolUnit fails, default True
@@ -537,7 +537,7 @@ def execute_DAG(
         for shared_path in shared_paths:
             shutil.rmtree(shared_path)
 
-    if not cache_unitresults and cache_basedir is not None:
+    if not keep_cache and cache_basedir is not None:
         shutil.rmtree(dag_unitresults_dir)
 
     return ProtocolDAGResult(

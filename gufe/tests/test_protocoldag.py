@@ -77,9 +77,9 @@ def writefile_dag():
 
 @pytest.mark.parametrize("keep_shared", [False, True])
 @pytest.mark.parametrize("keep_scratch", [False, True])
-@pytest.mark.parametrize("cache_unitresults", [False, True])
+@pytest.mark.parametrize("keep_cache", [False, True])
 @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, writefile_dag, capture_stderr_stdout):
+def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_cache, writefile_dag, capture_stderr_stdout):
     shared = pathlib.Path(tmp_path / "shared")
     shared.mkdir(parents=True)
 
@@ -107,7 +107,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, wri
         stdout_basedir=stdout,
         keep_shared=keep_shared,
         keep_scratch=keep_scratch,
-        cache_unitresults=cache_unitresults,
+        keep_cache=keep_cache,
     )
     # check outputs are as expected
     # will have produced 4 files in scratch and shared directory
@@ -140,7 +140,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, wri
             assert os.path.exists(scratch_file)
         else:
             assert not os.path.exists(scratch_file)
-        if cache_unitresults:
+        if keep_cache:
             assert os.path.exists(unit_result_file)
         else:
             assert not os.path.exists(unit_result_file)
@@ -202,7 +202,7 @@ def test_execute_DAG_cached_unitresults(tmp_path):
         stdout_basedir=None,
         keep_shared=False,
         keep_scratch=False,
-        cache_unitresults=True,
+        keep_cache=True,
     )
 
     for pu in dep_dag.protocol_units:
@@ -226,7 +226,7 @@ def test_execute_DAG_cached_unitresults(tmp_path):
             stdout_basedir=None,
             keep_shared=False,
             keep_scratch=False,
-            cache_unitresults=True,
+            keep_cache=True,
         )
 
     assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
@@ -282,7 +282,7 @@ def test_get_valid_unit_results(tmp_path):
         stdout_basedir=None,
         keep_shared=False,
         keep_scratch=False,
-        cache_unitresults=True,
+        keep_cache=True,
     )
     all_cached_unit_results = protocol_result.protocol_unit_results
 
