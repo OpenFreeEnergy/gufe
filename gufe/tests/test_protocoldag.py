@@ -116,7 +116,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, wri
         shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{id}_shared.txt")
         scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{id}_scratch.txt")
         # TODO: add result key.json
-        unit_result_file = os.path.join(cache_basedir, f"unitresults_{str(writefile_dag.key)}")
+        unit_result_file = os.path.join(cache_basedir, f"{str(writefile_dag.key)}_cache")
 
         if capture_stderr_stdout:
             stderr_file = os.path.join(
@@ -126,7 +126,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, cache_unitresults, wri
             )
             stdout_file = os.path.join(stdout, f"stdout_{str(pu.key)}_attempt_0", f"unit_{id}_stdout")
             # TODO: add result key.json
-            unit_result_file = os.path.join(cache_basedir, f"unitresults_{str(writefile_dag.key)}")
+            unit_result_file = os.path.join(cache_basedir, f"{str(writefile_dag.key)}_cache")
 
             # stderr and stdout are always removed since their
             # contents are included in the unit results
@@ -207,12 +207,14 @@ def test_execute_DAG_cached_unitresults(tmp_path):
     )
 
     for pu in dep_dag.protocol_units:
-        assert os.path.exists(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pu.key)}.json"))
+        assert os.path.exists(os.path.join(unit_results_dir, f"{dep_dag.key}_cache", f"{str(pu.key)}_unitresults.json"))
 
     # choose a terminal result so that only one node is rerun
     pu_to_corrupt = dependent_units[0]
 
-    with open(os.path.join(unit_results_dir, f"unitresults_{dep_dag.key}", f"{str(pu_to_corrupt.key)}.json"), "a") as f:
+    with open(
+        os.path.join(unit_results_dir, f"{dep_dag.key}_cache", f"{str(pu_to_corrupt.key)}_unitresults.json"), "a"
+    ) as f:
         f.write("string that will break JSON.")
 
     protocol_result_rerun = execute_DAG(

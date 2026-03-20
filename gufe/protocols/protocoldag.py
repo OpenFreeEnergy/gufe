@@ -458,7 +458,7 @@ def execute_DAG(
 
     all_cached_results: list[ProtocolUnitResult] = []  # store all unitresults found in the cache
     if cache_basedir is not None:
-        dag_unitresults_dir = cache_basedir / f"unitresults_{str(protocoldag.key)}"
+        dag_unitresults_dir = cache_basedir / f"{str(protocoldag.key)}_cache"
         dag_unitresults_dir.mkdir(exist_ok=True, parents=True)
 
         for file in dag_unitresults_dir.rglob("*.json"):
@@ -522,7 +522,7 @@ def execute_DAG(
 
                 # Serialize results if requested
                 if cache_basedir is not None:
-                    result.to_json(dag_unitresults_dir / f"{str(unit.key)}.json")
+                    result.to_json(dag_unitresults_dir / f"{str(unit.key)}_unitresults.json")
                 break
             attempt += 1
 
