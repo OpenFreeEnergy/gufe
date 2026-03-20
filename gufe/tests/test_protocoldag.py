@@ -216,17 +216,18 @@ def test_execute_DAG_cached_unitresults(tmp_path):
     ) as f:
         f.write("string that will break JSON.")
 
-    protocol_result_rerun = execute_DAG(
-        dep_dag,
-        shared_basedir=shared,
-        scratch_basedir=scratch,
-        cache_basedir=unit_results_dir,
-        stderr_basedir=None,
-        stdout_basedir=None,
-        keep_shared=False,
-        keep_scratch=False,
-        cache_unitresults=True,
-    )
+    with pytest.warns(UserWarning, match="Unable to read file, skipping"):
+        protocol_result_rerun = execute_DAG(
+            dep_dag,
+            shared_basedir=shared,
+            scratch_basedir=scratch,
+            cache_basedir=unit_results_dir,
+            stderr_basedir=None,
+            stdout_basedir=None,
+            keep_shared=False,
+            keep_scratch=False,
+            cache_unitresults=True,
+        )
 
     assert protocol_result.protocol_units == protocol_result_rerun.protocol_units
     # if the cache isn't used, these would be identical
