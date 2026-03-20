@@ -1,11 +1,6 @@
-import hashlib
-import os
-import pathlib
-from unittest import mock
-
 import pytest
 
-from gufe.storage.errors import ChangedExternalResourceError, MissingExternalResourceError
+from gufe.storage.errors import MissingExternalResourceError
 from gufe.storage.externalresource import FileStorage, MemoryStorage
 
 # NOTE: Tests for the abstract base are just part of the tests of its
@@ -112,6 +107,27 @@ class TestFileStorage:
 
         assert set(storage.iter_contents(prefix)) == expected
 
+    def test_iter(self, tmp_path):
+        files = [
+            "foo.txt",
+            "foo_dir/a.txt",
+            "foo_dir/b.txt",
+        ]
+        expected = {"foo.txt", "foo_dir/a.txt", "foo_dir/b.txt"}
+        for file in files:
+            path = tmp_path / file
+            path.parent.mkdir(parents=True, exist_ok=True)
+            assert not path.exists()
+            with open(path, "wb") as f:
+                f.write(b"")
+
+        storage = FileStorage(tmp_path)
+        # We do this to ensure that the expected and the base iter_contents
+        # stay together.
+        # This should help check if we break the underlying API
+        assert set(storage) == expected
+        assert set(storage) == set(storage.iter_contents())
+
     def test_delete_error_not_existing(self, file_storage):
         with pytest.raises(MissingExternalResourceError, match="does not exist"):
             file_storage.delete("baz.txt")
@@ -197,6 +213,20 @@ class TestMemoryStorage:
         }
 
         assert set(storage.iter_contents(prefix)) == expected
+
+    def test_iter(self):
+        storage = MemoryStorage()
+        storage._data = {
+            "foo.txt": b"",
+            "foo_dir/a.txt": b"",
+            "foo_dir/b.txt": b"",
+        }
+        expected = {"foo.txt", "foo_dir/a.txt", "foo_dir/b.txt"}
+        assert set(storage) == expected
+        # We do this to ensure that the expected and the base iter_contents
+        # stay together.
+        # This should help check if we break the underlying API
+        assert set(storage) == set(storage.iter_contents())
 
     def test_get_filename(self):
         pytest.skip("Not implemented yet")

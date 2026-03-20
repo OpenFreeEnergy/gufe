@@ -2,7 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
-from typing import Union
 
 from ..tokenization import GufeTokenizable
 

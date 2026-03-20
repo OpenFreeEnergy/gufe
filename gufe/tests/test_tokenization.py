@@ -3,15 +3,14 @@ import datetime
 import io
 import json
 import logging
-from typing import Optional
 from unittest import mock
 
 import pytest
 
+from gufe.compression import zst_decompress
 from gufe.serialization.msgpack import packb, unpackb
 from gufe.tokenization import (
     JSON_HANDLER,
-    TOKENIZABLE_CLASS_REGISTRY,
     TOKENIZABLE_REGISTRY,
     GufeKey,
     GufeTokenizable,
@@ -21,7 +20,6 @@ from gufe.tokenization import (
     gufe_objects_from_shallow_dict,
     gufe_to_digraph,
     import_qualname,
-    tokenize,
 )
 
 
@@ -147,7 +145,14 @@ class GufeTokenizableTestsMixin(abc.ABC):
         # assert ser == reser
 
     def test_to_msgpack_roundtrip(self, instance):
-        ser = instance.to_msgpack()
+        ser = instance.to_msgpack(compress=False)
+        deser = self.cls.from_msgpack(content=ser)
+
+        assert instance == deser
+        assert instance is deser
+
+    def test_to_msgpack_roundtrip_compressed(self, instance):
+        ser = instance.to_msgpack(compress=True)
         deser = self.cls.from_msgpack(content=ser)
 
         assert instance == deser
@@ -352,7 +357,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         msgpack_bytes = self.cont.to_msgpack()
         expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
 
-        assert unpackb(msgpack_bytes) == expected_keyed_chain
+        assert unpackb(zst_decompress(msgpack_bytes)) == expected_keyed_chain
 
     def test_from_msgpack_bytes(self):
         data = packb(self.cont.to_keyed_chain())
@@ -367,8 +372,9 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
 
         # tuples are converted to lists in msgpack so fix the expected result to use lists
         expected_keyed_chain = [list(tok) for tok in self.expected_keyed_chain]
+
         with file_path.open("rb") as f:
-            assert unpackb(f.read()) == expected_keyed_chain
+            assert unpackb(zst_decompress(f.read())) == expected_keyed_chain
 
     def test_from_msgpack_file(self, tmpdir):
         file_path = tmpdir / "container.messagepack"
@@ -438,7 +444,7 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         leaf = Leaf(10)
 
         results = stream.getvalue()
-        key = leaf.key.split("-")[-1]
+        key = str(leaf.key)
 
         initial_log = f"{name} - UNKNOWN - INFO - no key defined!\n"
         info_log = f"{name} - {key} - INFO - a=10\n"
@@ -596,6 +602,35 @@ class TestKeyedChain:
         assert kc[0] == kc._keyed_chain[0]
         assert kc[-1] == kc._keyed_chain[-1]
         assert kc[:] == kc._keyed_chain[:]
+
+    def test_decode_subchains(self, benzene_variants_star_map):
+        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+
+        # decode all chemical systems, which are just the network nodes
+        assert set(kc.decode_subchains(lambda kd: kd["__qualname__"] == "ChemicalSystem")) == set(kc.to_gufe().nodes)
+        # decode all transformations, which are just the network edges
+        assert set(
+            kc.decode_subchains(lambda kd: kd["__qualname__"] in ["Transformation", "NonTransformation"])
+        ) == set(kc.to_gufe().edges)
+
+        # get chemical systems with "-solvent" in the name
+        assert set(
+            kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem" and "-solvent" in kd["name"])
+        ) == {gt for gt in kc.to_gufe().nodes if "-solvent" in gt.name}
+
+        # get the set of solvent components of the network
+        solvent_components = set()
+        for cs in kc.to_gufe().nodes:
+            solvent_components.add(cs.components["solvent"])
+
+        assert set(kc.decode_subchains(lambda kd: kd.get("__qualname__") == "SolventComponent")) == solvent_components
+
+        # early return example: get first valid chemical system from
+        # generator and leave, useful for very large keyed chains
+        cs_with_next = next(kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem"), None)
+        for cs in kc.decode_subchains(lambda kd: kd.get("__qualname__") == "ChemicalSystem"):
+            assert cs is cs_with_next
+            break
 
 
 def test_datetime_to_json():

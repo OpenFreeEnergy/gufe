@@ -7,6 +7,7 @@ on:
     branches:
       - main
       - release
+      - stable
   schedule:
     # At 07:00 UTC on Monday and Thursday.
     - cron: "0 7 * * *"
@@ -74,6 +75,19 @@ jobs:
         run: |
           micromamba info
           micromamba list
+
+      - name: Cache Pooch data
+        uses: actions/cache@v4
+        with:
+          path: |
+            # linux cache location
+            ~/.cache/gufe
+            # osx cache location
+            ~/Library/Caches/gufe
+          # When files are added or changed in a pooch registry
+          # bump this key to create a new cache, for example if
+          # the key is pooch-${{ matrix.os }}-1 change it to pooch-${{ matrix.os }}-2
+          key: pooch-${{ matrix.os }}-0
 
       - name: "Run tests"
         run: |

@@ -16,11 +16,12 @@ import weakref
 from collections.abc import Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Callable, TextIO
 
 import networkx as nx
 from typing_extensions import Self
 
+from gufe.compression import zst_compress, zst_decompress
 from gufe.serialization.json import (
     BYTES_CODEC,
     DATETIME_CODEC,
@@ -124,7 +125,7 @@ class _GufeLoggerAdapter(logging.LoggerAdapter):
         extra = kwargs.get("extra", {})
         if (extra_dict := getattr(self, "_extra_dict", None)) is None:
             try:
-                gufekey = self.extra.key.split("-")[-1]
+                gufekey = str(self.extra.key)
             except Exception:
                 # no matter what happened, we have a bad key
                 gufekey = "UNKNOWN"
@@ -712,7 +713,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
                 return cls.from_keyed_chain(keyed_chain=deserialized)
             except ValueError:
                 # if the above fails, try to load as the dict representation
-                warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
+                warnings.warn("keyed-chain deserialization failed; falling back to deserializing dict representation")
                 return cls.from_dict(deserialized)
 
         from gufe.utils import ensure_filelike
@@ -724,10 +725,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             return cls.from_keyed_chain(keyed_chain=deserialized)
         except ValueError:
             # if the above fails, try to load as the dict representation
-            warnings.warn(f"keyed-chain deserialization failed; falling back to deserializing dict representation")
+            warnings.warn("keyed-chain deserialization failed; falling back to deserializing dict representation")
             return cls.from_dict(deserialized)
 
-    def to_msgpack(self, file: PathLike | BinaryIO | None = None) -> None | bytes:
+    def to_msgpack(self, file: PathLike | BinaryIO | None = None, compress: bool = True) -> None | bytes:
         """
         Generate a MessagePack keyed chain representation.
 
@@ -737,6 +738,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         ----------
         file
             A filepath or filelike object to write the encoded msgpack to.
+
+        compress
+            Whether or not to zstandard compress the serialized bytes.
+            The default is ``True``.
 
         Returns
         -------
@@ -748,13 +753,18 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         from_msgpack
         """
 
+        payload = packb(self.to_keyed_chain())
+
+        if compress:
+            payload = zst_compress(payload)
+
         if file is None:
-            return packb(self.to_keyed_chain())
+            return payload
 
         from gufe.utils import ensure_filelike
 
         with ensure_filelike(file, mode="w+b") as out:
-            out.write(packb(self.to_keyed_chain()))
+            out.write(payload)
 
         return None
 
@@ -782,7 +792,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             raise ValueError("Must specify either `content` and `file` for MessagePack input")
 
         if content is not None:
-            keyed_chain = unpackb(content)
+            # TODO: since zst_decompress catches ZstdError, this will
+            # fail on uncompressed data once removed in v2.0.0. This
+            # behavior should be caught in the unit tests.
+            keyed_chain = unpackb(zst_decompress(content))
         else:
             from gufe.utils import ensure_filelike
 
@@ -927,13 +940,41 @@ class KeyedChain:
         """Initialize a KeyedChain from a GufeTokenizable."""
         return cls(cls.gufe_to_keyed_chain_rep(gufe_object))
 
-    def to_gufe(self) -> GufeTokenizable:
+    def to_gufe(self, tokenizable_map: dict[str, GufeTokenizable] | None = None) -> GufeTokenizable:
         """Initialize a GufeTokenizable."""
-        gts: dict[str, GufeTokenizable] = {}
+        if tokenizable_map is None:
+            tokenizable_map = {}
+
         for gufe_key, keyed_dict in self:
-            gt = key_decode_dependencies(keyed_dict, registry=gts)
-            gts[gufe_key] = gt
-        return gt
+            if gt := tokenizable_map.get(gufe_key):
+                continue
+            gt = key_decode_dependencies(keyed_dict, registry=tokenizable_map)
+            tokenizable_map[gufe_key] = gt
+        return gt  # type: ignore
+
+    def decode_subchains(self, func: Callable) -> Generator[GufeTokenizable, None, None]:
+        """Extract ``GufeTokenizable`` objects matching a pattern from a KeyedChain.
+
+        The ``func`` function is applied to each keyed dict contained
+        in the ``KeyedChain``. When it evaluates to a truthy value,
+        the ``GufeTokenizable`` is created and yielded. Dependencies
+        of this ``GufeTokenizable`` are derived from preceeding
+        portions of the ``KeyedChain``.
+
+        Example
+        -------
+
+        Suppose only the ``NonTransformation`` ``GufeTokenizable``
+        objects are wanted from a ``KeyedChain``, ``an_kc``, that
+        encodes an ``AlchemicalNetwork``.
+
+        >>> nontransformations = list(an_kc.decode_subchains(lambda kd: kd["__qualname__"] == "NonTransformation"))
+
+        """
+        tokenizable_map: dict[str, GufeTokenizable] = {}
+        for idx, (_, keyed_dict) in enumerate(self):
+            if func(keyed_dict):
+                yield KeyedChain(self[: idx + 1]).to_gufe(tokenizable_map=tokenizable_map)
 
     @classmethod
     def from_keyed_chain_rep(cls, keyed_chain: list[tuple[str, dict]]) -> Self:

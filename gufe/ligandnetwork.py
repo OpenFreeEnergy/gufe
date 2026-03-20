@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import warnings
 from collections.abc import Iterable
 from itertools import chain
-from typing import FrozenSet, Optional, Union
 
 import networkx as nx
 
@@ -271,6 +271,7 @@ class LigandNetwork(GufeTokenizable):
             The label for the component undergoing an alchemical transformation
             (default ``'ligand'``).
         """
+
         transformations = []
         for edge in self.edges:
             for leg_name, labels in leg_labels.items():
@@ -330,6 +331,11 @@ class LigandNetwork(GufeTokenizable):
             Additional non-alchemical components; keyword will be the string
             label for the component.
         """
+
+        warnings.warn(
+            ("to_rbfe_alchemical_network() is deprecated and will be removed in version 2.0."),
+            DeprecationWarning,
+        )
         components = {"protein": protein, "solvent": solvent, **other_components}
         leg_labels = {
             "solvent": ["ligand", "solvent"],
@@ -342,24 +348,6 @@ class LigandNetwork(GufeTokenizable):
             autoname=autoname,
             autoname_prefix=autoname_prefix,
         )
-
-    # on hold until we figure out how to best hack in the PME/NoCutoff
-    # switch
-    # def to_rhfe_alchemical_network(self, *, solvent, protocol,
-    #                                autoname=True,
-    #                                autoname_prefix="easy_rhfe",
-    #                                **other_components):
-    #     leg_labels = {
-    #         "solvent": ["ligand", "solvent"] + list(other_components),
-    #         "vacuum": ["ligand"] + list(other_components),
-    #     }
-    #     return self._to_rfe_alchemical_network(
-    #         components={"solvent": solvent, **other_components},
-    #         leg_labels=leg_labels,
-    #         protocol=protocol,
-    #         autoname=autoname,
-    #         autoname_prefix=autoname_prefix
-    #     )
 
     def is_connected(self) -> bool:
         """Indicates whether all ligands in the network are (directly or indirectly)

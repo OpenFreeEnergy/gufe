@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Optional, Type
+from typing import Any
 
 import pytest
 from pydantic import BaseModel
