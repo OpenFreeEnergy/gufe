@@ -116,7 +116,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_cache, writefile_
         shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{id}_shared.txt")
         scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{id}_scratch.txt")
         unit_result_file = os.path.join(
-            cache_basedir, f"{str(writefile_dag.key)}_cache", f"{str(pu.key)}_unitresults.json"
+            cache_basedir, f"{str(writefile_dag.key)}-results_cache", f"{str(pu.key)}_unitresults.json"
         )
 
         if capture_stderr_stdout:
@@ -206,13 +206,16 @@ def test_execute_DAG_cached_unitresults(tmp_path):
     )
 
     for pu in dep_dag.protocol_units:
-        assert os.path.exists(os.path.join(unit_results_dir, f"{dep_dag.key}_cache", f"{str(pu.key)}_unitresults.json"))
+        assert os.path.exists(
+            os.path.join(unit_results_dir, f"{dep_dag.key}-results_cache", f"{str(pu.key)}_unitresults.json")
+        )
 
     # choose a terminal result so that only one node is rerun
     pu_to_corrupt = dependent_units[0]
 
     with open(
-        os.path.join(unit_results_dir, f"{dep_dag.key}_cache", f"{str(pu_to_corrupt.key)}_unitresults.json"), "a"
+        os.path.join(unit_results_dir, f"{dep_dag.key}-results_cache", f"{str(pu_to_corrupt.key)}_unitresults.json"),
+        "a",
     ) as f:
         f.write("string that will break JSON.")
 
