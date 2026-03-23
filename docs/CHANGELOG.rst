@@ -9,14 +9,14 @@ v1.9.0
 
 **Added:**
 
-* Added a how-to guide for defining a custom ``Component``.
-* Adds a .validate() method to gufe Components
-* ``gufe.protocol.protocoldag.execute_DAG`` now has the ability to resume DAG execution by passing in a path for results caching into ``cache_basedir``.
-* Adds two new Components, a `SolvatedPDBComponent` for explicitly solvated systems, including periodic box vectors, and a ProteinMembraneComponent that inherits from SolvatedPDBComponent and can be used downstream for type checking of solvated protein membrane appropriate settings.
+* Added a how-to guide for defining a custom ``Component`` (`PR #667 <https://github.com/OpenFreeEnergy/gufe/pull/667>`_).
+* Adds a .validate() method to gufe Components (`PR #732 <https://github.com/OpenFreeEnergy/gufe/pull/732>`_).
+* ``gufe.protocol.protocoldag.execute_DAG`` now has the ability to resume DAG execution by passing in a path for results caching into ``cache_basedir`` (`PR #738 <https://github.com/OpenFreeEnergy/gufe/pull/738>`_).
+* Adds two new Components, a ``SolvatedPDBComponent`` for explicitly solvated systems, including periodic box vectors, and a ``ProteinMembraneComponent`` that inherits from ``SolvatedPDBComponent`` and can be used downstream for type checking of solvated protein membrane appropriate settings (`PR #635 <https://github.com/OpenFreeEnergy/gufe/pull/635>`_).
 
 **Changed:**
 
-* Sped up the counting of the number of water molecules in a SolvatedPDBComponent.
+* Sped up the counting of the number of water molecules in a SolvatedPDBComponent (`PR #751 <https://github.com/OpenFreeEnergy/gufe/pull/751>`_).
 
 
 
