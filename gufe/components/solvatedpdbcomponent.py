@@ -16,9 +16,9 @@ from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from .errors import ComponentValidationError
 from .proteincomponent import ProteinComponent
 from .solventcomponent import BaseSolventComponent
-from .errors import ComponentValidationError
 
 
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
