@@ -4,16 +4,6 @@ CHANGELOG
 
 .. current developments
 
-v1.9.0
-====================
-
-**Changed:**
-
-* `amber/lipid17_merged.xml` is now defined by default in `forcefield` list
-  in :class:`OpenMMSystemGeneratorFFSettings` (PR #767).
-
-
-
 
 v1.9.0
 ====================
@@ -29,6 +19,7 @@ v1.9.0
 **Changed:**
 
 * Sped up the counting of the number of water molecules in a SolvatedPDBComponent (`PR #751 <https://github.com/OpenFreeEnergy/gufe/pull/751>`_).
+* ``amber/lipid17_merged.xml`` is now defined by default in forcefield list in :class:`OpenMMSystemGeneratorFFSettings` (`PR #767 <https://github.com/OpenFreeEnergy/gufe/pull/767>`_).
 
 
 
