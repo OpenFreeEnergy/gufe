@@ -16,6 +16,7 @@ from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from .errors import ComponentValidationError
 from .proteincomponent import ProteinComponent
 from .solventcomponent import BaseSolventComponent
 
@@ -113,9 +114,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         ----------
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
+
+        Raises
+        ------
+        ComponentValidationError
+            If the density is lower than the minimum density.
         """
         if self.density < min_density:  # type: ignore
-            raise ValueError(
+            raise ComponentValidationError(
                 "Estimated system density is very low.\n  "
                 f"Density: {self.density:.3f} (expected ≥ {min_density}). "
                 "This usually indicates missing solvent or incorrect box vectors."
@@ -453,7 +459,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
 
         Raises
         ------
-        ValueError
+        ComponentValidationError
             If one or more validation checks fail. All detected validation
             errors are aggregated and reported together.
         """
@@ -462,7 +468,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         # 1. Density check
         try:
             super().validate(min_density=min_density)
-        except ValueError as e:
+        except ComponentValidationError as e:
             errors.append(str(e))
 
         # 2. Water count check
@@ -470,7 +476,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
 
         if errors:
-            raise ValueError(
+            raise ComponentValidationError(
                 "ProteinMembraneComponent validation failed:\n"
                 + "\n".join(f"- {e}" for e in errors)
                 + "\nThis usually indicates missing solvent or incorrect box vectors."
