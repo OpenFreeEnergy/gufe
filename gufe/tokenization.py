@@ -656,7 +656,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         Generate a JSON keyed chain representation.
 
-        This will be writen to the filepath or filelike object if passed.
+        This will be written to the filepath or filelike object if passed.
 
         Parameters
         ----------
@@ -732,7 +732,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         Generate a MessagePack keyed chain representation.
 
-        This will be writen to the filepath or filelike object if passed.
+        This will be written to the filepath or filelike object if passed.
 
         Parameters
         ----------
@@ -958,7 +958,7 @@ class KeyedChain:
         The ``func`` function is applied to each keyed dict contained
         in the ``KeyedChain``. When it evaluates to a truthy value,
         the ``GufeTokenizable`` is created and yielded. Dependencies
-        of this ``GufeTokenizable`` are derived from preceeding
+        of this ``GufeTokenizable`` are derived from preceding
         portions of the ``KeyedChain``.
 
         Example

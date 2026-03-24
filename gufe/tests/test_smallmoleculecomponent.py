@@ -235,7 +235,7 @@ class TestSmallMoleculeComponentConversion:
         assert off_ethane.name == "ethane"
 
 
-@pytest.mark.skipif(not HAS_OFFTK, reason="no openff tookit available")
+@pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentPartialCharges:
     @pytest.fixture(scope="function")
     def charged_off_ethane(self, named_ethane):

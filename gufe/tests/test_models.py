@@ -95,6 +95,7 @@ def test_openmmffsettings_schema():
                     "amber/tip3p_standard.xml",
                     "amber/tip3p_HFE_multivalent.xml",
                     "amber/phosaa10.xml",
+                    "amber/lipid17_merged.xml",
                 ],
                 "items": {"type": "string"},
                 "title": "Forcefields",
