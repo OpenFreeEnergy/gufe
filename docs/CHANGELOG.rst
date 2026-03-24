@@ -4,6 +4,16 @@ CHANGELOG
 
 .. current developments
 
+v1.9.0
+====================
+
+**Changed:**
+
+* `amber/lipid17_merged.xml` is now defined by default in `forcefield` list
+  in :class:`OpenMMSystemGeneratorFFSettings` (PR #767).
+
+
+
 
 v1.9.0
 ====================
