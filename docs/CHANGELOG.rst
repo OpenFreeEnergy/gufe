@@ -4,15 +4,6 @@ CHANGELOG
 
 .. current developments
 
-v1.9.0
-====================
-
-**Added:**
-
-* Adds a ComponentValidationError type to be used specifically
-  when Component.validate() fails.
-
-
 
 v1.9.0
 ====================
@@ -20,9 +11,10 @@ v1.9.0
 **Added:**
 
 * Added a how-to guide for defining a custom ``Component`` (`PR #667 <https://github.com/OpenFreeEnergy/gufe/pull/667>`_).
-* Adds a .validate() method to gufe Components (`PR #732 <https://github.com/OpenFreeEnergy/gufe/pull/732>`_).
+* Added a ``.validate()`` method to gufe Components (`PR #732 <https://github.com/OpenFreeEnergy/gufe/pull/732>`_).
 * ``gufe.protocol.protocoldag.execute_DAG`` now has the ability to resume DAG execution by passing in a path for results caching into ``cache_basedir`` (`PR #738 <https://github.com/OpenFreeEnergy/gufe/pull/738>`_).
-* Adds two new Components, a ``SolvatedPDBComponent`` for explicitly solvated systems, including periodic box vectors, and a ``ProteinMembraneComponent`` that inherits from ``SolvatedPDBComponent`` and can be used downstream for type checking of solvated protein membrane appropriate settings (`PR #635 <https://github.com/OpenFreeEnergy/gufe/pull/635>`_).
+* Added two new Components, a ``SolvatedPDBComponent`` for explicitly solvated systems, including periodic box vectors, and a ``ProteinMembraneComponent`` that inherits from ``SolvatedPDBComponent`` and can be used downstream for type checking of solvated protein membrane appropriate settings (`PR #635 <https://github.com/OpenFreeEnergy/gufe/pull/635>`_).
+* Added a ``ComponentValidationError`` type to be used specifically when ``Component.validate()``  fails (`PR #766 <https://github.com/OpenFreeEnergy/gufe/pull/766>`_).
 
 **Changed:**
 
