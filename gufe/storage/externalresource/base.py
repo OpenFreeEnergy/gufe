@@ -4,7 +4,8 @@ import abc
 import dataclasses
 import hashlib
 import pathlib
-from typing import ContextManager, Iterator
+from collections.abc import Iterator
+from typing import ContextManager
 
 
 @dataclasses.dataclass

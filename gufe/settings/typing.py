@@ -5,7 +5,7 @@
 Custom types that inherit from openff.units.Quantity and are pydantic-compatible.
 """
 
-from typing import Annotated, Any, Dict, TypeAlias
+from typing import Annotated, Any, TypeAlias
 
 import numpy
 from openff.units import Quantity
@@ -43,7 +43,7 @@ def _plain_quantity_validator(
         raise ValueError(f"Invalid type {type(value)} for Quantity")
 
 
-def _plain_quantity_serializer(quantity: Quantity) -> Dict[str, Any]:
+def _plain_quantity_serializer(quantity: Quantity) -> dict[str, Any]:
     return {
         "val": quantity.m,
         "unit": str(quantity.units),
