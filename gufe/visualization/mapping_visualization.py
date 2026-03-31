@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 from collections.abc import Collection
 from itertools import chain
-from typing import Any, Dict, Tuple, Union
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -303,7 +303,7 @@ def draw_unhighlighted_molecule(mol, d2d=None):
     )
 
 
-def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[np.float64]]) -> Chem.Mol:
+def _translate(mol: Chem.Mol, shift: tuple[float, float, float] | NDArray[np.float64]) -> Chem.Mol:
     """
         shifts the molecule by the shift vector
 
@@ -329,7 +329,7 @@ def _translate(mol: Chem.Mol, shift: Union[Tuple[float, float, float], NDArray[n
 
 
 @requires_package("py3Dmol")
-def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: Dict[int, int]) -> None:
+def _add_spheres(view, mol1: Chem.Mol, mol2: Chem.Mol, mapping: dict[int, int]) -> None:
     """
         will add spheres according to mapping to the view. (inplace!)
 

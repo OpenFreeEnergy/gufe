@@ -13,13 +13,12 @@ import logging
 import re
 import warnings
 import weakref
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Callable, TextIO
+from typing import Any, BinaryIO, Self, TextIO
 
 import networkx as nx
-from typing_extensions import Self
 
 from gufe.compression import zst_compress, zst_decompress
 from gufe.serialization.json import (

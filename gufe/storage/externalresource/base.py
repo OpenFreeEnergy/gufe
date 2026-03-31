@@ -4,7 +4,8 @@ import abc
 import dataclasses
 import hashlib
 import pathlib
-from typing import ContextManager, Iterator
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 
 
 @dataclasses.dataclass
@@ -77,7 +78,7 @@ class ExternalStorage(abc.ABC):
         # now some consumers of this may not work with byteslike
         return self._get_filename(location)
 
-    def load_stream(self, location) -> ContextManager:
+    def load_stream(self, location) -> AbstractContextManager:
         """
         Load data for the given chunk in a context manager.
 

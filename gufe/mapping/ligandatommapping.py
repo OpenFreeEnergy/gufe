@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -203,10 +203,10 @@ class LigandAtomMapping(AtomMapping):
     @requires_package("py3Dmol")
     def view_3d(
         self,
-        spheres: Optional[bool] = True,
-        show_atomIDs: Optional[bool] = False,
-        style: Optional[str] = "stick",
-        shift: Optional[Union[Tuple[float, float, float], NDArray[np.float64]]] = None,
+        spheres: bool | None = True,
+        show_atomIDs: bool | None = False,
+        style: str | None = "stick",
+        shift: tuple[float, float, float] | NDArray[np.float64] | None = None,
     ) -> py3Dmol.view:
         """
         Render relative transformation edge in 3D using py3Dmol.
