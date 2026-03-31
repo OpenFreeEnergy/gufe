@@ -283,17 +283,17 @@ def nested_key_moved(dct, old_name, new_name):
     labels that match Python namespace/list notations. That is, if ``dct``
     is the following dict::
 
-        {'first': {'inner': ['list', 'of', 'words']}}
+        {"first": {"inner": ["list", "of", "words"]}}
 
     then the label ``'first.inner[1]'`` would refer to the word ``'of'``.
 
     In that case, the following call::
 
-        nested_key_moved(dct, 'first.inner[1]', 'second')
+        nested_key_moved(dct, "first.inner[1]", "second")
 
     would result in the dictionary::
 
-        {'first': {'inner': ['list', 'words']}, 'second': 'of'}
+        {"first": {"inner": ["list", "words"]}, "second": "of"}
 
     This is particular useful for things like protocol settings, which
     present as nested objects like this.

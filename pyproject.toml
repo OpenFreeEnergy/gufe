@@ -42,6 +42,7 @@ fallback_version = "0.0.0"
 line-length = 120
 exclude = [ "gufe/vendor/*" ]
 
+format.docstring-code-format = true
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 lint.select = [
   "F", # Pyflakes
