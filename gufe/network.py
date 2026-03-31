@@ -2,7 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from collections.abc import Generator, Iterable
-from typing import Self  # Self is included in typing as of python 3.11
+from typing import Self
 
 import networkx as nx
 
