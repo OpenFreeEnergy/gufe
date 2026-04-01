@@ -29,7 +29,6 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
 
     @pytest.fixture(scope="session")
     def instance(self, PDB_hif2a_solvated_ligands):
-        # with gzip.open(PDB_hif2a_solvated_ligands, "rb") as gzf:
         yield self.cls.from_pdb_file(PDB_hif2a_solvated_ligands, name="Steve")
 
     def test_from_pdb_file_sets_box_vectors(self, instance):
@@ -39,8 +38,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(3)
 
     def test_requires_box_vectors(self, PDB_hif2a_solvated_ligands):
-        with gzip.open(PDB_hif2a_solvated_ligands, "rb") as gzf:
-            prot = ProteinComponent.from_pdb_file(gzf)
+        prot = ProteinComponent.from_pdb_file(PDB_hif2a_solvated_ligands)
 
         with pytest.raises(ValueError, match="box_vectors must be provided"):
             self.cls(
