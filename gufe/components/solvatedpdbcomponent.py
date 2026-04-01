@@ -1,5 +1,6 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+import gzip
 import warnings
 from os import PathLike
 from typing import TextIO
@@ -254,7 +255,11 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDB file.
         """
-        pdb = PDBFile(pdb_file)
+        if str(pdb_file).endswith(".gz"):
+            with gzip.open(pdb_file) as f:
+                pdb = PDBFile(f)
+        else:
+            pdb = PDBFile(pdb_file)
 
         box = cls._resolve_box_vectors(
             pdb,

@@ -1,5 +1,6 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+import gzip
 import io
 from os import PathLike
 from string import digits
@@ -175,7 +176,11 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        openmm_PDBFile = PDBFile(pdb_file)
+        if str(pdb_file).endswith(".gz"):
+            with gzip.open(pdb_file) as f:
+                openmm_PDBFile = PDBFile(f)
+        else:
+            openmm_PDBFile = PDBFile(pdb_file)
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
 
     @classmethod

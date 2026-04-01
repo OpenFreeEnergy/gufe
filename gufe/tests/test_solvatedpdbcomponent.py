@@ -29,8 +29,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
 
     @pytest.fixture(scope="session")
     def instance(self, PDB_hif2a_solvated_ligands):
-        with gzip.open(PDB_hif2a_solvated_ligands, "rb") as gzf:
-            yield self.cls.from_pdb_file(gzf, name="Steve")
+        # with gzip.open(PDB_hif2a_solvated_ligands, "rb") as gzf:
+        yield self.cls.from_pdb_file(PDB_hif2a_solvated_ligands, name="Steve")
 
     def test_from_pdb_file_sets_box_vectors(self, instance):
         box = instance.box_vectors
