@@ -13,7 +13,6 @@ license = "MIT"
 license-files = [ "LICENSE" ]
 authors = [ { name = "The OpenFE developers", email = "openfe@omsf.io" } ]
 requires-python = ">=3.11,<3.14"
-
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
@@ -31,9 +30,7 @@ urls = { Homepage = "https://github.com/OpenFreeEnergy/gufe" }
 [tool.setuptools]
 zip-safe = false
 include-package-data = true
-
-[tool.setuptools.packages]
-find = { namespaces = false }
+packages.find = { namespaces = false }
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
@@ -45,8 +42,8 @@ exclude = [ "gufe/vendor/*" ]
 format.docstring-code-format = true
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 lint.select = [
-  "F", # Pyflakes
-  "I", # isort
+  "F",  # Pyflakes
+  "I",  # isort
   # "E", # pycodestyle errors
   # "C901"  # mccabe complexity  TODO: add this back in
   "UP",
@@ -60,28 +57,9 @@ lint.ignore = [
   "F405", # undefined imports (TODO: fix these)
   "F841", # vars assigned but not used (TODO: fix these)
 ]
-
 # ignore "unused import" error for all __init__.py files
 lint.per-file-ignores."__init__.py" = [ "F401" ]
-
 lint.isort.known-first-party = [ "gufe" ]
-
-[tool.coverage.run]
-omit = [
-  "*/_version.py",
-  "*/tests/dev/*py",
-  "gufe/tests/*",
-  "gufe/vendor/*",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "pragma: no-cover",
-  "-no-cov",
-  "raise NotImplementedError",
-  '\.\.\.',
-]
 
 [tool.mypy]
 files = "gufe"
@@ -92,9 +70,24 @@ module = "gufe.vendor.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "rdkit.Chem.AllChem.*" # TODO: troubleshoot these missing imports, add tests
-follow_imports = 'skip'
+module = "rdkit.Chem.AllChem.*"  # TODO: troubleshoot these missing imports, add tests
+follow_imports = "skip"
 follow_imports_for_stubs = true
+
+[tool.coverage]
+run.omit = [
+  "*/_version.py",
+  "*/tests/dev/*py",
+  "gufe/tests/*",
+  "gufe/vendor/*",
+]
+report.exclude_lines = [
+  "-no-cov",
+  "\\.\\.\\.",
+  "pragma: no cover",
+  "pragma: no-cover",
+  "raise NotImplementedError",
+]
 
 [tool.interrogate]
 fail-under = 0
