@@ -201,7 +201,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             the deserialized molecule
         """
         if str(pdbx_file).endswith(".gz"):
-            with gzip.open(pdbx_file) as f:
+            with gzip.open(pdbx_file, mode="rt") as f:
                 openmm_PDBxFile = PDBxFile(f)
         else:
             openmm_PDBxFile = PDBxFile(pdbx_file)

@@ -288,7 +288,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
         """
         if str(pdbx_file).endswith(".gz"):
-            with gzip.open(pdbx_file) as f:
+            with gzip.open(pdbx_file, mode="rt") as f:
                 pdbx = PDBxFile(f)
         else:
             pdbx = PDBxFile(pdbx_file)
