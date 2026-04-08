@@ -176,8 +176,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        if str(pdb_file).endswith(".gz"):
-            with gzip.open(pdb_file) as f:
+        if (pdb_str := str(pdb_file)).endswith(".gz"):
+            with gzip.open(pdb_str) as f:
                 openmm_PDBFile = PDBFile(f)
         else:
             openmm_PDBFile = PDBFile(pdb_file)
@@ -200,8 +200,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        if str(pdbx_file).endswith(".gz"):
-            with gzip.open(pdbx_file, mode="rt") as f:
+        if (pdbx_str := str(pdbx_file)).endswith(".gz"):
+            with gzip.open(pdbx_str, mode="rt") as f:
                 openmm_PDBxFile = PDBxFile(f)
         else:
             openmm_PDBxFile = PDBxFile(pdbx_file)
