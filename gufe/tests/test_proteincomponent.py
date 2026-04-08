@@ -120,9 +120,12 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
 
-    def test_from_pdbx_file(self, PDBx_181L_path):
+    def test_from_pdbx_file(self, PDBx_181L_path, PDBx_181L_gz_path):
         p = self.cls.from_pdbx_file(str(PDBx_181L_path), name="Steve")
-
+        p_gz = self.cls.from_pdbx_file(str(PDBx_181L_gz_path), name="Steve")
+        # footgun? this test requires that the .pdb and .pdb.gz files contain the same information
+        # we could gzip during this test instead
+        assert p == p_gz
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
         assert p.to_rdkit().GetNumAtoms() == 2639
