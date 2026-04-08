@@ -76,7 +76,7 @@ _benchmark_pdb_names = [
 ]
 
 PDB_ZENODO_LOADERS = {name: PoochFileLike(name) for name in _benchmark_pdb_names}
-PDB_FILE_LOADERS = {name: lambda: get_test_filename(name) for name in ["181l.pdb.gz", "181l.pdb"]}
+PDB_FILE_LOADERS = {name: lambda: get_test_filename(name) for name in ["181l.pdb"]}
 ALL_PDB_LOADERS = dict(**PDB_ZENODO_LOADERS, **PDB_FILE_LOADERS)
 
 

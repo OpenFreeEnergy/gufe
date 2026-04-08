@@ -200,9 +200,8 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         out_file = tmp_path / out_file_name
 
         p.to_pdb_file(str(out_file))
-        # strip .gz so that we're checking both the .pdb and .pdb.gz against
-        # the loaded .pdb. this should make sure the .pdb and .pdb.gz are equivalent
-        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path.strip(".gz")]()
+
+        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         # generate openMM reference file:
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
@@ -234,10 +233,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_openmm_positions(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-
-        # strip .gz so that we're checking both the .pdb and .pdb.gz against
-        # the loaded .pdb. this should make sure the .pdb and .pdb.gz are equivalent
-        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path.strip(".gz")]()
+        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
         openmm_pos = openmm_pdb.positions
@@ -255,10 +251,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     @pytest.mark.skipif(not OPENMM_VERSION, reason="OpenMM not installed")
     def test_to_openmm_topology(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-
-        # strip .gz so that we're checking both the .pdb and .pdb.gz against
-        # the loaded .pdb. this should make sure the .pdb and .pdb.gz are equivalent
-        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path.strip(".gz")]()
+        ref_in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
 
         openmm_pdb = pdbfile.PDBFile(ref_in_pdb_io)
         openmm_top = openmm_pdb.topology
