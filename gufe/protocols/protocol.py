@@ -71,10 +71,26 @@ class ProtocolResult(GufeTokenizable):
         return self._data
 
     @abc.abstractmethod
-    def get_estimate(self) -> Quantity: ...
+    def get_estimate(self) -> Quantity:
+        """Return the best possible estimate of the free energy difference
+        given the preserved data.
+
+        """
+        ...
 
     @abc.abstractmethod
-    def get_uncertainty(self) -> Quantity: ...
+    def get_uncertainty(self) -> Quantity:
+        """Return the uncertainty in the estimate returned by :meth:`get_estimate`.
+
+        """
+        ...
+
+    def get_convergence(self) -> Quantity:
+        """Return the uncertainty in the estimate as a function of increasing
+        `ProtocolDAGResult` inclusion.
+        
+        """
+        raise NotImplementedError
 
 
 class Protocol(GufeTokenizable):
