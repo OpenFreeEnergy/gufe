@@ -35,7 +35,7 @@ def PDB_181L_mutant(PDB_181L_path):
 @pytest.fixture
 def custom_pdb_ion(PDB_181L_path):
     def _make_custom_pdb_ion(new_ion: str):
-        with open(PDB_181L_path, "r") as f:
+        with open(PDB_181L_path) as f:
             orig_pdb = f.read()
 
         str_to_replace = "HETATM 2615 CL  "  #  CL S 173      43.141  16.447   1.769  1.00  0.00          CL"

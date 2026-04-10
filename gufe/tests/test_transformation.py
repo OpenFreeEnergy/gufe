@@ -36,7 +36,7 @@ def complex_equilibrium(solvated_complex):
 
 class TestTransformation(GufeTokenizableTestsMixin):
     cls = Transformation
-    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-13cfc31d879fd8877e6a57558c2e9f38>, name=None)"
+    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-e74b8a34526e7a7a5541d63e9ef511d5>, name=None)"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -93,7 +93,11 @@ class TestTransformation(GufeTokenizableTestsMixin):
             validate=True,
         )
 
-    def test_validation_bad_state(self, solvated_ligand, solvated_complex, tmpdir):
+    def test_validation_bad_state(
+        self,
+        solvated_ligand,
+        solvated_complex,
+    ):
         # show that instantiation without validation is possible (even though it's wrong)
         Transformation(
             solvated_ligand,
@@ -206,7 +210,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
 class TestNonTransformation(GufeTokenizableTestsMixin):
     cls = NonTransformation
-    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-13cfc31d879fd8877e6a57558c2e9f38>, name=None)"
+    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-e74b8a34526e7a7a5541d63e9ef511d5>, name=None)"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):
@@ -259,7 +263,7 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         )
 
-    def test_validation_bad_state(self, solvated_ligand, solvated_complex, tmpdir):
+    def test_validation_bad_state(self, solvated_ligand, solvated_complex):
         # show that instantiation without validation is possible (even though it's wrong)
         NonTransformation(
             None,

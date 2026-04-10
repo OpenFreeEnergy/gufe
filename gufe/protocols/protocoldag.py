@@ -2,7 +2,10 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import shutil
+import warnings
 from collections import defaultdict
+from collections.abc import Iterable
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +14,7 @@ import networkx as nx
 from gufe.storage.externalresource.base import ExternalStorage
 
 from ..tokenization import GufeKey, GufeTokenizable
-from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolUnitFailureError
+from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolDAGExecutionError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
 
@@ -373,16 +376,44 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         return cls(**dct)
 
 
+def _get_valid_unit_results(
+    protocoldag: ProtocolDAG, unit_results: Iterable[ProtocolUnitResult]
+) -> dict[GufeKey, ProtocolUnitResult]:
+    """Given a ProtocolDAG and a set of unit_results, determine which protocol_units of the DAG can be skipped during execution."""
+
+    # source_key isn't very stable, but we probably don't want to resume if gufe stability has changed
+    result_pu_key_to_pur: dict[GufeKey, ProtocolUnitResult] = {ur.source_key: ur for ur in unit_results}
+    for pu in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
+        invalid_results = []
+        if pu.key in result_pu_key_to_pur:  # units we want to skip during execution
+            pass
+        else:  # units we want to run (or re-run) during execution
+            # if this unit needs to be run, then everything downstream of it needs to be re-run as well
+            for downstream_unit in nx.ancestors(protocoldag.graph, pu):
+                p = result_pu_key_to_pur.pop(downstream_unit.key, False)
+                if p:
+                    invalid_results.append(p)
+
+        if invalid_results:
+            raise ProtocolDAGExecutionError(
+                f"The following results have been found in the cache, but are invalid due to missing upstream results for {pu}: {invalid_results}.\nPlease remove the cache and rerun this transformation."
+            )
+
+    return result_pu_key_to_pur
+
+
 def execute_DAG(
     protocoldag: ProtocolDAG,
     *,
     shared_storage: ExternalStorage,
     perm_storage: ExternalStorage,
     scratch_basedir: Path,
+    cache_basedir: Path | None = None,
     stderr_basedir: Path | None = None,
     stdout_basedir: Path | None = None,
     keep_shared: bool = False,
     keep_scratch: bool = False,
+    keep_cache: bool = False,
     raise_error: bool = True,
     n_retries: int = 0,
 ) -> ProtocolDAGResult:
@@ -401,6 +432,12 @@ def execute_DAG(
     scratch_basedir : Path
         Base directory for ProtocolUnit scratch space. Each ProtocolUnit gets
         its own scratch directory under this base directory.
+        Filesystem path to use for `ProtocolUnit` `scratch` space.
+    cache_basedir : Path | None = None
+        Filesystem path to use for `ProtocolUnitResult` caching during
+        execution. If ``None`` (default), results will not be cached
+        and it will not be able to resume DAG execution from the last
+        successfully finished `ProtocolUnit`.
     stderr_basedir : Path | None
         Base directory for ProtocolUnit stderr archiving. If None, stderr
         is not archived.
@@ -413,6 +450,11 @@ def execute_DAG(
     keep_scratch : bool
         If True, scratch directories are not removed after each ProtocolUnit
         execution. Default is False.
+        If True, don't remove scratch directories for a `ProtocolUnit` after
+        it is executed.
+    keep_cache : bool
+        If True, don't remove the cache directory which contains
+        the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`/s.
     raise_error : bool
         If True, raises an exception when a ProtocolUnit fails. If False,
         failures are stored as ProtocolUnitFailure objects in the returned
@@ -432,34 +474,56 @@ def execute_DAG(
     each ProtocolUnit's dependencies are executed before the ProtocolUnit itself.
     If a ProtocolUnit fails and raise_error is True, execution stops immediately.
     Otherwise, execution continues with the next ProtocolUnit.
+
+    Raises
+    ------
+    ProtocolDAGExecutionError
+        If the `ProtocolDAG` cannot be executed due to an invalid cache state.
+
     """
     if n_retries < 0:
         raise ValueError("Must give positive number of retries")
 
-    # iterate in DAG order
-    results: dict[GufeKey, ProtocolUnitResult] = {}
+    all_cached_results: list[ProtocolUnitResult] = []  # store all unitresults found in the cache
+    if cache_basedir is not None:
+        dag_unitresults_cache = cache_basedir / f"{str(protocoldag.key)}-results_cache"
+        dag_unitresults_cache.mkdir(exist_ok=True, parents=True)
+
+        for file in dag_unitresults_cache.rglob("*.json"):
+            try:
+                unit_result = ProtocolUnitResult.from_json(file)
+            except JSONDecodeError as e:
+                warnings.warn(f"Unable to read file, skipping {file}: {e}")
+            else:
+                all_cached_results.append(unit_result)
+
+    # handle results & optionally caching
+    results: dict[GufeKey, ProtocolUnitResult] = _get_valid_unit_results(protocoldag, all_cached_results)
     all_results = []  # successes AND failures
     shared_paths = []
-    for unit in protocoldag.protocol_units:
-        # translate each `ProtocolUnit` in input into corresponding
-        # `ProtocolUnitResult`
+    for unit in protocoldag.protocol_units:  # protocol_units is in DAG-dependency-order
+        # If we already have results, skip execution
+        if unit.key in results:
+            all_results.append(results[unit.key])
+            continue
+        # translate each `ProtocolUnit` in input into corresponding `ProtocolUnitResult`
         inputs = _pu_to_pur(unit.inputs, results)
 
         attempt = 0
         result = None
         while attempt <= n_retries:
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
-            scratch.mkdir()
+            scratch.mkdir(exist_ok=True)
 
             stderr = None
             if stderr_basedir:
                 stderr = stderr_basedir / f"stderr_{str(unit.key)}_attempt_{attempt}"
-                stderr.mkdir()
+                stderr.mkdir(exist_ok=True)
 
             stdout = None
             if stdout_basedir:
                 stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
-                stdout.mkdir()
+                stdout.mkdir(exist_ok=True)
 
             # execute
             with Context(
@@ -478,6 +542,10 @@ def execute_DAG(
             if result.ok():
                 # attach result to this `ProtocolUnit`
                 results[unit.key] = result
+
+                # Serialize results if requested
+                if cache_basedir is not None:
+                    result.to_json(dag_unitresults_cache / f"{str(unit.key)}_unitresults.json")
                 break
             attempt += 1
 
@@ -487,6 +555,9 @@ def execute_DAG(
     if not keep_shared:
         for shared_path in shared_paths:
             shutil.rmtree(shared_path)
+
+    if not keep_cache and cache_basedir is not None:
+        shutil.rmtree(dag_unitresults_cache)
 
     return ProtocolDAGResult(
         name=protocoldag.name,
@@ -516,6 +587,7 @@ def _pu_to_pur(
     replaced with its corresponding `ProtocolUnitResult`.
 
     """
+
     if isinstance(inputs, dict):
         return {key: _pu_to_pur(value, mapping) for key, value in inputs.items()}
     elif isinstance(inputs, list):

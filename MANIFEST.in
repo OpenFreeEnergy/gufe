@@ -5,3 +5,4 @@ recursive-include gufe/tests/data/ *.cif
 recursive-include gufe/tests/data/ *.mol2
 recursive-include gufe/tests/data/ *.json
 recursive-include gufe/tests/data/ *.graphml
+recursive-include gufe/tests/data/ *.gz

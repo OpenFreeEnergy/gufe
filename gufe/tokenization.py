@@ -13,13 +13,12 @@ import logging
 import re
 import warnings
 import weakref
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Callable, TextIO
+from typing import Any, BinaryIO, Self, TextIO
 
 import networkx as nx
-from typing_extensions import Self
 
 from gufe.compression import zst_compress, zst_decompress
 from gufe.serialization.json import (
@@ -284,17 +283,17 @@ def nested_key_moved(dct, old_name, new_name):
     labels that match Python namespace/list notations. That is, if ``dct``
     is the following dict::
 
-        {'first': {'inner': ['list', 'of', 'words']}}
+        {"first": {"inner": ["list", "of", "words"]}}
 
     then the label ``'first.inner[1]'`` would refer to the word ``'of'``.
 
     In that case, the following call::
 
-        nested_key_moved(dct, 'first.inner[1]', 'second')
+        nested_key_moved(dct, "first.inner[1]", "second")
 
     would result in the dictionary::
 
-        {'first': {'inner': ['list', 'words']}, 'second': 'of'}
+        {"first": {"inner": ["list", "words"]}, "second": "of"}
 
     This is particular useful for things like protocol settings, which
     present as nested objects like this.
@@ -656,7 +655,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         Generate a JSON keyed chain representation.
 
-        This will be writen to the filepath or filelike object if passed.
+        This will be written to the filepath or filelike object if passed.
 
         Parameters
         ----------
@@ -732,7 +731,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
         """
         Generate a MessagePack keyed chain representation.
 
-        This will be writen to the filepath or filelike object if passed.
+        This will be written to the filepath or filelike object if passed.
 
         Parameters
         ----------
@@ -958,7 +957,7 @@ class KeyedChain:
         The ``func`` function is applied to each keyed dict contained
         in the ``KeyedChain``. When it evaluates to a truthy value,
         the ``GufeTokenizable`` is created and yielded. Dependencies
-        of this ``GufeTokenizable`` are derived from preceeding
+        of this ``GufeTokenizable`` are derived from preceding
         portions of the ``KeyedChain``.
 
         Example

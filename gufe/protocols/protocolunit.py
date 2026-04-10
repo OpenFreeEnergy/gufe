@@ -15,7 +15,7 @@ import traceback
 import uuid
 from copy import copy
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from gufe.storage.externalresource.base import ExternalStorage
 
@@ -69,8 +69,13 @@ class Context:
 
     Examples
     --------
-    >>> with Context(dag_label="my_dag", unit_label="unit1", scratch="/tmp/scratch",
-    ...             shared_storage=shared_store, permanent_storage=perm_store) as ctx:
+    >>> with Context(
+    ...     dag_label="my_dag",
+    ...     unit_label="unit1",
+    ...     scratch="/tmp/scratch",
+    ...     shared_storage=shared_store,
+    ...     permanent_storage=perm_store,
+    ... ) as ctx:
     ...     # use ctx within the ProtocolUnit._execute method
     ...     pass
     """
@@ -82,8 +87,8 @@ class Context:
         scratch: Path,
         shared_storage: ExternalStorage,
         permanent_storage: ExternalStorage,
-        stderr: Optional[Path] = None,
-        stdout: Optional[Path] = None,
+        stderr: Path | None = None,
+        stdout: Path | None = None,
     ):
         self.scratch = scratch
         self.shared = StorageManager(
