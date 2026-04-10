@@ -160,7 +160,7 @@ def test_execute_dag(
         if keep_shared:
             assert shared_storage.exists(shared_file)
         else:
-            assert not os.path.exists(shared_file)
+            assert not shared_storage.exists(shared_file)
         if keep_scratch:
             assert os.path.exists(scratch_file)
         else:
