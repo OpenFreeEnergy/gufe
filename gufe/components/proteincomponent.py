@@ -1,6 +1,5 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import gzip
 import io
 from os import PathLike
 from string import digits
@@ -11,6 +10,8 @@ from openmm import app
 from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
+
+from gufe.utils import open_text_stream
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
@@ -176,11 +177,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        if (pdb_str := str(pdb_file)).endswith(".gz"):
-            with gzip.open(pdb_str) as f:
-                openmm_PDBFile = PDBFile(f)
-        else:
-            openmm_PDBFile = PDBFile(pdb_file)
+        with open_text_stream(pdb_file) as pdb_file_stream:
+            openmm_PDBFile = PDBFile(pdb_file_stream)
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
 
     @classmethod
@@ -200,11 +198,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        if (pdbx_str := str(pdbx_file)).endswith(".gz"):
-            with gzip.open(pdbx_str, mode="rt") as f:
-                openmm_PDBxFile = PDBxFile(f)
-        else:
-            openmm_PDBxFile = PDBxFile(pdbx_file)
+        with open_text_stream(pdbx_file) as pdbx_file_stream:
+            openmm_PDBxFile = PDBxFile(pdbx_file_stream)
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 
     @classmethod

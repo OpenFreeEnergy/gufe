@@ -1,6 +1,5 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
-import gzip
 import warnings
 from os import PathLike
 from typing import TextIO
@@ -12,6 +11,8 @@ from openff.units.openmm import from_openmm
 from openmm import unit as omm_unit
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
+
+from gufe.utils import open_text_stream
 
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
@@ -255,11 +256,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDB file.
         """
-        if (pdb_str := str(pdb_file)).endswith(".gz"):
-            with gzip.open(pdb_str) as f:
-                pdb = PDBFile(f)
-        else:
-            pdb = PDBFile(pdb_file)
+        with open_text_stream(pdb_file) as pdb_file_stream:
+            pdb = PDBFile(pdb_file_stream)
 
         box = cls._resolve_box_vectors(
             pdb,
@@ -287,11 +285,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
         """
-        if (pdbx_str := str(pdbx_file)).endswith(".gz"):
-            with gzip.open(pdbx_str, mode="rt") as f:
-                pdbx = PDBxFile(f)
-        else:
-            pdbx = PDBxFile(pdbx_file)
+        with open_text_stream(pdbx_file) as pdbx_file_stream:
+            pdbx = PDBxFile(pdbx_file_stream)
 
         box = cls._resolve_box_vectors(
             pdbx,

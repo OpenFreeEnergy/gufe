@@ -1,6 +1,9 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
+import bz2
+import gzip
 import io
+import lzma
 import os
 from unittest import mock
 
@@ -120,11 +123,58 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"
 
+    @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
+    def test_from_textIO(self, in_pdb_path):
+        in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
+        with open(in_pdb_io, "rb") as pdb_textIO:
+            p = self.cls.from_pdb_file(pdb_textIO, name="Steve")
+
+            assert isinstance(p, ProteinComponent)
+            assert p.name == "Steve"
+
+    @pytest.mark.parametrize(
+        "compress_fn, suffix",
+        [
+            (gzip.open, ".gz"),
+            (bz2.open, ".bz2"),
+            (lzma.open, ".xz"),
+        ],
+    )
+    def test_zipped_PDB(self, PDB_181L_path, compress_fn, suffix, tmp_path):
+        # create compressed version on the fly
+        compressed_path = tmp_path / f"181l.pdb{suffix}"
+        with open(PDB_181L_path, "rb") as f_in, compress_fn(compressed_path, "wb") as f_out:
+            f_out.write(f_in.read())
+
+        p_ref = self.cls.from_pdb_file(PDB_181L_path)
+        p_compressed = self.cls.from_pdb_file(compressed_path)
+
+        assert p_ref == p_compressed
+
+    @pytest.mark.parametrize(
+        "compress_fn, suffix",
+        [
+            (gzip.open, ".gz"),
+            (bz2.open, ".bz2"),
+            (lzma.open, ".xz"),
+        ],
+    )
+    def test_zipped_PDB_textIO(self, PDB_181L_path, compress_fn, suffix, tmp_path):
+        # create compressed version on the fly
+        compressed_path = tmp_path / f"181l.pdb{suffix}"
+        with open(PDB_181L_path, "rb") as f_in, compress_fn(compressed_path, "wb") as f_out:
+            f_out.write(f_in.read())
+
+        p_ref = self.cls.from_pdb_file(PDB_181L_path)
+        with open(compressed_path, "rb") as compressed_textIO:
+            p_compressed = self.cls.from_pdb_file(compressed_textIO)
+
+        assert p_ref == p_compressed
+
     def test_from_pdbx_file(self, PDBx_181L_path, PDBx_181L_gz_path):
+        # This tests loading a PDBx (same as cif) and a gziped PDBx
         p = self.cls.from_pdbx_file(str(PDBx_181L_path), name="Steve")
         p_gz = self.cls.from_pdbx_file(str(PDBx_181L_gz_path), name="Steve")
-        # footgun? this test requires that the .pdb and .pdb.gz files contain the same information
-        # we could gzip during this test instead
         assert p == p_gz
         assert isinstance(p, ProteinComponent)
         assert p.name == "Steve"

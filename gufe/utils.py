@@ -1,10 +1,70 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
+import bz2
 import functools
+import gzip
 import io
+import lzma
 import warnings
 from collections.abc import Callable
+from os import PathLike
+from typing import IO, TextIO
+
+# Magic bytes for compression format detection
+# Reference: https://en.wikipedia.org/wiki/List_of_file_signatures
+MAGIC_BYTES = {
+    b"\x1f\x8b": lambda f: gzip.open(f, "rt"),  # gzip
+    b"\x42\x5a": lambda f: bz2.open(f, "rt"),  # bzip2
+    b"\xfd\x37": lambda f: lzma.open(f, "rt"),  # xz/lzma
+}
+
+
+def open_text_stream(path_or_stream: str | PathLike | IO) -> TextIO:
+    """Open a file path or stream as text, transparently decompressing if needed.
+
+    Supports gzip, bzip2, and lzma/xz compression, detected via magic bytes rather than file extension.
+    Works with both file paths and streams, including non-seekable streams.
+
+    Parameters
+    ----------
+    path_or_stream
+        A file path or an already-open **binary** stream.
+        Text streams are not supported as there is no way to inspect the magic bytes after decoding.
+
+    Returns
+    -------
+    TextIO
+        An open text stream, decompressed if necessary.
+    """
+    if isinstance(path_or_stream, (str, PathLike)):
+        f = open(path_or_stream, "rb")
+    else:
+        f = path_or_stream
+        if hasattr(f, "mode") and "b" not in f.mode:
+            raise ValueError(
+                "Streams must be opened in binary mode ('rb'), not text mode. open_text_stream will handle decoding."
+            )
+
+    # read the header bytes, then reconstruct the stream so the
+    # parser sees the full content regardless of seekability
+    header = f.read(2)
+
+    if f.seekable():
+        f.seek(0)
+        buffered = f
+    else:
+        remainder = f.read()
+        buffered = io.BytesIO(header + remainder)
+
+    opener = MAGIC_BYTES.get(header)
+    if opener:
+        return opener(buffered)
+
+    # wrap in TextIOWrapper if still binary
+    if isinstance(buffered, (io.RawIOBase, io.BufferedIOBase)):
+        return io.TextIOWrapper(buffered)
+    return buffered
 
 
 class ensure_filelike:
