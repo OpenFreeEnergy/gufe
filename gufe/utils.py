@@ -8,6 +8,7 @@ import io
 import lzma
 import warnings
 from collections.abc import Callable
+from contextlib import nullcontext
 from os import PathLike
 from typing import IO, TextIO
 
@@ -35,13 +36,32 @@ def open_text_stream(path_or_stream: str | PathLike | IO) -> TextIO:
     Returns
     -------
     TextIO
-        An open text stream, decompressed if necessary.
+        Should be used as a context manager to ensure the stream is properly closed.
+        If a file path was provided, the underlying file will be closed on exit.
+        If an already-open stream was provided, it will not be closed on exit.
+
+    Raises
+    ------
+    ValueError
+        If a text-mode stream is passed.
+        Streams must be opened in binary mode to allow magic byte inspection.
+
+    Notes
+    -----
+    For seekable streams, the stream is rewound to the start after reading the magic bytes, avoiding loading the file into memory.
+    For non-seekable streams, the entire content is buffered into a ``io.BytesIO`` object.
     """
     if isinstance(path_or_stream, (str, PathLike)):
         f = open(path_or_stream, "rb")
+        own_file = True
     else:
         f = path_or_stream
+        own_file = False
         if hasattr(f, "mode") and "b" not in f.mode:
+            raise ValueError(
+                "Streams must be opened in binary mode ('rb'), not text mode. open_text_stream will handle decoding."
+            )
+        if isinstance(f, io.TextIOBase):
             raise ValueError(
                 "Streams must be opened in binary mode ('rb'), not text mode. open_text_stream will handle decoding."
             )
@@ -52,19 +72,30 @@ def open_text_stream(path_or_stream: str | PathLike | IO) -> TextIO:
 
     if f.seekable():
         f.seek(0)
-        buffered = f
+        if own_file:
+            buffered = f
+        else:
+            # copy into BytesIO so closing our stream never touches the caller's handle
+            buffered = io.BytesIO(f.read())
     else:
         remainder = f.read()
         buffered = io.BytesIO(header + remainder)
 
+    # Check to see if we need to decompress
+    # If we do, then opener will be the function we need
+    # If we don't, then opener will be None
     opener = MAGIC_BYTES.get(header)
-    if opener:
-        return opener(buffered)
 
-    # wrap in TextIOWrapper if still binary
-    if isinstance(buffered, (io.RawIOBase, io.BufferedIOBase)):
-        return io.TextIOWrapper(buffered)
-    return buffered
+    if opener:
+        stream = opener(buffered)
+    elif isinstance(buffered, (io.RawIOBase, io.BufferedIOBase)):
+        # only wrap in TextIOWrapper if it's still a binary stream
+        stream = io.TextIOWrapper(buffered)
+    else:
+        # already a text stream, pass through as-is
+        stream = buffered
+
+    return stream if own_file else nullcontext(stream)
 
 
 class ensure_filelike:

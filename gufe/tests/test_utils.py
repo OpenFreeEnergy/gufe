@@ -1,11 +1,14 @@
 # This code is part of OpenFE and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/openfe
 
+import bz2
+import gzip
 import io
+import lzma
 
 import pytest
 
-from gufe.utils import ensure_filelike
+from gufe.utils import ensure_filelike, open_text_stream
 
 
 @pytest.mark.parametrize("input_type", ["str", "path", "TextIO", "BytesIO", "StringIO"])
@@ -97,3 +100,92 @@ def test_ensure_filelike_default_mode():
     path = "foo.txt"
     loader = ensure_filelike(path)
     assert loader.mode == "r"
+
+
+PLAIN_TEXT = b"OpenFE can be quite useful on real projects\n"
+
+
+@pytest.fixture
+def plain_text_path(tmp_path):
+    p = tmp_path / "test.txt"
+    p.write_bytes(PLAIN_TEXT)
+    return p
+
+
+@pytest.fixture(params=["gz", "bz2", "xz"])
+def compressed_path(tmp_path, request):
+    suffix = request.param
+    p = tmp_path / f"test.txt.{suffix}"
+    openers = {"gz": gzip.open, "bz2": bz2.open, "xz": lzma.open}
+    with openers[suffix](p, "wb") as f:
+        f.write(PLAIN_TEXT)
+    return p
+
+
+class TestOpenTextStream:
+    def test_plain_text_path(self, plain_text_path):
+        with open_text_stream(plain_text_path) as f:
+            assert f.read() == PLAIN_TEXT.decode()
+
+    def test_compressed_path(self, compressed_path):
+        """All three compression formats are detected via magic bytes."""
+        with open_text_stream(compressed_path) as f:
+            assert f.read() == PLAIN_TEXT.decode()
+
+    def test_magic_bytes_not_extension(self, tmp_path):
+        """Compression is detected from magic bytes, not file extension."""
+        p = tmp_path / "test.txt"  # no .gz extension
+        with gzip.open(p, "wb") as f:
+            f.write(PLAIN_TEXT)
+        with open_text_stream(p) as f:
+            assert f.read() == PLAIN_TEXT.decode()
+
+    def test_binary_stream(self, plain_text_path):
+        with open(plain_text_path, "rb") as binary_stream:
+            with open_text_stream(binary_stream) as f:
+                assert f.read() == PLAIN_TEXT.decode()
+
+    def test_compressed_binary_stream(self, compressed_path):
+        with open(compressed_path, "rb") as binary_stream:
+            with open_text_stream(binary_stream) as f:
+                assert f.read() == PLAIN_TEXT.decode()
+
+    def test_text_mode_stream_raises(self, plain_text_path):
+        """Text mode streams raise early with a clear error."""
+        with open(plain_text_path) as text_stream:
+            with pytest.raises(ValueError, match="binary mode"):
+                open_text_stream(text_stream)
+
+    def test_stringio_raises(self):
+        """StringIO is a text stream and should raise."""
+        with pytest.raises(ValueError, match="binary mode"):
+            open_text_stream(io.StringIO(PLAIN_TEXT.decode()))
+
+    def test_non_seekable_stream(self, compressed_path):
+        """Non-seekable streams are buffered into BytesIO."""
+        with open(compressed_path, "rb") as f:
+            non_seekable = io.RawIOBase()
+            non_seekable.read = f.read
+            non_seekable.seekable = lambda: False
+            with open_text_stream(non_seekable) as stream:
+                assert stream.read() == PLAIN_TEXT.decode()
+
+    def test_caller_stream_not_closed(self, plain_text_path):
+        """When a stream is passed in, it is not closed on context manager exit."""
+        with open(plain_text_path, "rb") as binary_stream:
+            with open_text_stream(binary_stream):
+                pass
+            assert not binary_stream.closed
+
+    def test_path_stream_is_closed(self, plain_text_path):
+        """When a path is passed in, the stream is closed on context manager exit."""
+        with open_text_stream(plain_text_path) as f:
+            pass
+        assert f.closed
+
+    def test_consumed_stream_is_rewound(self, plain_text_path):
+        """Consumed seekable streams are rewound automatically."""
+        with open(plain_text_path, "rb") as f:
+            f.read()  # consume the stream
+            with open_text_stream(f) as stream:
+                assert stream.read() == PLAIN_TEXT.decode()
