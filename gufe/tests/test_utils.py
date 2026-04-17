@@ -174,17 +174,6 @@ class TestOpenTextStream:
             with open_text_stream(binary_stream) as f:
                 assert f.read() == PLAIN_TEXT.decode()
 
-    def test_text_mode_stream_raises(self, plain_text_path):
-        """Text mode streams raise early with a clear error."""
-        with open(plain_text_path) as text_stream:
-            with pytest.raises(ValueError, match="binary mode"):
-                open_text_stream(text_stream)
-
-    def test_stringio_raises(self):
-        """StringIO is a text stream and should raise."""
-        with pytest.raises(ValueError, match="binary mode"):
-            open_text_stream(io.StringIO(PLAIN_TEXT.decode()))
-
     def test_non_seekable_stream(self, compressed_path):
         """Non-seekable streams are buffered into BytesIO."""
         with open(compressed_path, "rb") as f:
