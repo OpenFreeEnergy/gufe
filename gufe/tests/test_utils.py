@@ -122,28 +122,23 @@ def compressed_path(tmp_path, request):
     return p
 
 
-class _NonSeekable(io.RawIOBase):
-    """Minimal non-seekable binary stream for testing ``open_text_stream``.
-
-    Unlike monkey-patching ``io.RawIOBase``, this is a proper subclass whose
-    ``readinto`` implementation satisfies the ``RawIOBase`` contract.
-    """
-
-    def __init__(self, data: bytes) -> None:
-        self._view = memoryview(data)
-        self._pos = 0
-
-    def readable(self) -> bool:
-        return True
-
+class _NonSeekableBytesIO(io.BytesIO):
     def seekable(self) -> bool:
         return False
 
-    def readinto(self, b: bytearray) -> int:
-        n = min(len(b), len(self._view) - self._pos)
-        b[:n] = self._view[self._pos : self._pos + n]
-        self._pos += n
-        return n
+    def seek(self, *args, **kwargs):
+        raise io.UnsupportedOperation("not seekable")
+
+
+class _BadBinaryLike:
+    def read(self, size=-1):
+        return "not bytes"
+
+    def seekable(self):
+        return True
+
+    def seek(self, offset, whence=0):
+        return 0
 
 
 class TestOpenTextStream:
@@ -178,7 +173,7 @@ class TestOpenTextStream:
         """Non-seekable streams are buffered into BytesIO."""
         with open(compressed_path, "rb") as f:
             data = f.read()
-        with open_text_stream(_NonSeekable(data)) as stream:
+        with open_text_stream(_NonSeekableBytesIO(data)) as stream:
             assert stream.read() == PLAIN_TEXT.decode()
 
     def test_caller_stream_not_closed(self, plain_text_path):
@@ -194,9 +189,27 @@ class TestOpenTextStream:
             pass
         assert f.closed
 
-    def test_consumed_stream_is_rewound(self, plain_text_path):
-        """Consumed seekable streams are rewound automatically."""
-        with open(plain_text_path, "rb") as f:
-            f.read()  # consume the stream
-            with open_text_stream(f) as stream:
+    def test_text_stream_is_passthrough(self, plain_text_path):
+        with open(plain_text_path) as text_stream:
+            text_stream.read(5)
+
+            with open_text_stream(text_stream) as stream:
+                assert stream is text_stream
+                assert stream.read() == PLAIN_TEXT.decode()[5:]
+
+            assert not text_stream.closed
+
+    def test_non_seekable_plain_binary_stream(self):
+        with open_text_stream(_NonSeekableBytesIO(PLAIN_TEXT)) as stream:
+            assert stream.read() == PLAIN_TEXT.decode()
+
+    def test_compressed_caller_stream_not_closed(self, compressed_path):
+        with open(compressed_path, "rb") as binary_stream:
+            with open_text_stream(binary_stream) as stream:
                 assert stream.read() == PLAIN_TEXT.decode()
+            assert not binary_stream.closed
+
+    def test_non_text_stream_must_return_bytes(self):
+        with pytest.raises(TypeError, match="must return bytes"):
+            with open_text_stream(_BadBinaryLike()):
+                pass
