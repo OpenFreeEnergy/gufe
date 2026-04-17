@@ -44,14 +44,72 @@ def _detach_safely(stream: io.TextIOWrapper) -> None:
 def open_text_stream(
     path_or_stream: str | PathLike | BinaryIO | TextIO,
 ) -> Generator[TextIO, None, None]:
-    """Open a file path or stream as text.
-
-    Paths and binary streams are inspected for gzip/bzip2/lzma magic bytes.
-    Text streams are yielded unchanged and are assumed to already be decoded
-    (and decompressed, if applicable).
-
-    Caller-owned streams are never closed.
     """
+    Open a file path or stream as text, transparently decompressing when possible.
+
+    File paths and binary streams are inspected for compression using magic bytes rather than file extensions.
+    gzip, bzip2, and lzma/xz are supported.
+    Text streams are yielded unchanged and are assumed to already be decoded and, if applicable, already decompressed.
+
+    Parameters
+    ----------
+    path_or_stream : str or os.PathLike or typing.BinaryIO or typing.TextIO input source to open as text.
+
+        - If a file path is provided, the file is opened in binary mode and inspected for compression.
+        - If a binary stream is provided, its leading bytes are inspected for compression.
+        - If a text stream is provided, it is yielded unchanged without any compression detection.
+
+    Yields
+    ------
+    TextIO
+        A text-mode stream suitable for iteration and line-based reading.
+
+        - For compressed inputs, this is a text wrapper around the appropriate decompressor.
+        - For uncompressed binary inputs, this is an ``io.TextIOWrapper``.
+        - For text-mode inputs, this is the original stream.
+
+    Raises
+    ------
+    TypeError
+        Raised if a non-text stream is provided whose ``read()`` method does not return a bytes-like object.
+
+    Notes
+    -----
+    Compression detection is only possible for file paths and binary streams.
+    For text streams, decoding has already occurred, so the original byte signature is no longer available.
+
+    Seekable binary streams are rewound after header inspection so the full content remains available to the decompressor or text wrapper.
+
+    Non-seekable binary streams are fully buffered into an ``io.BytesIO`` object so that the header bytes consumed during detection are preserved.
+
+    Streams opened by this function are closed when the context manager exits.
+    Caller-owned streams are never closed by this function.
+
+    Examples
+    --------
+    Open a plain text file by path:
+
+    >>> with open_text_stream("data.txt") as f:
+    ...     first_line = f.readline()
+
+    Open a compressed file by path:
+
+    >>> with open_text_stream("data.txt.gz") as f:
+    ...     text = f.read()
+
+    Pass an already-open binary stream:
+
+    >>> with open("data.txt.gz", "rb") as raw:
+    ...     with open_text_stream(raw) as f:
+    ...         text = f.read()
+
+    Pass an already-open text stream:
+
+    >>> with open("data.txt", "rt") as f:
+    ...     with open_text_stream(f) as text_stream:
+    ...         first_line = text_stream.readline()
+    """
+
     if isinstance(path_or_stream, io.TextIOBase):
         yield path_or_stream
         return
