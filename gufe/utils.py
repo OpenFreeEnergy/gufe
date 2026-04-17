@@ -8,29 +8,36 @@ import io
 import lzma
 import warnings
 from collections.abc import Callable, Generator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from os import PathLike
 from typing import BinaryIO, TextIO
 
 # Ordered longest-to-shortest so more-specific signatures win.
-# xz needs 6 bytes, bzip2 needs 3 (BZh), gzip needs 2.
-# Reference: https://en.wikipedia.org/wiki/List_of_file_signatures
-_MAGIC_SIGNATURES: list[tuple[bytes, object]] = [
-    (b"\xfd\x37\x7a\x58\x5a\x00", lzma.open),  # xz  (6 bytes)
-    (b"\x42\x5a\x68", bz2.open),  # bzip2 (3 bytes -- BZh)
-    (b"\x1f\x8b", gzip.open),  # gzip (2 bytes)
+_MAGIC_SIGNATURES = [
+    (b"\xfd\x37\x7a\x58\x5a\x00", lzma.open),  # xz
+    (b"\x42\x5a\x68", bz2.open),  # bzip2
+    (b"\x1f\x8b", gzip.open),  # gzip
 ]
 
-# Minimum bytes to read for unambiguous magic-byte detection.
-_HEADER_READ_SIZE = 6
+# Keep track of how many bytes we need to read
+_HEADER_READ_SIZE = max(len(magic) for magic, _ in _MAGIC_SIGNATURES)
 
 
 def _detect_opener(header: bytes):
-    """Return the decompression opener for *header*, or ``None`` for plain text."""
+    """Return the decompression opener for *header*, or None for plain text."""
     for magic, opener in _MAGIC_SIGNATURES:
-        if header[: len(magic)] == magic:
+        if header.startswith(magic):
             return opener
     return None
+
+
+def _detach_safely(stream: io.TextIOWrapper) -> None:
+    """Detach a wrapper without closing the caller-owned binary stream."""
+    try:
+        stream.detach()
+    except ValueError:
+        # Already closed/detached.
+        pass
 
 
 @contextmanager
@@ -45,19 +52,18 @@ def open_text_stream(
 
     Caller-owned streams are never closed.
     """
-    if isinstance(path_or_stream, (str, PathLike)):
-        raw = open(path_or_stream, "rb")
-        close_raw = True
-    elif isinstance(path_or_stream, io.TextIOBase):
-        # Already text: do not wrap again.
-        # Compression auto-detection is no longer possible here.
+    if isinstance(path_or_stream, io.TextIOBase):
         yield path_or_stream
         return
-    else:
-        raw = path_or_stream
-        close_raw = False
 
-    try:
+    with ExitStack() as stack:
+        if isinstance(path_or_stream, (str, PathLike)):
+            raw = stack.enter_context(open(path_or_stream, "rb"))
+            raw_is_caller_owned = False
+        else:
+            raw = path_or_stream
+            raw_is_caller_owned = True
+
         header = raw.read(_HEADER_READ_SIZE)
         if not isinstance(header, (bytes, bytearray, memoryview)):
             raise TypeError(
@@ -69,42 +75,25 @@ def open_text_stream(
         if raw.seekable():
             raw.seek(0)
             source = raw
-            own_source = close_raw
-            close_raw = False
+            source_is_caller_owned = raw_is_caller_owned
         else:
-            remainder = raw.read()
-            source = io.BytesIO(header + remainder)
-            own_source = False
-            if close_raw:
-                raw.close()
-                close_raw = False
+            source = io.BytesIO(header + raw.read())
+            source_is_caller_owned = False
+            stack.callback(source.close)
 
         opener = _detect_opener(header)
 
-        try:
-            if opener is not None:
-                stream = opener(source, "rt")
+        if opener is not None:
+            stream = opener(source, "rt")
+            stack.callback(stream.close)
+        else:
+            stream = io.TextIOWrapper(source)
+            if source_is_caller_owned:
+                stack.callback(_detach_safely, stream)
             else:
-                stream = io.TextIOWrapper(source)
-        except BaseException:
-            if own_source and not source.closed:
-                source.close()
-            raise
+                stack.callback(stream.close)
 
-        try:
-            yield stream
-        finally:
-            if opener is not None:
-                stream.close()
-                if own_source and not source.closed:
-                    source.close()
-            elif own_source:
-                stream.close()
-            else:
-                stream.detach()
-    finally:
-        if close_raw and not raw.closed:
-            raw.close()
+        yield stream
 
 
 class ensure_filelike:
