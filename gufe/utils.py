@@ -10,7 +10,7 @@ import warnings
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from os import PathLike
-from typing import IO, TextIO
+from typing import BinaryIO, TextIO
 
 # Ordered longest-to-shortest so more-specific signatures win.
 # xz needs 6 bytes, bzip2 needs 3 (BZh), gzip needs 2.
@@ -35,67 +35,46 @@ def _detect_opener(header: bytes):
 
 @contextmanager
 def open_text_stream(
-    path_or_stream: str | PathLike | IO,
+    path_or_stream: str | PathLike | BinaryIO | TextIO,
 ) -> Generator[TextIO, None, None]:
-    """Open a file path or stream as text, transparently decompressing if needed.
+    """Open a file path or stream as text.
 
-    Supports gzip, bzip2, and lzma/xz compression, detected via magic bytes rather than file extension.
-    Works with both file paths and streams, including non-seekable streams.
+    Paths and binary streams are inspected for gzip/bzip2/lzma magic bytes.
+    Text streams are yielded unchanged and are assumed to already be decoded
+    (and decompressed, if applicable).
 
-    Parameters
-    ----------
-    path_or_stream
-        A file path or an already-open **binary** stream.
-        Text streams are not supported as there is no way to inspect the magic bytes after decoding.
-
-    Returns
-    -------
-    Generator[TextIO, None, None]
-        Must be used as a context manager.  If a file path was provided, the
-        underlying file will be closed on exit.  If an already-open stream was
-        provided, it will not be closed on exit.
-
-    Raises
-    ------
-    ValueError
-        If a text-mode stream is passed.
-        Streams must be opened in binary mode to allow magic byte inspection.
-
-    Notes
-    -----
-    For seekable streams the stream is rewound after the header read so the
-    full content is available to the decompressor without loading it into memory.
-    For non-seekable streams the entire content is buffered into ``io.BytesIO``.
-    Caller-owned streams are never closed when the context manager exits.
+    Caller-owned streams are never closed.
     """
     if isinstance(path_or_stream, (str, PathLike)):
         raw = open(path_or_stream, "rb")
         close_raw = True
+    elif isinstance(path_or_stream, io.TextIOBase):
+        # Already text: do not wrap again.
+        # Compression auto-detection is no longer possible here.
+        yield path_or_stream
+        return
     else:
         raw = path_or_stream
         close_raw = False
-        # if (hasattr(raw, "mode") and "b" not in raw.mode) or isinstance(raw, io.TextIOBase):
-        #    raise ValueError(
-        #        "Streams must be opened in binary mode ('rb'), not text mode. "
-        #        "open_text_stream will handle decoding."
-        #    )
 
     try:
         header = raw.read(_HEADER_READ_SIZE)
+        if not isinstance(header, (bytes, bytearray, memoryview)):
+            raise TypeError(
+                "Binary streams passed to open_text_stream must return bytes. "
+                "Text streams should be passed as text and will be yielded unchanged."
+            )
+        header = bytes(header)
 
         if raw.seekable():
             raw.seek(0)
             source = raw
-            # Transfer ownership: clear close_raw so the safety-net finally
-            # block does not double-close the handle.
             own_source = close_raw
             close_raw = False
         else:
-            # Non-seekable: buffer everything, then close the original handle
-            # if we own it so we never leak a file descriptor.
             remainder = raw.read()
             source = io.BytesIO(header + remainder)
-            own_source = False  # BytesIO requires no explicit close
+            own_source = False
             if close_raw:
                 raw.close()
                 close_raw = False
@@ -104,12 +83,8 @@ def open_text_stream(
 
         try:
             if opener is not None:
-                # The compression wrappers do *not* close the underlying stream
-                # when given a file object, so we remain responsible for
-                # closing `source` if we own it.
                 stream = opener(source, "rt")
             else:
-                # Plain binary stream -- wrap in a text decoder.
                 stream = io.TextIOWrapper(source)
         except BaseException:
             if own_source and not source.closed:
@@ -124,15 +99,10 @@ def open_text_stream(
                 if own_source and not source.closed:
                     source.close()
             elif own_source:
-                # TextIOWrapper.close() also closes the underlying source.
                 stream.close()
             else:
-                # Don't own the source: detach so TextIOWrapper doesn't
-                # close the caller's handle on garbage collection.
                 stream.detach()
     finally:
-        # Safety net: close the file we opened if an exception fired before
-        # ownership was transferred to `source`.
         if close_raw and not raw.closed:
             raw.close()
 
