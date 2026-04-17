@@ -124,10 +124,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         assert p.name == "Steve"
 
     @pytest.mark.parametrize("in_pdb_path", ALL_PDB_LOADERS.keys())
-    def test_from_textIO(self, in_pdb_path):
+    def test_from_binary_io(self, in_pdb_path):
         in_pdb_io = ALL_PDB_LOADERS[in_pdb_path]()
-        with open(in_pdb_io, "rb") as pdb_textIO:
-            p = self.cls.from_pdb_file(pdb_textIO, name="Steve")
+        with open(in_pdb_io, "rb") as pdb_binary_io:
+            p = self.cls.from_pdb_file(pdb_binary_io, name="Steve")
 
             assert isinstance(p, ProteinComponent)
             assert p.name == "Steve"

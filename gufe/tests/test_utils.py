@@ -122,6 +122,30 @@ def compressed_path(tmp_path, request):
     return p
 
 
+class _NonSeekable(io.RawIOBase):
+    """Minimal non-seekable binary stream for testing ``open_text_stream``.
+
+    Unlike monkey-patching ``io.RawIOBase``, this is a proper subclass whose
+    ``readinto`` implementation satisfies the ``RawIOBase`` contract.
+    """
+
+    def __init__(self, data: bytes) -> None:
+        self._view = memoryview(data)
+        self._pos = 0
+
+    def readable(self) -> bool:
+        return True
+
+    def seekable(self) -> bool:
+        return False
+
+    def readinto(self, b: bytearray) -> int:
+        n = min(len(b), len(self._view) - self._pos)
+        b[:n] = self._view[self._pos : self._pos + n]
+        self._pos += n
+        return n
+
+
 class TestOpenTextStream:
     def test_plain_text_path(self, plain_text_path):
         with open_text_stream(plain_text_path) as f:
@@ -164,11 +188,9 @@ class TestOpenTextStream:
     def test_non_seekable_stream(self, compressed_path):
         """Non-seekable streams are buffered into BytesIO."""
         with open(compressed_path, "rb") as f:
-            non_seekable = io.RawIOBase()
-            non_seekable.read = f.read
-            non_seekable.seekable = lambda: False
-            with open_text_stream(non_seekable) as stream:
-                assert stream.read() == PLAIN_TEXT.decode()
+            data = f.read()
+        with open_text_stream(_NonSeekable(data)) as stream:
+            assert stream.read() == PLAIN_TEXT.decode()
 
     def test_caller_stream_not_closed(self, plain_text_path):
         """When a stream is passed in, it is not closed on context manager exit."""
