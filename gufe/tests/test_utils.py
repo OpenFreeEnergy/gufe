@@ -213,3 +213,19 @@ class TestOpenTextStream:
         with pytest.raises(TypeError, match="must return bytes"):
             with open_text_stream(_BadBinaryLike()):
                 pass
+
+    def test_already_detached_wrapper_on_exit(self, plain_text_path):
+        """Cleanup tolerates a caller-owned plain stream already detached by user code."""
+        with open(plain_text_path, "rb") as binary_stream:
+            with open_text_stream(binary_stream) as stream:
+                assert isinstance(stream, io.TextIOWrapper)
+                assert stream.read() == PLAIN_TEXT.decode()
+
+                detached = stream.detach()
+                assert detached is binary_stream
+
+            # The context manager should not fail when cleanup sees an already
+            # detached wrapper, and the caller-owned stream must remain open.
+            assert not binary_stream.closed
+            binary_stream.seek(0)
+            assert binary_stream.read() == PLAIN_TEXT
