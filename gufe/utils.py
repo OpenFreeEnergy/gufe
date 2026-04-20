@@ -112,7 +112,7 @@ def magic_open(
 
     if isinstance(path_or_stream, io.TextIOBase):
         # mypy doesn't treat io.TextIOBase and typing.TextIO as the same thing
-        # cast JUST tell's mypy "this is TextIO type" IT DOES NOT (repeat) DOES NOT
+        # cast JUST tells mypy "this is TextIO type" IT DOES NOT (repeat) DOES NOT
         # change the type of path_or_stream, just returns it
         yield cast(TextIO, path_or_stream)
         return
