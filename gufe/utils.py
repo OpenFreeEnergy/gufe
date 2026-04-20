@@ -7,10 +7,10 @@ import gzip
 import io
 import lzma
 import warnings
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager
 from os import PathLike
-from typing import BinaryIO, TextIO
+from typing import BinaryIO, TextIO, cast
 
 # Ordered longest-to-shortest so more-specific signatures win.
 _MAGIC_SIGNATURES = [
@@ -43,7 +43,7 @@ def _detach_safely(stream: io.TextIOWrapper) -> None:
 @contextmanager
 def open_text_stream(
     path_or_stream: str | PathLike | BinaryIO | TextIO,
-) -> Generator[TextIO, None, None]:
+) -> Iterator[TextIO]:
     """
     Open a file path or stream as text, transparently decompressing when possible.
 
@@ -111,15 +111,17 @@ def open_text_stream(
     """
 
     if isinstance(path_or_stream, io.TextIOBase):
-        yield path_or_stream
+        # mypy doesn't treat io.TextIOBase and typing.TextIO as the same thing
+        yield cast(TextIO, path_or_stream)
         return
 
     with ExitStack() as stack:
+        raw: BinaryIO
         if isinstance(path_or_stream, (str, PathLike)):
             raw = stack.enter_context(open(path_or_stream, "rb"))
             raw_is_caller_owned = False
         else:
-            raw = path_or_stream
+            raw = cast(BinaryIO, path_or_stream)
             raw_is_caller_owned = True
 
         header = raw.read(_HEADER_READ_SIZE)
@@ -141,6 +143,7 @@ def open_text_stream(
 
         opener = _detect_opener(header)
 
+        stream: TextIO
         if opener is not None:
             stream = opener(source, "rt")
             stack.callback(stream.close)
