@@ -12,6 +12,8 @@ from openmm import unit as omm_unit
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
 
+from gufe.utils import magic_open
+
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from ..vendor.pdb_file.pdbfile import PDBFile
@@ -254,7 +256,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDB file.
         """
-        pdb = PDBFile(pdb_file)
+        with magic_open(pdb_file) as pdb_file_stream:
+            pdb = PDBFile(pdb_file_stream)
 
         box = cls._resolve_box_vectors(
             pdb,
@@ -282,7 +285,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
         """
-        pdbx = PDBxFile(pdbx_file)
+        with magic_open(pdbx_file) as pdbx_file_stream:
+            pdbx = PDBxFile(pdbx_file_stream)
 
         box = cls._resolve_box_vectors(
             pdbx,

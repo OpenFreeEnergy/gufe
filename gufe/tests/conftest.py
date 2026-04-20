@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 
+import gzip
 import importlib
 
 import pooch
@@ -147,10 +148,18 @@ def PDB_thrombin_path():
         yield str(f)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def PDBx_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.cif") as f:
         yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDBx_181L_gz_path(PDBx_181L_path, tmp_path_factory):
+    gz_path = tmp_path_factory.getbasetemp() / "181l.cif.gz"
+    with open(PDBx_181L_path, "rb") as f_in, gzip.open(gz_path, "wb") as f_out:
+        f_out.write(f_in.read())
+    yield str(gz_path)
 
 
 @pytest.fixture
