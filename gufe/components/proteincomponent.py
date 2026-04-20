@@ -11,7 +11,7 @@ from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
-from gufe.utils import open_text_stream
+from gufe.utils import magic_open
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
@@ -177,7 +177,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        with open_text_stream(pdb_file) as pdb_file_stream:
+        with magic_open(pdb_file) as pdb_file_stream:
             openmm_PDBFile = PDBFile(pdb_file_stream)
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBFile, name=name)
 
@@ -198,7 +198,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ProteinComponent
             the deserialized molecule
         """
-        with open_text_stream(pdbx_file) as pdbx_file_stream:
+        with magic_open(pdbx_file) as pdbx_file_stream:
             openmm_PDBxFile = PDBxFile(pdbx_file_stream)
         return cls._from_openmmPDBFile(openmm_PDBFile=openmm_PDBxFile, name=name)
 

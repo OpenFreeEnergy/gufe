@@ -41,7 +41,7 @@ def _detach_safely(stream: io.TextIOWrapper) -> None:
 
 
 @contextmanager
-def open_text_stream(
+def magic_open(
     path_or_stream: str | PathLike | BinaryIO | TextIO,
 ) -> Iterator[TextIO]:
     """
@@ -89,24 +89,24 @@ def open_text_stream(
     --------
     Open a plain text file by path:
 
-    >>> with open_text_stream("data.txt") as f:
+    >>> with magic_open("data.txt") as f:
     ...     first_line = f.readline()
 
     Open a compressed file by path:
 
-    >>> with open_text_stream("data.txt.gz") as f:
+    >>> with magic_open("data.txt.gz") as f:
     ...     text = f.read()
 
     Pass an already-open binary stream:
 
     >>> with open("data.txt.gz", "rb") as raw:
-    ...     with open_text_stream(raw) as f:
+    ...     with magic_open(raw) as f:
     ...         text = f.read()
 
     Pass an already-open text stream:
 
     >>> with open("data.txt", "rt") as f:
-    ...     with open_text_stream(f) as text_stream:
+    ...     with magic_open(f) as text_stream:
     ...         first_line = text_stream.readline()
     """
 
@@ -127,7 +127,7 @@ def open_text_stream(
         header = raw.read(_HEADER_READ_SIZE)
         if not isinstance(header, (bytes, bytearray, memoryview)):
             raise TypeError(
-                "Binary streams passed to open_text_stream must return bytes. "
+                "Binary streams passed to magic_open must return bytes. "
                 "Text streams should be passed as text and will be yielded unchanged."
             )
         header = bytes(header)

@@ -8,7 +8,7 @@ import lzma
 
 import pytest
 
-from gufe.utils import ensure_filelike, open_text_stream
+from gufe.utils import ensure_filelike, magic_open
 
 
 @pytest.mark.parametrize("input_type", ["str", "path", "TextIO", "BytesIO", "StringIO"])
@@ -143,12 +143,12 @@ class _BadBinaryLike:
 
 class TestOpenTextStream:
     def test_plain_text_path(self, plain_text_path):
-        with open_text_stream(plain_text_path) as f:
+        with magic_open(plain_text_path) as f:
             assert f.read() == PLAIN_TEXT.decode()
 
     def test_compressed_path(self, compressed_path):
         """All three compression formats are detected via magic bytes."""
-        with open_text_stream(compressed_path) as f:
+        with magic_open(compressed_path) as f:
             assert f.read() == PLAIN_TEXT.decode()
 
     def test_magic_bytes_not_extension(self, tmp_path):
@@ -156,36 +156,36 @@ class TestOpenTextStream:
         p = tmp_path / "test.txt"  # no .gz extension
         with gzip.open(p, "wb") as f:
             f.write(PLAIN_TEXT)
-        with open_text_stream(p) as f:
+        with magic_open(p) as f:
             assert f.read() == PLAIN_TEXT.decode()
 
     def test_binary_stream(self, plain_text_path):
         with open(plain_text_path, "rb") as binary_stream:
-            with open_text_stream(binary_stream) as f:
+            with magic_open(binary_stream) as f:
                 assert f.read() == PLAIN_TEXT.decode()
 
     def test_compressed_binary_stream(self, compressed_path):
         with open(compressed_path, "rb") as binary_stream:
-            with open_text_stream(binary_stream) as f:
+            with magic_open(binary_stream) as f:
                 assert f.read() == PLAIN_TEXT.decode()
 
     def test_non_seekable_stream(self, compressed_path):
         """Non-seekable streams are buffered into BytesIO."""
         with open(compressed_path, "rb") as f:
             data = f.read()
-        with open_text_stream(_NonSeekableBytesIO(data)) as stream:
+        with magic_open(_NonSeekableBytesIO(data)) as stream:
             assert stream.read() == PLAIN_TEXT.decode()
 
     def test_caller_stream_not_closed(self, plain_text_path):
         """When a stream is passed in, it is not closed on context manager exit."""
         with open(plain_text_path, "rb") as binary_stream:
-            with open_text_stream(binary_stream):
+            with magic_open(binary_stream):
                 pass
             assert not binary_stream.closed
 
     def test_path_stream_is_closed(self, plain_text_path):
         """When a path is passed in, the stream is closed on context manager exit."""
-        with open_text_stream(plain_text_path) as f:
+        with magic_open(plain_text_path) as f:
             pass
         assert f.closed
 
@@ -193,31 +193,31 @@ class TestOpenTextStream:
         with open(plain_text_path) as text_stream:
             text_stream.read(5)
 
-            with open_text_stream(text_stream) as stream:
+            with magic_open(text_stream) as stream:
                 assert stream is text_stream
                 assert stream.read() == PLAIN_TEXT.decode()[5:]
 
             assert not text_stream.closed
 
     def test_non_seekable_plain_binary_stream(self):
-        with open_text_stream(_NonSeekableBytesIO(PLAIN_TEXT)) as stream:
+        with magic_open(_NonSeekableBytesIO(PLAIN_TEXT)) as stream:
             assert stream.read() == PLAIN_TEXT.decode()
 
     def test_compressed_caller_stream_not_closed(self, compressed_path):
         with open(compressed_path, "rb") as binary_stream:
-            with open_text_stream(binary_stream) as stream:
+            with magic_open(binary_stream) as stream:
                 assert stream.read() == PLAIN_TEXT.decode()
             assert not binary_stream.closed
 
     def test_non_text_stream_must_return_bytes(self):
         with pytest.raises(TypeError, match="must return bytes"):
-            with open_text_stream(_BadBinaryLike()):
+            with magic_open(_BadBinaryLike()):
                 pass
 
     def test_already_detached_wrapper_on_exit(self, plain_text_path):
         """Cleanup tolerates a caller-owned plain stream already detached by user code."""
         with open(plain_text_path, "rb") as binary_stream:
-            with open_text_stream(binary_stream) as stream:
+            with magic_open(binary_stream) as stream:
                 assert isinstance(stream, io.TextIOWrapper)
                 assert stream.read() == PLAIN_TEXT.decode()
 
