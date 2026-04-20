@@ -112,6 +112,8 @@ def magic_open(
 
     if isinstance(path_or_stream, io.TextIOBase):
         # mypy doesn't treat io.TextIOBase and typing.TextIO as the same thing
+        # cast JUST tell's mypy "this is TextIO type" IT DOES NOT (repeat) DOES NOT
+        # change the type of path_or_stream, just returns it
         yield cast(TextIO, path_or_stream)
         return
 
@@ -121,6 +123,10 @@ def magic_open(
             raw = stack.enter_context(open(path_or_stream, "rb"))
             raw_is_caller_owned = False
         else:
+            # cast tells mypy that path_or_stream is a BinaryIO object
+            # it DOES NOT (repeat) DOES NOT change the type of path_or_stream
+            # it only is for type checking and doesn't modify path_or_stream at
+            # run time, just returns it
             raw = cast(BinaryIO, path_or_stream)
             raw_is_caller_owned = True
 
@@ -132,10 +138,17 @@ def magic_open(
             )
         header = bytes(header)
 
+        # If we can re-wind the stream to 0 after reading in the header
+        # we do. This saves us from having to load the whole file into
+        # memory. This branch doesn't affect the ownership of the source
         if raw.seekable():
             raw.seek(0)
             source = raw
             source_is_caller_owned = raw_is_caller_owned
+        # If we can't re-wind the stream to 0, then we read in the whole
+        # stream and concatenate it with the header we already read. This
+        # changes the ownership of the stream to "us" so we want to make
+        # sure that we close the stream when we are done
         else:
             source = io.BytesIO(header + raw.read())
             source_is_caller_owned = False
