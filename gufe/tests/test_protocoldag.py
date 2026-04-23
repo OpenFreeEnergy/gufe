@@ -1,25 +1,33 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import os
-import pathlib
 
 import pytest
 from openff.units import unit
 
 import gufe
-from gufe.protocols import execute_DAG, protocoldag
+from gufe.protocols import ProtocolDAG, execute_DAG, protocoldag
+from gufe.protocols.protocolunit import Context
+from gufe.storage.externalresource.filestorage import FileStorage
+from gufe.storage.storagemanager import StorageManager
 
 
 class WriterUnit(gufe.ProtocolUnit):
     @staticmethod
-    def _execute(ctx, **inputs):
+    def _execute(ctx: Context, **inputs):
         my_id = inputs["identity"]
 
-        with open(os.path.join(ctx.shared, f"unit_{my_id}_shared.txt"), "w") as out:
-            out.write(f"unit {my_id} existed!\n")
-        with open(os.path.join(ctx.scratch, f"unit_{my_id}_scratch.txt"), "w") as out:
-            out.write(f"unit {my_id} was here\n")
+        unit_shared_name = f"unit_{my_id}_shared.txt"
+        ctx.shared.register(unit_shared_name)
+        unit_shared = ctx.scratch / unit_shared_name
 
+        unit_scratch_name = f"unit_{my_id}_scratch.txt"
+        unit_scratch = ctx.scratch / unit_scratch_name
+
+        with open(unit_shared, "w") as out:
+            out.write(f"unit {my_id} existed\n")
+        with open(unit_scratch, "w") as out:
+            out.write(f"unit {my_id} was here\n")
         if ctx.stderr:
             with open(os.path.join(ctx.stderr, f"unit_{my_id}_stderr"), "w") as out:
                 out.write(f"unit {my_id} wrote to stderr")
@@ -79,28 +87,37 @@ def writefile_dag():
 @pytest.mark.parametrize("keep_scratch", [False, True])
 @pytest.mark.parametrize("keep_cache", [False, True])
 @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_cache, writefile_dag, capture_stderr_stdout):
-    shared = pathlib.Path(tmp_path / "shared")
-    shared.mkdir(parents=True)
-
-    scratch = pathlib.Path(tmp_path / "scratch")
+def test_execute_dag(
+    tmp_path, keep_shared, keep_scratch, keep_cache, writefile_dag: ProtocolDAG, capture_stderr_stdout
+):
+    scratch = tmp_path / "scratch"
     scratch.mkdir(parents=True)
 
-    cache_basedir = pathlib.Path(tmp_path / "openfe_cache")
+    shared = tmp_path / "shared"
+    shared.mkdir(parents=True)
+
+    shared_storage = FileStorage(shared)
+
+    perm = tmp_path / "perm"
+    perm.mkdir(parents=True)
+    perm_storage = FileStorage(perm)
+
+    cache_basedir = tmp_path / "openfe_cache"
     cache_basedir.mkdir(parents=True)
 
     stderr = None
     stdout = None
     if capture_stderr_stdout:
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stoud"
         stdout.mkdir(parents=True)
 
     # run dag
     execute_DAG(
         writefile_dag,
-        shared_basedir=shared,
+        shared_storage=shared_storage,
+        perm_storage=perm_storage,
         scratch_basedir=scratch,
         cache_basedir=cache_basedir,
         stderr_basedir=stderr,
@@ -109,12 +126,15 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_cache, writefile_
         keep_scratch=keep_scratch,
         keep_cache=keep_cache,
     )
+
     # check outputs are as expected
     # will have produced 4 files in scratch and shared directory
+    dag_label = str(writefile_dag.key)
     for pu in writefile_dag.protocol_units:
-        id = pu.inputs["identity"]
-        shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{id}_shared.txt")
-        scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{id}_scratch.txt")
+        identity = pu.inputs["identity"]
+        # shared_file = os.path.join(shared, f"shared_{str(pu.key)}_attempt_0", f"unit_{identity}_shared.txt")
+        shared_file = StorageManager.append_to_namespace(f"{dag_label}/{pu.key}", f"unit_{identity}_shared.txt")
+        scratch_file = os.path.join(scratch, f"scratch_{str(pu.key)}_attempt_0", f"unit_{identity}_scratch.txt")
         unit_result_file = os.path.join(
             cache_basedir, f"{str(writefile_dag.key)}-results_cache", f"{str(pu.key)}_unitresults.json"
         )
@@ -123,7 +143,12 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_cache, writefile_
             stderr_file = os.path.join(
                 stderr,
                 f"stderr_{str(pu.key)}_attempt_0",
-                f"unit_{id}_stderr",
+                f"unit_{identity}_stderr",
+            )
+            stdout_file = os.path.join(
+                stdout,
+                f"stdout_{str(pu.key)}_attempt_0",
+                f"unit_{identity}_stdout",
             )
             stdout_file = os.path.join(stdout, f"stdout_{str(pu.key)}_attempt_0", f"unit_{id}_stdout")
 
@@ -133,7 +158,7 @@ def test_execute_dag(tmp_path, keep_shared, keep_scratch, keep_cache, writefile_
             assert not os.path.exists(stdout_file)
 
         if keep_shared:
-            assert os.path.exists(shared_file)
+            assert shared_storage.exists(shared_file)
         else:
             assert not os.path.exists(shared_file)
         if keep_scratch:
@@ -186,16 +211,23 @@ def test_execute_DAG_cached_unitresults(tmp_path):
     )
 
     # run all unit_results
-    shared = pathlib.Path(tmp_path / "shared")
+    shared = tmp_path / "shared"
     shared.mkdir(parents=True)
 
-    scratch = pathlib.Path(tmp_path / "scratch")
+    shared_storage = FileStorage(shared)
+
+    perm = tmp_path / "perm"
+    perm.mkdir(parents=True)
+    perm_storage = FileStorage(perm)
+
+    scratch = tmp_path / "scratch"
     scratch.mkdir(parents=True)
 
-    unit_results_dir = pathlib.Path(tmp_path / "unitresults_cache")
+    unit_results_dir = tmp_path / "unitresults_cache"
     protocol_result = execute_DAG(
         dep_dag,
-        shared_basedir=shared,
+        shared_storage=shared_storage,
+        perm_storage=perm_storage,
         scratch_basedir=scratch,
         cache_basedir=unit_results_dir,
         stderr_basedir=None,
@@ -222,7 +254,8 @@ def test_execute_DAG_cached_unitresults(tmp_path):
     with pytest.warns(UserWarning, match="Unable to read file, skipping"):
         protocol_result_rerun = execute_DAG(
             dep_dag,
-            shared_basedir=shared,
+            shared_storage=shared_storage,
+            perm_storage=perm_storage,
             scratch_basedir=scratch,
             cache_basedir=unit_results_dir,
             stderr_basedir=None,
@@ -269,16 +302,23 @@ def test_get_valid_unit_results(tmp_path):
         protocol_units=all_protocol_units,
         transformation_key=None,
     )
-    shared = pathlib.Path(tmp_path / "shared")
+    shared = tmp_path / "shared"
     shared.mkdir(parents=True)
 
-    scratch = pathlib.Path(tmp_path / "scratch")
+    shared_storage = FileStorage(shared)
+
+    perm = tmp_path / "perm"
+    perm.mkdir(parents=True)
+    perm_storage = FileStorage(perm)
+
+    scratch = tmp_path / "scratch"
     scratch.mkdir(parents=True)
 
-    unit_results_dir = pathlib.Path(tmp_path / "unitresults_cache")
+    unit_results_dir = tmp_path / "unitresults_cache"
     protocol_result = execute_DAG(
         dep_dag,
-        shared_basedir=shared,
+        shared_storage=shared_storage,
+        perm_storage=perm_storage,
         scratch_basedir=scratch,
         cache_basedir=unit_results_dir,
         stderr_basedir=None,
