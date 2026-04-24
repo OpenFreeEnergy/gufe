@@ -5,6 +5,7 @@ import abc
 import json
 import warnings
 from collections.abc import Iterable
+from typing import Any
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
@@ -16,12 +17,9 @@ from ..utils import ensure_filelike
 class TransformationBase(GufeTokenizable):
     _protocol: Protocol
     _name: str | None
+    _metadata: dict[str, Any]
 
-    def __init__(
-        self,
-        protocol: Protocol,
-        name: str | None = None,
-    ):
+    def __init__(self, protocol: Protocol, name: str | None = None, metadata: dict[str, Any] | None = None):
         """Transformation base class.
 
         Parameters
@@ -34,6 +32,7 @@ class TransformationBase(GufeTokenizable):
         """
         self._protocol = protocol
         self._name = name
+        self._metadata = metadata or {}
 
     @classmethod
     def _defaults(cls):
@@ -48,6 +47,11 @@ class TransformationBase(GufeTokenizable):
         deduplication.
         """
         return self._name
+
+    @property
+    def metadata(self) -> dict[str, Any]:
+        """Metadata associated with the transformation."""
+        return self._metadata.copy()
 
     @classmethod
     def _from_dict(cls, d: dict):
