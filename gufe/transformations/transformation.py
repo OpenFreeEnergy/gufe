@@ -156,6 +156,7 @@ class Transformation(TransformationBase):
     _protocol: Protocol
     _mapping: ComponentMapping | list[ComponentMapping] | None
     _name: str | None
+    _metadata: dict[str, Any]
 
     def __init__(
         self,
@@ -164,6 +165,7 @@ class Transformation(TransformationBase):
         protocol: Protocol,
         mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None = None,
         name: str | None = None,
+        metadata: dict[str, Any] | None = None,
         validate: bool = False,
     ):
         r"""Two chemical states with a method for estimating the free energy
@@ -189,6 +191,9 @@ class Transformation(TransformationBase):
         validate: bool, optional
             Whether or not to validate the inputs to be provided to
             the :class:`.Protocol`.
+        metadata: dict[str, Any] | None
+            Metadata of the Transformation. ``None`` produces and
+            empty dictionary. Defaults to ``None``.
 
         See also
         --------
@@ -207,6 +212,7 @@ class Transformation(TransformationBase):
         self._protocol = protocol
         self._mapping = mapping
         self._name = name
+        self._metadata = metadata or {}
 
         if validate:
             self.protocol.validate(
@@ -216,7 +222,7 @@ class Transformation(TransformationBase):
             )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(stateA={self.stateA}, stateB={self.stateB}, protocol={self.protocol}, name={self.name})"
+        return f"{self.__class__.__name__}(stateA={self.stateA}, stateB={self.stateB}, protocol={self.protocol}, name={self.name}, metadata={self.metadata})"
 
     @property
     def stateA(self) -> ChemicalSystem:
@@ -240,6 +246,7 @@ class Transformation(TransformationBase):
             "protocol": self.protocol,
             "mapping": self.mapping,
             "name": self.name,
+            "metadata": self.metadata,
         }
 
     def create(
@@ -265,12 +272,14 @@ class NonTransformation(TransformationBase):
     _system: ChemicalSystem
     _protocol: Protocol
     _name: str | None
+    _metadata: dict[str, Any]
 
     def __init__(
         self,
         system: ChemicalSystem,
         protocol: Protocol,
         name: str | None = None,
+        metadata: dict[str, Any] | None = None,
         validate: bool = False,
     ):
         """A non-alchemical edge of an alchemical network.
@@ -292,6 +301,8 @@ class NonTransformation(TransformationBase):
             The sampling method to use on the ``system``
         name : str, optional
             A human-readable name for this transformation.
+        metadata: dict[str, Any] | None
+            Metadata of the NonTransformation. ``None`` produces and empty dictionary. Defaults to ``None``.
         validate: bool, optional
             Whether or not to validate the inputs to be provided to
             the :class:`.Protocol`.
@@ -300,6 +311,7 @@ class NonTransformation(TransformationBase):
         self._system = system
         self._protocol = protocol
         self._name = name
+        self._metadata = metadata or {}
 
         if validate:
             self.protocol.validate(
@@ -309,7 +321,7 @@ class NonTransformation(TransformationBase):
             )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(system={self.system}, protocol={self.protocol}, name={self.name})"
+        return f"{self.__class__.__name__}(system={self.system}, protocol={self.protocol}, name={self.name}, metadata={self.metadata})"
 
     @property
     def stateA(self) -> ChemicalSystem:
@@ -340,6 +352,7 @@ class NonTransformation(TransformationBase):
             "system": self.system,
             "protocol": self.protocol,
             "name": self.name,
+            "metadata": self.metadata,
         }
 
     def create(
