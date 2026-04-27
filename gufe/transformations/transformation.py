@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 import abc
+import copy
 import json
 import warnings
 from collections.abc import Iterable
@@ -51,7 +52,7 @@ class TransformationBase(GufeTokenizable):
     @property
     def metadata(self) -> dict[str, Any]:
         """Metadata associated with the transformation."""
-        return self._metadata.copy()
+        return copy.deepcopy(self._metadata)
 
     @classmethod
     def _from_dict(cls, d: dict):
