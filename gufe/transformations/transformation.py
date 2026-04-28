@@ -25,10 +25,13 @@ class TransformationBase(GufeTokenizable):
 
         Parameters
         ----------
-        protocol : Protocol
+        protocol: Protocol
             The sampling method to use for the transformation.
-        name : str, optional
+        name: str, optional
             A human-readable name for this transformation.
+        metadata : dict[str, Any], optional
+            Metadata of the Transformation. ``None`` produces and
+            empty dictionary. Defaults to ``None``.
 
         """
         self._protocol = protocol
@@ -192,7 +195,7 @@ class Transformation(TransformationBase):
         validate: bool, optional
             Whether or not to validate the inputs to be provided to
             the :class:`.Protocol`.
-        metadata: dict[str, Any] | None
+        metadata: dict[str, Any], optional
             Metadata of the Transformation. ``None`` produces and
             empty dictionary. Defaults to ``None``.
 
@@ -302,7 +305,7 @@ class NonTransformation(TransformationBase):
             The sampling method to use on the ``system``
         name : str, optional
             A human-readable name for this transformation.
-        metadata: dict[str, Any] | None
+        metadata: dict[str, Any], optional
             Metadata of the NonTransformation. ``None`` produces and empty dictionary. Defaults to ``None``.
         validate: bool, optional
             Whether or not to validate the inputs to be provided to
