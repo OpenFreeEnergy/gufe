@@ -15,6 +15,7 @@ from gufe.utils import magic_open
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
+from ..vendor.openmm.app import topology
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
@@ -26,10 +27,10 @@ _BONDORDERS_OPENMM_TO_RDKIT = {
     None: BondType.UNSPECIFIED,
 }
 _BONDTYPES_OPENMM_TO_RDKIT = {
-    app.Single: BondType.SINGLE,
-    app.Double: BondType.DOUBLE,
-    app.Triple: BondType.TRIPLE,
-    app.Aromatic: BondType.AROMATIC,
+    topology.Single: BondType.SINGLE,
+    topology.Double: BondType.DOUBLE,
+    topology.Triple: BondType.TRIPLE,
+    topology.Aromatic: BondType.AROMATIC,
     None: BondType.UNSPECIFIED,
 }
 _BONDORDERS_RDKIT_TO_OPENMM = {v: k for k, v in _BONDORDERS_OPENMM_TO_RDKIT.items()}
@@ -399,7 +400,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return cls(rdkit=rd_mol, name=name)
 
-    def to_openmm_topology(self) -> app.Topology:
+    def to_openmm_topology(self) -> topology.Topology:
         """Convert to an openmm Topology object
 
         Returns
@@ -441,7 +442,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         atom_lookup = {}  # maps rdkit indices to openmm Atoms
 
-        top = app.Topology()
+        top = topology.Topology()
         for atom in self._rdkit.GetAtoms():
             mi = atom.GetMonomerInfo()
             if (new_chainid := chainkey(mi)) != current_chainid:
