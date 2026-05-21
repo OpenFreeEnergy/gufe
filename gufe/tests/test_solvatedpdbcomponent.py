@@ -10,6 +10,7 @@ from openff.units import unit as offunit
 from rdkit import Chem
 
 from gufe import ProteinComponent, ProteinMembraneComponent, SolvatedPDBComponent
+from gufe.components.errors import ComponentValidationError
 
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
@@ -27,19 +28,17 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     repr = "SolvatedPDBComponent(name=Steve)"
 
     @pytest.fixture(scope="session")
-    def instance(self, PDB_a2a_path):
-        with gzip.open(PDB_a2a_path, "rb") as gzf:
-            yield self.cls.from_pdb_file(gzf, name="Steve")
+    def instance(self, PDB_hif2a_solvated_ligands):
+        yield self.cls.from_pdb_file(PDB_hif2a_solvated_ligands, name="Steve")
 
     def test_from_pdb_file_sets_box_vectors(self, instance):
         box = instance.box_vectors
         _is_box_shape(box)
         assert _box_vectors_are_in_reduced_form(box)
-        assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(6.9587)
+        assert box[0, 0].m_as(offunit.nanometer) == pytest.approx(3)
 
-    def test_requires_box_vectors(self, PDB_a2a_path):
-        with gzip.open(PDB_a2a_path, "rb") as gzf:
-            prot = ProteinComponent.from_pdb_file(gzf)
+    def test_requires_box_vectors(self, PDB_hif2a_solvated_ligands):
+        prot = ProteinComponent.from_pdb_file(PDB_hif2a_solvated_ligands)
 
         with pytest.raises(ValueError, match="box_vectors must be provided"):
             self.cls(
@@ -87,20 +86,19 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             (
                 SolvatedPDBComponent.from_pdb_file,
                 pdbfile.PDBFile,
-                "PDB_a2a_path",
+                "PDB_hif2a_solvated_ligands",
             ),
             (
                 SolvatedPDBComponent.from_pdbx_file,
                 pdbxfile.PDBxFile,
-                "PDBx_a2a_path",
+                "PDBx_hif2a_solvated_ligands",
             ),
         ],
     )
     def test_uses_file_box_vectors(self, factory, loader, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
 
-        with gzip.open(path, "rt") as f:
-            comp = factory(f)
+        comp = factory(path)
         with gzip.open(path, "rt") as f2:
             ref = loader(f2).topology.getPeriodicBoxVectors()
 
@@ -129,8 +127,8 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     @pytest.mark.parametrize(
         "factory,path_fixture",
         [
-            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
-            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+            (SolvatedPDBComponent.from_pdb_file, "PDB_hif2a_solvated_ligands"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_hif2a_solvated_ligands"),
         ],
     )
     def test_realistic_system_density(self, factory, path_fixture, request):
@@ -138,8 +136,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         Check that a properly solvated system produces a realistic density.
         """
         path = request.getfixturevalue(path_fixture)
-        with gzip.open(path, "rt") as f:
-            comp = factory(f)
+        comp = factory(path)
 
         density = comp.density
         # Expect realistic protein + solvent density ~> 800-1200 g/L (0.8-1.2 g/mL)
@@ -149,14 +146,13 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     @pytest.mark.parametrize(
         "factory,path_fixture",
         [
-            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
-            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+            (SolvatedPDBComponent.from_pdb_file, "PDB_hif2a_solvated_ligands"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_hif2a_solvated_ligands"),
         ],
     )
     def test_validate_passes(self, factory, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
-        with gzip.open(path, "rt") as f:
-            comp = factory(f)
+        comp = factory(path)
         # Should not raise for proper box vector
         comp.validate()
 
@@ -165,7 +161,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         assert instance.density > 500 * offunit.gram / offunit.liter
         instance.box_vectors = instance.box_vectors * 100
         assert instance.density < 500 * offunit.gram / offunit.liter
-        with pytest.raises(ValueError, match="density is very low"):
+        with pytest.raises(ComponentValidationError, match="density is very low"):
             instance.validate(min_density=500 * offunit.gram / offunit.liter)
 
     def test_box_vectors_affect_equality(self, instance):
@@ -185,10 +181,9 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
                 box_vectors=None,
             )
 
-    def test_from_pdbx_file_user_box_vectors(self, PDBx_a2a_path):
+    def test_from_pdbx_file_user_box_vectors(self, PDBx_hif2a_solvated_ligands):
         b = np.eye(3) * 2.0 * offunit.nanometer
-        with gzip.open(PDBx_a2a_path, "rt") as f:
-            comp = self.cls.from_pdbx_file(f, box_vectors=b)
+        comp = self.cls.from_pdbx_file(PDBx_hif2a_solvated_ligands, box_vectors=b)
         box = comp.box_vectors
         assert box is not None
         assert box.shape == (3, 3)
@@ -197,18 +192,16 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     @pytest.mark.parametrize(
         "factory,path_fixture",
         [
-            (SolvatedPDBComponent.from_pdb_file, "PDB_a2a_path"),
-            (SolvatedPDBComponent.from_pdbx_file, "PDBx_a2a_path"),
+            (SolvatedPDBComponent.from_pdb_file, "PDB_hif2a_solvated_ligands"),
+            (SolvatedPDBComponent.from_pdbx_file, "PDBx_hif2a_solvated_ligands"),
         ],
     )
     def test_explicit_box_vectors_override_file_box(self, factory, path_fixture, request):
         path = request.getfixturevalue(path_fixture)
 
-        with gzip.open(path, "rt") as f:
-            ref = factory(f)
-        with gzip.open(path, "rt") as f2:
-            override = np.eye(3) * 2.0 * offunit.nanometer
-            comp = factory(f2, box_vectors=override)
+        ref = factory(path)
+        override = np.eye(3) * 2.0 * offunit.nanometer
+        comp = factory(path, box_vectors=override)
         ref_box = ref.box_vectors
 
         assert not np.allclose(
@@ -258,21 +251,21 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
 
     @pytest.fixture(scope="session")
     def instance(self, PDB_a2a_path):
-        with gzip.open(PDB_a2a_path, "rb") as gzf:
-            yield self.cls.from_pdb_file(gzf, name="Steve")
+        yield self.cls.from_pdb_file(PDB_a2a_path, name="Steve")
+
+    @pytest.fixture(scope="function")
+    def a2a_pdbx(self, PDBx_a2a_path):
+        yield self.cls.from_pdbx_file(PDBx_a2a_path, name="Steve")
 
     @pytest.mark.parametrize(
-        "factory,path_fixture",
+        "component_fixture",
         [
-            (ProteinMembraneComponent.from_pdb_file, "PDB_a2a_path"),
-            (ProteinMembraneComponent.from_pdbx_file, "PDBx_a2a_path"),
+            "instance",
+            "a2a_pdbx",
         ],
     )
-    def test_validate_passes(self, factory, path_fixture, request):
-        path = request.getfixturevalue(path_fixture)
-        with gzip.open(path, "rt") as f:
-            comp = factory(f)
-        # Should not raise for properly solvated system
+    def test_validate_passes(self, component_fixture, request):
+        comp = request.getfixturevalue(component_fixture)
         comp.validate(min_waters=50)
 
     def test_is_water_fragment_unknown_atom(self):
@@ -286,20 +279,21 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
         mol.AddBond(o, c, Chem.BondType.SINGLE)
 
         mol = mol.GetMol()
+        fragment_indices = (0, 1, 2)
 
-        assert ProteinMembraneComponent._is_water_fragment(mol) is False
+        assert ProteinMembraneComponent._is_water_fragment(mol, fragment_indices) is False
 
     def test_validate_few_waters_raises(self, PDB_181L_path):
         comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path, infer_box_vectors=True)
         # Only 8 Xray waters, not properly solvated
         assert comp.n_waters == 8
-        with pytest.raises(ValueError, match="water molecules detected"):
+        with pytest.raises(ComponentValidationError, match="water molecules detected"):
             comp.validate(min_waters=50)
 
     def test_validate_few_waters_and_low_density_raises(self, PDB_181L_path):
         comp = ProteinMembraneComponent.from_pdb_file(PDB_181L_path, infer_box_vectors=True)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ComponentValidationError) as excinfo:
             comp.validate()
 
         # Check that both error messages appear

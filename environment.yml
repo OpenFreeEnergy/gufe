@@ -22,7 +22,3 @@ dependencies:
   - typing-extensions
   - ipywidgets  # opt
   - zstandard
-  # docs
-  - pydata-sphinx-theme
-  - sphinx-jsonschema==1.15
-  - sphinx <7.1.2

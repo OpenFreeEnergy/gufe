@@ -316,8 +316,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_to_json_file(self, tmpdir):
-        file_path = tmpdir / "container.json"
+    def test_to_json_file(self, tmp_path):
+        file_path = tmp_path / "container.json"
         self.cont.to_json(file=file_path)
 
         # tuples are converted to lists in JSON so fix the expected result to use lists
@@ -325,8 +325,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         with file_path.open(mode="r") as f:
             assert json.load(f, cls=JSON_HANDLER.decoder) == expected_key_chain
 
-    def test_from_json_file(self, tmpdir):
-        file_path = tmpdir / "container.json"
+    def test_from_json_file(self, tmp_path):
+        file_path = tmp_path / "container.json"
         with file_path.open(mode="w") as f:
             json.dump(
                 self.expected_keyed_chain,
@@ -338,9 +338,9 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_from_json_file_dict(self, tmpdir):
+    def test_from_json_file_dict(self, tmp_path):
         """Test that we can still load json-serialized dict representations from files."""
-        file_path = tmpdir / "container.json"
+        file_path = tmp_path / "container.json"
         with file_path.open(mode="w") as f:
             json.dump(
                 self.expected_deep,
@@ -366,8 +366,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         assert recreated == self.cont
         assert recreated is self.cont
 
-    def test_to_msgpack_file(self, tmpdir):
-        file_path = tmpdir / "container.messagepack"
+    def test_to_msgpack_file(self, tmp_path):
+        file_path = tmp_path / "container.messagepack"
         self.cont.to_msgpack(file=file_path)
 
         # tuples are converted to lists in msgpack so fix the expected result to use lists
@@ -376,8 +376,8 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         with file_path.open("rb") as f:
             assert unpackb(zst_decompress(f.read())) == expected_keyed_chain
 
-    def test_from_msgpack_file(self, tmpdir):
-        file_path = tmpdir / "container.messagepack"
+    def test_from_msgpack_file(self, tmp_path):
+        file_path = tmp_path / "container.messagepack"
 
         with open(file_path, "wb") as f:
             f.write(packb(self.expected_keyed_chain))
@@ -572,11 +572,11 @@ def test_gufe_objects_from_shallow_dict(solvated_complex):
 
 
 class TestKeyedChain:
-    def test_from_gufe(self, benzene_variants_star_map):
-        contained_objects = list(get_all_gufe_objs(benzene_variants_star_map))
+    def test_from_gufe(self, alchem_network_benzene_variants):
+        contained_objects = list(get_all_gufe_objs(alchem_network_benzene_variants))
         expected_len = len(contained_objects)
 
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
 
         assert len(kc) == expected_len
 
@@ -592,19 +592,19 @@ class TestKeyedChain:
             assert key in kc_gufe_keys
             assert keyed_dict in kc_keyed_dicts
 
-    def test_to_gufe(self, benzene_variants_star_map):
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
-        assert hash(kc.to_gufe()) == hash(benzene_variants_star_map)
+    def test_to_gufe(self, alchem_network_benzene_variants):
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
+        assert hash(kc.to_gufe()) == hash(alchem_network_benzene_variants)
 
-    def test_get_item(self, benzene_variants_star_map):
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+    def test_get_item(self, alchem_network_benzene_variants):
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
 
         assert kc[0] == kc._keyed_chain[0]
         assert kc[-1] == kc._keyed_chain[-1]
         assert kc[:] == kc._keyed_chain[:]
 
-    def test_decode_subchains(self, benzene_variants_star_map):
-        kc = KeyedChain.from_gufe(benzene_variants_star_map)
+    def test_decode_subchains(self, alchem_network_benzene_variants):
+        kc = KeyedChain.from_gufe(alchem_network_benzene_variants)
 
         # decode all chemical systems, which are just the network nodes
         assert set(kc.decode_subchains(lambda kd: kd["__qualname__"] == "ChemicalSystem")) == set(kc.to_gufe().nodes)

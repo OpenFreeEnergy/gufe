@@ -2,7 +2,6 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 import importlib
 import json
-import pathlib
 
 import numpy as np
 import pytest
@@ -228,19 +227,18 @@ def test_atommapping_hash(simple_mapping, other_mapping):
     assert simple_mapping is not other_mapping
 
 
-def test_draw_mapping_cairo(tmpdir, simple_mapping):
-    with tmpdir.as_cwd():
-        simple_mapping.draw_to_file("test.png")
-        filed = pathlib.Path("test.png")
-        assert filed.exists()
+def test_draw_mapping_cairo(tmp_path, simple_mapping):
+    fpath = tmp_path / "test.png"
+
+    simple_mapping.draw_to_file(fpath)
+    assert fpath.exists()
 
 
-def test_draw_mapping_svg(tmpdir, other_mapping):
-    with tmpdir.as_cwd():
-        d2d = Chem.Draw.rdMolDraw2D.MolDraw2DSVG(600, 300, 300, 300)
-        other_mapping.draw_to_file("test.svg", d2d=d2d)
-        filed = pathlib.Path("test.svg")
-        assert filed.exists()
+def test_draw_mapping_svg(tmp_path, other_mapping):
+    fpath = tmp_path / "test.svg"
+    d2d = Chem.Draw.rdMolDraw2D.MolDraw2DSVG(600, 300, 300, 300)
+    other_mapping.draw_to_file(fpath, d2d=d2d)
+    assert fpath.exists()
 
 
 class TestLigandAtomMappingSerialization:
@@ -249,23 +247,23 @@ class TestLigandAtomMappingSerialization:
 
         assert roundtrip == benzene_phenol_mapping
 
-        # We don't check coordinates since that's already done in guefe for
+        # We don't check coordinates since that's already done in gufe for
         # SmallMoleculeComponent
 
         assert roundtrip != benzene_anisole_mapping
 
-    def test_file_roundtrip(self, benzene_phenol_mapping, tmpdir):
-        with tmpdir.as_cwd():
-            with open("tmpfile.json", "w") as f:
-                f.write(json.dumps(benzene_phenol_mapping.to_dict()))
+    def test_file_roundtrip(self, benzene_phenol_mapping, tmp_path):
+        fpath = tmp_path / "tmpfile.json"
+        with open(fpath, "w") as f:
+            f.write(json.dumps(benzene_phenol_mapping.to_dict()))
 
-            with open("tmpfile.json") as f:
-                d = json.load(f)
+        with open(fpath) as f:
+            d = json.load(f)
 
-            assert isinstance(d, dict)
-            roundtrip = LigandAtomMapping.from_dict(d)
+        assert isinstance(d, dict)
+        roundtrip = LigandAtomMapping.from_dict(d)
 
-            assert roundtrip == benzene_phenol_mapping
+        assert roundtrip == benzene_phenol_mapping
 
 
 def test_annotated_atommapping_hash_eq(simple_mapping, annotated_simple_mapping):

@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 
+import gzip
 import importlib
 
 import pooch
@@ -118,6 +119,18 @@ def PDB_a2a_single_fragment_path():
         yield str(f)
 
 
+@pytest.fixture(scope="session")
+def PDB_hif2a_solvated_ligands():
+    with importlib.resources.path("gufe.tests.data", "hif2a_solvent_1_155.pdb.gz") as f:
+        yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDBx_hif2a_solvated_ligands():
+    with importlib.resources.path("gufe.tests.data", "hif2a_solvent_1_155.cif.gz") as f:
+        yield str(f)
+
+
 @pytest.fixture
 def offxml_settings_path():
     with importlib.resources.path("gufe.tests.data", "offxml_settings.json") as f:
@@ -136,10 +149,18 @@ def PDB_thrombin_path():
         yield str(f)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def PDBx_181L_path():
     with importlib.resources.path("gufe.tests.data", "181l.cif") as f:
         yield str(f)
+
+
+@pytest.fixture(scope="session")
+def PDBx_181L_gz_path(PDBx_181L_path, tmp_path_factory):
+    gz_path = tmp_path_factory.getbasetemp() / "181l.cif.gz"
+    with open(PDBx_181L_path, "rb") as f_in, gzip.open(gz_path, "wb") as f_out:
+        f_out.write(f_in.read())
+    yield str(gz_path)
 
 
 @pytest.fixture
@@ -281,19 +302,26 @@ def benzene_variants_star_map_transformations(
     styrene,
     prot_comp,
     solv_comp,
-):
+) -> tuple[list[gufe.Transformation], list[gufe.Transformation]]:
+    """
+    Transformations corresponding to two separate star maps:
+    one for solvent transformations, once for complex transformations.
+    """
     variants = [toluene, phenol, benzonitrile, anisole, benzaldehyde, styrene]
 
-    # define the solvent chemical systems and transformations between
-    # benzene and the others
+    # define the solvent chemical systems and transformations between benzene and the others
     solvated_ligands = {}
     solvated_ligand_transformations = {}
 
-    solvated_ligands["benzene"] = gufe.ChemicalSystem({"solvent": solv_comp, "ligand": benzene}, name="benzene-solvent")
+    solvated_ligands["benzene"] = gufe.ChemicalSystem(
+        {"solvent": solv_comp, "ligand": benzene},
+        name="benzene-solvent",
+    )
 
     for ligand in variants:
         solvated_ligands[ligand.name] = gufe.ChemicalSystem(
-            {"solvent": solv_comp, "ligand": ligand}, name=f"{ligand.name}-solvent"
+            {"solvent": solv_comp, "ligand": ligand},
+            name=f"{ligand.name}-solvent",
         )
         solvated_ligand_transformations[("benzene", ligand.name)] = gufe.Transformation(
             solvated_ligands["benzene"],
@@ -302,8 +330,7 @@ def benzene_variants_star_map_transformations(
             mapping=None,
         )
 
-    # define the complex chemical systems and transformations between
-    # benzene and the others
+    # define the complex chemical systems and transformations between benzene and the others
     solvated_complexes = {}
     solvated_complex_transformations = {}
 
@@ -328,13 +355,15 @@ def benzene_variants_star_map_transformations(
 
 
 @pytest.fixture
-def benzene_variants_star_map(benzene_variants_star_map_transformations):
+def alchem_network_benzene_variants(benzene_variants_star_map_transformations) -> gufe.AlchemicalNetwork:
+    """Alchemical network containing two separate star maps for ligand and complex transformations."""
     solvated_ligand_transformations, solvated_complex_transformations = benzene_variants_star_map_transformations
     return gufe.AlchemicalNetwork(solvated_ligand_transformations + solvated_complex_transformations)
 
 
 @pytest.fixture
-def benzene_variants_ligand_star_map(benzene_variants_star_map_transformations):
+def alchem_network_benzene_variants_solvent_only(benzene_variants_star_map_transformations) -> gufe.AlchemicalNetwork:
+    """Alchemical network containing a single star map for ligand transformations."""
     solvated_ligand_transformations, _ = benzene_variants_star_map_transformations
     return gufe.AlchemicalNetwork(solvated_ligand_transformations)
 

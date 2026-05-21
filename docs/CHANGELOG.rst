@@ -4,6 +4,36 @@ CHANGELOG
 
 .. current developments
 
+v1.10.0
+====================
+
+**Added:**
+
+* Added transparent support for compressed PDB and PDBx/mmCIF loading in ``ProteinComponent`` and ``SolvatedPDBComponent``, including file-like binary streams, via ``from_pdb_file()`` and ``from_pdbx_file()`` (`PR #777 <https://github.com/OpenFreeEnergy/gufe/pull/777>`_).
+
+* Added ``gufe.utils.magic_open()`` for opening plain-text or compressed text inputs through a single interface, with support for paths as well as binary and text streams (`PR #777 <https://github.com/OpenFreeEnergy/gufe/pull/777>`_).
+
+
+
+
+v1.9.0
+====================
+
+**Added:**
+
+* Added a how-to guide for defining a custom ``Component`` (`PR #667 <https://github.com/OpenFreeEnergy/gufe/pull/667>`_).
+* Added a ``.validate()`` method to gufe Components (`PR #732 <https://github.com/OpenFreeEnergy/gufe/pull/732>`_).
+* ``gufe.protocol.protocoldag.execute_DAG`` now has the ability to resume DAG execution by passing in a path for results caching into ``cache_basedir`` (`PR #738 <https://github.com/OpenFreeEnergy/gufe/pull/738>`_).
+* Added two new Components, a ``SolvatedPDBComponent`` for explicitly solvated systems, including periodic box vectors, and a ``ProteinMembraneComponent`` that inherits from ``SolvatedPDBComponent`` and can be used downstream for type checking of solvated protein membrane appropriate settings (`PR #635 <https://github.com/OpenFreeEnergy/gufe/pull/635>`_).
+* Added a ``ComponentValidationError`` type to be used specifically when ``Component.validate()``  fails (`PR #766 <https://github.com/OpenFreeEnergy/gufe/pull/766>`_).
+
+**Changed:**
+
+* Sped up the counting of the number of water molecules in a SolvatedPDBComponent (`PR #751 <https://github.com/OpenFreeEnergy/gufe/pull/751>`_).
+* ``amber/lipid17_merged.xml`` is now defined by default in forcefield list in :class:`OpenMMSystemGeneratorFFSettings` (`PR #767 <https://github.com/OpenFreeEnergy/gufe/pull/767>`_).
+
+
+
 v1.8.0
 ====================
 
@@ -24,6 +54,14 @@ v1.8.0
 * Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization (`PR #666 <https://github.com/OpenFreeEnergy/gufe/pull/666>`_).
 * a ``ProtocolDAG`` created with ``ProtocolUnit``\s not explicitly represented on init now raises ``ProtocolDAGError`` (`PR #583 <https://github.com/OpenFreeEnergy/gufe/pull/583>`_).
 
+v1.7.1
+====================
+
+**Fixed:**
+
+* Fixed a bug where ``GufeTokenizables`` using openff units of Celsius would throw a ``pint.errors.OffsetUnitCalculusError`` error when using MessagePack serialization (`PR #666 <https://github.com/OpenFreeEnergy/gufe/pull/666>`_)
+
+* Fixed a Pydantic deprecation warning when viewing ``Settings`` in an IPython display (such as a jupyter notebook (`PR #653 <https://github.com/OpenFreeEnergy/gufe/pull/666>`_).
 
 
 v1.7.0

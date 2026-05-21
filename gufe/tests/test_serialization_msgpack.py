@@ -1,6 +1,6 @@
 import abc
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -106,7 +106,7 @@ class TestMessagePack:
 
     class TestTimeStampCoding(CustomMessagePackCodingTest):
         def setup_method(self):
-            self.objs = [datetime.now(timezone.utc), datetime.now()]
+            self.objs = [datetime.now(UTC), datetime.now()]
 
     class TestUUIDCoding(CustomMessagePackCodingTest):
         def setup_method(self):

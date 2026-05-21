@@ -18,8 +18,8 @@ class TestArchival(GufeTokenizableTestsMixin):
     repr = None
 
     @pytest.fixture()
-    def instance(instance, benzene_variants_star_map):
-        alchemical_network = benzene_variants_star_map
+    def instance(instance, alchem_network_benzene_variants):
+        alchemical_network = alchem_network_benzene_variants
         transformations = sorted(list(alchemical_network.edges))
         # create fake results for the transformations
         transformation_results = []

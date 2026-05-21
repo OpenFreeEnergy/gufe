@@ -12,10 +12,13 @@ from openmm import unit as omm_unit
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
 
+from gufe.utils import magic_open
+
 from ..vendor.openff.interchange._annotations import _is_box_shape
 from ..vendor.openff.interchange._packmol import _box_vectors_are_in_reduced_form
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from .errors import ComponentValidationError
 from .proteincomponent import ProteinComponent
 from .solventcomponent import BaseSolventComponent
 
@@ -113,9 +116,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         ----------
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
+
+        Raises
+        ------
+        ComponentValidationError
+            If the density is lower than the minimum density.
         """
         if self.density < min_density:  # type: ignore
-            raise ValueError(
+            raise ComponentValidationError(
                 "Estimated system density is very low.\n  "
                 f"Density: {self.density:.3f} (expected ≥ {min_density}). "
                 "This usually indicates missing solvent or incorrect box vectors."
@@ -248,7 +256,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDB file.
         """
-        pdb = PDBFile(pdb_file)
+        with magic_open(pdb_file) as pdb_file_stream:
+            pdb = PDBFile(pdb_file_stream)
 
         box = cls._resolve_box_vectors(
             pdb,
@@ -276,7 +285,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         """
         Create a SolvatedPDBComponent from a PDBx/mmCIF file.
         """
-        pdbx = PDBxFile(pdbx_file)
+        with magic_open(pdbx_file) as pdbx_file_stream:
+            pdbx = PDBxFile(pdbx_file_stream)
 
         box = cls._resolve_box_vectors(
             pdbx,
@@ -385,22 +395,32 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
     """
 
     @staticmethod
-    def _is_water_fragment(mol: Mol) -> bool:
+    def _is_water_fragment(mol: Mol, atom_indices: tuple[int, ...]) -> bool:
         """
         Return True if this fragment looks like a water molecule (TIP3P/TIP4P/etc).
 
-        Definition:
-        - exactly 1 oxygen
-        - exactly 2 hydrogens
-        Atoms with atomic number 0 (virtual sites) are ignored.
+        Parameters
+        ----------
+        mol : rdkit.Chem.Mol
+          The parent RDKit molecule.
+        atom_indices : tuple[int, ...]
+          Atom indices belonging to a single disconnected fragment
+          (e.g. as returned by ``Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)``).
+
+        Returns
+        -------
+        bool
+          True if the fragment consists of exactly three atoms
+          (1 oxygen and 2 hydrogens)
         """
-        if mol.GetNumAtoms() != 3:
+        if len(atom_indices) != 3:
             return False
         n_H = 0
         n_O = 0
 
-        for atom in mol.GetAtoms():
-            match atom.GetAtomicNum():
+        for idx in atom_indices:
+            atomic_num = mol.GetAtomWithIdx(idx).GetAtomicNum()
+            match atomic_num:
                 case 1:
                     n_H += 1
                 case 8:
@@ -422,8 +442,8 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         """
         Count water molecules by disconnected fragments.
         """
-        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=True)
-        return sum(ProteinMembraneComponent._is_water_fragment(frag) for frag in frags)
+        frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
+        return sum(ProteinMembraneComponent._is_water_fragment(rdkit_mol, frag) for frag in frags)
 
     def validate(
         self,
@@ -443,7 +463,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
 
         Raises
         ------
-        ValueError
+        ComponentValidationError
             If one or more validation checks fail. All detected validation
             errors are aggregated and reported together.
         """
@@ -452,7 +472,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         # 1. Density check
         try:
             super().validate(min_density=min_density)
-        except ValueError as e:
+        except ComponentValidationError as e:
             errors.append(str(e))
 
         # 2. Water count check
@@ -460,7 +480,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
 
         if errors:
-            raise ValueError(
+            raise ComponentValidationError(
                 "ProteinMembraneComponent validation failed:\n"
                 + "\n".join(f"- {e}" for e in errors)
                 + "\nThis usually indicates missing solvent or incorrect box vectors."
