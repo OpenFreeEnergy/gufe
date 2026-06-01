@@ -17,6 +17,8 @@ Optional Visualization Dependencies
 -----------------------------------
 
 **gufe** has optional software dependences which can be installed to visualize atom mappings.
+This dependences are optional to keep **gufe** lightweight when used purely for compute.
+
 **py3Dmol** is used to create three dimensional views of atom mappings and can be installed with:
 
 .. code-block:: bash
@@ -30,7 +32,7 @@ Optional Visualization Dependencies
 
     $ mamba install -c conda-forge ipywidgets
 
-For an optimal experience we recommend installing the optional packages at the same time you install **gufe**:
+For an optimal installation experience we recommend installing the optional packages at the same time you install **gufe**:
 
 .. code-block:: bash
 
