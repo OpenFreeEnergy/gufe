@@ -415,7 +415,7 @@ def display_mapping_3d(
     shift: tuple[float, float, float] | NDArray[np.float64] | None = None,
 ) -> py3Dmol.view:
     """
-    Render relative transformation edge in 3D using py3Dmol.
+    Render the `LigandAtomMapping` in 3D using py3Dmol.
 
     By default matching atoms will be annotated using colored spheres.
 
@@ -425,18 +425,19 @@ def display_mapping_3d(
     Parameters
     ----------
     mapping : LigandAtomMapping
-        The ligand transformation edge to visualize.
     spheres : bool, default=True
-        Whether or not to show matching atoms as spheres.
+        If True, show matching atoms as spheres (default=True).
     show_atomIDs: bool, default=False
-        Whether or not to show atom ids in the mapping visualization
+        If True, show atom IDs (default=False).
     style : str, default='stick'
-        Style in which to represent the molecules in py3Dmol.
+        Style in which to represent the molecules in py3Dmol (default='stick').
     shift : Tuple of floats, default=None
         Amount to shift molB by in order to visualize the two ligands.
         If None, the default shift will be estimated as the largest
         intraMol distance of both mols.
-
+    shift : tuple[float,...], default=None
+        Amount to shift molB by in order to visualize the two ligands.
+        If None, the default shift will be estimated as the largest intraMol distance of both mols.
     Returns
     -------
     view : py3Dmol.view
@@ -520,8 +521,6 @@ def display_mappings_3d(mappingSet: AtomMapping | list[AtomMapping]) -> widgets.
         print(f"Mapping MolA->MolB: {mappingSet[index].componentA_to_componentB}")
         if hasattr(mappingSet[index], "score"):
             print(f"Mapping Score: {getattr(mappingSet[index], 'score')} score")
-        else:
-            print()
         view = display_mapping_3d(mappingSet[index], spheres=True, show_atomIDs=True)  # shift=(0.1, 0, 0))
         view.show()
 
