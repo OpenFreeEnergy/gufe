@@ -38,7 +38,7 @@ fallback_version = "0.0.0"
 [tool.ruff]
 target-version = "py311"
 line-length = 120
-exclude = [ "gufe/vendor/*" ]
+exclude = [ "src/gufe/vendor/*" ]
 format.docstring-code-format = true
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 lint.select = [
@@ -62,7 +62,7 @@ lint.per-file-ignores."__init__.py" = [ "F401" ]
 lint.isort.known-first-party = [ "gufe" ]
 
 [tool.mypy]
-files = "gufe"
+files = "src/"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -76,10 +76,10 @@ follow_imports_for_stubs = true
 
 [tool.coverage]
 run.omit = [
-  "*/_version.py",
-  "*/tests/dev/*py",
-  "gufe/tests/*",
-  "gufe/vendor/*",
+  "src/*/_version.py",
+  "src/*/tests/dev/*py",
+  "src/gufe/tests/*",
+  "src/gufe/vendor/*",
 ]
 report.exclude_lines = [
   "-no-cov",
