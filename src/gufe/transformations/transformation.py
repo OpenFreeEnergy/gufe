@@ -123,13 +123,16 @@ class TransformationBase(GufeTokenizable):
         which is used in both ``ChemicalSystem`` objects will be represented
         twice in the JSON output.
 
+        version-deprecated :: 1.3.0
+            `.dump()` is deprecated. Use `.to_json() instead`.
+
         Parameters
         ----------
         file : Union[PathLike, FileLike]
             A pathlike of filelike to save this transformation to.
         """
         warnings.warn(
-            ("use of this method is deprecated; instead use `to_json`"),
+            ("`.dump()` is deprecated as of gufe v1.3.0; Use `.to_json()` instead."),
             DeprecationWarning,
         )
         with ensure_filelike(file, mode="w") as f:
@@ -139,13 +142,16 @@ class TransformationBase(GufeTokenizable):
     def load(cls, file):
         """Create a Transformation from a JSON file.
 
+        version-deprecated :: 1.3.0
+            `.load()` is deprecated. Use `.from_json() instead`.
+
         Parameters
         ----------
         file : Union[PathLike, FileLike]
             A pathlike or filelike to read this transformation from.
         """
         warnings.warn(
-            ("use of this method is deprecated; instead use `from_json`"),
+            ("`.load()` is deprecated as of gufe v1.3.0; Use `.from_json()` instead."),
             DeprecationWarning,
         )
         with ensure_filelike(file, mode="r") as f:
