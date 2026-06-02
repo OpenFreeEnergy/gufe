@@ -338,6 +338,7 @@ class LigandNetwork(GufeTokenizable):
         warnings.warn(
             ("to_rbfe_alchemical_network() is deprecated and will be removed in version 1.13.0."),
             DeprecationWarning,
+            stacklevel=2,
         )
         components = {"protein": protein, "solvent": solvent, **other_components}
         leg_labels = {

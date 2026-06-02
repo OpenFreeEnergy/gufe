@@ -134,6 +134,7 @@ class TransformationBase(GufeTokenizable):
         warnings.warn(
             ("`.dump()` is deprecated as of gufe v1.3.0; Use `.to_json()` instead."),
             DeprecationWarning,
+            stacklevel=2,
         )
         with ensure_filelike(file, mode="w") as f:
             json.dump(self.to_dict(), f, cls=JSON_HANDLER.encoder, sort_keys=True)
@@ -153,6 +154,7 @@ class TransformationBase(GufeTokenizable):
         warnings.warn(
             ("`.load()` is deprecated as of gufe v1.3.0; Use `.from_json()` instead."),
             DeprecationWarning,
+            stacklevel=2,
         )
         with ensure_filelike(file, mode="r") as f:
             dct = json.load(f, cls=JSON_HANDLER.decoder)
@@ -214,6 +216,7 @@ class Transformation(TransformationBase):
             warnings.warn(
                 ("mapping input as a dict is deprecated; instead use either a single Mapping or list"),
                 DeprecationWarning,
+                stacklevel=2,
             )
             mapping = list(mapping.values())
 

@@ -254,6 +254,7 @@ class Protocol(GufeTokenizable):
             warnings.warn(
                 ("mapping input as a dict is deprecated, instead use either a single Mapping or list"),
                 DeprecationWarning,
+                stacklevel=2,
             )
             mapping = list(mapping.values())
 
@@ -364,6 +365,7 @@ class Protocol(GufeTokenizable):
             warnings.warn(
                 "mapping input as a dict is deprecated, instead use either a single Mapping or list",
                 DeprecationWarning,
+                stacklevel=2,
             )
             mapping = list(mapping.values())
 
