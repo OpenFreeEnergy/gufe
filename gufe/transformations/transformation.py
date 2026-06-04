@@ -30,7 +30,7 @@ class TransformationBase(GufeTokenizable):
         name: str, optional
             A human-readable name for this transformation.
         metadata : dict[str, Any], optional
-            Metadata of the Transformation. ``None`` produces and
+            Metadata of the Transformation. ``None`` produces an
             empty dictionary. Defaults to ``None``.
 
         """
