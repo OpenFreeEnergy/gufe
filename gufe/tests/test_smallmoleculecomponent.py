@@ -11,6 +11,7 @@ else:
     HAS_OFFTK = True
 import json
 import logging
+import pickle
 from unittest import mock
 
 import pytest
@@ -459,6 +460,16 @@ def test_prop_preservation(ethane, target, dtype):
         assert obj.GetProp("foo") == "bar"
     else:
         assert obj.GetDoubleProp("foo") == pytest.approx(1.234)
+
+    # check that props survive being pickled
+
+    mol.SetProp("_Name", "ethane")
+    smc = SmallMoleculeComponent(rdkit=mol)
+    pickled_smc = pickle.dumps(smc)
+    new_smc = pickle.loads(pickled_smc)
+    new_mol = new_smc.to_rdkit()
+
+    assert new_mol.GetProp("_Name") == "ethane"
 
 
 def test_missing_H_warning():

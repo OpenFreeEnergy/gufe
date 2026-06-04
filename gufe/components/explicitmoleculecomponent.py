@@ -68,14 +68,13 @@ class ExplicitMoleculeComponent(Component):
         self._check_partial_charges()
 
     def __getstate__(self):
-        # TODO: check that RDKit setting is set before issuing warning
-        if Chem.GetDefaultPickleProperties() != Chem.PropertyPickleOptions.AllProps:
-            warnings.warn(
-                "RDKit does not preserve Mol properties when pickled by default, which may drop e.g. atom charges; "
-                "consider setting `Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)`"
-            )
+        state = self.__dict__.copy()
+        state["_rdkit"] = self._rdkit.ToBinary(Chem.PropertyPickleOptions.AllProps)
+        return state
 
-        return self.__dict__
+    def __setstate__(self, state):
+        state["_rdkit"] = Chem.Mol(state["_rdkit"])
+        self.__dict__.update(state)
 
     @classmethod
     def _defaults(cls):
