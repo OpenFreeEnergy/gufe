@@ -7,6 +7,7 @@ on:
     branches:
       - main
       - stable
+      - epic/*
       - release
   schedule:
     # At 07:00 UTC on Monday and Thursday.
@@ -47,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Setup Micromamba"
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           micromamba-binary-path: ~/.local/bin/micromamba
           environment-file: environment.yml
@@ -114,7 +115,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Setup Micromamba"
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           environment-file: environment.yml
           environment-name: gufe

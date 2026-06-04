@@ -4,6 +4,27 @@ CHANGELOG
 
 .. current developments
 
+v1.11.0
+====================
+
+**Added:**
+
+* Added reusable 3D ligand atom mapping visualization helpers, ``display_mapping_3d()`` and ``display_mappings_3d()``, to ``gufe.visualization.mapping_visualization``.
+  ``LigandAtomMapping.view_3d()`` now uses the shared ``display_mapping_3d()`` helper internally (`PR #748 <https://github.com/OpenFreeEnergy/gufe/pull/748>`_).
+
+
+
+v1.10.0
+====================
+
+**Added:**
+
+* Added transparent support for compressed PDB and PDBx/mmCIF loading in ``ProteinComponent`` and ``SolvatedPDBComponent``, including file-like binary streams, via ``from_pdb_file()`` and ``from_pdbx_file()`` (`PR #777 <https://github.com/OpenFreeEnergy/gufe/pull/777>`_).
+
+* Added ``gufe.utils.magic_open()`` for opening plain-text or compressed text inputs through a single interface, with support for paths as well as binary and text streams (`PR #777 <https://github.com/OpenFreeEnergy/gufe/pull/777>`_).
+
+
+
 
 v1.9.0
 ====================
