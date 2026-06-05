@@ -461,14 +461,37 @@ def test_prop_preservation(ethane, target, dtype):
     else:
         assert obj.GetDoubleProp("foo") == pytest.approx(1.234)
 
-    # check that props survive being pickled
 
+@pytest.mark.parametrize(
+    "roundtrip",
+    [
+        pytest.param(
+            lambda smc: pickle.loads(pickle.dumps(smc)),
+            id="pickle",
+        ),
+        pytest.param(
+            lambda smc: SmallMoleculeComponent.from_dict(smc.to_dict()),
+            id="dict",
+        ),
+        pytest.param(
+            lambda smc: SmallMoleculeComponent.from_msgpack(content=smc.to_msgpack()),
+            id="msgpack",
+        ),
+    ],
+)
+def test_equality_after_round_trip(roundtrip):
+    mol = Chem.MolFromSmiles("CC")
+    Chem.AllChem.Compute2DCoords(mol)
     mol.SetProp("_Name", "ethane")
-    smc = SmallMoleculeComponent(rdkit=mol)
-    pickled_smc = pickle.dumps(smc)
-    new_smc = pickle.loads(pickled_smc)
-    new_mol = new_smc.to_rdkit()
 
+    smc = SmallMoleculeComponent(rdkit=mol)
+
+    new_smc = roundtrip(smc)
+
+    assert new_smc == smc
+
+    new_mol = new_smc.to_rdkit()
+    assert new_mol.HasProp("_Name")
     assert new_mol.GetProp("_Name") == "ethane"
 
 

@@ -68,13 +68,11 @@ class ExplicitMoleculeComponent(Component):
         self._check_partial_charges()
 
     def __getstate__(self):
-        state = self.__dict__.copy()
-        state["_rdkit"] = self._rdkit.ToBinary(Chem.PropertyPickleOptions.AllProps)
-        return state
+        return self.to_dict()
 
     def __setstate__(self, state):
-        state["_rdkit"] = Chem.Mol(state["_rdkit"])
-        self.__dict__.update(state)
+        new = self.from_dict(state)
+        self.__dict__.update(new.__dict__)
 
     @classmethod
     def _defaults(cls):
