@@ -46,6 +46,7 @@ class ExplicitMoleculeComponent(Component):
     _name: str
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
+        Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
         name = _ensure_ofe_name(rdkit, name)
         conformers = list(rdkit.GetConformers())
         if not conformers:
@@ -66,13 +67,6 @@ class ExplicitMoleculeComponent(Component):
         self._name = name
 
         self._check_partial_charges()
-
-    def __getstate__(self):
-        return self.to_dict()
-
-    def __setstate__(self, state):
-        new = self.from_dict(state)
-        self.__dict__.update(new.__dict__)
 
     @classmethod
     def _defaults(cls):
