@@ -488,7 +488,7 @@ def test_equality_after_round_trip(roundtrip):
 
     new_smc = roundtrip(smc)
 
-    assert new_smc == smc
+    assert new_smc is smc
 
     new_mol = new_smc.to_rdkit()
     assert new_mol.HasProp("_Name")
