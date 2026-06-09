@@ -1,13 +1,49 @@
 import pickle
 
+import pytest
+
+
+def _pickle_roundtrip(obj):
+    return pickle.loads(pickle.dumps(obj))
+
+
+def _dict_roundtrip(obj):
+    return type(obj).from_dict(obj.to_dict())
+
+
+def _msgpack_roundtrip(obj):
+    return type(obj).from_msgpack(content=obj.to_msgpack())
+
 
 class ExplicitMoleculeComponentMixin:
-    def test_pickle(self, instance):
-        pickled = pickle.dumps(instance)
-        unpickled = pickle.loads(pickled)
+    @pytest.mark.parametrize(
+        "roundtrip",
+        [
+            pytest.param(_pickle_roundtrip, id="pickle"),
+            pytest.param(_dict_roundtrip, id="dict"),
+            pytest.param(_msgpack_roundtrip, id="msgpack"),
+        ],
+    )
+    def test_equality_after_round_trip(self, instance, roundtrip):
+        new_instance = roundtrip(instance)
 
-        assert unpickled == instance
+        assert new_instance == instance
+        assert new_instance.key == instance.key
+        assert type(new_instance) is type(instance)
 
-        # it's currently the case that the flyweight pattern isn't respected by
-        # pickling/unpickling
-        assert not unpickled is instance
+    @pytest.mark.parametrize(
+        "roundtrip",
+        [
+            pytest.param(_pickle_roundtrip, id="pickle"),
+            pytest.param(_dict_roundtrip, id="dict"),
+            pytest.param(_msgpack_roundtrip, id="msgpack"),
+        ],
+    )
+    def test_name_after_round_trip(self, instance, roundtrip):
+        new_instance = roundtrip(instance)
+
+        assert new_instance.name == instance.name
+
+        mol = new_instance.to_rdkit()
+        assert mol.HasProp("ofe-name")
+        assert mol.GetProp("ofe-name") == instance.name

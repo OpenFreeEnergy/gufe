@@ -11,7 +11,6 @@ else:
     HAS_OFFTK = True
 import json
 import logging
-import pickle
 from unittest import mock
 
 import pytest
@@ -460,39 +459,6 @@ def test_prop_preservation(ethane, target, dtype):
         assert obj.GetProp("foo") == "bar"
     else:
         assert obj.GetDoubleProp("foo") == pytest.approx(1.234)
-
-
-@pytest.mark.parametrize(
-    "roundtrip",
-    [
-        pytest.param(
-            lambda smc: pickle.loads(pickle.dumps(smc)),
-            id="pickle",
-        ),
-        pytest.param(
-            lambda smc: SmallMoleculeComponent.from_dict(smc.to_dict()),
-            id="dict",
-        ),
-        pytest.param(
-            lambda smc: SmallMoleculeComponent.from_msgpack(content=smc.to_msgpack()),
-            id="msgpack",
-        ),
-    ],
-)
-def test_equality_after_round_trip(roundtrip):
-    mol = Chem.MolFromSmiles("CC")
-    Chem.AllChem.Compute2DCoords(mol)
-    mol.SetProp("_Name", "ethane")
-
-    smc = SmallMoleculeComponent(rdkit=mol)
-
-    new_smc = roundtrip(smc)
-
-    assert new_smc == smc
-
-    new_mol = new_smc.to_rdkit()
-    assert new_mol.HasProp("_Name")
-    assert new_mol.GetProp("_Name") == "ethane"
 
 
 def test_missing_H_warning():
