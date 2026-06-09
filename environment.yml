@@ -1,7 +1,6 @@
 name: gufe
 channels:
   - conda-forge
-  - mmh/label/beta
 dependencies:
   - annotated-types
   - coverage
