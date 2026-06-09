@@ -24,23 +24,12 @@ class ExplicitMoleculeComponentMixin:
             pytest.param(_msgpack_roundtrip, id="msgpack"),
         ],
     )
-    def test_equality_after_round_trip(self, instance, roundtrip):
+    def test_name_and_equality_after_round_trip(self, instance, roundtrip):
         new_instance = roundtrip(instance)
 
         assert new_instance == instance
         assert new_instance.key == instance.key
         assert type(new_instance) is type(instance)
-
-    @pytest.mark.parametrize(
-        "roundtrip",
-        [
-            pytest.param(_pickle_roundtrip, id="pickle"),
-            pytest.param(_dict_roundtrip, id="dict"),
-            pytest.param(_msgpack_roundtrip, id="msgpack"),
-        ],
-    )
-    def test_name_after_round_trip(self, instance, roundtrip):
-        new_instance = roundtrip(instance)
 
         assert new_instance.name == instance.name
 
