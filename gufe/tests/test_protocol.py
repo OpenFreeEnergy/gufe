@@ -13,7 +13,6 @@ import networkx as nx
 import numpy as np
 import pytest
 from openff.units import unit
-from pydantic import ConfigDict
 
 import gufe
 from gufe import settings
@@ -71,7 +70,6 @@ class FinishUnit(ProtocolUnit):
 
 
 class DummySpecificSettings(settings.Settings):
-    model_config = ConfigDict(extra="ignore")
     n_repeats: int
 
 
