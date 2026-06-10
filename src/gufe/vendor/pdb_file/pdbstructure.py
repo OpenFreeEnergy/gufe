@@ -463,9 +463,7 @@ class Chain:
         else:  # Residue name does not match
             # Only residue name does not match
             warnings.warn(
-                "WARNING: two consecutive residues with same number ({}, {})".format(
-                    atom, self._current_residue.atoms[-1]
-                )
+                f"WARNING: two consecutive residues with same number ({atom}, {self._current_residue.atoms[-1]})"
             )
             self._add_residue(
                 Residue(
