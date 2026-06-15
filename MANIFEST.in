@@ -1,8 +1,8 @@
-include gufe/vendor/pdb_file/data/*.xml
-recursive-include gufe/tests/data/ *.pdb
-recursive-include gufe/tests/data/ *.sdf
-recursive-include gufe/tests/data/ *.cif
-recursive-include gufe/tests/data/ *.mol2
-recursive-include gufe/tests/data/ *.json
-recursive-include gufe/tests/data/ *.graphml
-recursive-include gufe/tests/data/ *.gz
+include src/gufe/vendor/pdb_file/data/*.xml
+recursive-include src/gufe/tests/data/ *.pdb
+recursive-include src/gufe/tests/data/ *.sdf
+recursive-include src/gufe/tests/data/ *.cif
+recursive-include src/gufe/tests/data/ *.mol2
+recursive-include src/gufe/tests/data/ *.json
+recursive-include src/gufe/tests/data/ *.graphml
+recursive-include src/gufe/tests/data/ *.gz
