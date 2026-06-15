@@ -272,7 +272,12 @@ def is_legacy_path_dict(dct: dict) -> bool:
 
 PATH_CODEC = JSONCodec(
     cls=pathlib.PosixPath,
-    to_dict=lambda p: {"path": str(p)},
+    to_dict=lambda p: {
+        "__module__": "pathlib",
+        "__class__": "PosixPath",
+        ":is_custom:": True,
+        "path": str(p),
+    },
     from_dict=lambda dct: pathlib.PosixPath(dct["path"]),
     is_my_dict=is_legacy_path_dict,
 )
