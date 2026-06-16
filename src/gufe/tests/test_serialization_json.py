@@ -234,13 +234,12 @@ class TestPathCodec(CustomJSONCodingTest):
         self.objs = [
             pathlib.PosixPath("foo/bar"),
         ]
-        # This will get the correct flavor of "pathlib" or "pathlib._local" at
-        # run time instead of us hard coding based on version
+        # Check to see if we get the canonical serialized form of the pathlib module
         self.dcts = [
             {
-                "__class__": "PosixPath",
-                "__module__": pathlib.PosixPath.__module__,
                 ":is_custom:": True,
+                "__class__": "PosixPath",
+                "__module__": "pathlib",
                 "path": "foo/bar",
             }
         ]
