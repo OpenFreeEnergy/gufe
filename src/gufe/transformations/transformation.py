@@ -213,10 +213,9 @@ class Transformation(TransformationBase):
 
         self._stateA = stateA
         self._stateB = stateB
-        self._protocol = protocol
         self._mapping = mapping
-        self._name = name
-        self._metadata = metadata or {}
+
+        super().__init__(protocol=protocol, name=name, metadata=metadata)
 
         if validate:
             self.protocol.validate(
@@ -313,9 +312,7 @@ class NonTransformation(TransformationBase):
         """
 
         self._system = system
-        self._protocol = protocol
-        self._name = name
-        self._metadata = metadata or {}
+        super().__init__(protocol=protocol, name=name, metadata=metadata)
 
         if validate:
             self.protocol.validate(
