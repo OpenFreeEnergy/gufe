@@ -359,6 +359,9 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
             (self.__class__, self.to_keyed_chain()),
         )
 
+    def __deepcopy__(self, memo):
+        return self
+
     def _gufe_tokenize(self):
         """Generate a unique token for this object."""
         return tokenize(self)

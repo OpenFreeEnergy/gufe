@@ -22,6 +22,7 @@ def absolute_transformation(solvated_ligand, solvated_complex):
         solvated_complex,
         protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
         mapping=None,
+        metadata={"sample_metadata_key": "sample_metadata_value"},
     )
 
 
@@ -35,7 +36,7 @@ def complex_equilibrium(solvated_complex):
 
 class TestTransformation(GufeTokenizableTestsMixin):
     cls = Transformation
-    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-e74b8a34526e7a7a5541d63e9ef511d5>, name=None)"
+    repr = "Transformation(stateA=ChemicalSystem(name=, components={'ligand': SmallMoleculeComponent(name=toluene), 'solvent': SolventComponent(name=O, K+, Cl-)}), stateB=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-e74b8a34526e7a7a5541d63e9ef511d5>, name=None, metadata={'sample_metadata_key': 'sample_metadata_value'})"
 
     @pytest.fixture
     def instance(self, absolute_transformation):
@@ -161,6 +162,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
             solvated_complex,
             solvated_ligand,
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
+            metadata={"sample_metadata_key": "sample_metadata_value"},
         )
         assert absolute_transformation != opposite
 
@@ -170,6 +172,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
             solvated_ligand,
             solvated_complex,
             protocol=DummyProtocol(settings=s),
+            metadata={"sample_metadata_key": "sample_metadata_value"},
         )
         assert absolute_transformation != different_protocol_settings
 
@@ -178,6 +181,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
             solvated_complex,
             protocol=DummyProtocol(settings=DummyProtocol.default_settings()),
             mapping=None,
+            metadata={"sample_metadata_key": "sample_metadata_value"},
         )
         assert absolute_transformation == identical
 
@@ -206,7 +210,7 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
 class TestNonTransformation(GufeTokenizableTestsMixin):
     cls = NonTransformation
-    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-e74b8a34526e7a7a5541d63e9ef511d5>, name=None)"
+    repr = "NonTransformation(system=ChemicalSystem(name=, components={'protein': ProteinComponent(name=), 'solvent': SolventComponent(name=O, K+, Cl-), 'ligand': SmallMoleculeComponent(name=toluene)}), protocol=<DummyProtocol-e74b8a34526e7a7a5541d63e9ef511d5>, name=None, metadata={})"
 
     @pytest.fixture
     def instance(self, complex_equilibrium):

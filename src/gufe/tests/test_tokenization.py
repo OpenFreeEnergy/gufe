@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import pickle
+from copy import deepcopy
 from unittest import mock
 
 import pytest
@@ -257,6 +258,23 @@ class TestGufeTokenizable(GufeTokenizableTestsMixin):
         recreated = Container.from_dict(self.expected_deep)
         assert recreated == self.cont
         assert recreated is self.cont
+
+    def test_deepcopy(self):
+        # deepcopy of a tokenizable returns itself
+        assert deepcopy(self.cont) is self.cont
+
+        # include the tokenizable inside nested containers
+        nested = {"list_key": [self.cont]}
+
+        # show that a deepcopy of the nested structure is equal but
+        # not the same as the orignal
+        nested_copy = deepcopy(nested)
+        assert nested is not nested_copy
+        assert nested == nested_copy
+        assert nested["list_key"] is not nested_copy["list_key"]
+
+        # the contained tokenizable is the same object
+        assert self.cont is nested_copy["list_key"][0]
 
     def test_to_keyed_dict(self):
         assert self.cont.to_keyed_dict() == self.expected_keyed
