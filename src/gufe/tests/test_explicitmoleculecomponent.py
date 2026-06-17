@@ -37,3 +37,5 @@ class ExplicitMoleculeComponentMixin:
         mol = new_instance.to_rdkit()
         assert mol.HasProp("ofe-name")
         assert mol.GetProp("ofe-name") == instance.name
+        # I don't expect this to work since rdkit will make 2 identical ojbects BUT at different locations in memory, which is what the == checks
+        assert new_instance.to_rdkit() == instance.to_rdkit()

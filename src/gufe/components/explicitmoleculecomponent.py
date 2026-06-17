@@ -46,7 +46,6 @@ class ExplicitMoleculeComponent(Component):
     _name: str
 
     def __init__(self, rdkit: RDKitMol, name: str = ""):
-        Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
         name = _ensure_ofe_name(rdkit, name)
         conformers = list(rdkit.GetConformers())
         if not conformers:
