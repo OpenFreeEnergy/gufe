@@ -30,6 +30,7 @@ class ExplicitMoleculeComponentMixin:
         assert new_instance == instance
         assert new_instance.key == instance.key
         assert type(new_instance) is type(instance)
+        assert new_instance is instance
 
         assert new_instance.name == instance.name
 

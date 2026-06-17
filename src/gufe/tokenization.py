@@ -320,6 +320,10 @@ def nested_key_moved(dct, old_name, new_name):
     return dct
 
 
+def _restore_gufe_from_keyed_chain(cls, keyed_chain):
+    return cls.from_keyed_chain(keyed_chain)
+
+
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizable gufe objects.
 
@@ -348,6 +352,12 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def __hash__(self):
         return hash(self.key)
+
+    def __reduce_ex__(self, protocol):
+        return (
+            _restore_gufe_from_keyed_chain,
+            (self.__class__, self.to_keyed_chain()),
+        )
 
     def _gufe_tokenize(self):
         """Generate a unique token for this object."""
