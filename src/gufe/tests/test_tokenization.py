@@ -132,6 +132,17 @@ ROUNDTRIP_CASES = [
     pytest.param(_keyed_chain_roundtrip, id="keyed_chain"),
 ]
 
+# This subset (less keyed_dict and shallow_dict) does not need the registry to
+# populated to work, so we can test them on an empty registry
+REGISTRY_INDEPENDENT_ROUNDTRIPS = [
+    pytest.param(_pickle_roundtrip, id="pickle"),
+    pytest.param(_dict_roundtrip, id="dict"),
+    pytest.param(_msgpack_roundtrip, id="msgpack"),
+    pytest.param(_compressed_msgpack_roundtrip, id="msgpack-compressed"),
+    pytest.param(_json_roundtrip, id="json"),
+    pytest.param(_keyed_chain_roundtrip, id="keyed_chain"),
+]
+
 
 class GufeTokenizableTestsMixin(abc.ABC):
     # set this to the `GufeTokenizable` subclass you are testing
@@ -151,14 +162,15 @@ class GufeTokenizableTestsMixin(abc.ABC):
         assert deser == instance
         assert deser is instance
 
-    @pytest.mark.skip
-    def test_to_dict_roundtrip_clear_registry(self, instance):
-        ser = instance.to_dict()
+    @pytest.mark.parametrize("roundtrip_case", REGISTRY_INDEPENDENT_ROUNDTRIPS)
+    def test_roundtrip_clear_registry(self, instance, roundtrip_case):
+        ser = roundtrip_case(self.cls, instance)
+
         patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
         with mock.patch.dict(patch_loc, {}, clear=True):
-            deser = self.cls.from_dict(ser)
-        reser = deser.to_dict()
+            deser = roundtrip_case(self.cls, instance)
 
+        assert type(instance) is type(deser)
         assert instance == deser
         assert instance is not deser
 
