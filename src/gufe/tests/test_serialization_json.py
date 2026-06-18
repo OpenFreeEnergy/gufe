@@ -6,7 +6,6 @@
 import abc
 import json
 import pathlib
-import sys
 from uuid import uuid4
 
 import numpy as np
@@ -235,6 +234,7 @@ class TestPathCodec(CustomJSONCodingTest):
         self.objs = [
             pathlib.PosixPath("foo/bar"),
         ]
+        # Check to see if we get the canonical serialized form of the pathlib module
         self.dcts = [
             {
                 ":is_custom:": True,
@@ -243,8 +243,6 @@ class TestPathCodec(CustomJSONCodingTest):
                 "path": "foo/bar",
             }
         ]
-        if sys.version_info[:2] >= (3, 13):
-            self.dcts[0]["__module__"] = "pathlib._local"
 
 
 class TestSettingsCodec(CustomJSONCodingTest):
