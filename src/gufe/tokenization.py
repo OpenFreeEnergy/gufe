@@ -320,11 +320,15 @@ def nested_key_moved(dct, old_name, new_name):
     return dct
 
 
-def _restore_gufe_from_keyed_chain(keyed_chain):
+def _restore_gufe_from_keyed_chain(
+    keyed_chain: list[tuple[str, dict]],
+) -> "GufeTokenizable":
     """Restore a GufeTokenizable from its keyed-chain representation.
 
     This helper is used by ``GufeTokenizable.__reduce_ex__`` as the pickle reconstruction callable.
-    Routing pickle deserialization through ``from_keyed_chain`` ensures that pickled objects are restored using the same tokenization machinery as the other serialization formats, including lookup in the tokenizable registry. If an equivalent object is already present in memory, the registered instance is returned."""
+    Routing pickle deserialization through ``from_keyed_chain`` ensures that pickled objects are restored using the same tokenization machinery as the other serialization formats, including lookup in the tokenizable registry.
+    If an equivalent object is already present in memory, the registered instance is returned.
+    """
     return GufeTokenizable.from_keyed_chain(keyed_chain)
 
 
@@ -357,7 +361,10 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     def __hash__(self):
         return hash(self.key)
 
-    def __reduce_ex__(self, protocol):
+    def __reduce_ex__(
+        self,
+        protocol: int,
+    ) -> tuple[Callable[[list[tuple[str, dict]]], "GufeTokenizable"], tuple[list[tuple[str, dict]],]]:
         """Return the pickle reduction for this tokenizable.
 
         Pickle round-tripping is implemented via the keyed-chain representation rather than by pickling the instance ``__dict__``.
