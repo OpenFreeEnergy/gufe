@@ -55,7 +55,7 @@ def test_conc():
 
 
 @pytest.mark.parametrize(
-    "conc,",
+    "conc",
     [
         1.22,  # no units, 1.22 what?
         1.5 * unit.kg,  # probably a tad much salt

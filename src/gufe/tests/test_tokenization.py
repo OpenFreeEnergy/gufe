@@ -3,6 +3,7 @@ import datetime
 import io
 import json
 import logging
+import pickle
 from copy import deepcopy
 from unittest import mock
 
@@ -88,6 +89,61 @@ class Container(GufeTokenizable):
         return super()._defaults()
 
 
+def _pickle_roundtrip(cls, instance):
+    return pickle.loads(pickle.dumps(instance))
+
+
+def _dict_roundtrip(cls, instance):
+    return cls.from_dict(instance.to_dict())
+
+
+def _keyed_dict_roundtrip(cls, instance):
+    return cls.from_keyed_dict(instance.to_keyed_dict())
+
+
+def _shallow_dict_roundtrip(cls, instance):
+    return cls.from_shallow_dict(instance.to_shallow_dict())
+
+
+def _msgpack_roundtrip(cls, instance):
+    return cls.from_msgpack(content=instance.to_msgpack(compress=False))
+
+
+def _compressed_msgpack_roundtrip(cls, instance):
+    return cls.from_msgpack(content=instance.to_msgpack(compress=True))
+
+
+def _json_roundtrip(cls, instance):
+    return cls.from_json(content=instance.to_json())
+
+
+def _keyed_chain_roundtrip(cls, instance):
+    return cls.from_keyed_chain(instance.to_keyed_chain())
+
+
+ROUNDTRIP_CASES = [
+    pytest.param(_pickle_roundtrip, id="pickle"),
+    pytest.param(_dict_roundtrip, id="dict"),
+    pytest.param(_keyed_dict_roundtrip, id="keyed_dict"),
+    pytest.param(_shallow_dict_roundtrip, id="shallow_dict"),
+    pytest.param(_msgpack_roundtrip, id="msgpack"),
+    pytest.param(_compressed_msgpack_roundtrip, id="msgpack-compressed"),
+    pytest.param(_json_roundtrip, id="json"),
+    pytest.param(_keyed_chain_roundtrip, id="keyed_chain"),
+]
+
+# This subset (less keyed_dict and shallow_dict) does not need the registry to be
+# populated to work, so we can test them on an empty registry
+REGISTRY_INDEPENDENT_ROUNDTRIPS = [
+    pytest.param(_pickle_roundtrip, id="pickle"),
+    pytest.param(_dict_roundtrip, id="dict"),
+    pytest.param(_msgpack_roundtrip, id="msgpack"),
+    pytest.param(_compressed_msgpack_roundtrip, id="msgpack-compressed"),
+    pytest.param(_json_roundtrip, id="json"),
+    pytest.param(_keyed_chain_roundtrip, id="keyed_chain"),
+]
+
+
 class GufeTokenizableTestsMixin(abc.ABC):
     # set this to the `GufeTokenizable` subclass you are testing
     cls: type[GufeTokenizable]
@@ -98,90 +154,25 @@ class GufeTokenizableTestsMixin(abc.ABC):
         """Define instance to test with here."""
         ...
 
-    def test_to_dict_roundtrip(self, instance):
-        ser = instance.to_dict()
-        deser = self.cls.from_dict(ser)
-        reser = deser.to_dict()
+    @pytest.mark.parametrize("roundtrip_case", ROUNDTRIP_CASES)
+    def test_roundtrip(self, instance, roundtrip_case):
+        deser = roundtrip_case(self.cls, instance)
 
-        assert instance == deser
-        assert instance is deser
+        assert type(deser) is type(instance)
+        assert deser == instance
+        assert deser is instance
 
-        # not generally true that the dict forms are equal, e.g. if they
-        # include `np.nan`s
-        # assert ser == reser
+    @pytest.mark.parametrize("roundtrip_case", REGISTRY_INDEPENDENT_ROUNDTRIPS)
+    def test_roundtrip_clear_registry(self, instance, roundtrip_case):
+        ser = roundtrip_case(self.cls, instance)
 
-    @pytest.mark.skip
-    def test_to_dict_roundtrip_clear_registry(self, instance):
-        ser = instance.to_dict()
         patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
         with mock.patch.dict(patch_loc, {}, clear=True):
-            deser = self.cls.from_dict(ser)
-        reser = deser.to_dict()
+            deser = roundtrip_case(self.cls, instance)
 
+        assert type(instance) is type(deser)
         assert instance == deser
         assert instance is not deser
-
-    def test_to_keyed_dict_roundtrip(self, instance):
-        ser = instance.to_keyed_dict()
-        deser = self.cls.from_keyed_dict(ser)
-        reser = deser.to_keyed_dict()
-
-        assert instance == deser
-        assert instance is deser
-
-        # not generally true that the dict forms are equal, e.g. if they
-        # include `np.nan`s
-        # assert ser == reser
-
-    def test_to_shallow_dict_roundtrip(self, instance):
-        ser = instance.to_shallow_dict()
-        deser = self.cls.from_shallow_dict(ser)
-        reser = deser.to_shallow_dict()
-
-        assert instance == deser
-        assert instance is deser
-
-        # not generally true that the dict forms are equal, e.g. if they
-        # include `np.nan`s
-        # assert ser == reser
-
-    def test_to_msgpack_roundtrip(self, instance):
-        ser = instance.to_msgpack(compress=False)
-        deser = self.cls.from_msgpack(content=ser)
-
-        assert instance == deser
-        assert instance is deser
-
-    def test_to_msgpack_roundtrip_compressed(self, instance):
-        ser = instance.to_msgpack(compress=True)
-        deser = self.cls.from_msgpack(content=ser)
-
-        assert instance == deser
-        assert instance is deser
-
-    def test_to_json_roundtrip(self, instance):
-        ser = instance.to_json()
-        deser = self.cls.from_json(content=ser)
-
-        assert instance == deser
-        assert instance is deser
-
-    def test_to_keyed_chain_roundtrip(self, instance):
-        ser = instance.to_keyed_chain()
-        deser = self.cls.from_keyed_chain(ser)
-
-        assert instance == deser
-        assert instance is deser
-
-    def test_key_stable(self, instance):
-        """Check that generating the instance from a dict representation yields
-        the same key (and the same instance).
-
-        """
-        instance_ = GufeTokenizable.from_dict(instance.to_dict())
-
-        assert instance_.key == instance.key
-        assert instance_ is instance
 
     def test_repr(self, instance):
         if self.repr is None:

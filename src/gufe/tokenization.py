@@ -16,7 +16,7 @@ import weakref
 from collections.abc import Callable, Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Self, TextIO
+from typing import Any, BinaryIO, Self, SupportsIndex, TextIO
 
 import networkx as nx
 
@@ -320,6 +320,18 @@ def nested_key_moved(dct, old_name, new_name):
     return dct
 
 
+def _restore_gufe_from_keyed_chain(
+    keyed_chain: list[tuple[str, dict]],
+) -> "GufeTokenizable":
+    """Restore a GufeTokenizable from its keyed-chain representation.
+
+    This helper is used by ``GufeTokenizable.__reduce_ex__`` as the pickle reconstruction callable.
+    Routing pickle deserialization through ``from_keyed_chain`` ensures that pickled objects are restored using the same tokenization machinery as the other serialization formats, including lookup in the tokenizable registry.
+    If an equivalent object is already present in memory, the registered instance is returned.
+    """
+    return GufeTokenizable.from_keyed_chain(keyed_chain)
+
+
 class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
     """Base class for all tokenizable gufe objects.
 
@@ -348,6 +360,21 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def __hash__(self):
         return hash(self.key)
+
+    def __reduce_ex__(
+        self,
+        protocol: SupportsIndex,
+    ) -> tuple[Callable[[list[tuple[str, dict]]], "GufeTokenizable"], tuple[list[tuple[str, dict]],]]:
+        """Return the pickle reduction for this tokenizable.
+
+        Pickle round-tripping is implemented via the keyed-chain representation rather than by pickling the instance ``__dict__``.
+        This keeps pickle behavior aligned with gufe's stable serialization formats and preserves the tokenizable flyweight semantics: unpickling will call ``from_keyed_chain``, which may return an existing registered instance instead of constructing a duplicate.
+        The ``protocol`` argument is accepted for compatibility with Python's pickle protocol, but is not currently used.
+        """
+        return (
+            _restore_gufe_from_keyed_chain,
+            (self.to_keyed_chain(),),
+        )
 
     def __deepcopy__(self, memo):
         return self
