@@ -132,7 +132,7 @@ ROUNDTRIP_CASES = [
     pytest.param(_keyed_chain_roundtrip, id="keyed_chain"),
 ]
 
-# This subset (less keyed_dict and shallow_dict) does not need the registry to
+# This subset (less keyed_dict and shallow_dict) does not need the registry to be
 # populated to work, so we can test them on an empty registry
 REGISTRY_INDEPENDENT_ROUNDTRIPS = [
     pytest.param(_pickle_roundtrip, id="pickle"),
