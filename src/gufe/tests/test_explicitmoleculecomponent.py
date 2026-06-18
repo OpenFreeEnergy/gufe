@@ -1,4 +1,5 @@
 import pickle
+from unittest import mock
 
 import pytest
 
@@ -33,6 +34,20 @@ class ExplicitMoleculeComponentMixin:
         assert new_instance is instance
 
         assert new_instance.name == instance.name
+
+        mol = new_instance.to_rdkit()
+        assert mol.HasProp("ofe-name")
+        assert mol.GetProp("ofe-name") == instance.name
+
+    def test_pickle_roundtrip_reconstructs_molecule_props_with_empty_registry(self, instance):
+        payload = pickle.dumps(instance)
+
+        patch_loc = "gufe.tokenization.TOKENIZABLE_REGISTRY"
+        with mock.patch.dict(patch_loc, {}, clear=True):
+            new_instance = pickle.loads(payload)
+
+        assert new_instance == instance
+        assert new_instance is not instance
 
         mol = new_instance.to_rdkit()
         assert mol.HasProp("ofe-name")
