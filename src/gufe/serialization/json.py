@@ -258,8 +258,8 @@ def is_openff_quantity_dict(dct):
 
 
 def is_python_313_path_dict(dct: dict) -> bool:
-    """This supports the case where python 3.12 needs to load python 3.13
-    TODO: remove when 3.12 support is dropped
+    """This supports the python 3.13 convention
+    TODO: remove when 3.13 support is dropped
     """
     expected = ["__class__", "__module__", ":is_custom:", "path"]
     is_custom = all(exp in dct for exp in expected)
