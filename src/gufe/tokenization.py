@@ -16,7 +16,7 @@ import weakref
 from collections.abc import Callable, Generator
 from itertools import chain
 from os import PathLike
-from typing import Any, BinaryIO, Self, TextIO
+from typing import Any, BinaryIO, Self, SupportsIndex, TextIO
 
 import networkx as nx
 
@@ -363,7 +363,7 @@ class GufeTokenizable(abc.ABC, metaclass=_ABCGufeClassMeta):
 
     def __reduce_ex__(
         self,
-        protocol: int,
+        protocol: SupportsIndex,
     ) -> tuple[Callable[[list[tuple[str, dict]]], "GufeTokenizable"], tuple[list[tuple[str, dict]],]]:
         """Return the pickle reduction for this tokenizable.
 
