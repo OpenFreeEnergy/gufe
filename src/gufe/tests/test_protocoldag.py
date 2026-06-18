@@ -1,5 +1,7 @@
 # This code is part of gufe and is licensed under the MIT license.
 # For details, see https://github.com/OpenFreeEnergy/gufe
+from __future__ import annotations
+
 import os
 import pathlib
 

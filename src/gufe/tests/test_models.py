@@ -4,6 +4,8 @@ Different than testing settings, so tests like model schema generation, model
 json round trip, and physical unit testing belongs here.
 """
 
+from __future__ import annotations
+
 import json
 
 import numpy as np

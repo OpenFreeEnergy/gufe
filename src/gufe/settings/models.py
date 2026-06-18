@@ -4,6 +4,8 @@
 Pydantic models used for storing settings.
 """
 
+from __future__ import annotations
+
 import abc
 import pprint
 from typing import Annotated, Any, Literal
