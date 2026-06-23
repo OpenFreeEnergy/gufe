@@ -212,6 +212,8 @@ class Transformation(TransformationBase):
         :meth:`.Protocol.validate`
 
         """
+        super().__init__(protocol=protocol, name=name, metadata=metadata)
+
         if isinstance(mapping, dict):
             warnings.warn(
                 ("mapping input as a dict is deprecated; instead use either a single Mapping or list"),
@@ -222,10 +224,7 @@ class Transformation(TransformationBase):
 
         self._stateA = stateA
         self._stateB = stateB
-        self._protocol = protocol
         self._mapping = mapping
-        self._name = name
-        self._metadata = metadata or {}
 
         if validate:
             self.protocol.validate(
@@ -320,11 +319,9 @@ class NonTransformation(TransformationBase):
             Whether or not to validate the inputs to be provided to
             the :class:`.Protocol`.
         """
+        super().__init__(protocol=protocol, name=name, metadata=metadata)
 
         self._system = system
-        self._protocol = protocol
-        self._name = name
-        self._metadata = metadata or {}
 
         if validate:
             self.protocol.validate(
