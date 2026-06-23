@@ -318,6 +318,9 @@ class LigandNetwork(GufeTokenizable):
     ) -> gufe.AlchemicalNetwork:
         """Create an :class:`.AlchemicalNetwork` from this :class:`.LigandNetwork`.
 
+        .. version-deprecated:: 1.8.0
+            This function is deprecated and will be removed in version 1.13.0.
+
         Parameters
         ----------
         protocol: Protocol
@@ -333,8 +336,9 @@ class LigandNetwork(GufeTokenizable):
         """
 
         warnings.warn(
-            ("to_rbfe_alchemical_network() is deprecated and will be removed in version 2.0."),
+            ("to_rbfe_alchemical_network() is deprecated and will be removed in version 1.13.0."),
             DeprecationWarning,
+            stacklevel=2,
         )
         components = {"protein": protein, "solvent": solvent, **other_components}
         leg_labels = {
