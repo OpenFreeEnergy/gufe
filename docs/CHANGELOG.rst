@@ -25,7 +25,8 @@ v1.12.0
 * Normalized serialized ``pathlib.PosixPath`` objects to use the public ``pathlib`` module name while continuing to read the Python 3.13 ``pathlib._local`` form (`PR #796 <https://github.com/OpenFreeEnergy/gufe/pull/796>`_).
 * Fixed pickling of ``SmallMoleculeComponent``/``ExplicitMoleculeComponent`` objects so RDKit molecule properties, such as ``_Name``, are preserved across serialization round-trips.
   This will fix issues from using multiprocessing with these objects (`PR #797 <https://github.com/OpenFreeEnergy/gufe/pull/797>`_).
-
+* ``Transformations`` and ``NonTransformations`` now call the initialization of the parent ``TransformationBase``.
+  This fix doesn't affect behavior of the classes as implemented in gufe, but may affect external classes that inherit from them (`PR #798 <https://github.com/OpenFreeEnergy/gufe/pull/798>`_).
 
 
 v1.11.0
