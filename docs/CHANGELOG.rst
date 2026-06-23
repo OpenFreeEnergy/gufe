@@ -4,6 +4,23 @@ CHANGELOG
 
 .. current developments
 
+v1.12.0
+====================
+
+**Added:**
+
+* Added support for Python 3.14.
+* Unpickling gufe tokenizables now supports the gufe token registry (PR #797 <https://github.com/OpenFreeEnergy/gufe/pull/797>_).
+* ``Transformation`` and ``NonTransformation`` classes now have a ``metadata`` property. This property is a dictionary with ``str`` keys mapping to any values with a ``gufe`` serializable type.
+
+**Fixed:**
+
+* Normalized serialized ``pathlib.PosixPath`` objects to use the public ``pathlib`` module name while continuing to read the Python 3.13 ``pathlib._local`` form.
+* Fixed pickling of ``SmallMoleculeComponent``/``ExplicitMoleculeComponent`` objects so RDKit molecule properties, such as ``_Name``, are preserved across serialization round-trips (PR #797 <https://github.com/OpenFreeEnergy/gufe/pull/797>_).
+  This will fix issues from using multiprocessing with these objects.
+
+
+
 v1.11.0
 ====================
 
