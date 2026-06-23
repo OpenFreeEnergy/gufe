@@ -14,6 +14,10 @@ v1.12.0
 * ``Transformation`` and ``NonTransformation`` classes now have a ``metadata`` property.
   This property is a dictionary with ``str`` keys mapping to any values with a ``gufe`` serializable type (PR #789 <https://github.com/OpenFreeEnergy/gufe/pull/789>_).
 
+**Deprecated:**
+
+* ``LigandNetwork.to_rbfe_alchemical_network()`` has been deprecated and will be removed in gufe v1.13.0 (`PR #793 <https://github.com/OpenFreeEnergy/gufe/pull/793>`_).
+
 **Fixed:**
 
 * Normalized serialized ``pathlib.PosixPath`` objects to use the public ``pathlib`` module name while continuing to read the Python 3.13 ``pathlib._local`` form (PR #796 <https://github.com/OpenFreeEnergy/gufe/pull/796>_).
