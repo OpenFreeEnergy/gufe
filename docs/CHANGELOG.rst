@@ -4,6 +4,31 @@ CHANGELOG
 
 .. current developments
 
+v1.12.0
+====================
+
+**Added:**
+
+* Added support for Python 3.14 (`PR #796 <https://github.com/OpenFreeEnergy/gufe/pull/796>`_).
+* Unpickling gufe tokenizables now supports the gufe token registry (`PR #797 <https://github.com/OpenFreeEnergy/gufe/pull/797>`_).
+* ``Transformation`` and ``NonTransformation`` classes now have a ``metadata`` property.
+  This property is a dictionary with ``str`` keys mapping to any values with a ``gufe`` serializable type (`PR #789 <https://github.com/OpenFreeEnergy/gufe/pull/789>`_).
+
+**Deprecated:**
+
+* The removal timeline for the already-deprecated
+  ``LigandNetwork.to_rbfe_alchemical_network()`` has been updated from
+  gufe v2.0 to gufe v1.13.0 (`PR #793 <https://github.com/OpenFreeEnergy/gufe/pull/793>`_).
+
+**Fixed:**
+
+* Normalized serialized ``pathlib.PosixPath`` objects to use the public ``pathlib`` module name while continuing to read the Python 3.13 ``pathlib._local`` form (`PR #796 <https://github.com/OpenFreeEnergy/gufe/pull/796>`_).
+* Fixed pickling of ``SmallMoleculeComponent``/``ExplicitMoleculeComponent`` objects so RDKit molecule properties, such as ``_Name``, are preserved across serialization round-trips.
+  This will fix issues from using multiprocessing with these objects (`PR #797 <https://github.com/OpenFreeEnergy/gufe/pull/797>`_).
+* ``Transformations`` and ``NonTransformations`` now call the initialization of the parent ``TransformationBase``.
+  This fix doesn't affect behavior of the classes as implemented in gufe, but may affect external classes that inherit from them (`PR #798 <https://github.com/OpenFreeEnergy/gufe/pull/798>`_).
+
+
 v1.11.0
 ====================
 
