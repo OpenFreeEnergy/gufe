@@ -7,7 +7,6 @@ from .chemicalsystem import ChemicalSystem
 from .components import (
     BaseSolventComponent,
     Component,
-    ProteinComponent,
     ProteinMembraneComponent,
     SmallMoleculeComponent,
     SolvatedPDBComponent,
