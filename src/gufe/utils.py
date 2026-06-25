@@ -43,6 +43,7 @@ def _detach_safely(stream: io.TextIOWrapper) -> None:
 @contextmanager
 def magic_open(
     path_or_stream: str | PathLike | BinaryIO | TextIO,
+    some_new_opton: str,
 ) -> Iterator[TextIO]:
     """
     Open a file path or stream as text, transparently decompressing when possible.
