@@ -9,6 +9,7 @@ import pytest
 import gufe
 from gufe.protocols.errors import ProtocolValidationError
 from gufe.protocols.protocoldag import execute_DAG
+from gufe.storage.externalresource import MemoryStorage
 from gufe.transformations import NonTransformation, Transformation
 
 from .test_protocol import DummyProtocol, DummyProtocolResult
@@ -55,21 +56,22 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
         protocoldag = tnf.create()
 
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
-        scratch.mkdir(parents=True)
+        scratch = pathlib.Path("scratch")
+        scratch.mkdir(parents=True, exist_ok=True)
 
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
 
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stdout"
         stdout.mkdir(parents=True)
 
         protocoldagresult = execute_DAG(
             protocoldag,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
@@ -121,22 +123,23 @@ class TestTransformation(GufeTokenizableTestsMixin):
 
         assert isinstance(tnf.protocol, DummyProtocol)
 
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
 
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stdout"
         stdout.mkdir(parents=True)
 
         protocoldag = tnf.create()
         protocoldagresult = execute_DAG(
             protocoldag,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
@@ -145,7 +148,8 @@ class TestTransformation(GufeTokenizableTestsMixin):
         protocoldag2 = tnf.create(extends=protocoldagresult)
         protocoldagresult2 = execute_DAG(
             protocoldag2,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
@@ -228,21 +232,22 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         protocoldag = ntnf.create()
 
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
 
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stdout"
         stdout.mkdir(parents=True)
 
         protocoldagresult = execute_DAG(
             protocoldag,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
@@ -283,22 +288,23 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
 
         assert isinstance(ntnf.protocol, DummyProtocol)
 
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
 
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stdout"
         stdout.mkdir(parents=True)
 
         protocoldag = ntnf.create()
         protocoldagresult = execute_DAG(
             protocoldag,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
@@ -307,8 +313,9 @@ class TestNonTransformation(GufeTokenizableTestsMixin):
         protocoldag2 = ntnf.create(extends=protocoldagresult)
         protocoldagresult2 = execute_DAG(
             protocoldag2,
-            shared_basedir=shared,
             scratch_basedir=scratch,
+            shared_storage=shared,
+            perm_storage=perm,
         )
 
         protocolresult = ntnf.gather([protocoldagresult, protocoldagresult2])

@@ -11,6 +11,8 @@ from typing import Any
 
 import networkx as nx
 
+from gufe.storage.externalresource.base import ExternalStorage
+
 from ..tokenization import GufeKey, GufeTokenizable
 from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolDAGExecutionError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
@@ -403,7 +405,8 @@ def _get_valid_unit_results(
 def execute_DAG(
     protocoldag: ProtocolDAG,
     *,
-    shared_basedir: Path,
+    shared_storage: ExternalStorage,
+    perm_storage: ExternalStorage,
     scratch_basedir: Path,
     cache_basedir: Path | None = None,
     stderr_basedir: Path | None = None,
@@ -420,12 +423,15 @@ def execute_DAG(
     Parameters
     ----------
     protocoldag : ProtocolDAG
-        The :class:``ProtocolDAG`` to execute.
-    shared_basedir : Path
-        Filesystem path to use for shared space that persists across whole DAG
-        execution. Used by a `ProtocolUnit` to pass file contents to dependent
-        class:``ProtocolUnit`` instances.
+        The :class:`ProtocolDAG` to execute.
+    shared_storage : ExternalStorage
+        Storage for shared files that persist across the entire DAG execution.
+        Used by ProtocolUnits to pass file contents to dependent ProtocolUnits.
+    perm_storage : ExternalStorage
+        Permanent storage for files that should persist after DAG execution.
     scratch_basedir : Path
+        Base directory for ProtocolUnit scratch space. Each ProtocolUnit gets
+        its own scratch directory under this base directory.
         Filesystem path to use for `ProtocolUnit` `scratch` space.
     cache_basedir : Path | None = None
         Filesystem path to use for `ProtocolUnitResult` caching during
@@ -433,29 +439,41 @@ def execute_DAG(
         and it will not be able to resume DAG execution from the last
         successfully finished `ProtocolUnit`.
     stderr_basedir : Path | None
-        Filesystem path to use for `ProtocolUnit` `stderr` archiving.
+        Base directory for ProtocolUnit stderr archiving. If None, stderr
+        is not archived.
     stdout_basedir : Path | None
-        Filesystem path to use for `ProtocolUnit` `stdout` archiving.
+        Base directory for ProtocolUnit stdout archiving. If None, stdout
+        is not archived.
     keep_shared : bool
-        If True, don't remove shared directories for `ProtocolUnit`s after
-        the `ProtocolDAG` is executed.
+        If True, shared directories are not removed after DAG execution.
+        Default is False.
     keep_scratch : bool
+        If True, scratch directories are not removed after each ProtocolUnit
+        execution. Default is False.
         If True, don't remove scratch directories for a `ProtocolUnit` after
         it is executed.
     keep_cache : bool
         If True, don't remove the cache directory which contains
         the serialized `ProtocolUnitResult` for all executed `ProtocolUnit`/s.
     raise_error : bool
-        If True, raise an exception if a ProtocolUnit fails, default True
-        if False, any exceptions will be stored as `ProtocolUnitFailure`
-        objects inside the returned `ProtocolDAGResult`
+        If True, raises an exception when a ProtocolUnit fails. If False,
+        failures are stored as ProtocolUnitFailure objects in the returned
+        ProtocolDAGResult. Default is True.
     n_retries : int
-        the number of times to attempt, default 0, i.e. try once and only once
+        Number of times to retry failed ProtocolUnits. Default is 0 (no retries).
 
     Returns
     -------
     ProtocolDAGResult
-        The result of executing the `ProtocolDAG`.
+        Result object containing the execution results of all ProtocolUnits
+        in the DAG, including both successes and failures.
+
+    Notes
+    -----
+    The function executes ProtocolUnits in DAG-dependency order, ensuring that
+    each ProtocolUnit's dependencies are executed before the ProtocolUnit itself.
+    If a ProtocolUnit fails and raise_error is True, execution stops immediately.
+    Otherwise, execution continues with the next ProtocolUnit.
 
     Raises
     ------
@@ -492,11 +510,8 @@ def execute_DAG(
         inputs = _pu_to_pur(unit.inputs, results)
 
         attempt = 0
+        result = None
         while attempt <= n_retries:
-            shared = shared_basedir / f"shared_{str(unit.key)}_attempt_{attempt}"
-            shared_paths.append(shared)
-            shared.mkdir(exist_ok=True)
-
             scratch = scratch_basedir / f"scratch_{str(unit.key)}_attempt_{attempt}"
             scratch.mkdir(exist_ok=True)
 
@@ -510,17 +525,16 @@ def execute_DAG(
                 stdout = stdout_basedir / f"stdout_{str(unit.key)}_attempt_{attempt}"
                 stdout.mkdir(exist_ok=True)
 
-            context = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
-
             # execute
-            result = unit.execute(context=context, raise_error=raise_error, **inputs)
-            all_results.append(result)
-
-            # clean up outputs
-            if stderr:
-                shutil.rmtree(stderr)
-            if stdout:
-                shutil.rmtree(stdout)
+            with Context(
+                dag_label=str(protocoldag.key),
+                unit_label=str(unit.key),
+                shared_storage=shared_storage,
+                permanent_storage=perm_storage,
+                scratch=scratch,
+            ) as ctx:
+                result = unit.execute(context=ctx, raise_error=raise_error, **inputs)
+                all_results.append(result)
 
             if not keep_scratch:
                 shutil.rmtree(scratch)
@@ -535,7 +549,7 @@ def execute_DAG(
                 break
             attempt += 1
 
-        if not result.ok():
+        if result is not None and not result.ok():
             break
 
     if not keep_shared:
