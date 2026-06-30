@@ -110,6 +110,7 @@ def test_openmmffsettings_schema():
             },
             "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
             "nonbonded_cutoff": {
+                "default": '{"magnitude": 0.9, "units": "nanometer"}',
                 "description": "Cutoff value for short range nonbonded interactions in nm. Compatible units will be converted to nm.",
                 "title": "Nonbonded Cutoff",
                 "type": "number",
