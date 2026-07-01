@@ -218,7 +218,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand,
             stateB=vacuum_ligand,
             name="a dummy run",
-            mapping=None,
         )
 
         shared = pathlib.Path(tmp_path / "shared")
@@ -246,7 +245,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand,
             stateB=vacuum_ligand,
             name="a broken dummy run",
-            mapping=None,
         )
         shared = pathlib.Path(tmp_path / "shared")
         shared.mkdir(parents=True)
@@ -388,7 +386,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateA=solvated_ligand,
             stateB=vacuum_ligand,
             name="a broken dummy run",
-            mapping=None,
         )
         shared = pathlib.Path(tmp_path / "shared")
         shared.mkdir(parents=True)
@@ -575,7 +572,6 @@ class TestProtocol(GufeTokenizableTestsMixin):
                 settings={},
                 stateA=vacuum_ligand,
                 stateB=solvated_ligand,
-                mapping=None,
                 start=None,
                 some_dict={"a": 2, "b": 12},
             )
@@ -645,7 +641,6 @@ class TestNoDepProtocol:
         return protocol.create(
             stateA=ChemicalSystem(components={"solvent": gufe.SolventComponent(positive_ion="Na")}),
             stateB=ChemicalSystem(components={"solvent": gufe.SolventComponent(positive_ion="Li")}),
-            mapping=None,
         )
 
     def test_create(self, dag):
@@ -801,7 +796,6 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmp_path):
     dag = protocol.create(
         stateA=solvated_ligand,
         stateB=vacuum_ligand,
-        mapping=None,
     )
 
     shared = pathlib.Path(tmp_path / "shared")
@@ -837,7 +831,6 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmp_path):
     dag = protocol.create(
         stateA=solvated_ligand,
         stateB=vacuum_ligand,
-        mapping=None,
     )
 
     shared = pathlib.Path(tmp_path / "shared")
