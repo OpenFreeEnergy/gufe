@@ -96,9 +96,11 @@ class SettingsBaseModel(_BaseModel):
         # which results in frozen/unfrozen objects not being equal
         # https://github.com/pydantic/pydantic/blob/2486e068e85c51728c9f2d344cfee2f7e11d555c/pydantic/v1/main.py#L911
         if isinstance(other, _BaseModel):
-            return self.model_dump() == other.model_dump()
+            return self.model_dump(polymorphic_serialization=True) == other.model_dump(polymorphic_serialization=True)
+            # TODO: as of pydantic 3.13, polymorphic_serialization is required, or else the default(?) will be used instead?
+            # https://pydantic.dev/docs/validation/latest/concepts/serialization#polymorphic-serialization
         else:
-            return self.model_dump() == other
+            return self.model_dump(polymorphic_serialization=True) == other
 
 
 class ThermoSettings(SettingsBaseModel):

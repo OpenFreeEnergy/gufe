@@ -8,7 +8,7 @@ dependencies:
   - networkx
   - numpy
   - openff-toolkit-base >=0.15.1
-  - openff-units >=0.3.1
+  - openff-units >=0.3.2
   - openmm
   - pint
   - pip
@@ -22,3 +22,7 @@ dependencies:
   - typing-extensions
   - ipywidgets  # opt
   - zstandard
+  - pip:
+    - git+https://github.com/openforcefield/openff-units/@define-pydantic-schema
+    - git+https://github.com/openforcefield/openff-interchange/@fix-pydantic
+    - pydantic==2.13.*
