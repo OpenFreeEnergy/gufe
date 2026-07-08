@@ -221,6 +221,20 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComp
         else:
             assert new.smiles == "CC"
 
+    def test_residue_info_roundtrips(self):
+        off = Molecule.from_smiles("CCO")
+        off.generate_conformers(n_conformers=1)
+        for a in off.atoms:
+            a.metadata["residue_name"] = "LIG"
+            a.metadata["chain_id"] = "A"
+        smc = SmallMoleculeComponent.from_openff(off)
+
+        smc_from_dict = SmallMoleculeComponent._from_dict(smc._to_dict())
+        info = smc_from_dict.to_rdkit().GetAtomWithIdx(0).GetPDBResidueInfo()
+        assert info is not None
+        assert info.GetResidueName().strip() == "LIG"
+        assert info.GetChainId().strip() == "A"
+
 
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:

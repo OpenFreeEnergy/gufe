@@ -264,7 +264,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         output["molprops"] = self._rdkit.GetPropsAsDict(includePrivate=False)
 
-        # Store PDBResidueInfo if at least one atom has it
+        # Store PDBResidueInfo
         residue_info = []
         for atom in self._rdkit.GetAtoms():
             info = atom.GetPDBResidueInfo()
@@ -278,8 +278,8 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
                         "chain_id": info.GetChainId(),
                     }
                 )
-        if any(ri is not None for ri in residue_info):
-            output["residue_info"] = residue_info
+
+        output["residue_info"] = residue_info
 
         return output
 
@@ -319,17 +319,16 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
             b.SetStereo(_INT_TO_BONDSTEREO[bond[3]])
             _setprops(b, bond[4])
 
-        # Restore PDBResidueInfo if present.
+        # Restore PDBResidueInfo
         residue_info = d.get("residue_info")
-        if residue_info is not None:
-            for atom, ri in zip(m.GetAtoms(), residue_info):
-                if ri is None:
-                    continue
-                info = Chem.AtomPDBResidueInfo()
-                info.SetResidueName(ri["residue_name"])
-                info.SetResidueNumber(ri["residue_number"])
-                info.SetChainId(ri["chain_id"])
-                atom.SetPDBResidueInfo(info)
+        for atom, ri in zip(m.GetAtoms(), residue_info):
+            if ri is None:
+                continue
+            info = Chem.AtomPDBResidueInfo()
+            info.SetResidueName(ri["residue_name"])
+            info.SetResidueNumber(ri["residue_number"])
+            info.SetChainId(ri["chain_id"])
+            atom.SetPDBResidueInfo(info)
 
         pos = deserialize_numpy(d["conformer"][0])
         c = Chem.Conformer(m.GetNumAtoms())
