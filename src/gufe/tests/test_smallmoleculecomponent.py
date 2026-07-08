@@ -222,7 +222,7 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComp
             assert new.smiles == "CC"
 
     def test_residue_info_roundtrips(self):
-        off = Molecule.from_smiles("CCO")
+        off = openff.toolkit.topology.Molecule.from_smiles("CCO")
         off.generate_conformers(n_conformers=1)
         for a in off.atoms:
             a.metadata["residue_name"] = "LIG"

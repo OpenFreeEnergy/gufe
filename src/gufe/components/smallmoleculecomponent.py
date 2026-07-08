@@ -265,7 +265,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         output["molprops"] = self._rdkit.GetPropsAsDict(includePrivate=False)
 
         # Store PDBResidueInfo
-        residue_info = []
+        residue_info: list[dict] = []
         for atom in self._rdkit.GetAtoms():
             info = atom.GetPDBResidueInfo()
             if info is None:
