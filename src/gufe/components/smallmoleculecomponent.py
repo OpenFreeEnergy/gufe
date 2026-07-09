@@ -279,7 +279,8 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
                     }
                 )
 
-        output["residue_info"] = residue_info
+        if any(ri is not None for ri in residue_info):
+            output["residue_info"] = residue_info
 
         return output
 
@@ -321,14 +322,15 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         # Restore PDBResidueInfo
         residue_info = d.get("residue_info")
-        for atom, ri in zip(m.GetAtoms(), residue_info):
-            if ri is None:
-                continue
-            info = Chem.AtomPDBResidueInfo()
-            info.SetResidueName(ri["residue_name"])
-            info.SetResidueNumber(ri["residue_number"])
-            info.SetChainId(ri["chain_id"])
-            atom.SetPDBResidueInfo(info)
+        if residue_info is not None:
+            for atom, ri in zip(m.GetAtoms(), residue_info):
+                if ri is None:
+                    continue
+                info = Chem.AtomPDBResidueInfo()
+                info.SetResidueName(ri["residue_name"])
+                info.SetResidueNumber(ri["residue_number"])
+                info.SetChainId(ri["chain_id"])
+                atom.SetPDBResidueInfo(info)
 
         pos = deserialize_numpy(d["conformer"][0])
         c = Chem.Conformer(m.GetNumAtoms())
