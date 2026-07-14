@@ -221,6 +221,30 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComp
         else:
             assert new.smiles == "CC"
 
+    def test_residue_info_roundtrips(self):
+        off = openff.toolkit.topology.Molecule.from_smiles("CCO")
+        off.generate_conformers(n_conformers=1)
+
+        smc_no_res_info = SmallMoleculeComponent.from_openff(off)
+        assert "residue_info" not in smc_no_res_info._to_dict()
+
+        # Add residue info only on first atm, so residue_info has both dict and None
+        off.atoms[0].metadata["residue_name"] = "LIG"
+        off.atoms[0].metadata["chain_id"] = "A"
+
+        smc = SmallMoleculeComponent.from_openff(off)
+
+        # Check that residue info is now stored correctly
+        d = smc._to_dict()
+        assert "residue_info" in d
+        assert d["residue_info"][0]["residue_name"].strip() == "LIG"
+        assert d["residue_info"][0]["chain_id"].strip() == "A"
+        assert d["residue_info"][1] is None
+
+        # Make sure the residue info round-trips correctly
+        smc_from_dict = SmallMoleculeComponent._from_dict(d)
+        assert smc_from_dict._to_dict()["residue_info"] == d["residue_info"]
+
 
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
