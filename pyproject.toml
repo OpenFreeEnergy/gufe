@@ -28,6 +28,15 @@ classifiers = [
 dynamic = [ "version" ]
 urls = { Homepage = "https://github.com/OpenFreeEnergy/gufe" }
 
+# Interactive framejs.io visualizations (`.view()` / bare-cell auto-display in
+# Jupyter, marimo, VSCode). Optional so headless installs stay lean; gufe imports
+# and runs fine without these — `.view()` falls back to the legacy RDKit/py3Dmol
+# renderers when they are absent.
+optional-dependencies.viz = [
+  "anywidget>=0.9.0",
+  "metaframe-widget>=0.3.11",
+]
+
 [tool.setuptools]
 packages.find.where = [ "src" ]
 packages.find.namespaces = false

@@ -1,0 +1,67 @@
+name: gufe-viz
+
+# Self-contained dev stack for the gufe framejs visualizations. gufe env, NATIVE
+# arm64, fast. Covers all `.view()` development (every target class lives in gufe),
+# a JupyterLab demo, and a marimo demo. `just dev` brings it up.
+x-gufe: &gufe
+  build:
+    # Context is the repo root (one level up) so the build can see the core
+    # gufe files it needs — environment.yml lives there, not in this subdir.
+    context: ..
+    dockerfile: visualization-demo/Dockerfile
+    args:
+      CONDA_ENV_FILE: environment.yml
+  image: gufe-viz:local
+  environment:
+    - SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0+docker
+  volumes:
+    # The gufe checkout (repo root, one level up), editable-installed over the
+    # env (host edits are live — just restart the kernel, no rebuild). Mounted
+    # at /src so its `gufe` dir name doesn't shadow the editable-installed
+    # package (src layout).
+    - ..:/src/gufe
+    # Notebook surfaces served under /workspace.
+    - ./demo:/workspace/demo
+    - ./scratch:/workspace/scratch
+    # Cloned locally by `just dev` (git-ignored) — real OpenFE demo inputs +
+    # notebook, available for richer demoing. See `just _ensure-openfe-demo`.
+    - ./openfe-demo:/workspace/openfe-demo
+    # To develop the metaframe-widget itself (instead of the PyPI build), use
+    # `just dev-widget` — it layers docker-compose.widget.yml to mount your local
+    # checkout ($FRAMEJS_IO_REPO/python) over the image's widget.
+
+services:
+  # JupyterLab — primary notebook surface. http://localhost:8888/lab
+  # Open demo/framejs_demo.ipynb to see LigandNetwork.view() render.
+  jupyter:
+    <<: *gufe
+    container_name: gufe-viz-jupyter
+    command:
+      - dev-start.sh
+      - jupyter
+      - lab
+      - --ip=0.0.0.0
+      - --port=8888
+      - --no-browser
+      - --ServerApp.root_dir=/workspace
+      - --ServerApp.token=
+      - --ServerApp.password=
+    ports:
+      - "8888:8888"
+
+  # marimo — proves the py3Dmol→anywidget fix renders. http://localhost:2718
+  marimo:
+    <<: *gufe
+    container_name: gufe-viz-marimo
+    command:
+      - dev-start.sh
+      - marimo
+      - edit
+      - demo/marimo_demo.py
+      - --host=0.0.0.0
+      - -p
+      - "2718"
+      - --headless
+      - --no-token
+    ports:
+      - "2718:2718"

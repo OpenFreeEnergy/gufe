@@ -1,0 +1,17 @@
+# Override: develop metaframe-widget in-place alongside gufe.
+#
+# Layered on top of docker-compose.yml by `just dev-widget`. Mounts your local
+# metaframe-widget (the framejs.io widget) checkout over the PyPI build baked into
+# the image; dev-start.sh editable-installs it, so host edits are live (restart
+# the kernel — no rebuild). The package lives at <repo>/python.
+#
+# FRAMEJS_IO_REPO must point at your metaframe-js checkout root. `just dev-widget`
+# validates it and errors informatively if unset. Compose merges these volume
+# lists onto the base service definitions.
+services:
+  jupyter:
+    volumes:
+      - ${FRAMEJS_IO_REPO:?set FRAMEJS_IO_REPO to your metaframe-js checkout (see just dev-widget)}/python:/src/metaframe-widget
+  marimo:
+    volumes:
+      - ${FRAMEJS_IO_REPO:?set FRAMEJS_IO_REPO to your metaframe-js checkout (see just dev-widget)}/python:/src/metaframe-widget

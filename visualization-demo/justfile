@@ -1,0 +1,210 @@
+set shell       := ["bash", "-c"]
+set export      := true
+set dotenv-load := true
+
+# Self-contained dev stack for the gufe framejs visualizations. Everything runs
+# in Docker — nothing is installed on your host except `docker` and `just`.
+#   just dev   → fast gufe stack (native arm64): JupyterLab + marimo demo
+
+SVC := "jupyter"   # default service for exec/shell/cli recipes
+
+# On-disk framejs frame dirs (canonical local-file-io format) + our stdlib
+# save/restore helper. Docs: https://framejs.io/docs/guide/local-file-io
+# viz_assets is CORE code in the gufe package (one level up from this dir);
+# the frame helper moved here alongside the rest of the demo harness.
+VIZ_ASSETS := "../src/gufe/visualization/viz_assets"
+FRAME_HELPER := "python3 scripts/framejs_frame.py"
+
+# Pinned openfe-demo revision cloned locally by `just dev` (git-ignored). Bump to
+# track upstream; override with OPENFE_DEMO_URL / OPENFE_DEMO_REF.
+OPENFE_DEMO_URL := env_var_or_default("OPENFE_DEMO_URL", "https://github.com/OpenFreeEnergy/openfe-demo.git")
+OPENFE_DEMO_REF := env_var_or_default("OPENFE_DEMO_REF", "40eb18bbba132f112c380944b25526004ad5002a")
+
+# minimal formatting
+bold := '\033[1m'
+normal := '\033[0m'
+green := "\\e[32m"
+yellow := "\\e[33m"
+grey := "\\e[90m"
+
+@_help:
+    just --list --unsorted
+    echo -e ""
+    echo -e "    {{ bold }}Start here:{{ normal }} {{ green }}just dev{{ normal }}   {{ grey }}(builds in minutes, then cached){{ normal }}"
+    echo -e "      JupyterLab 📓 {{ green }}http://localhost:8888/lab{{ normal }}  →  open {{ bold }}demo/framejs_demo.ipynb{{ normal }}"
+    echo -e "      marimo     🟢 {{ green }}http://localhost:2718{{ normal }}"
+    echo -e ""
+    echo -e "    {{ bold }}Edit the on-disk viz frames:{{ normal }} {{ green }}just viz-edit{{ normal }}   {{ grey }}(framejs local server, needs deno){{ normal }}"
+    echo -e "      {{ grey }}just viz-url → the offline framejs URL gufe builds from disk  •  just publish-viz → a /j/<uuid>{{ normal }}"
+    echo -e ""
+
+# ── Primary command ──────────────────────────────────────────────────────────
+# Build (first time) + start the fast stack. Also clones openfe-demo locally so a
+# clone of THIS repo can demo the notebook visualization on its own.
+dev: _ensure-openfe-demo
+    docker compose up -d --build jupyter marimo
+    @just _urls
+
+@_urls:
+    echo -e ""
+    echo -e "{{ bold }}✓ gufe viz stack up{{ normal }} (native arm64)"
+    echo -e "  JupyterLab 📓 {{ green }}http://localhost:8888/lab{{ normal }}  →  open {{ bold }}demo/framejs_demo.ipynb{{ normal }}"
+    echo -e "  marimo     🟢 {{ green }}http://localhost:2718{{ normal }}"
+    echo -e "  {{ grey }}logs: just logs   •   stop: just down   •   shell: just shell{{ normal }}"
+
+# Same as `just dev`, but ALSO mounts your local metaframe-widget (framejs.io)
+# checkout so you can develop the widget while testing it in demo/framejs_demo.ipynb.
+# Host edits are live — just restart the notebook kernel (no rebuild). Point
+# FRAMEJS_IO_REPO at your metaframe-js checkout root (the widget lives at <repo>/python):
+#   FRAMEJS_IO_REPO=~/dev/git/metapages/metaframes/metaframe-js just dev-widget
+dev-widget: _require-framejs-repo _ensure-openfe-demo
+    docker compose -f docker-compose.yml -f docker-compose.widget.yml up -d --build jupyter marimo
+    @just _urls
+    @echo -e "  {{ bold }}widget dev{{ normal }} 🧩 editable metaframe-widget from {{ green }}${FRAMEJS_IO_REPO}/python{{ normal }} {{ grey }}(restart kernel after edits){{ normal }}"
+
+# Guard for dev-widget: FRAMEJS_IO_REPO must be set and point at a metaframe-js
+# checkout (the widget package is at <repo>/python).
+_require-framejs-repo:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    if [ -z "${FRAMEJS_IO_REPO:-}" ]; then
+      echo -e "{{ yellow }}FRAMEJS_IO_REPO is not set.{{ normal }}" >&2
+      echo "" >&2
+      echo "  'just dev-widget' develops metaframe-widget in-place. Point" >&2
+      echo "  FRAMEJS_IO_REPO at your metaframe-js checkout root, e.g.:" >&2
+      echo "" >&2
+      echo -e "    {{ green }}FRAMEJS_IO_REPO=~/dev/git/metapages/metaframes/metaframe-js just dev-widget{{ normal }}" >&2
+      echo "" >&2
+      echo "  (the widget package must exist at \$FRAMEJS_IO_REPO/python). For the" >&2
+      echo "  plain PyPI widget with no in-place dev, use 'just dev' instead." >&2
+      exit 1
+    fi
+    if [ ! -f "$FRAMEJS_IO_REPO/python/pyproject.toml" ]; then
+      echo -e "{{ yellow }}FRAMEJS_IO_REPO='$FRAMEJS_IO_REPO' has no python/pyproject.toml.{{ normal }}" >&2
+      echo "  Expected the metaframe-widget package at \$FRAMEJS_IO_REPO/python —" >&2
+      echo "  point FRAMEJS_IO_REPO at your metaframe-js checkout ROOT." >&2
+      exit 1
+    fi
+
+# Clone openfe-demo INTO this repo (git-ignored) at the pinned ref, so the demo
+# works from a fresh clone with no external setup. No-op if already present.
+_ensure-openfe-demo:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -d openfe-demo/.git ]; then exit 0; fi
+    echo -e "{{ yellow }}cloning openfe-demo locally (git-ignored) …{{ normal }}"
+    [ -e openfe-demo ] && rm -rf openfe-demo
+    git clone --filter=blob:none "$OPENFE_DEMO_URL" openfe-demo
+    git -C openfe-demo checkout -q "$OPENFE_DEMO_REF"
+    echo -e "  {{ green }}✓ openfe-demo ready{{ normal }} ($(git -C openfe-demo rev-parse --short HEAD))"
+
+# Stop the stack (keeps built images)
+down:
+    docker compose down
+
+# Build images (use after Dockerfile / environment.yml changes)
+build:
+    docker compose build jupyter marimo
+rebuild:
+    docker compose build --no-cache jupyter marimo
+
+# Confirm gufe + widget import from the editable mount
+doctor:
+    docker compose exec {{ SVC }} python -c "import gufe, metaframe_widget as m; print('gufe   ', gufe.__file__); print('widget ', m.__file__)"
+    docker compose exec {{ SVC }} python -c "from metaframe_widget import MetaframeWidget; print('MetaframeWidget OK')"
+
+# gufe visualization tests
+test:
+    docker compose exec {{ SVC }} python -m pytest /src/gufe/src/gufe/tests -k "visual or mapping or view" -q
+
+# Just the framejs infrastructure tests (hermetic — no network). Keep green.
+test-framejs:
+    docker compose exec -T {{ SVC }} python -m pytest /src/gufe/src/gufe/tests/test_framejs_visualization.py -q
+
+# Block until gufe imports in the container (the editable install has finished),
+# so `just ci` doesn't race container startup.
+wait-ready:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    for i in $(seq 1 60); do
+      if docker compose exec -T {{ SVC }} python -c "import gufe" >/dev/null 2>&1; then
+        echo "container ready"; exit 0
+      fi
+      sleep 2
+    done
+    echo "container not ready after 120s" >&2; exit 1
+
+# One-shot, reproducible check from cold: build + start + wait + framejs tests.
+ci: dev wait-ready test-framejs
+
+# ── framejs local-file-io: on-disk frame dirs under viz_assets/<id>/ ─────────
+# The canonical way to keep framejs frames in the repo — a directory with
+# `code.js` (+ optional og.json / modules.json / inputs.json). gufe's .view()/CLI
+# build a self-contained URL straight from this on-disk source by default
+# (GUFE_VIZ_SOURCE=local); publishing to a /j/<uuid> is optional (publish-viz).
+# Docs: https://framejs.io/docs/guide/local-file-io
+
+# Print the full hash-param framejs.io URL for a frame dir (offline, no account).
+# This is exactly the URL gufe builds by default from disk (GUFE_VIZ_SOURCE=local).
+@viz-url FRAME=(VIZ_ASSETS / "network"):
+    {{ FRAME_HELPER }} restore "{{ FRAME }}"
+
+# Save a framejs.io URL (…/#?js=…&og=…) back into a frame dir — captures edits to
+# disk as code.js/og.json/…  e.g. after tweaking a frame in the browser editor.
+@viz-save URL FRAME=(VIZ_ASSETS / "network"):
+    {{ FRAME_HELPER }} save "{{ URL }}" "{{ FRAME }}"
+
+# Browse & live-edit every on-disk frame under viz_assets/ in the browser. Needs
+# only `deno` — runs the canonical framejs local server straight from GitHub (no
+# clone). Dirs with a code.js show as ◆ FRAME; edits auto-save to disk.
+#   → open http://localhost:{{PORT}} , navigate to a frame, edit, "saved ✓"
+viz-edit ROOT=VIZ_ASSETS PORT="4700":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    command -v deno >/dev/null || { echo -e "{{ yellow }}deno not found{{ normal }} — install: https://docs.deno.com/runtime/getting_started/installation/" >&2; exit 1; }
+    root="{{ justfile_directory() }}/{{ ROOT }}"
+    echo -e "{{ green }}framejs local server{{ normal }} 🖊  http://localhost:{{ PORT }}   {{ grey }}(root: {{ ROOT }} — edits auto-save to disk){{ normal }}"
+    deno run \
+      --allow-read="$root" --allow-write="$root" --allow-net --allow-env \
+      https://raw.githubusercontent.com/metapages/framejs.io/main/local-server/server.ts \
+      --root "$root" --port "{{ PORT }}"
+
+# ── Publish a frame dir to a canonical framejs.io /j/<uuid> (HOST-side; node+net) ─
+# OPTIONAL — the default runtime path builds a local URL from disk and needs no
+# account. Publish only to get a short, shareable /j/<uuid> you can update without
+# re-releasing gufe. Prints the uuid to pin in CANONICAL_VIZ (or export as
+# GUFE_VIZ_<ID>_UUID for dev/CI). ⚠ A fresh frame is ANONYMOUS and EXPIRES — open
+# the printed page and CLAIM it under a (free) framejs account to keep the uuid.
+# Override the publish helper with FRAMEJS_HELPER=<path to framejs.mjs>.
+publish-viz FRAME=(VIZ_ASSETS / "network") ID="network":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    helper="${FRAMEJS_HELPER:-$HOME/.claude/skills/framejs/scripts/framejs.mjs}"
+    if [ ! -f "$helper" ]; then
+      echo "framejs helper not found at $helper — set FRAMEJS_HELPER=<path to framejs.mjs>" >&2
+      exit 1
+    fi
+    if [ ! -f "{{ FRAME }}/code.js" ]; then
+      echo "no code.js in {{ FRAME }} — expected a framejs frame dir (see 'just viz-edit')" >&2
+      exit 1
+    fi
+    args=(create --new --no-open --screenshot)
+    if [ -f "{{ FRAME }}/og.json" ]; then
+      args+=(--og "$(cat "{{ FRAME }}/og.json")")
+    else
+      args+=(--title "gufe {{ ID }} viz")
+    fi
+    if [ -f "{{ FRAME }}/modules.json" ]; then
+      while IFS= read -r m; do [ -n "$m" ] && args+=(--module "$m"); done < <(jq -r '.[]' "{{ FRAME }}/modules.json")
+    fi
+    echo "Publishing {{ FRAME }}/ to framejs.io …"
+    out="$(cat "{{ FRAME }}/code.js" | node "$helper" "${args[@]}")"
+    printf '%s\n' "$out"
+    url="$(printf '%s\n' "$out" | head -n1)"
+    uuid="$(printf '%s\n' "$url" | sed -E 's#.*/j/([^/?]+).*#\1#')"
+    echo ""
+    echo "  canonical url : https://framejs.io/j/$uuid"
+    echo "  pin in gufe   : CANONICAL_VIZ['…'] uuid=\"$uuid\"   (src/gufe/visualization/framejs.py)"
+    echo "  or dev / CI   : export GUFE_VIZ_$(printf '%s' '{{ ID }}' | tr a-z A-Z)_UUID=$uuid"
+    echo ""
+    echo "  ⚠ open $url while logged in to a framejs account and CLAIM it (anonymous frames expire)."
