@@ -108,6 +108,18 @@ build:
 rebuild:
     docker compose build --no-cache jupyter marimo
 
+# Remove python & notebook caches across the repo (.ipynb_checkpoints from
+# Jupyter, __pycache__ bytecode, .pytest_cache). Skips .git and the openfe-demo
+# clone. Safe: only ever deletes regenerable caches.
+clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="{{ justfile_directory() }}/.."
+    n=$(find "$root" \( -path '*/.git' -o -path '*/openfe-demo' \) -prune -o \
+          -type d \( -name .ipynb_checkpoints -o -name __pycache__ -o -name .pytest_cache \) -print \
+        | tee >(xargs -r rm -rf) | wc -l | tr -d ' ')
+    echo -e "  {{ green }}✓ removed ${n} cache dir(s){{ normal }}"
+
 # Confirm gufe + widget import from the editable mount
 doctor:
     docker compose exec {{ SVC }} python -c "import gufe, metaframe_widget as m; print('gufe   ', gufe.__file__); print('widget ', m.__file__)"
