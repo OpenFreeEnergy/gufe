@@ -591,7 +591,7 @@ init(null);
 export async function onInputs(inputs) {
   if (!inputs) return;
   try {
-    const system = await asObject(inputs['system']);
+    const system = await asObject(inputs['chemical_system']);
     const json = JSON.stringify(system);
     if (json === lastPayloadJson) return;   // identical re-delivery
     lastPayloadJson = json;

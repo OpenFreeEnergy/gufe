@@ -6,14 +6,29 @@ in Jupyter / marimo / VSCode — renders it as an interactive widget. Rendering 
 powered by the optional `viz` extra (`pip install gufe[viz]`); without it,
 `.view()` falls back to the legacy RDKit / py3Dmol renderers.
 
-- `framejs.py` — the registry: maps each gufe class to its frame (`CANONICAL_VIZ`)
-  and to the serializer that turns an object into that frame's `inputs`
-  (`_PAYLOAD_BUILDERS`), then builds the self-contained framejs.io URL /
-  `anywidget`.
+- `framejs.py` — `VIZ_REGISTRY` maps each gufe class to a `VizRef` holding both
+  halves of the contract: the frame that draws it and the serializer that turns
+  an object into that frame's `inputs`. It then builds the self-contained
+  framejs.io URL / `anywidget`.
 - `../_viewable.py` — the `FramejsViewable` mixin that gives a class `.view()` and
   `_repr_mimebundle_`. Mixing it in is the whole opt-in.
-- `mapping_visualization.py` — the legacy RDKit atom-mapping renderer.
+- `mapping_visualization.py` — the legacy RDKit atom-mapping renderer, reached
+  through `LigandAtomMapping._legacy_view()` when framejs is unavailable.
 - `viz_assets/<frame>/` — the on-disk framejs frames that ship with gufe.
+
+Adding a visualization is one `VIZ_REGISTRY` entry plus one frame directory. A
+class must **not** define `_ipython_display_`: IPython checks that hook before
+`_repr_mimebundle_` and short-circuits on it, so a bare cell and `.view()` would
+disagree. Define `_legacy_view()` instead for the non-framejs fallback.
+
+Payload keys are the contract with each frame's `onInputs`. File-shaped values
+use a descriptive `<thing>.<ext>` key (`molecule.sdf`, `protein.pdb`,
+`network.graphml`) — frames read these through `asText()`, which also accepts a
+dropped file. Everything else is a bare snake_case field, and where a viz takes
+one structured object that object's key is the frame name (`chemical_system`,
+`transformation`, `alchemical_network`, `solvent_component`). Renaming a key
+breaks any frame already published to a `/j/<uuid>`, which is pinned and keeps
+reading the old name.
 
 ## What renders
 

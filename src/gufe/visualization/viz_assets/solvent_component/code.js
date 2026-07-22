@@ -425,12 +425,7 @@ export async function onInputs(inputs) {
   try {
     if (!inputs) { renderPlaceholder('Waiting for solvent data…'); return; }
 
-    let payload = inputs.solvent;
-    // Tolerate the whole payload arriving under a single key.
-    if (payload == null && inputs.payload != null) {
-      const outer = await asObject(inputs.payload);
-      payload = outer && outer.solvent;
-    }
+    const payload = inputs['solvent_component'];
     if (payload == null) { renderPlaceholder('Waiting for solvent data…'); return; }
 
     const solvent = await asObject(payload);

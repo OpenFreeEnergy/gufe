@@ -7,13 +7,19 @@ object then renders as an interactive framejs.io widget in Jupyter/marimo/VSCode
 (bare cell or explicit ``.view()``), and :func:`gufe.visualization.framejs.build_cli_url`
 can turn it into a shareable browser URL.
 
-Which viz and which serialization it gets are looked up by class name in
-``framejs.CANONICAL_VIZ`` / ``framejs._PAYLOAD_BUILDERS`` — both walk the MRO, so a
-subclass inherits its parent's viz unless it registers its own.
+Which viz it gets — the frame that draws it and the serializer that feeds that
+frame — is looked up by class name in ``framejs.VIZ_REGISTRY``, which walks the
+MRO, so a subclass inherits its parent's viz unless it registers its own.
 
-Everything degrades gracefully: with no ``viz`` extra installed, ``.view()`` falls
-back to the object's ``_legacy_view`` (RDKit / py3Dmol) if it defines one, and
-``_repr_mimebundle_`` returns ``None`` so the notebook prints the plain ``repr``.
+Everything degrades gracefully. With no ``viz`` extra installed, both paths fall
+back to the object's ``_legacy_view()`` (RDKit / py3Dmol) if it defines one:
+``.view()`` returns it directly, and ``_repr_mimebundle_`` returns its mimebundle
+so a bare cell keeps the picture it had before framejs. An object with no legacy
+renderer falls through to the plain ``repr``.
+
+Display belongs to this mixin, via ``_repr_mimebundle_`` only. A class must not
+also define ``_ipython_display_`` — IPython checks that hook *first* and
+short-circuits on it, which would make a bare cell and ``.view()`` disagree.
 
 This module deliberately imports nothing from gufe at import time — the framejs
 machinery is pulled in lazily inside each method so ``import gufe`` stays cheap
@@ -31,8 +37,8 @@ class FramejsViewable:
 
         Renders inline in Jupyter, marimo and VSCode (via ``metaframe-widget``).
         Requires the ``viz`` extra (``pip install gufe[viz]``); if it is not
-        available this returns the object's legacy view, or ``None`` when it has
-        none.
+        available this warns and returns the object's ``_legacy_view()``, or
+        ``None`` when it has none.
 
         Parameters
         ----------
@@ -52,8 +58,10 @@ class FramejsViewable:
     def _repr_mimebundle_(self, include=None, exclude=None):
         """Auto-display the interactive framejs widget in notebook front-ends.
 
-        Returns ``None`` (so the notebook falls back to the plain ``repr``) when
-        the ``viz`` extra is not installed or framejs is otherwise unavailable.
+        When the ``viz`` extra is not installed or framejs is otherwise
+        unavailable, returns the legacy renderer's mimebundle if the object has
+        one, else ``None`` so the notebook prints the plain ``repr``. Silent
+        either way — this runs on every display of the object.
         """
         from .visualization.framejs import repr_mimebundle
 

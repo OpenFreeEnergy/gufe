@@ -14,6 +14,7 @@ import base64
 import importlib
 import json
 import urllib.parse
+import warnings
 
 import pytest
 from openff.units import unit
@@ -67,7 +68,7 @@ def local_network(monkeypatch):
 def unpublished_network(monkeypatch):
     """Force the registered LigandNetwork viz to be fully unavailable: no pinned
     uuid AND no on-disk frame, so URL building must raise / fall back."""
-    monkeypatch.setitem(framejs.CANONICAL_VIZ, "LigandNetwork", framejs.VizRef(id="ligand_network"))
+    monkeypatch.setitem(framejs.VIZ_REGISTRY, "LigandNetwork", framejs.VizRef(frame="does_not_exist", payload=lambda o: {}))
 
 
 # --------------------------------------------------------------------------- #
@@ -90,58 +91,52 @@ def test_string_to_base64_string_roundtrip():
 
 
 def test_ligandnetwork_is_registered():
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
-    assert viz.id == "ligand_network"
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     assert viz.frame == "ligand_network"
     assert viz.has_local()  # the on-disk frame dir viz_assets/ligand_network/ ships with gufe
 
 
 def test_ligandnetwork_is_published():
     # the registered viz carries the published framejs.io uuid
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     assert viz.published is True
     assert viz.canonical_url() == f"https://framejs.io/j/{viz.uuid}"
 
 
 def test_vizref_without_uuid_is_unpublished():
-    viz = framejs.VizRef(id="x")
+    viz = framejs.VizRef(frame="x", payload=lambda o: {})
     assert viz.published is False
     with pytest.raises(framejs.FramejsUnavailable):
         viz.canonical_url()
 
 
 def test_vizref_canonical_url_from_env(published_network):
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     assert viz.published is True
     assert viz.canonical_url() == f"https://framejs.io/j/{FAKE_UUID}"
 
 
 def test_vizref_canonical_url_explicit_uuid():
-    viz = framejs.VizRef(id="x", uuid="abc123")
+    viz = framejs.VizRef(frame="x", payload=lambda o: {}, uuid="abc123")
     assert viz.canonical_url() == "https://framejs.io/j/abc123"
 
 
-def test_vizref_canonical_url_with_version_pin():
-    viz = framejs.VizRef(id="x", uuid="abc123", version="sha256hex")
-    assert viz.canonical_url() == "https://framejs.io/j/abc123?v=sha256hex"
-
-
 def test_vizref_js_source_loads_from_frame_dir():
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     src = viz.js_source()  # reads viz_assets/ligand_network/code.js
     assert "onInputs" in src  # the framejs render entrypoint (may be `async`)
     assert len(src) > 100
 
 
 def test_vizref_missing_frame_raises():
-    bad = framejs.VizRef(id="nope", uuid="abc", frame="does_not_exist")
+    bad = framejs.VizRef(frame="does_not_exist", payload=lambda o: {}, uuid="abc")
     assert bad.has_local() is False
     with pytest.raises(framejs.FramejsUnavailable):
         bad.js_source()
 
 
 def test_vizref_no_frame_has_no_local():
-    assert framejs.VizRef(id="x", uuid="abc").has_local() is False
+    assert framejs.VizRef(frame="does_not_exist", payload=lambda o: {}, uuid="abc").has_local() is False
 
 
 # --------------------------------------------------------------------------- #
@@ -150,7 +145,7 @@ def test_vizref_no_frame_has_no_local():
 
 
 def test_vizref_local_url_encodes_frame():
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     url = viz.local_url()
     assert url.startswith("https://framejs.io/#?js=")
     # the js hash param decodes back to the on-disk code.js (btoa(encodeURIComponent(js)))
@@ -168,18 +163,18 @@ def test_vizref_local_url_encodes_frame():
 
 def test_resolve_url_auto_prefers_local():
     # default (no GUFE_VIZ_SOURCE): the on-disk frame wins over the pinned uuid
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     assert viz.resolve_url() == viz.local_url()
 
 
 def test_resolve_url_canonical_env(published_network):
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     assert viz.resolve_url() == viz.canonical_url()
     assert viz.resolve_url() == f"https://framejs.io/j/{FAKE_UUID}"
 
 
 def test_resolve_url_local_env(local_network):
-    viz = framejs.CANONICAL_VIZ["LigandNetwork"]
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
     assert viz.resolve_url() == viz.local_url()
 
 
@@ -197,9 +192,9 @@ def test_build_cli_url_local_default(simple_network):
 
 def test_unregistered_type_raises():
     with pytest.raises(framejs.FramejsUnavailable):
-        framejs._viz_ref_for(object())
+        framejs._viz_for(object())
     with pytest.raises(framejs.FramejsUnavailable):
-        framejs._payload_for(object())
+        framejs._viz_for(object())
 
 
 # --------------------------------------------------------------------------- #
@@ -209,7 +204,7 @@ def test_unregistered_type_raises():
 
 def test_network_payload_is_graphml(simple_network):
     # the canonical viz reads inputs['network.graphml'] and parses GraphML itself
-    payload = framejs._payload_for(simple_network)
+    payload = framejs._viz_for(simple_network).payload(simple_network)
     assert set(payload) == {"network.graphml"}
     xml = payload["network.graphml"]
     assert isinstance(xml, str)
@@ -218,14 +213,14 @@ def test_network_payload_is_graphml(simple_network):
 
 
 def test_network_payload_is_json_serializable(simple_network):
-    payload = framejs._payload_for(simple_network)
+    payload = framejs._viz_for(simple_network).payload(simple_network)
     # must round-trip cleanly (it travels as JSON to the browser)
     assert json.loads(json.dumps(payload)) == payload
 
 
 def test_network_payload_stable(simple_network):
     # reproducible: same network -> identical payload
-    assert framejs._payload_for(simple_network) == framejs._payload_for(simple_network)
+    assert framejs._viz_for(simple_network).payload(simple_network) == framejs._viz_for(simple_network).payload(simple_network)
 
 
 # --------------------------------------------------------------------------- #
@@ -293,7 +288,7 @@ def test_view_falls_back_when_viz_unavailable(simple_network, published_network,
     # simulate framejs being unavailable -> falls back to legacy_view (None here)
     monkeypatch.setattr(
         framejs,
-        "_viz_widget",
+        "_build_widget",
         lambda *a, **k: (_ for _ in ()).throw(framejs.FramejsUnavailable("boom")),
     )
     with pytest.warns(UserWarning):
@@ -324,9 +319,8 @@ EXPECTED_FRAMES = {
 
 @pytest.mark.parametrize("cls_name,frame", sorted(EXPECTED_FRAMES.items()))
 def test_every_registered_viz_ships_its_frame(cls_name, frame):
-    """Naming rule: a viz's id and frame dir are the snake_case gufe class name."""
-    viz = framejs.CANONICAL_VIZ[cls_name]
-    assert viz.id == frame
+    """Naming rule: a viz's frame dir is the snake_case gufe class name."""
+    viz = framejs.VIZ_REGISTRY[cls_name]
     assert viz.frame == frame
     assert viz.has_local(), f"viz_assets/{frame}/code.js is missing from the package"
     assert "onInputs" in viz.js_source()
@@ -334,7 +328,7 @@ def test_every_registered_viz_ships_its_frame(cls_name, frame):
 
 @pytest.mark.parametrize("cls_name", sorted(EXPECTED_FRAMES))
 def test_every_registered_viz_has_a_serializer(cls_name):
-    assert cls_name in framejs._PAYLOAD_BUILDERS
+    assert callable(framejs.VIZ_REGISTRY[cls_name].payload)
 
 
 def test_registry_lookup_walks_the_mro():
@@ -345,8 +339,8 @@ def test_registry_lookup_walks_the_mro():
     class Sub(LigandNetwork):
         pass
 
-    assert framejs._registry_lookup(Sub.__new__(Sub), framejs.CANONICAL_VIZ).frame == "ligand_network"
-    assert framejs._registry_lookup(object(), framejs.CANONICAL_VIZ) is None
+    assert framejs._registry_lookup(Sub.__new__(Sub), framejs.VIZ_REGISTRY).frame == "ligand_network"
+    assert framejs._registry_lookup(object(), framejs.VIZ_REGISTRY) is None
 
 
 def test_json_safe_stringifies_units():
@@ -361,7 +355,7 @@ def test_mapping_payload_is_json_serializable(simple_network):
     """Regression: mapping annotations carry openff Quantity objects, which broke
     both transports (widget set_inputs and the CLI hash) with a TypeError."""
     edge = next(e for e in simple_network.edges if "length" in e.annotations)
-    payload = framejs._payload_for(edge)
+    payload = framejs._viz_for(edge).payload(edge)
     json.dumps(payload)  # must not raise
     assert set(payload) == {"molA.sdf", "molB.sdf", "nameA", "nameB", "mapping", "annotations"}
     # mapping keys are stringified for JSON; values stay ints
@@ -370,7 +364,7 @@ def test_mapping_payload_is_json_serializable(simple_network):
 
 def test_small_molecule_payload(simple_network):
     mol = next(iter(simple_network.nodes))
-    payload = framejs._payload_for(mol)
+    payload = framejs._viz_for(mol).payload(mol)
     assert payload["name"] == mol.name
     assert payload["smiles"] == mol.smiles
     assert "V2000" in payload["molecule.sdf"] or "V3000" in payload["molecule.sdf"]
@@ -380,8 +374,8 @@ def test_small_molecule_payload(simple_network):
 def test_solvent_payload():
     from gufe import SolventComponent
 
-    payload = framejs._payload_for(SolventComponent())
-    assert set(payload["solvent"]) == {
+    payload = framejs._viz_for(SolventComponent()).payload(SolventComponent())
+    assert set(payload["solvent_component"]) == {
         "smiles",
         "positive_ion",
         "negative_ion",
@@ -396,7 +390,7 @@ def test_chemical_system_payload(simple_network):
 
     mol = next(iter(simple_network.nodes))
     system = ChemicalSystem({"ligand": mol, "solvent": SolventComponent()}, name="sys")
-    payload = framejs._payload_for(system)["system"]
+    payload = framejs._viz_for(system).payload(system)["chemical_system"]
     assert payload["name"] == "sys"
     assert [c["label"] for c in payload["components"]] == ["ligand", "solvent"]
     # each component is described by type + name, plus its own structural payload
@@ -417,6 +411,90 @@ def test_component_descriptor_records_errors_instead_of_raising():
 
     mol = SmallMoleculeComponent(mol_from_smiles("CCO"), name="boom")
     mol.__class__ = Exploding
-    desc = framejs._component_descriptor(mol)
+    desc = framejs._component_descriptor("ligand", mol)
     assert "nope" in desc["error"]
     json.dumps(desc)
+
+
+# --------------------------------------------------------------------------- #
+# Legacy fallback — the pre-framejs RDKit / py3Dmol renderers                    #
+# --------------------------------------------------------------------------- #
+
+
+def _break_framejs(monkeypatch):
+    """Make every framejs render path fail, as if the viz extra were missing."""
+    monkeypatch.setattr(
+        framejs,
+        "_build_widget",
+        lambda *a, **k: (_ for _ in ()).throw(framejs.FramejsUnavailable("boom")),
+    )
+
+
+def test_no_viewable_class_defines_ipython_display(simple_network):
+    """`_ipython_display_` short-circuits `_repr_mimebundle_` in IPython, so a
+    class defining both would show a different thing in a bare cell than through
+    `.view()`. Display belongs to FramejsViewable alone."""
+    offenders = [
+        cls_name
+        for cls_name in EXPECTED_FRAMES
+        if any("_ipython_display_" in vars(k) for k in _class_for(cls_name).__mro__)
+    ]
+    assert offenders == []
+
+
+def _class_for(cls_name):
+    import gufe
+    import gufe.transformations
+
+    return {
+        "LigandNetwork": gufe.LigandNetwork,
+        "AlchemicalNetwork": gufe.AlchemicalNetwork,
+        "TransformationBase": gufe.transformations.transformation.TransformationBase,
+        "ChemicalSystem": gufe.ChemicalSystem,
+        "LigandAtomMapping": gufe.LigandAtomMapping,
+        "SmallMoleculeComponent": gufe.SmallMoleculeComponent,
+        "ProteinComponent": gufe.ProteinComponent,
+        "SolventComponent": gufe.SolventComponent,
+    }[cls_name]
+
+
+def test_mapping_legacy_view_returns_an_image(simple_network):
+    edge = next(iter(simple_network.edges))
+    img = edge._legacy_view()
+    assert hasattr(img, "_repr_png_")  # IPython.display.Image
+    assert img._repr_png_()
+
+
+def test_view_falls_back_to_legacy_renderer(simple_network, monkeypatch):
+    """LigandAtomMapping has a legacy renderer, so `.view()` must return it."""
+    _break_framejs(monkeypatch)
+    edge = next(iter(simple_network.edges))
+    with pytest.warns(UserWarning):
+        result = edge.view()
+    assert result is not None
+    assert result._repr_png_()
+
+
+def test_repr_mimebundle_falls_back_to_legacy_renderer(simple_network, monkeypatch):
+    """A bare cell must keep the pre-framejs picture when framejs is unavailable."""
+    _break_framejs(monkeypatch)
+    edge = next(iter(simple_network.edges))
+    bundle = edge._repr_mimebundle_()
+    assert bundle is not None
+    # a mimebundle is either the data dict or a (data, metadata) pair
+    data = bundle[0] if isinstance(bundle, tuple) else bundle
+    assert "image/png" in data
+
+
+def test_repr_mimebundle_is_none_without_a_legacy_renderer(simple_network, monkeypatch):
+    """LigandNetwork has no legacy renderer, so the notebook gets the plain repr."""
+    _break_framejs(monkeypatch)
+    assert simple_network._repr_mimebundle_() is None
+
+
+def test_repr_mimebundle_does_not_warn(simple_network, monkeypatch):
+    """It runs on every display of the object — a warning per render is intolerable."""
+    _break_framejs(monkeypatch)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert simple_network._repr_mimebundle_() is None
