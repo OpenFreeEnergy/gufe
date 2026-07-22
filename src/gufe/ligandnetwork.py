@@ -13,11 +13,12 @@ import networkx as nx
 import gufe
 from gufe import SmallMoleculeComponent
 
+from ._viewable import FramejsViewable
 from .mapping import LigandAtomMapping
 from .tokenization import JSON_HANDLER, GufeTokenizable
 
 
-class LigandNetwork(GufeTokenizable):
+class LigandNetwork(GufeTokenizable, FramejsViewable):
     """A directed graph connecting ligands according to their atom mapping.
 
     A network can be defined by specifying only edges, in which case the nodes are implicitly added.
@@ -362,3 +363,6 @@ class LigandNetwork(GufeTokenizable):
 
         """
         return nx.is_weakly_connected(self.graph)
+
+    # `.view()` / bare-cell auto-display come from FramejsViewable; the viz and
+    # serializer are registered for `LigandNetwork` in visualization/framejs.py.

@@ -13,6 +13,7 @@ from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
 from gufe.utils import magic_open
 
+from .._viewable import FramejsViewable
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
@@ -127,7 +128,7 @@ ions_dict = {
 }
 
 
-class ProteinComponent(ExplicitMoleculeComponent):
+class ProteinComponent(ExplicitMoleculeComponent, FramejsViewable):
     """
     :class:`Component` representing the contents of a PDB file, such as a protein.
 

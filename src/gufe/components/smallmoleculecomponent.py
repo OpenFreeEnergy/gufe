@@ -11,6 +11,7 @@ from typing import Any
 
 from rdkit import Chem
 
+from .._viewable import FramejsViewable
 from ..molhashing import deserialize_numpy, serialize_numpy
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
@@ -98,7 +99,7 @@ def _setprops(obj, d: dict) -> None:
             obj.SetProp(k, v)
 
 
-class SmallMoleculeComponent(ExplicitMoleculeComponent):
+class SmallMoleculeComponent(ExplicitMoleculeComponent, FramejsViewable):
     """
     :class:`Component` representing a small molecule, used for ligands and cofactors.
 

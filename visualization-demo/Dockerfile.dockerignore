@@ -1,0 +1,11 @@
+# Dockerfile-specific ignore file. The build context is the REPO ROOT (compose
+# sets `context: ..`) so the image build can see environment.yml, but the source
+# is MOUNTED at runtime, not built in — the image only needs environment.yml,
+# this Dockerfile, and dev-start.sh. So we whitelist: ignore everything, then
+# re-include only those three (parent dirs must be re-included before children).
+*
+!environment.yml
+!visualization-demo
+visualization-demo/*
+!visualization-demo/Dockerfile
+!visualization-demo/dev-start.sh

@@ -8,6 +8,7 @@ import warnings
 from collections.abc import Iterable
 from typing import Any
 
+from .._viewable import FramejsViewable
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 from ..protocols import Protocol, ProtocolDAG, ProtocolDAGResult, ProtocolResult
@@ -15,7 +16,7 @@ from ..tokenization import JSON_HANDLER, GufeTokenizable
 from ..utils import ensure_filelike
 
 
-class TransformationBase(GufeTokenizable):
+class TransformationBase(GufeTokenizable, FramejsViewable):
     _protocol: Protocol
     _name: str | None
     _metadata: dict[str, Any]

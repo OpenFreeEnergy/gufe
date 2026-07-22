@@ -4,6 +4,11 @@ docs/generated/*
 .xxrun
 .idea/
 
+# framejs dev stack (visualization-demo/): openfe-demo is cloned locally by
+# `just dev` and scratch is a runtime workspace mount — neither is committed.
+/visualization-demo/openfe-demo/
+/visualization-demo/scratch/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

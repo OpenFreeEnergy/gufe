@@ -1,4 +1,5 @@
 include src/gufe/vendor/pdb_file/data/*.xml
+recursive-include src/gufe/visualization/viz_assets/ *.js *.json
 recursive-include src/gufe/tests/data/ *.pdb
 recursive-include src/gufe/tests/data/ *.sdf
 recursive-include src/gufe/tests/data/ *.cif

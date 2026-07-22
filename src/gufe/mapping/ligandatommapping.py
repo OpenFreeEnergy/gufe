@@ -12,6 +12,7 @@ from rdkit import Chem
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import display_mapping_3d, draw_mapping
 
+from .._viewable import FramejsViewable
 from ..tokenization import JSON_HANDLER
 from ..utils import requires_package
 from . import AtomMapping
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     import py3Dmol
 
 
-class LigandAtomMapping(AtomMapping):
+class LigandAtomMapping(AtomMapping, FramejsViewable):
     """
     Container for an atom mapping between two small molecule components.
 
@@ -136,9 +137,18 @@ class LigandAtomMapping(AtomMapping):
             f"annotations={self.annotations!r})"
         )
 
-    def _ipython_display_(self, d2d=None):  # pragma: no-cover
-        """
-        Visualize atom mapping in a Jupyter Notebook.
+    def _legacy_view(self, d2d=None):
+        """The pre-framejs static rendering of this mapping: an RDKit 2D image.
+
+        Used as the fallback when the interactive framejs view is unavailable —
+        ``.view()`` returns this, and bare-cell display falls back to it — so an
+        install without the ``viz`` extra keeps the picture it always had.
+
+        This is deliberately *not* named ``_ipython_display_``: IPython checks
+        that hook before ``_repr_mimebundle_`` and short-circuits on it, which
+        would make a bare cell show this static image while ``.view()`` showed
+        the interactive one. :class:`~gufe._viewable.FramejsViewable` owns display
+        for both paths instead.
 
         Parameters
         ---------
@@ -151,16 +161,14 @@ class LigandAtomMapping(AtomMapping):
         Image: IPython.core.display.Image
             Image of the atom map
         """
-        from IPython.display import Image, display
+        from IPython.display import Image
 
-        return display(
-            Image(
-                draw_mapping(
-                    self._compA_to_compB,
-                    self.componentA.to_rdkit(),
-                    self.componentB.to_rdkit(),
-                    d2d,
-                )
+        return Image(
+            draw_mapping(
+                self._compA_to_compB,
+                self.componentA.to_rdkit(),
+                self.componentB.to_rdkit(),
+                d2d,
             )
         )
 
