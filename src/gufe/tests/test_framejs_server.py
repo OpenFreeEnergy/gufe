@@ -6,9 +6,11 @@ Hermetic: the server is bound to an ephemeral loopback port in-process and drive
 with ``urllib``. Nothing here reaches framejs.io — the frame URL is built from the
 on-disk frame directory, exactly as it is at runtime, and never fetched.
 
-The invariant these guard is the one that makes the terminal path match the
-notebook path: the page carries the viz JavaScript and *no object data*, and the
-object data comes back separately from ``?inputs=1``.
+The invariant these guard: the page carries the viz JavaScript and *no object
+data*, and the object data comes back separately from ``?inputs=1`` — fetched by
+the page, which is same-origin with this server. It deliberately is **not** the
+frame that fetches: a frame served from framejs.io is a public origin, and
+browsers now refuse those a loopback address without a user permission prompt.
 """
 
 import functools
@@ -43,7 +45,9 @@ def simple_network():
 def data_dir(tmp_path, simple_network):
     """A directory holding one file of each interesting kind."""
     (tmp_path / "network.graphml").write_text(simple_network.to_graphml())
-    mol = next(iter(simple_network.nodes))
+    # by name, not by iteration order: `nodes` is a frozenset, so `next(iter(…))`
+    # picks a different molecule from run to run
+    mol = next(m for m in simple_network.nodes if m.name == "ethanol")
     (tmp_path / "ethanol.sdf").write_text(mol.to_sdf())
     simple_network.to_json(file=tmp_path / "network.json")
     (tmp_path / "notes.txt").write_text("not a gufe object")
@@ -60,19 +64,25 @@ def client(data_dir):
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{httpd.server_address[1]}"
 
-    def get(path):
+    def get(path, headers=False):
         """Return (status, body-text) — HTTP errors come back, they don't raise."""
         try:
             with urllib.request.urlopen(base + path, timeout=10) as r:
-                return r.status, r.read().decode("utf-8")
+                return (r.status, dict(r.headers)) if headers else (r.status, r.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
-            return e.code, e.read().decode("utf-8")
+            return (e.code, dict(e.headers)) if headers else (e.code, e.read().decode("utf-8"))
 
+    get.base = base
     try:
         yield get
     finally:
         httpd.shutdown()
         httpd.server_close()
+
+
+def page_config(body):
+    """The JSON config block the page is rendered with."""
+    return json.loads(body.split('type="application/json">', 1)[1].split("</script>", 1)[0])
 
 
 # --------------------------------------------------------------------------- #
@@ -114,7 +124,7 @@ def test_every_loader_extension_is_lowercase_and_dotted():
 def test_viewer_page_bakes_in_the_frame_url_but_no_data(client, data_dir):
     status, body = client("/network.graphml")
     assert status == 200
-    config = json.loads(body.split('type="application/json">', 1)[1].split("</script>", 1)[0])
+    config = page_config(body)
     # the viz JavaScript is baked in by Python...
     assert config["frame_url"] == server._viz_for(server.load_object(data_dir / "network.graphml")).resolve_url()
     assert config["object_type"] == "LigandNetwork"
@@ -135,18 +145,67 @@ def test_viewer_page_is_a_single_metaframe(client):
 def test_viewer_page_pins_the_same_metapage_as_the_widget(client):
     """The page drives the frame through the runtime the Jupyter widget uses."""
     _, body = client("/ethanol.sdf")
-    config = json.loads(body.split('type="application/json">', 1)[1].split("</script>", 1)[0])
-    assert config["metapage_module"] == server.METAPAGE_MODULE
+    assert page_config(body)["metapage_module"] == server.METAPAGE_MODULE
     assert "@metapages/metapage@" in server.METAPAGE_MODULE
+
+
+def test_the_page_fetches_the_data_not_the_frame(client):
+    """Load-bearing: a framejs.io frame is a public origin, and browsers refuse
+    those a loopback address without a user permission prompt (Chrome's Local
+    Network Access). The page is same-origin with this server, so it can."""
+    _, body = client("/network.graphml")
+    config = page_config(body)
+    assert config["inputs_url"].startswith("/")  # relative == same-origin, no address space crossed
+    assert "://" not in config["inputs_url"]
+    # nothing in what the frame is handed points back at this server
+    assert "http://" not in config["frame_url"]
+    assert "setInputs" in body  # the data goes over postMessage instead
 
 
 def test_viewer_url_path_is_the_data_file_path(client):
     """The URL says what it shows, including for a file in a subdirectory."""
     status, body = client("/sub/ethanol.sdf")
     assert status == 200
-    config = json.loads(body.split('type="application/json">', 1)[1].split("</script>", 1)[0])
+    config = page_config(body)
     assert config["path"] == "sub/ethanol.sdf"
     assert config["inputs_url"] == "/sub/ethanol.sdf?inputs=1"
+
+
+def test_hash_inputs_replaces_only_the_big_values(client):
+    """`hash_inputs` is not on the viewer path (see its docstring), but the frames
+    do accept URL inputs, so its contract is still worth pinning down."""
+    payload = {"molecule.sdf": "V2000\n" * 100, "name": "ethanol", "total_charge": 0}
+    rewritten = server.hash_inputs(payload, data_url="http://host/x.sdf")
+    assert rewritten["molecule.sdf"] == "http://host/x.sdf?input=molecule.sdf"
+    assert rewritten["name"] == "ethanol"  # small scalars are not worth a round-trip
+    assert rewritten["total_charge"] == 0
+
+
+def test_input_endpoint_serves_one_payload_value(client, data_dir):
+    """What the frame fetches, for exactly the key the hash pointed it at."""
+    status, body = client("/network.graphml?input=network.graphml")
+    assert status == 200
+    assert body == server.payload_for(data_dir / "network.graphml")["network.graphml"]
+    assert "<graphml" in body
+
+
+def test_input_endpoint_serves_structured_values_as_json(client, data_dir, simple_network):
+    edge = next(iter(simple_network.edges))
+    (data_dir / "mapping.json").write_text(edge.to_json())
+    status, body = client("/mapping.json?input=mapping")
+    assert status == 200
+    assert json.loads(body) == server.payload_for(data_dir / "mapping.json")["mapping"]
+
+
+def test_unknown_input_key_is_404(client):
+    assert client("/network.graphml?input=nope")[0] == 404
+
+
+def test_responses_are_readable_by_the_framejs_origin(client):
+    """The frame is cross-origin by construction, so CORS is not optional here."""
+    for path in ("/network.graphml", "/network.graphml?input=network.graphml"):
+        _, headers = client(path, headers=True)
+        assert headers["Access-Control-Allow-Origin"] == "*"
 
 
 # --------------------------------------------------------------------------- #

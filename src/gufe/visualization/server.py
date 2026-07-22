@@ -21,8 +21,26 @@ hands them to the frame through ``renderMetapage`` — the same
 ``@metapages/metapage`` entrypoint, at the same pinned version, that
 ``metaframe_widget`` uses in Jupyter.
 
-Why serve rather than just open a URL
--------------------------------------
+Why *this page* does the fetching
+---------------------------------
+It would be tidier to put the inputs straight in the iframe's URL hash and let the
+frame fetch its own data from ``?input=<key>`` — the frames support exactly that
+(see :func:`hash_inputs`, and ``asText()``/``asObject()`` in every frame, which
+fetch a whitespace-free ``http(s)://`` string). **Browsers no longer allow it.**
+Chrome 142's Local Network Access blocks a public-origin page — which the frame,
+served from framejs.io, is — from reaching a loopback address without an explicit
+user permission prompt, and inside a cross-origin iframe the ``local-network-access``
+Permissions Policy has to be delegated on top. It fails as a CORS error:
+*"Permission was denied for this request to access the `loopback` address space"*.
+(The older Private Network Access opt-in header, ``Access-Control-Allow-Private-Network``,
+is superseded and ignored.)
+
+This page has no such problem: it is served from ``localhost:8899`` itself, so its
+fetch is same-origin — no address space is crossed and nothing prompts — and
+handing the result to the frame is a ``postMessage``, not a network request.
+
+Why serve at all, rather than just open a URL
+---------------------------------------------
 :func:`gufe.visualization.framejs.build_cli_url` puts everything — the viz
 JavaScript *and* the object — in the URL's hash. That is perfect for a link you
 want to paste somewhere, and it is still available (``--url-only`` in the CLI),
@@ -43,7 +61,9 @@ under it, otherwise the file's own directory), and **the URL path is the data
 file's path** relative to that root — a link that says what it shows::
 
     http://localhost:8899/setup/ligand_network.graphml       the viewer page
-    http://localhost:8899/setup/ligand_network.graphml?inputs=1   its payload (JSON)
+    http://localhost:8899/setup/ligand_network.graphml?input=network.graphml
+                                                            one payload value (what the frame fetches)
+    http://localhost:8899/setup/ligand_network.graphml?inputs=1   the whole payload (JSON)
     http://localhost:8899/setup/ligand_network.graphml?raw=1      the file itself
     http://localhost:8899/setup/                             a listing of what is viewable
 
@@ -77,6 +97,7 @@ __all__ = [
     "DEFAULT_PORT",
     "LOADER_REGISTRY",
     "UnviewableFile",
+    "hash_inputs",
     "load_object",
     "serve",
     "viewer_html",
@@ -89,6 +110,11 @@ DEFAULT_PORT = 8899
 # to the same version `metaframe_widget`'s anywidget ESM loads, so the terminal
 # and the notebook drive a frame through identical code.
 METAPAGE_MODULE = "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.10.11/+esm"
+
+# Payload values at or under this many bytes ride inline in the URL hash; bigger
+# ones are replaced by a URL back to this server. Only reachable through
+# `hash_inputs`, which the viewer page does not use — see its docstring.
+INLINE_LIMIT = 200
 
 
 class UnviewableFile(ValueError):
@@ -200,7 +226,41 @@ def payload_for(path: Path) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# The page: one metaframe, fed by fetch                                         #
+# Payload -> URL hash, with the big values left here to be fetched              #
+# --------------------------------------------------------------------------- #
+
+
+def _fits_inline(value: Any) -> bool:
+    """True if ``value`` is small enough to ride in the URL hash as itself."""
+    if value is None or isinstance(value, (bool, int, float)):
+        return True
+    text = value if isinstance(value, str) else json.dumps(value, separators=(",", ":"))
+    return len(text) <= INLINE_LIMIT
+
+
+def hash_inputs(payload: dict[str, Any], *, data_url: str) -> dict[str, Any]:
+    """Rewrite ``payload`` for the URL hash, replacing big values with URLs.
+
+    ``data_url`` is the absolute URL of the data file on this server; each
+    replaced value becomes ``<data_url>?input=<key>``, which serves exactly that
+    value. The frames accept either form, so this is invisible to them.
+
+    .. warning::
+       **The viewer page does not use this**, because a frame served from
+       framejs.io can no longer fetch a loopback address — see the module
+       docstring on Local Network Access. It is kept for the case the frames were
+       taught to handle, and which does work: inputs pointing at data the frame
+       is allowed to reach (a public ``https://`` URL, or same-origin data when
+       the frame is hosted alongside it).
+    """
+    return {
+        key: value if _fits_inline(value) else f"{data_url}?input={urllib.parse.quote(key)}"
+        for key, value in payload.items()
+    }
+
+
+# --------------------------------------------------------------------------- #
+# The page: one metaframe, fed by a same-origin fetch                           #
 # --------------------------------------------------------------------------- #
 
 # Everything variable rides in a single JSON <script> block, so the page needs no
@@ -262,8 +322,10 @@ document.querySelector("header .type").textContent = cfg.object_type;
 document.getElementById("raw").href = cfg.raw_url;
 document.getElementById("up").href = cfg.parent_url;
 
-// The frame is loaded once, from the URL Python baked in above; the object's data
-// is fetched separately and pushed in — the same split the Jupyter widget makes.
+// THIS page fetches the data, not the frame: we are same-origin with the server,
+// and the frame (on framejs.io) is not allowed to reach a loopback address at all
+// — see the Local Network Access note in the module docstring. Handing the result
+// over is a postMessage, which no such policy applies to.
 const fetchInputs = () => fetch(cfg.inputs_url, { cache: "no-store" })
   .then(async (r) => r.ok ? r.json() : Promise.reject(new Error(await r.text())));
 
@@ -378,11 +440,22 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
         if not self.quiet:
             sys.stderr.write(f"  {fmt % args}\n")
 
+    def _send_cors_headers(self) -> None:
+        """Let anything that is *allowed* to reach this server read the response.
+
+        The viewer page does not need this (it is same-origin), but a notebook,
+        a script or a frame hosted alongside the data might, and the alternative
+        would be a same-origin lock on a server that already binds loopback and
+        serves only what it was pointed at.
+        """
+        self.send_header("Access-Control-Allow-Origin", "*")
+
     def _send(self, body: bytes, content_type: str, status: int = 200) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self._send_cors_headers()
         self.end_headers()
         self.wfile.write(body)
 
@@ -419,9 +492,28 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
             return self._serve_listing(path, split.path)
         if "raw" in query:
             return self._serve_raw(path)
+        if "input" in query:
+            return self._serve_input(path, query["input"][0])
         if "inputs" in query:
             return self._serve_inputs(path)
         return self._serve_viewer(path, split.path)
+
+    def do_OPTIONS(self):  # noqa: N802 - stdlib naming
+        """Answer CORS preflights, for anything fetching these responses directly.
+
+        Note this is *not* what makes the viewer page work — that fetch is
+        same-origin. Nor can it re-enable a fetch from the framejs.io frame:
+        Local Network Access is a permission the browser asks the user for, not
+        something a response header can grant (``Access-Control-Allow-Private-Network``
+        was that header, and it is superseded).
+        """
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", self.headers.get("Access-Control-Request-Headers", "*"))
+        self.send_header("Access-Control-Max-Age", "600")
+        self.send_header("Content-Length", "0")
+        self._send_cors_headers()
+        self.end_headers()
 
     def _serve_viewer(self, path: Path, url_path: str) -> None:
         try:
@@ -442,6 +534,21 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
             ),
             "text/html",
         )
+
+    def _serve_input(self, path: Path, key: str) -> None:
+        """Serve one payload value — the endpoint a frame fetches a big input from."""
+        try:
+            payload = payload_for(path)
+        except UnviewableFile as e:
+            return self._send_text(str(e), "text/plain", 415)
+        except Exception as e:
+            return self._send_text(f"could not read {path.name}: {type(e).__name__}: {e}", "text/plain", 422)
+        if key not in payload:
+            return self._send_text(f"no input {key!r} in the payload for {path.name}", "text/plain", 404)
+        value = payload[key]
+        if isinstance(value, str):
+            return self._send_text(value, "text/plain")
+        self._send_text(json.dumps(value), "application/json")
 
     def _serve_inputs(self, path: Path) -> None:
         try:

@@ -1585,10 +1585,21 @@ layoutSelect.addEventListener('change', () => {
 // ============================================================================
 // Module entry points
 // ============================================================================
+// An input may arrive as an http(s) URL to fetch rather than as the content
+// itself: that is how gufe's `openfe view` server hands over data (here, a
+// GraphML document) that would not fit in the URL hash. A one-token string with
+// no whitespace is a URL; real file content never is.
+const isFetchableUrl = (v) => typeof v === 'string' && /^https?:\/\/[^\s]+$/.test(v.trim());
+
 export async function onInputs(inputs) {
   let xml = inputs && inputs['network.graphml'];
   if (!xml) return;
-  if (xml instanceof Blob) xml = await xml.text();
+  if (isFetchableUrl(xml)) {
+    const r = await fetch(xml.trim());
+    if (!r.ok) throw new Error(`fetch ${xml.trim()} failed: ${r.status} ${r.statusText}`);
+    xml = await r.text();
+  }
+  else if (xml instanceof Blob) xml = await xml.text();
   else if (xml instanceof ArrayBuffer) xml = new TextDecoder().decode(xml);
   else if (ArrayBuffer.isView(xml))    xml = new TextDecoder().decode(xml);
   if (typeof xml !== 'string') xml = String(xml);

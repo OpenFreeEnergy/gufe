@@ -115,8 +115,19 @@ var T = DARK_MODE ? THEMES.dark : THEMES.light;
 // INPUT NORMALIZATION
 // ============================================================================
 
+// An input may arrive as an http(s) URL to fetch rather than as the content
+// itself: that is how gufe's `openfe view` server hands over data (an SDF, a
+// PDB, a GraphML, a JSON blob) that would not fit in the URL hash. A one-token
+// string with no whitespace is a URL; real file content never is.
+const isFetchableUrl = (v) => typeof v === 'string' && /^https?:\/\/[^\s]+$/.test(v.trim());
+
 async function asText(v) {
   if (v == null) return null;
+  if (isFetchableUrl(v)) {
+    const r = await fetch(v.trim());
+    if (!r.ok) throw new Error(`fetch ${v.trim()} failed: ${r.status} ${r.statusText}`);
+    return await r.text();
+  }
   if (v instanceof Blob) return await v.text();
   if (v instanceof ArrayBuffer) return new TextDecoder().decode(v);
   if (ArrayBuffer.isView(v)) return new TextDecoder().decode(v);
@@ -124,10 +135,11 @@ async function asText(v) {
 }
 
 // Object-valued inputs may arrive as a JSON string.
-function asObject(v) {
+// Async because a string value may be a URL that asText has to fetch first.
+async function asObject(v) {
   if (v == null) return null;
   if (typeof v === 'string') {
-    try { return JSON.parse(v); } catch (e) { return null; }
+    try { return JSON.parse(await asText(v)); } catch (e) { return null; }
   }
   return (typeof v === 'object') ? v : null;
 }
@@ -1012,8 +1024,8 @@ export async function onInputs(inputs) {
     // (handled in parseSDF) rather than clobbering it with a generic label.
     const nameA = (await asText(inputs['nameA'])) || '';
     const nameB = (await asText(inputs['nameB'])) || '';
-    const mappingObj = asObject(inputs['mapping']);
-    const annotations = asObject(inputs['annotations']);
+    const mappingObj = await asObject(inputs['mapping']);
+    const annotations = await asObject(inputs['annotations']);
     init(sdfA, sdfB, nameA, nameB, mappingObj, annotations);
   } catch (e) {
     console.warn('[mapping] onInputs failed: ' + e.message);

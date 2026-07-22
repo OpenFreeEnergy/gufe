@@ -115,8 +115,19 @@ const CONFIG = {
 // HELPERS
 // ============================================================================
 
+// An input may arrive as an http(s) URL to fetch rather than as the content
+// itself: that is how gufe's `openfe view` server hands over data (an SDF, a
+// PDB, a GraphML, a JSON blob) that would not fit in the URL hash. A one-token
+// string with no whitespace is a URL; real file content never is.
+const isFetchableUrl = (v) => typeof v === 'string' && /^https?:\/\/[^\s]+$/.test(v.trim());
+
 async function asText(v) {
   if (v == null) return null;
+  if (isFetchableUrl(v)) {
+    const r = await fetch(v.trim());
+    if (!r.ok) throw new Error(`fetch ${v.trim()} failed: ${r.status} ${r.statusText}`);
+    return await r.text();
+  }
   if (v instanceof Blob) return await v.text();
   if (v instanceof ArrayBuffer) return new TextDecoder().decode(v);
   if (ArrayBuffer.isView(v)) return new TextDecoder().decode(v);

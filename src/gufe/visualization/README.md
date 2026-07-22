@@ -92,6 +92,37 @@ is frozen at the moment the link was made, and a solvated `AlchemicalNetwork` wi
 not fit in a URL. Appended `inputs` take priority over anything baked into the
 frame, which is what makes that form work at all.
 
+**Inputs may be content or a URL to content**, and every frame accepts both:
+`asText()` / `asObject()` fetch a whitespace-free `http(s)://` string and use
+anything else as-is. Read file-shaped inputs through those helpers rather than
+touching `inputs[…]` directly and a new frame gets that for free. Note the one
+place it does *not* help — see below.
+
+### Why the page fetches, and not the frame
+
+It would be tidier for the terminal path to put its inputs straight in the
+iframe's hash as URLs and let the frame pull its own data from
+`?input=<key>`. **Browsers no longer allow that.** Chrome 142's [Local Network
+Access](https://developer.chrome.com/blog/local-network-access) blocks a
+public-origin page — which the frame, served from framejs.io, is — from reaching a
+loopback address without an explicit user permission prompt, and a cross-origin
+iframe additionally needs the `local-network-access` Permissions Policy delegated
+to it. It surfaces as a CORS failure:
+
+```
+Access to fetch at 'http://localhost:8899/181l.pdb?input=protein.pdb' from origin
+'https://framejs.io' has been blocked by CORS policy: Permission was denied for
+this request to access the `loopback` address space.
+```
+
+No response header fixes it; `Access-Control-Allow-Private-Network` was the header
+for the older Private Network Access design and is superseded. The viewer page has
+no such problem, because it is served from `localhost:8899` itself — its fetch is
+same-origin, so no address space is crossed — and handing the result to the frame
+is a `postMessage`, which no such policy applies to. `server.hash_inputs()` still
+implements the URL form for the case that does work: data the frame is allowed to
+reach, such as a public `https://` URL.
+
 ### Two URL forms
 
 Both are built from the one on-disk frame directory:
@@ -122,17 +153,23 @@ openfe view-ligand-network network.graphml         # the older .graphml-only ent
 ```
 
 What gets served at `http://localhost:8899/<path/to/the/file>` is a page Python
-renders per file: a header, one metaframe, and ~30 lines of JavaScript. The
-framejs URL of the registered viz is **baked into the page**; the page then
-fetches the object's `inputs` from `?inputs=1` on its own path and hands them to
-the frame through the same `@metapages/metapage` entry point, pinned to the same
-version, that `metaframe_widget` uses in Jupyter.
+renders per file: a header and **one iframe**, with no JavaScript at all. The
+iframe's `src` is the registered viz's framejs URL with the object's `inputs` in
+its hash — so the page is a thin frame around a link you could paste into a
+browser yourself. Each input too big to inline is
+`http://localhost:8899/<the file>?input=<key>`, which serves exactly that value
+and which the frame fetches for itself.
 
 The URL path *is* the data file's path, relative to the served root — the
 directory you pointed at, or the working directory if the file is under it.
 Everything viewable under that root is reachable from the one server, and nothing
-outside it is. The payload is rebuilt from disk on every fetch, so regenerating a
-file and pressing the page's ⟳ re-renders it without restarting anything.
+outside it is. The payload is rebuilt from disk on every request, so regenerating
+a file and reloading the page re-renders it without restarting anything.
+
+Because the frame is served from framejs.io and fetches from localhost, every
+response carries `Access-Control-Allow-Origin: *` and preflights are answered,
+including Chrome's Private Network Access check for an https page reaching a
+local address.
 
 `LOADER_REGISTRY` is what makes a file type viewable: `.json` (any saved gufe
 object), `.graphml`, `.pdb`, `.cif`/`.pdbx`, `.sdf`/`.mol`. A file it cannot load,
