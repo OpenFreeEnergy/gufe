@@ -12,6 +12,7 @@ from rdkit import Chem
 from gufe.components import SmallMoleculeComponent
 from gufe.visualization.mapping_visualization import display_mapping_3d, draw_mapping
 
+from .._viewable import FramejsViewable
 from ..tokenization import JSON_HANDLER
 from ..utils import requires_package
 from . import AtomMapping
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     import py3Dmol
 
 
-class LigandAtomMapping(AtomMapping):
+class LigandAtomMapping(AtomMapping, FramejsViewable):
     """
     Container for an atom mapping between two small molecule components.
 

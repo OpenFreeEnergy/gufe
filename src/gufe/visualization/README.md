@@ -1,22 +1,49 @@
 # gufe visualization
 
 Interactive [framejs.io](https://framejs.io) visualizations for gufe objects.
-`LigandNetwork.view()` (and bare-cell auto-display in Jupyter / marimo / VSCode)
-renders an interactive radial network — click an edge to drive a 3D atom-mapping
-viewer for its two endpoint molecules. Rendering is powered by the optional
-`viz` extra (`pip install gufe[viz]`); without it, `.view()` falls back to the
-legacy RDKit / py3Dmol renderers.
+Calling `.view()` — or just leaving an object as the last line of a notebook cell
+in Jupyter / marimo / VSCode — renders it as an interactive widget. Rendering is
+powered by the optional `viz` extra (`pip install gufe[viz]`); without it,
+`.view()` falls back to the legacy RDKit / py3Dmol renderers.
 
-- `framejs.py` — builds the self-contained framejs.io URL / `anywidget` from a
-  gufe object plus an on-disk frame directory.
+- `framejs.py` — the registry: maps each gufe class to its frame (`CANONICAL_VIZ`)
+  and to the serializer that turns an object into that frame's `inputs`
+  (`_PAYLOAD_BUILDERS`), then builds the self-contained framejs.io URL /
+  `anywidget`.
+- `../_viewable.py` — the `FramejsViewable` mixin that gives a class `.view()` and
+  `_repr_mimebundle_`. Mixing it in is the whole opt-in.
 - `mapping_visualization.py` — the legacy RDKit atom-mapping renderer.
 - `viz_assets/<frame>/` — the on-disk framejs frames that ship with gufe.
+
+## What renders
+
+A frame directory is named after the gufe class it renders, snake_cased, so the
+two are greppable from each other.
+
+| gufe class | frame | shows |
+| --- | --- | --- |
+| `LigandNetwork` | `ligand_network` | radial network; click an edge to drive a 3D atom-mapping viewer |
+| `AlchemicalNetwork` | `alchemical_network` | d3 force graph of ChemicalSystem nodes / Transformation edges |
+| `Transformation`, `NonTransformation` | `transformation` | stateA↔stateB component diff + the atom mapping |
+| `ChemicalSystem` | `chemical_system` | master/detail over the system's labelled components |
+| `LigandAtomMapping` | `ligand_atom_mapping` | the mapping viewer standalone (plain/colored/lines/overlay/2d) |
+| `SmallMoleculeComponent` | `small_molecule_component` | 2D depiction + 3D conformer + SMILES/charge |
+| `ProteinComponent` | `protein_component` | 3Dmol with representation / colour-scheme switchers |
+| `SolventComponent` | `solvent_component` | settings card (it has no coordinates) |
+
+Lookup walks the MRO, so subclasses inherit their base's viz: `SolvatedPDBComponent`
+and `ProteinMembraneComponent` get the protein frame, `NonTransformation` gets the
+transformation frame, with nothing registered for them.
+
+To add one: mix `FramejsViewable` into the class, add a `VizRef` and a payload
+builder in `framejs.py`, and drop a frame directory under `viz_assets/`.
 
 ## Running the Jupyter notebook demo
 
 The demo stack (`visualization-demo/`) is fully driven by Docker Compose — no
 `just` required. It builds a native gufe env, editable-installs this checkout,
-and serves a JupyterLab notebook that exercises `LigandNetwork.view()`.
+and serves a JupyterLab notebook that exercises `.view()` on one of every
+visualizable gufe object.
 
 From the repository root:
 
@@ -45,7 +72,7 @@ docker compose down                   # stop the stack (keeps built images)
 
 Each visualization is a framejs **frame directory** under `viz_assets/`, in the
 canonical [framejs local-file-io](https://framejs.io/docs/guide/local-file-io)
-format. For example `viz_assets/network/`:
+format. For example `viz_assets/ligand_network/`:
 
 | file           | contents                                                        |
 | -------------- | --------------------------------------------------------------- |

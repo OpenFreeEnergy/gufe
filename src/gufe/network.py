@@ -6,12 +6,13 @@ from typing import Self
 
 import networkx as nx
 
+from ._viewable import FramejsViewable
 from .chemicalsystem import ChemicalSystem
 from .tokenization import GufeTokenizable
 from .transformations import Transformation
 
 
-class AlchemicalNetwork(GufeTokenizable):
+class AlchemicalNetwork(GufeTokenizable, FramejsViewable):
     _edges: frozenset[Transformation]
     _nodes: frozenset[ChemicalSystem]
     _name: str | None

@@ -111,7 +111,8 @@ class VizRef:
     Parameters
     ----------
     id
-        Stable short identifier, e.g. ``"network"``. Also the suffix of the
+        Stable short identifier — by convention the snake_case gufe class name,
+        e.g. ``"ligand_network"``. Also the suffix of the
         per-viz env override ``GUFE_VIZ_<ID>_UUID`` (uppercased).
     uuid
         The framejs.io canonical frame id: the viz is published once to
@@ -254,17 +255,37 @@ class VizRef:
 
 
 # Object-type name -> pinned canonical visualization.
-# v1 ships LigandNetwork end-to-end. Its `uuid` is the network viz published to
-# framejs.io under a claimed account (PLAN §7): https://framejs.io/j/<uuid>
-# (== https://framejs.app/j/<uuid>). A dev/CI publish can override it via
-# GUFE_VIZ_NETWORK_UUID without a code change.
+#
+# Naming rule: a viz's `id` (== its `frame` directory under viz_assets/) is the
+# snake_case form of the gufe class it renders — `LigandNetwork` ->
+# `ligand_network`, `SmallMoleculeComponent` -> `small_molecule_component`, …
+# So the on-disk frame is always greppable from the class name and vice versa.
+#
+# `LigandNetwork`'s `uuid` is the one viz published to framejs.io so far (PLAN §7):
+# https://framejs.io/j/<uuid> (== https://framejs.app/j/<uuid>). The rest resolve
+# via their on-disk frame (`GUFE_VIZ_SOURCE=auto` -> `local_url()`) until they are
+# published; a dev/CI publish can fill each in via GUFE_VIZ_<ID>_UUID with no code
+# change.
+_3DMOL = ("https://3dmol.org/build/3Dmol-min.js",)
+
 CANONICAL_VIZ: dict[str, VizRef] = {
-    "LigandNetwork": VizRef(id="network", uuid="019f2b55e1f57722af0293acbda78362", frame="network"),
-    # Phase 2 (not yet implemented):
-    # "ProteinComponent":       VizRef(id="protein",  frame="protein",
-    #                                  modules=("https://3dmol.org/build/3Dmol-min.js",)),
-    # "SmallMoleculeComponent": VizRef(id="ligand2d", frame="ligand2d"),
-    # "LigandAtomMapping":      VizRef(id="mapping2d", frame="mapping2d"),
+    "LigandNetwork": VizRef(
+        id="ligand_network",
+        uuid="019f2b55e1f57722af0293acbda78362",
+        frame="ligand_network",
+        modules=_3DMOL,
+    ),
+    "AlchemicalNetwork": VizRef(id="alchemical_network", frame="alchemical_network"),
+    # Registered on the base so `Transformation` and `NonTransformation` (which are
+    # siblings, not parent/child) both resolve to it.
+    "TransformationBase": VizRef(id="transformation", frame="transformation", modules=_3DMOL),
+    "ChemicalSystem": VizRef(id="chemical_system", frame="chemical_system", modules=_3DMOL),
+    "LigandAtomMapping": VizRef(id="ligand_atom_mapping", frame="ligand_atom_mapping", modules=_3DMOL),
+    "SmallMoleculeComponent": VizRef(id="small_molecule_component", frame="small_molecule_component", modules=_3DMOL),
+    "ProteinComponent": VizRef(
+        id="protein_component", frame="protein_component", modules=_3DMOL, default_height="560px"
+    ),
+    "SolventComponent": VizRef(id="solvent_component", frame="solvent_component", default_height="320px"),
 }
 
 
@@ -275,8 +296,8 @@ CANONICAL_VIZ: dict[str, VizRef] = {
 # --------------------------------------------------------------------------- #
 
 
-def _network_payload(net) -> dict[str, Any]:
-    """Serialize a :class:`gufe.LigandNetwork` to the ``network`` viz input.
+def _ligand_network_payload(net) -> dict[str, Any]:
+    """Serialize a :class:`gufe.LigandNetwork` to the ``ligand_network`` viz input.
 
     The canonical network viz reads ``inputs['network.graphml']`` and parses the
     GraphML itself (accepting a string, Blob, or ArrayBuffer). We push the exact
@@ -286,25 +307,211 @@ def _network_payload(net) -> dict[str, Any]:
     return {"network.graphml": net.to_graphml()}
 
 
-# Object-type name -> payload builder.
+# -- component descriptors (shared by the container vizzes) ----------------- #
+#
+# ChemicalSystem / Transformation / AlchemicalNetwork all need to describe the
+# components they contain. They share one JSON shape, produced here, so the three
+# frames can render a component with the same code:
+#
+#     {"type": <class name>, "name": str, "sdf"|"pdb": str, ...type-specific...}
+
+
+def _component_descriptor(comp) -> dict[str, Any]:
+    """Describe any :class:`gufe.Component` as a plain JSON dict for a viz."""
+    kind = type(comp).__name__
+    desc: dict[str, Any] = {"type": kind, "name": getattr(comp, "name", "") or ""}
+    try:
+        if hasattr(comp, "to_sdf"):
+            desc["sdf"] = comp.to_sdf()
+            desc["smiles"] = comp.smiles
+        elif hasattr(comp, "to_pdb_file"):
+            desc["pdb"] = _protein_pdb_string(comp)
+        elif hasattr(comp, "smiles"):  # SolventComponent & friends
+            desc.update(_solvent_fields(comp))
+    except Exception as e:  # a bad component must not take down the whole view
+        desc["error"] = f"{type(e).__name__}: {e}"
+    return desc
+
+
+def _protein_pdb_string(protein) -> str:
+    """Render a :class:`gufe.ProteinComponent` to a PDB string (in memory)."""
+    import io
+
+    buf = io.StringIO()
+    protein.to_pdb_file(buf)
+    return buf.getvalue()
+
+
+def _json_safe(value: Any) -> Any:
+    """Coerce ``value`` into something ``json.dumps`` can handle, stringifying the rest.
+
+    Free-form gufe metadata — ``LigandAtomMapping.annotations`` most of all — can
+    hold ``openff.units.Quantity`` and other rich objects. A viz only ever
+    *displays* these, so rendering the leftovers with ``str()`` (``"1.2 nanometer"``)
+    is both lossless enough and more readable than gufe's ``:custom:`` JSON codec.
+    """
+    return json.loads(json.dumps(value, default=str))
+
+
+def _solvent_fields(solvent) -> dict[str, Any]:
+    return {
+        "smiles": solvent.smiles,
+        "positive_ion": solvent.positive_ion,
+        "negative_ion": solvent.negative_ion,
+        "neutralize": solvent.neutralize,
+        "ion_concentration": str(solvent.ion_concentration),
+    }
+
+
+def _small_molecule_component_payload(mol) -> dict[str, Any]:
+    """Serialize a :class:`gufe.SmallMoleculeComponent` (2D depiction + 3D)."""
+    return {
+        "molecule.sdf": mol.to_sdf(),
+        "name": mol.name,
+        "smiles": mol.smiles,
+        "total_charge": mol.total_charge,
+    }
+
+
+def _protein_component_payload(protein) -> dict[str, Any]:
+    """Serialize a :class:`gufe.ProteinComponent` as a PDB string for 3Dmol."""
+    return {"protein.pdb": _protein_pdb_string(protein), "name": protein.name}
+
+
+def _solvent_component_payload(solvent) -> dict[str, Any]:
+    """Serialize a :class:`gufe.SolventComponent` — a small settings card."""
+    return {"solvent": _solvent_fields(solvent)}
+
+
+def _ligand_atom_mapping_payload(mapping) -> dict[str, Any]:
+    """Serialize a :class:`gufe.LigandAtomMapping` for the mapping viewer.
+
+    Both endpoint molecules go over as SDF plus the raw
+    ``componentA_to_componentB`` index map, so the viz can colour core / unique
+    atoms and draw the correspondence lines itself.
+    """
+    return {
+        "molA.sdf": mapping.componentA.to_sdf(),
+        "molB.sdf": mapping.componentB.to_sdf(),
+        "nameA": mapping.componentA.name,
+        "nameB": mapping.componentB.name,
+        "mapping": {str(k): v for k, v in mapping.componentA_to_componentB.items()},
+        "annotations": _json_safe(mapping.annotations),
+    }
+
+
+def _chemical_system_payload(system) -> dict[str, Any]:
+    """Serialize a :class:`gufe.ChemicalSystem` — its labelled components."""
+    return {
+        "system": {
+            "name": system.name,
+            "components": [
+                dict(_component_descriptor(comp), label=label) for label, comp in sorted(system.components.items())
+            ],
+        }
+    }
+
+
+def _transformation_payload(transformation) -> dict[str, Any]:
+    """Serialize a :class:`gufe.Transformation` — stateA vs stateB, plus mapping.
+
+    ``NonTransformation`` has the same ``stateA``/``stateB`` properties (both its
+    single system), so it renders through this builder unchanged.
+    """
+    mapping = getattr(transformation, "mapping", None)
+    mappings = mapping if isinstance(mapping, list) else ([] if mapping is None else [mapping])
+    return {
+        "transformation": {
+            "name": transformation.name,
+            "protocol": type(transformation.protocol).__name__,
+            "stateA": _chemical_system_payload(transformation.stateA)["system"],
+            "stateB": _chemical_system_payload(transformation.stateB)["system"],
+            "mappings": [_ligand_atom_mapping_payload(m) for m in mappings if hasattr(m, "componentA_to_componentB")],
+        }
+    }
+
+
+def _alchemical_network_payload(net) -> dict[str, Any]:
+    """Serialize a :class:`gufe.AlchemicalNetwork` as a node/edge graph.
+
+    ``AlchemicalNetwork.to_graphml()`` is not implemented, so — unlike
+    ``LigandNetwork`` — we build the graph JSON here. Nodes are ``ChemicalSystem``
+    summaries keyed by gufe key; edges are ``Transformation`` summaries. Component
+    SDF/PDB payloads are *not* inlined (a solvated network would be enormous); the
+    viz shows composition and topology.
+    """
+
+    def node_id(system):
+        return str(system.key)
+
+    return {
+        "alchemical_network": {
+            "name": net.name,
+            "nodes": [
+                {
+                    "id": node_id(system),
+                    "name": system.name,
+                    "components": [
+                        {"label": label, "type": type(c).__name__, "name": getattr(c, "name", "") or ""}
+                        for label, c in sorted(system.components.items())
+                    ],
+                }
+                for system in sorted(net.nodes, key=node_id)
+            ],
+            "edges": [
+                {
+                    "id": str(edge.key),
+                    "name": edge.name,
+                    "source": node_id(edge.stateA),
+                    "target": node_id(edge.stateB),
+                    "protocol": type(edge.protocol).__name__,
+                }
+                for edge in sorted(net.edges, key=lambda e: str(e.key))
+            ],
+        }
+    }
+
+
+# Object-type name -> payload builder. Looked up over the object's MRO (see
+# `_registry_lookup`), so subclasses such as `SolvatedPDBComponent` (a
+# `ProteinComponent`) and `NonTransformation` (a `Transformation`) inherit the
+# viz + serializer of their base class for free.
 _PAYLOAD_BUILDERS: dict[str, Callable[[Any], dict[str, Any]]] = {
-    "LigandNetwork": _network_payload,
+    "LigandNetwork": _ligand_network_payload,
+    "AlchemicalNetwork": _alchemical_network_payload,
+    "TransformationBase": _transformation_payload,
+    "ChemicalSystem": _chemical_system_payload,
+    "LigandAtomMapping": _ligand_atom_mapping_payload,
+    "SmallMoleculeComponent": _small_molecule_component_payload,
+    "ProteinComponent": _protein_component_payload,
+    "SolventComponent": _solvent_component_payload,
 }
 
 
+def _registry_lookup(obj, registry: dict[str, Any]):
+    """Look ``obj``'s type up in a registry, walking the MRO for the best match.
+
+    Exact class first, then base classes in MRO order — so a subclass gets its
+    parent's viz unless it registers its own. Returns ``None`` on no match.
+    """
+    for klass in type(obj).__mro__:
+        hit = registry.get(klass.__name__)
+        if hit is not None:
+            return hit
+    return None
+
+
 def _viz_ref_for(obj) -> VizRef:
-    name = type(obj).__name__
-    viz = CANONICAL_VIZ.get(name)
+    viz = _registry_lookup(obj, CANONICAL_VIZ)
     if viz is None:
-        raise FramejsUnavailable(f"no canonical framejs viz registered for {name!r}")
+        raise FramejsUnavailable(f"no canonical framejs viz registered for {type(obj).__name__!r}")
     return viz
 
 
 def _payload_for(obj) -> dict[str, Any]:
-    name = type(obj).__name__
-    builder = _PAYLOAD_BUILDERS.get(name)
+    builder = _registry_lookup(obj, _PAYLOAD_BUILDERS)
     if builder is None:
-        raise FramejsUnavailable(f"no framejs payload serializer registered for {name!r}")
+        raise FramejsUnavailable(f"no framejs payload serializer registered for {type(obj).__name__!r}")
     return builder(obj)
 
 

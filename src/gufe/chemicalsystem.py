@@ -3,11 +3,12 @@
 
 from collections import abc
 
+from ._viewable import FramejsViewable
 from .components import Component
 from .tokenization import GufeTokenizable
 
 
-class ChemicalSystem(GufeTokenizable, abc.Mapping):
+class ChemicalSystem(GufeTokenizable, abc.Mapping, FramejsViewable):
     def __init__(
         self,
         components: dict[str, Component],

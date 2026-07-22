@@ -13,11 +13,12 @@ import networkx as nx
 import gufe
 from gufe import SmallMoleculeComponent
 
+from ._viewable import FramejsViewable
 from .mapping import LigandAtomMapping
 from .tokenization import JSON_HANDLER, GufeTokenizable
 
 
-class LigandNetwork(GufeTokenizable):
+class LigandNetwork(GufeTokenizable, FramejsViewable):
     """A directed graph connecting ligands according to their atom mapping.
 
     A network can be defined by specifying only edges, in which case the nodes are implicitly added.
@@ -363,28 +364,5 @@ class LigandNetwork(GufeTokenizable):
         """
         return nx.is_weakly_connected(self.graph)
 
-    def view(self, *, width: str | None = None, height: str | None = None, **opts):
-        """Return an interactive framejs.io radial graph widget for this network.
-
-        Renders inline in Jupyter, marimo and VSCode (via ``metaframe-widget``).
-        Requires the ``viz`` extra (``pip install gufe[viz]``); if it is not
-        available this returns the legacy view (``LigandNetwork`` has none, so
-        ``None``).
-
-        Returns
-        -------
-        metaframe_widget.MetaframeWidget or None
-        """
-        from .visualization.framejs import view_object
-
-        return view_object(self, width=width, height=height, **opts)
-
-    def _repr_mimebundle_(self, include=None, exclude=None):
-        """Auto-display the interactive framejs graph in notebook front-ends.
-
-        Returns ``None`` (so the notebook falls back to the plain ``repr``) when
-        the ``viz`` extra is not installed or framejs is otherwise unavailable.
-        """
-        from .visualization.framejs import repr_mimebundle
-
-        return repr_mimebundle(self, include=include, exclude=exclude)
+    # `.view()` / bare-cell auto-display come from FramejsViewable; the viz and
+    # serializer are registered for `LigandNetwork` in visualization/framejs.py.

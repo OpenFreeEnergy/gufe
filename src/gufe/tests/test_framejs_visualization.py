@@ -51,7 +51,7 @@ def published_network(monkeypatch):
     """Registered LigandNetwork viz, pinned to FAKE_UUID and forced to the
     *canonical* source (``/j/<uuid>``) so these tests exercise that branch
     regardless of whether the on-disk frame dir is present."""
-    monkeypatch.setenv("GUFE_VIZ_NETWORK_UUID", FAKE_UUID)
+    monkeypatch.setenv("GUFE_VIZ_LIGAND_NETWORK_UUID", FAKE_UUID)
     monkeypatch.setenv("GUFE_VIZ_SOURCE", "canonical")
     return FAKE_UUID
 
@@ -67,7 +67,7 @@ def local_network(monkeypatch):
 def unpublished_network(monkeypatch):
     """Force the registered LigandNetwork viz to be fully unavailable: no pinned
     uuid AND no on-disk frame, so URL building must raise / fall back."""
-    monkeypatch.setitem(framejs.CANONICAL_VIZ, "LigandNetwork", framejs.VizRef(id="network"))
+    monkeypatch.setitem(framejs.CANONICAL_VIZ, "LigandNetwork", framejs.VizRef(id="ligand_network"))
 
 
 # --------------------------------------------------------------------------- #
@@ -91,9 +91,9 @@ def test_string_to_base64_string_roundtrip():
 
 def test_ligandnetwork_is_registered():
     viz = framejs.CANONICAL_VIZ["LigandNetwork"]
-    assert viz.id == "network"
-    assert viz.frame == "network"
-    assert viz.has_local()  # the on-disk frame dir viz_assets/network/ ships with gufe
+    assert viz.id == "ligand_network"
+    assert viz.frame == "ligand_network"
+    assert viz.has_local()  # the on-disk frame dir viz_assets/ligand_network/ ships with gufe
 
 
 def test_ligandnetwork_is_published():
@@ -128,7 +128,7 @@ def test_vizref_canonical_url_with_version_pin():
 
 def test_vizref_js_source_loads_from_frame_dir():
     viz = framejs.CANONICAL_VIZ["LigandNetwork"]
-    src = viz.js_source()  # reads viz_assets/network/code.js
+    src = viz.js_source()  # reads viz_assets/ligand_network/code.js
     assert "onInputs" in src  # the framejs render entrypoint (may be `async`)
     assert len(src) > 100
 
@@ -299,3 +299,125 @@ def test_view_falls_back_when_viz_unavailable(simple_network, published_network,
     )
     with pytest.warns(UserWarning):
         assert simple_network.view() is None
+
+
+# --------------------------------------------------------------------------- #
+# Registry coverage for every visualizable gufe type                            #
+# --------------------------------------------------------------------------- #
+#
+# The rest of this module exercises the infrastructure through LigandNetwork.
+# These tests assert the *breadth* of the registry instead: every type that mixes
+# in FramejsViewable must have both a viz and a serializer, its frame must ship
+# on disk, and its payload must survive the JSON transport both hops use.
+
+# Every gufe class that opts in to a framejs view, and the frame it must resolve to.
+EXPECTED_FRAMES = {
+    "LigandNetwork": "ligand_network",
+    "AlchemicalNetwork": "alchemical_network",
+    "TransformationBase": "transformation",
+    "ChemicalSystem": "chemical_system",
+    "LigandAtomMapping": "ligand_atom_mapping",
+    "SmallMoleculeComponent": "small_molecule_component",
+    "ProteinComponent": "protein_component",
+    "SolventComponent": "solvent_component",
+}
+
+
+@pytest.mark.parametrize("cls_name,frame", sorted(EXPECTED_FRAMES.items()))
+def test_every_registered_viz_ships_its_frame(cls_name, frame):
+    """Naming rule: a viz's id and frame dir are the snake_case gufe class name."""
+    viz = framejs.CANONICAL_VIZ[cls_name]
+    assert viz.id == frame
+    assert viz.frame == frame
+    assert viz.has_local(), f"viz_assets/{frame}/code.js is missing from the package"
+    assert "onInputs" in viz.js_source()
+
+
+@pytest.mark.parametrize("cls_name", sorted(EXPECTED_FRAMES))
+def test_every_registered_viz_has_a_serializer(cls_name):
+    assert cls_name in framejs._PAYLOAD_BUILDERS
+
+
+def test_registry_lookup_walks_the_mro():
+    """Subclasses inherit their base's viz — that is how SolvatedPDBComponent /
+    ProteinMembraneComponent get the protein viz, and NonTransformation the
+    transformation viz, without registering anything themselves."""
+
+    class Sub(LigandNetwork):
+        pass
+
+    assert framejs._registry_lookup(Sub.__new__(Sub), framejs.CANONICAL_VIZ).frame == "ligand_network"
+    assert framejs._registry_lookup(object(), framejs.CANONICAL_VIZ) is None
+
+
+def test_json_safe_stringifies_units():
+    """openff Quantity et al. are display-only, so they go over the wire as str."""
+    safe = framejs._json_safe({"score": 0.5, "length": 1.0 * unit.angstrom})
+    assert safe["score"] == 0.5
+    assert isinstance(safe["length"], str)
+    json.dumps(safe)  # must not raise
+
+
+def test_mapping_payload_is_json_serializable(simple_network):
+    """Regression: mapping annotations carry openff Quantity objects, which broke
+    both transports (widget set_inputs and the CLI hash) with a TypeError."""
+    edge = next(e for e in simple_network.edges if "length" in e.annotations)
+    payload = framejs._payload_for(edge)
+    json.dumps(payload)  # must not raise
+    assert set(payload) == {"molA.sdf", "molB.sdf", "nameA", "nameB", "mapping", "annotations"}
+    # mapping keys are stringified for JSON; values stay ints
+    assert all(isinstance(k, str) for k in payload["mapping"])
+
+
+def test_small_molecule_payload(simple_network):
+    mol = next(iter(simple_network.nodes))
+    payload = framejs._payload_for(mol)
+    assert payload["name"] == mol.name
+    assert payload["smiles"] == mol.smiles
+    assert "V2000" in payload["molecule.sdf"] or "V3000" in payload["molecule.sdf"]
+    json.dumps(payload)
+
+
+def test_solvent_payload():
+    from gufe import SolventComponent
+
+    payload = framejs._payload_for(SolventComponent())
+    assert set(payload["solvent"]) == {
+        "smiles",
+        "positive_ion",
+        "negative_ion",
+        "neutralize",
+        "ion_concentration",
+    }
+    json.dumps(payload)
+
+
+def test_chemical_system_payload(simple_network):
+    from gufe import ChemicalSystem, SolventComponent
+
+    mol = next(iter(simple_network.nodes))
+    system = ChemicalSystem({"ligand": mol, "solvent": SolventComponent()}, name="sys")
+    payload = framejs._payload_for(system)["system"]
+    assert payload["name"] == "sys"
+    assert [c["label"] for c in payload["components"]] == ["ligand", "solvent"]
+    # each component is described by type + name, plus its own structural payload
+    by_label = {c["label"]: c for c in payload["components"]}
+    assert by_label["ligand"]["type"] == "SmallMoleculeComponent"
+    assert "sdf" in by_label["ligand"]
+    assert by_label["solvent"]["type"] == "SolventComponent"
+    json.dumps(payload)
+
+
+def test_component_descriptor_records_errors_instead_of_raising():
+    """A component that cannot be serialized must degrade to an error string, not
+    take down the whole ChemicalSystem view."""
+
+    class Exploding(SmallMoleculeComponent):
+        def to_sdf(self):
+            raise ValueError("nope")
+
+    mol = SmallMoleculeComponent(mol_from_smiles("CCO"), name="boom")
+    mol.__class__ = Exploding
+    desc = framejs._component_descriptor(mol)
+    assert "nope" in desc["error"]
+    json.dumps(desc)

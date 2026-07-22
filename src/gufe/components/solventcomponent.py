@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from openff.units import Quantity, unit
 
+from .._viewable import FramejsViewable
 from .component import Component
 
 _CATIONS = {"Cs", "K", "Li", "Na", "Rb"}
@@ -22,7 +23,7 @@ class BaseSolventComponent(Component):
 
 
 # really wanted to make this a dataclass but then can't sort & strip ion input
-class SolventComponent(BaseSolventComponent):
+class SolventComponent(BaseSolventComponent, FramejsViewable):
     """
     :class:`.Component` representing solvation in a chemical system.
 
