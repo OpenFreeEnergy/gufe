@@ -33,6 +33,7 @@ grey := "\\e[90m"
     echo -e "    {{ bold }}Start here:{{ normal }} {{ green }}just dev{{ normal }}   {{ grey }}(builds in minutes, then cached){{ normal }}"
     echo -e "      JupyterLab 📓 {{ green }}http://localhost:8888/lab{{ normal }}  →  open {{ bold }}demo/framejs_demo.ipynb{{ normal }}"
     echo -e "      marimo     🟢 {{ green }}http://localhost:2718{{ normal }}"
+    echo -e "      viz server 🖥  {{ green }}http://localhost:8899{{ normal }}   {{ grey }}the terminal path: what 'openfe view <file>' serves{{ normal }}"
     echo -e ""
     echo -e "    {{ bold }}Edit the on-disk viz frames:{{ normal }} {{ green }}just viz-edit{{ normal }}   {{ grey }}(framejs local server, needs deno){{ normal }}"
     echo -e "      {{ grey }}just viz-url → the offline framejs URL gufe builds from disk  •  just publish-viz → a /j/<uuid>{{ normal }}"
@@ -42,7 +43,7 @@ grey := "\\e[90m"
 # Build (first time) + start the fast stack. Also clones openfe-demo locally so a
 # clone of THIS repo can demo the notebook visualization on its own.
 dev: _ensure-openfe-demo
-    docker compose up -d --build jupyter marimo
+    docker compose up -d --build jupyter marimo viz
     @just _urls
 
 @_urls:
@@ -50,7 +51,20 @@ dev: _ensure-openfe-demo
     echo -e "{{ bold }}✓ gufe viz stack up{{ normal }} (native arm64)"
     echo -e "  JupyterLab 📓 {{ green }}http://localhost:8888/lab{{ normal }}  →  open {{ bold }}demo/framejs_demo.ipynb{{ normal }}"
     echo -e "  marimo     🟢 {{ green }}http://localhost:2718{{ normal }}"
+    echo -e "  viz server 🖥  {{ green }}http://localhost:8899{{ normal }}  {{ grey }}(the terminal path — what 'openfe view <file>' serves){{ normal }}"
     echo -e "  {{ grey }}logs: just logs   •   stop: just down   •   shell: just shell{{ normal }}"
+
+# Serve ONE file the way `openfe view <file>` does — in the container, on :8900
+# so it can run alongside `just dev`'s viz service. Ctrl-C stops it.
+# FILE is relative to the gufe repo root (or absolute, for a container path):
+#   just serve src/gufe/tests/data/181l.pdb
+serve FILE="src/gufe/tests/data/ligand_network.graphml":
+    #!/usr/bin/env bash
+    set -uo pipefail
+    target="{{ FILE }}"; case "$target" in /*) ;; *) target="/src/gufe/$target" ;; esac
+    echo -e "{{ bold }}open{{ normal }} {{ green }}http://localhost:8900{{ normal }}  {{ grey }}(Ctrl-C to stop){{ normal }}"
+    docker compose run --rm -p 8900:8900 viz \
+      dev-start.sh python -m gufe.visualization.server --host=0.0.0.0 --port=8900 --no-browser "$target"
 
 # Same as `just dev`, but ALSO mounts your local metaframe-widget (framejs.io)
 # checkout so you can develop the widget while testing it in demo/framejs_demo.ipynb.
@@ -131,7 +145,7 @@ test:
 
 # Just the framejs infrastructure tests (hermetic — no network). Keep green.
 test-framejs:
-    docker compose exec -T {{ SVC }} python -m pytest /src/gufe/src/gufe/tests/test_framejs_visualization.py -q
+    docker compose exec -T {{ SVC }} python -m pytest /src/gufe/src/gufe/tests/test_framejs_visualization.py /src/gufe/src/gufe/tests/test_framejs_server.py -q
 
 # Block until gufe imports in the container (the editable install has finished),
 # so `just ci` doesn't race container startup.
@@ -153,11 +167,11 @@ ci: dev wait-ready test-framejs
 # The canonical way to keep framejs frames in the repo — a directory with
 # `code.js` (+ optional og.json / modules.json / inputs.json). gufe's .view()/CLI
 # build a self-contained URL straight from this on-disk source by default
-# (GUFE_VIZ_SOURCE=local); publishing to a /j/<uuid> is optional (publish-viz).
+# publishing to a /j/<uuid> is optional (publish-viz).
 # Docs: https://framejs.io/docs/guide/local-file-io
 
 # Print the full hash-param framejs.io URL for a frame dir (offline, no account).
-# This is exactly the URL gufe builds by default from disk (GUFE_VIZ_SOURCE=local).
+# This is exactly the URL gufe builds by default from disk.
 @viz-url FRAME=(VIZ_ASSETS / "network"):
     {{ FRAME_HELPER }} restore "{{ FRAME }}"
 
@@ -184,8 +198,8 @@ viz-edit ROOT=VIZ_ASSETS PORT="4700":
 # ── Publish a frame dir to a canonical framejs.io /j/<uuid> (HOST-side; node+net) ─
 # OPTIONAL — the default runtime path builds a local URL from disk and needs no
 # account. Publish only to get a short, shareable /j/<uuid> you can update without
-# re-releasing gufe. Prints the uuid to pin in CANONICAL_VIZ (or export as
-# GUFE_VIZ_<ID>_UUID for dev/CI). ⚠ A fresh frame is ANONYMOUS and EXPIRES — open
+# re-releasing gufe. Prints the uuid to pin in VIZ_REGISTRY (or export as
+# ⚠ A fresh frame is ANONYMOUS and EXPIRES — open
 # the printed page and CLAIM it under a (free) framejs account to keep the uuid.
 # Override the publish helper with FRAMEJS_HELPER=<path to framejs.mjs>.
 publish-viz FRAME=(VIZ_ASSETS / "network") ID="network":
@@ -216,7 +230,6 @@ publish-viz FRAME=(VIZ_ASSETS / "network") ID="network":
     uuid="$(printf '%s\n' "$url" | sed -E 's#.*/j/([^/?]+).*#\1#')"
     echo ""
     echo "  canonical url : https://framejs.io/j/$uuid"
-    echo "  pin in gufe   : CANONICAL_VIZ['…'] uuid=\"$uuid\"   (src/gufe/visualization/framejs.py)"
-    echo "  or dev / CI   : export GUFE_VIZ_$(printf '%s' '{{ ID }}' | tr a-z A-Z)_UUID=$uuid"
+    echo "  pin in gufe   : VIZ_REGISTRY['…'] uuid=\"$uuid\"   (src/gufe/visualization/framejs.py)"
     echo ""
     echo "  ⚠ open $url while logged in to a framejs account and CLAIM it (anonymous frames expire)."

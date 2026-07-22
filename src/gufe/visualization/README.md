@@ -6,20 +6,36 @@ in Jupyter / marimo / VSCode — renders it as an interactive widget. Rendering 
 powered by the optional `viz` extra (`pip install gufe[viz]`); without it,
 `.view()` falls back to the legacy RDKit / py3Dmol renderers.
 
+> **Architecture, interactively:**
+> <https://framejs.app/j/019f8b367fac7e469f26b99bb30e06e4> — both render paths
+> and the registry table below, clickable. Source:
+> `visualization-demo/frames/architecture/` (`just viz-edit frames` to edit it).
+
 - `framejs.py` — `VIZ_REGISTRY` maps each gufe class to a `VizRef` holding both
   halves of the contract: the frame that draws it and the serializer that turns
-  an object into that frame's `inputs`. It then builds the self-contained
-  framejs.io URL / `anywidget`.
+  an object into that frame's `inputs`. It then builds the framejs.io URL /
+  `anywidget`.
 - `../_viewable.py` — the `FramejsViewable` mixin that gives a class `.view()` and
   `_repr_mimebundle_`. Mixing it in is the whole opt-in.
 - `mapping_visualization.py` — the legacy RDKit atom-mapping renderer, reached
-  through `LigandAtomMapping._legacy_view()` when framejs is unavailable.
+  through `LigandAtomMapping._legacy_view()` when framejs is unavailable. It is
+  the only legacy renderer left.
+- `server.py` — the terminal path: a small local web server that shows a **file's**
+  visualization in a browser (`python -m gufe.visualization.server <file>`, which
+  is what `openfe view <file>` runs). Its `LOADER_REGISTRY` maps a file extension
+  to the gufe object it loads to; `VIZ_REGISTRY` takes it from there.
 - `viz_assets/<frame>/` — the on-disk framejs frames that ship with gufe.
+- `../tests/test_framejs_visualization.py`, `../tests/test_framejs_server.py` —
+  hermetic (no network) tests for all of the above, including the invariants
+  stated here.
 
 Adding a visualization is one `VIZ_REGISTRY` entry plus one frame directory. A
 class must **not** define `_ipython_display_`: IPython checks that hook before
 `_repr_mimebundle_` and short-circuits on it, so a bare cell and `.view()` would
 disagree. Define `_legacy_view()` instead for the non-framejs fallback.
+
+This package reads **no environment variables**. What renders, and from where, is
+determined entirely by `VIZ_REGISTRY` and the caller's arguments.
 
 Payload keys are the contract with each frame's `onInputs`. File-shaped values
 use a descriptive `<thing>.<ext>` key (`molecule.sdf`, `protein.pdb`,
@@ -47,41 +63,133 @@ two are greppable from each other.
 | `SolventComponent` | `solvent_component` | settings card (it has no coordinates) |
 
 Lookup walks the MRO, so subclasses inherit their base's viz: `SolvatedPDBComponent`
-and `ProteinMembraneComponent` get the protein frame, `NonTransformation` gets the
-transformation frame, with nothing registered for them.
+and `ProteinMembraneComponent` get the protein frame, with nothing registered for
+them. The transformation entry is registered on `TransformationBase` rather than
+on `Transformation`, because `Transformation` and `NonTransformation` are siblings
+under it, not parent and child.
 
 To add one: mix `FramejsViewable` into the class, add a `VizRef` and a payload
 builder in `framejs.py`, and drop a frame directory under `viz_assets/`.
 
+## Render paths, one core
+
+Every path looks the object up in the same `VIZ_REGISTRY`, gets the same `VizRef`,
+builds the same base URL from the same on-disk frame, and serializes the object
+with the same `VizRef.payload`. They differ **only** in how that payload reaches
+the frame.
+
+| | Notebook | Terminal | Shareable link |
+| --- | --- | --- | --- |
+| entry point | `.view()` / bare cell → `view_object()` / `repr_mimebundle()` | `server.serve(path)` → `openfe view <file>` | `build_cli_url(obj)` → `openfe view --url-only` |
+| carrier | `MetaframeWidget.set_inputs()` — live over the widget comm channel | `fetch()` from the served page → `metapage.setInputs()` | `…&inputs=<base64(json)>` appended to the URL hash |
+| size limit | none | none | the URL's |
+| result | an iframe inline in the cell, updatable in place | a page at `http://localhost:8899/<the file's path>` | one link you can paste anywhere |
+
+The first two are the same design — load the frame, then push data into it — which
+is why a frame does not care which one is hosting it, and why neither has a size
+limit. The third bakes the object into the link instead: no server, but the data
+is frozen at the moment the link was made, and a solvated `AlchemicalNetwork` will
+not fit in a URL. Appended `inputs` take priority over anything baked into the
+frame, which is what makes that form work at all.
+
+### Two URL forms
+
+Both are built from the one on-disk frame directory:
+
+- **local** — a self-contained `https://framejs.io/#?js=<b64>&og=<b64>…`. **The
+  default everywhere.** It always matches the installed gufe, needs no framejs
+  account, and cannot expire.
+- **canonical** — the pinned short `https://framejs.io/j/<uuid>`, minted once by
+  `just publish-viz`. Its one advantage is size, so it is opt-in exactly where
+  size can matter: `build_cli_url(obj, short=True)`. For a `LigandNetwork` that is
+  a ~10 kB URL rather than ~140 kB — the difference between a link you can paste
+  somewhere and one you cannot. It requires that viz to have been published;
+  only `ligand_network` has been so far.
+
+`VizRef.resolve_url()` prefers the on-disk frame and falls back to the pinned
+uuid only if no frame directory is present.
+
+### The terminal path in practice
+
+`openfe`'s viewer commands are thin wrappers over `server.serve`:
+
+```bash
+openfe view network_setup/ligand_network.graphml   # serve it, open a browser, wait for Ctrl-C
+openfe view results/                               # a listing: browse every viewable file
+openfe view ligand.sdf --no-browser                # only print the URL (ssh, container)
+openfe view ligand.sdf --url-only                  # no server: one self-contained link
+openfe view-ligand-network network.graphml         # the older .graphml-only entry point
+```
+
+What gets served at `http://localhost:8899/<path/to/the/file>` is a page Python
+renders per file: a header, one metaframe, and ~30 lines of JavaScript. The
+framejs URL of the registered viz is **baked into the page**; the page then
+fetches the object's `inputs` from `?inputs=1` on its own path and hands them to
+the frame through the same `@metapages/metapage` entry point, pinned to the same
+version, that `metaframe_widget` uses in Jupyter.
+
+The URL path *is* the data file's path, relative to the served root — the
+directory you pointed at, or the working directory if the file is under it.
+Everything viewable under that root is reachable from the one server, and nothing
+outside it is. The payload is rebuilt from disk on every fetch, so regenerating a
+file and pressing the page's ⟳ re-renders it without restarting anything.
+
+`LOADER_REGISTRY` is what makes a file type viewable: `.json` (any saved gufe
+object), `.graphml`, `.pdb`, `.cif`/`.pdbx`, `.sdf`/`.mol`. A file it cannot load,
+or one that loads to an object with no registered viz, produces an explanatory
+page (415/422) rather than a traceback.
+
+In a container, bind `--host 0.0.0.0` and publish the port: loopback inside the
+container is not reachable from the host, and there is no browser in there to
+open. The URL is printed either way.
+
+### When framejs is unavailable
+
+Everything here is optional — `import gufe` works without `metaframe-widget`. On
+`FramejsUnavailable` or `OSError` (no `viz` extra, nothing registered, no frame on
+disk), both paths degrade: the object falls back to `_legacy_view()` if it defines
+one, and otherwise to its plain `repr`. `.view()` warns when it falls back;
+auto-display stays silent, because it runs on every display of the object.
+
 ## Running the Jupyter notebook demo
 
-The demo stack (`visualization-demo/`) is fully driven by Docker Compose — no
-`just` required. It builds a native gufe env, editable-installs this checkout,
-and serves a JupyterLab notebook that exercises `.view()` on one of every
-visualizable gufe object.
-
-From the repository root:
+The demo stack (`visualization-demo/`) builds a native gufe env, editable-installs
+this checkout, and serves a JupyterLab notebook that exercises `.view()` on one of
+every visualizable gufe object.
 
 ```bash
 cd visualization-demo
+just dev     # build (first time) + start JupyterLab :8888 and marimo :2718
+```
 
-# build the image + start JupyterLab in the background
-docker compose up -d --build jupyter
+→ open <http://localhost:8888/lab> and run `demo/framejs_demo.ipynb`.
 
-# → open http://localhost:8888/lab and run demo/framejs_demo.ipynb
+`just dev` also clones the pinned `openfe-demo` locally (git-ignored) so the demo
+works from a fresh clone. If you would rather not install `just`, the stack is
+plain Docker Compose:
+
+```bash
+docker compose up -d --build jupyter marimo   # same thing, minus the openfe-demo clone
+docker compose logs -f jupyter                # follow logs
+docker compose down                           # stop (keeps built images)
 ```
 
 The mounted gufe source is editable-installed, so host edits to `src/gufe/` (or
 to a `viz_assets/` frame) are live — just restart the notebook kernel.
 
-Optional extras:
+Useful checks, all from `visualization-demo/`:
 
-```bash
-docker compose up -d --build marimo   # marimo demo at http://localhost:2718
-docker compose logs -f jupyter        # follow logs
-docker compose down                   # stop the stack (keeps built images)
-```
+| command | does |
+| --- | --- |
+| `just ci` | build → start → wait → run the framejs tests, from cold |
+| `just test-framejs` | just the hermetic framejs tests against the running stack |
+| `just doctor` | confirm `gufe` + `metaframe_widget` import from the editable mount |
 
+`just dev` also starts the **terminal** path — the `viz` service, which is
+`python -m gufe.visualization.server` over gufe's own test fixtures, bound to
+`0.0.0.0:8899` because it is in a container. Open <http://localhost:8899> for a
+listing and click any fixture; `just serve <file>` does the same for one file of
+your choosing (on :8900, so it can run alongside).
 
 ## Editing the visualizations
 
@@ -131,6 +239,11 @@ Then open <http://localhost:4700>, pick a frame (dirs with a `code.js` show as
 straight from this on-disk source, so your edits show up on the next render.
 
 > The `visualization-demo/justfile` wraps this as `just viz-edit` (plus
-> `just viz-url` / `just viz-save` to round-trip a frame ↔ a framejs.io URL), but
-> the raw `deno` command above is all you need.
+> `just viz-url` / `just viz-save` to round-trip a frame ↔ a framejs.io URL, and
+> `just publish-viz` to mint a `/j/<uuid>`), but the raw `deno` command above is
+> all you need.
 
+Frames that are **not** gufe vizzes — the architecture diagram linked at the top —
+live under `visualization-demo/frames/` instead, since every directory in
+`viz_assets/` is package data named after the gufe class it draws. Edit those with
+`just viz-edit frames`.

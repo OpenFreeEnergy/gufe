@@ -5,7 +5,7 @@
 These cover the *infrastructure* (registry, serializers, canonical-URL building,
 display hooks, fallback) and deliberately do not assert on the canonical viz
 JavaScript itself. They are fully **hermetic** — no network: the canonical viz
-``uuid`` is injected via the ``GUFE_VIZ_<ID>_UUID`` env override so we never need a
+``uuid`` is swapped into the registry by fixture so we never need a
 live published frame. Tests that need the optional ``metaframe-widget`` dependency
 skip cleanly when it is not installed (it lives behind the ``gufe[viz]`` extra).
 """
@@ -15,6 +15,7 @@ import importlib
 import json
 import urllib.parse
 import warnings
+from dataclasses import replace
 
 import pytest
 from openff.units import unit
@@ -23,8 +24,8 @@ from rdkit import Chem
 from gufe import LigandAtomMapping, LigandNetwork, SmallMoleculeComponent
 from gufe.visualization import framejs
 
-# A fake published frame id, injected via the env override so canonical_url()
-# resolves without any live framejs.io frame.
+# A fake published frame id, swapped into the registry so canonical_url() resolves
+# without any live framejs.io frame.
 FAKE_UUID = "0192f0a1-0000-7000-8000-deadbeef0001"
 
 
@@ -49,19 +50,26 @@ def simple_network():
 
 @pytest.fixture
 def published_network(monkeypatch):
-    """Registered LigandNetwork viz, pinned to FAKE_UUID and forced to the
-    *canonical* source (``/j/<uuid>``) so these tests exercise that branch
-    regardless of whether the on-disk frame dir is present."""
-    monkeypatch.setenv("GUFE_VIZ_LIGAND_NETWORK_UUID", FAKE_UUID)
-    monkeypatch.setenv("GUFE_VIZ_SOURCE", "canonical")
+    """Registered LigandNetwork viz pinned to FAKE_UUID, with no frame directory
+    on disk — the one situation where the canonical ``/j/<uuid>`` form is what
+    `resolve_url()` returns. Hermetic: nothing is fetched."""
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
+    monkeypatch.setitem(
+        framejs.VIZ_REGISTRY,
+        "LigandNetwork",
+        replace(viz, frame="does_not_exist", uuid=FAKE_UUID),
+    )
     return FAKE_UUID
 
 
 @pytest.fixture
-def local_network(monkeypatch):
-    """Force the registered LigandNetwork viz to build its URL from the on-disk
-    frame directory (``GUFE_VIZ_SOURCE=local``) — no network, no uuid needed."""
-    monkeypatch.setenv("GUFE_VIZ_SOURCE", "local")
+def short_url_network(monkeypatch):
+    """Registered LigandNetwork viz pinned to FAKE_UUID, frame dir intact — so
+    `build_cli_url(short=True)` has a uuid to build on while the default path
+    still resolves locally."""
+    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
+    monkeypatch.setitem(framejs.VIZ_REGISTRY, "LigandNetwork", replace(viz, uuid=FAKE_UUID))
+    return FAKE_UUID
 
 
 @pytest.fixture
@@ -110,12 +118,6 @@ def test_vizref_without_uuid_is_unpublished():
         viz.canonical_url()
 
 
-def test_vizref_canonical_url_from_env(published_network):
-    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
-    assert viz.published is True
-    assert viz.canonical_url() == f"https://framejs.io/j/{FAKE_UUID}"
-
-
 def test_vizref_canonical_url_explicit_uuid():
     viz = framejs.VizRef(frame="x", payload=lambda o: {}, uuid="abc123")
     assert viz.canonical_url() == "https://framejs.io/j/abc123"
@@ -161,21 +163,18 @@ def test_vizref_local_url_encodes_frame():
     assert "load3Dmol" in decoded
 
 
-def test_resolve_url_auto_prefers_local():
-    # default (no GUFE_VIZ_SOURCE): the on-disk frame wins over the pinned uuid
+def test_resolve_url_prefers_local_over_uuid():
+    """The shipped frame wins over the pinned uuid: it always matches the
+    installed code and cannot expire."""
     viz = framejs.VIZ_REGISTRY["LigandNetwork"]
+    assert viz.published and viz.has_local()
     assert viz.resolve_url() == viz.local_url()
 
 
-def test_resolve_url_canonical_env(published_network):
+def test_resolve_url_falls_back_to_uuid_without_a_frame_dir(published_network):
     viz = framejs.VIZ_REGISTRY["LigandNetwork"]
-    assert viz.resolve_url() == viz.canonical_url()
+    assert not viz.has_local()
     assert viz.resolve_url() == f"https://framejs.io/j/{FAKE_UUID}"
-
-
-def test_resolve_url_local_env(local_network):
-    viz = framejs.VIZ_REGISTRY["LigandNetwork"]
-    assert viz.resolve_url() == viz.local_url()
 
 
 def test_build_cli_url_local_default(simple_network):
@@ -244,6 +243,44 @@ def test_build_cli_url_unpublished_raises(simple_network, unpublished_network):
     # an unpublished registered viz (no uuid) makes the CLI URL unbuildable
     with pytest.raises(framejs.FramejsUnavailable):
         framejs.build_cli_url(simple_network)
+
+
+def test_build_cli_url_short_uses_the_uuid(simple_network, short_url_network):
+    """`short=True` opts into the pinned /j/<uuid> even though the frame dir is
+    present — the only reason to do so being URL size."""
+    url = framejs.build_cli_url(simple_network, short=True)
+    assert url.startswith(f"https://framejs.io/j/{FAKE_UUID}#?inputs=")
+    assert "js=" not in url  # the viz JavaScript is hosted, not inlined
+
+
+def test_build_cli_url_short_is_dramatically_smaller(simple_network, short_url_network):
+    long_url = framejs.build_cli_url(simple_network)
+    short = framejs.build_cli_url(simple_network, short=True)
+    assert long_url.startswith("https://framejs.io/#?js=")  # default stays local
+    assert len(short) * 4 < len(long_url)  # inlining code.js is what makes it big
+
+
+def test_build_cli_url_short_raises_when_unpublished(simple_network):
+    """The shipped LigandAtomMapping viz has no uuid, so there is no short form."""
+    edge = next(iter(simple_network.edges))
+    assert framejs._viz_for(edge).published is False
+    framejs.build_cli_url(edge)  # the default (local) form still works
+    with pytest.raises(framejs.FramejsUnavailable):
+        framejs.build_cli_url(edge, short=True)
+
+
+def test_module_reads_no_environment_variables():
+    """Behaviour comes from the registry and the caller's arguments, not the env.
+
+    Guards the deliberate removal of GUFE_VIZ_SOURCE / GUFE_VIZ_<FRAME>_UUID: both
+    were reachable only in combination, and drifted out of sync with the docs.
+    """
+    import inspect
+
+    src = inspect.getsource(framejs)
+    code = "\n".join(l for l in src.splitlines() if not l.strip().startswith("#"))
+    assert "os.environ" not in code
+    assert "getenv" not in code
 
 
 # --------------------------------------------------------------------------- #

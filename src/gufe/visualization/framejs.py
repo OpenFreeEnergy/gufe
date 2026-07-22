@@ -45,25 +45,28 @@ The viz source lives in the repo as a framejs frame directory under
 ``viz_assets/<frame>/`` — the on-disk format documented at
 https://framejs.io/docs/guide/local-file-io (``code.js`` required; ``og.json`` /
 ``modules.json`` / ``inputs.json`` / ``options.json`` / ``definition.json``
-optional). From that one source gufe builds either of two equivalent URLs, chosen
-by ``GUFE_VIZ_SOURCE`` (see :meth:`VizRef.resolve_url`):
+optional). From that one source gufe builds either of two equivalent URLs:
 
-* **local** — a self-contained hash-param URL built from the frame directory,
-  ``https://framejs.io/#?js=<b64>&og=<b64>…``. Never expires, always matches the
-  repo source, needs no account. See :meth:`VizRef.local_url`.
+* **local** (the default everywhere) — a self-contained hash-param URL built from
+  the frame directory, ``https://framejs.io/#?js=<b64>&og=<b64>…``. Never expires,
+  always matches the installed code, needs no account. See :meth:`VizRef.local_url`.
 * **canonical** — a pinned short URL ``https://framejs.io/j/<uuid>`` minted by
-  publishing the frame directory once (``just publish-viz``). Short and shareable,
-  and updatable without re-releasing gufe. See :meth:`VizRef.canonical_url`.
+  publishing the frame directory once (``just publish-viz``). Its one advantage is
+  size, so it is opt-in exactly where size matters: ``build_cli_url(obj,
+  short=True)``. See :meth:`VizRef.canonical_url`.
 
-Default is **auto**: local when the frame directory is present, else the pinned
-uuid. Either way the per-object data rides on top of the chosen base URL — the
-viz JavaScript is never re-derived per object:
+Either way the per-object data rides on top of the base URL — the viz JavaScript
+is never re-derived per object:
 
 * **Notebook** (``.view()`` / bare-cell): the object is pushed as live ``inputs``
-  over the comm channel, so there is no URL size limit. See :func:`view_object`.
+  over the comm channel, so there is no URL size limit and the local form is
+  always used. See :func:`view_object`.
 * **CLI** (a browser, no live Python channel): the object is appended to the base
   URL's hash as ``inputs=<b64>``. Appended ``inputs`` take priority over anything
   baked into the frame. See :func:`build_cli_url`.
+
+This module reads no environment variables: what it does is determined by the
+registry and the caller's arguments.
 
 Everything here is optional. ``import gufe`` works without ``metaframe-widget``
 installed; rendering then falls back to the object's legacy RDKit / py3Dmol
@@ -75,7 +78,6 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 import urllib.parse
 import warnings
 from dataclasses import dataclass
@@ -115,9 +117,8 @@ class VizRef:
     frame
         Name of the frame directory under ``gufe/visualization/viz_assets/``, in
         the framejs local-file-io format (``<frame>/code.js`` plus optional JSON
-        sidecars). By convention the snake_case gufe class name. Doubles as the
-        viz's short id: it is the suffix of the ``GUFE_VIZ_<FRAME>_UUID`` env
-        override, uppercased.
+        sidecars). By convention the snake_case gufe class name, so the directory
+        is greppable from the class and vice versa.
     payload
         Serializer turning the object into the frame's ``inputs`` dict. Its keys
         are the contract with the frame's ``onInputs`` — see the module docstring
@@ -138,34 +139,24 @@ class VizRef:
 
     # -- canonical form: the pinned https://framejs.io/j/<uuid> ---------------- #
 
-    def _resolved_uuid(self) -> str | None:
-        """The effective uuid, allowing a per-viz env override.
-
-        ``GUFE_VIZ_<FRAME>_UUID`` lets a dev/CI publish swap in a freshly minted
-        frame without a code change.
-        """
-        return os.environ.get(f"GUFE_VIZ_{self.frame.upper()}_UUID") or self.uuid
-
     @property
     def published(self) -> bool:
         """True if this viz has a canonical framejs.io uuid to point at."""
-        return bool(self._resolved_uuid())
+        return bool(self.uuid)
 
     def canonical_url(self) -> str:
         """Return the pinned ``https://framejs.io/j/<uuid>`` URL for this viz.
 
         Raises :class:`FramejsUnavailable` if the viz has not been published.
         """
-        uuid = self._resolved_uuid()
-        if not uuid:
+        if not self.uuid:
             raise FramejsUnavailable(
                 f"viz {self.frame!r} has no published framejs.io uuid yet; publish it "
-                f"(`just publish-viz`) and set its uuid, or export "
-                f"GUFE_VIZ_{self.frame.upper()}_UUID=<uuid>"
+                f"with `just publish-viz` and pin the uuid in VIZ_REGISTRY."
             )
         # On the /j/<uuid> route, `inputs` appended in the hash (the CLI path)
         # take priority over the frame's baked-in inputs — what gufe relies on.
-        return f"{FRAMEJS_BASE}/j/{uuid}"
+        return f"{FRAMEJS_BASE}/j/{self.uuid}"
 
     # -- local form: a self-contained URL built from the frame directory ------- #
 
@@ -215,20 +206,14 @@ class VizRef:
         return f"{FRAMEJS_BASE}/#?" + "&".join(parts)
 
     def resolve_url(self) -> str:
-        """Return the base viz URL, choosing the form per ``GUFE_VIZ_SOURCE``.
+        """Return the base viz URL: the on-disk frame if present, else the uuid.
 
-        * ``local``     — always :meth:`local_url` (from the on-disk frame dir).
-        * ``canonical`` — always :meth:`canonical_url` (the pinned ``/j/<uuid>``).
-        * ``auto`` (default) — the on-disk frame when present, else the uuid.
+        Local is preferred because it always matches the installed code, needs
+        nothing from framejs.io's frame store, and cannot expire. The canonical
+        form is a deliberate opt-in — see ``short=True`` in :func:`build_cli_url`.
 
-        Raises :class:`FramejsUnavailable` if the requested form is unavailable.
+        Raises :class:`FramejsUnavailable` if neither form is available.
         """
-        source = os.environ.get("GUFE_VIZ_SOURCE", "auto").strip().lower()
-        if source == "canonical":
-            return self.canonical_url()
-        if source == "local":
-            return self.local_url()
-        # auto
         if self.has_local():
             return self.local_url()
         if self.published:
@@ -431,9 +416,9 @@ def _json_safe(value: Any) -> Any:
 # `SolvatedPDBComponent` (a `ProteinComponent`) and `NonTransformation` (a
 # `TransformationBase`) inherit their base's viz and serializer for free.
 #
-# `LigandNetwork` is the one viz published to framejs.io so far; the rest resolve
-# via their on-disk frame until they are published, and a dev/CI publish can fill
-# each in via GUFE_VIZ_<FRAME>_UUID with no code change.
+# `LigandNetwork` is the one viz published to framejs.io so far; the rest have no
+# uuid and so resolve via their on-disk frame. To publish one, run
+# `just publish-viz` and pin the uuid it prints here.
 VIZ_REGISTRY: dict[str, VizRef] = {
     "LigandNetwork": VizRef(
         frame="ligand_network",
@@ -597,16 +582,27 @@ def _legacy_mimebundle(obj, include=None, exclude=None):
 # --------------------------------------------------------------------------- #
 
 
-def build_cli_url(obj) -> str:
+def build_cli_url(obj, *, short: bool = False) -> str:
     """Return a framejs.io URL that renders ``obj`` (for ``webbrowser.open``).
 
-    The base viz URL is chosen by :meth:`VizRef.resolve_url` (the local hash-param
-    URL built from the on-disk frame by default, else the pinned ``/j/<uuid>``),
-    and this object's ``inputs`` are merged into that URL's hash. Appended
+    This object's ``inputs`` are merged into the base viz URL's hash; appended
     ``inputs`` take priority over anything baked into the frame.
+
+    Parameters
+    ----------
+    short
+        Build on the pinned ``/j/<uuid>`` instead of inlining the frame's
+        JavaScript, which is what makes these URLs big — for a ``LigandNetwork``
+        that is ~10 kB rather than ~140 kB, the difference between a link you can
+        paste somewhere and one you cannot. Requires the viz to have been
+        published; raises :class:`FramejsUnavailable` if it has not been.
+
+        The default (``False``) is self-contained: it needs nothing from
+        framejs.io's frame store, always matches the installed gufe, and cannot
+        expire.
     """
     viz = _viz_for(obj)
-    base = viz.resolve_url()
+    base = viz.canonical_url() if short else viz.resolve_url()
     encoded = string_to_base64_string(json.dumps(viz.payload(obj)))
     # The local URL already carries a `#?js=…` hash — merge inputs into it with
     # `&`; the canonical `/j/<uuid>` URL has no hash yet, so start one with `#?`.

@@ -1,0 +1,4 @@
+{
+  "title": "gufe framejs visualization architecture",
+  "description": "How a gufe object becomes an interactive framejs.io view: the notebook path (.view() / bare cell → live widget) and the CLI path (openfe view → a URL), and the shared registry core both route through."
+}

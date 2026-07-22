@@ -49,6 +49,29 @@ services:
     ports:
       - "8888:8888"
 
+  # The TERMINAL path, in miniature: gufe's local viz server — what `openfe view
+  # <file>` runs. http://localhost:8899 lists every viewable fixture; click one
+  # and the page loads its framejs visualization and feeds it the file's data,
+  # exactly as the notebook widget does. Point it elsewhere with VIZ_TARGET.
+  #
+  # Note --host=0.0.0.0: inside a container the server must bind all interfaces
+  # to be reachable through the published port, and there is no browser to open,
+  # so it only prints the URL (`docker compose logs viz` shows it).
+  viz:
+    <<: *gufe
+    container_name: gufe-viz-server
+    command:
+      - dev-start.sh
+      - python
+      - -m
+      - gufe.visualization.server
+      - --host=0.0.0.0
+      - --port=8899
+      - --no-browser
+      - ${VIZ_TARGET:-/src/gufe/src/gufe/tests/data}
+    ports:
+      - "8899:8899"
+
   # marimo — proves the py3Dmol→anywidget fix renders. http://localhost:2718
   marimo:
     <<: *gufe
