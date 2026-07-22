@@ -266,25 +266,25 @@ class VizRef:
 # via their on-disk frame (`GUFE_VIZ_SOURCE=auto` -> `local_url()`) until they are
 # published; a dev/CI publish can fill each in via GUFE_VIZ_<ID>_UUID with no code
 # change.
-_3DMOL = ("https://3dmol.org/build/3Dmol-min.js",)
-
+# No frame declares `modules`: 3Dmol.js is injected on demand by the frames that
+# need it (each has a `load3Dmol()` mirroring their `loadRDKit()`), rather than
+# being loaded eagerly for every render. That keeps the engine off the critical
+# path — `SmallMoleculeComponent.view()` paints its 2D depiction without waiting
+# on it, and a `LigandNetwork` only fetches it once an edge is clicked.
 CANONICAL_VIZ: dict[str, VizRef] = {
     "LigandNetwork": VizRef(
         id="ligand_network",
         uuid="019f2b55e1f57722af0293acbda78362",
         frame="ligand_network",
-        modules=_3DMOL,
     ),
     "AlchemicalNetwork": VizRef(id="alchemical_network", frame="alchemical_network"),
     # Registered on the base so `Transformation` and `NonTransformation` (which are
     # siblings, not parent/child) both resolve to it.
-    "TransformationBase": VizRef(id="transformation", frame="transformation", modules=_3DMOL),
-    "ChemicalSystem": VizRef(id="chemical_system", frame="chemical_system", modules=_3DMOL),
-    "LigandAtomMapping": VizRef(id="ligand_atom_mapping", frame="ligand_atom_mapping", modules=_3DMOL),
-    "SmallMoleculeComponent": VizRef(id="small_molecule_component", frame="small_molecule_component", modules=_3DMOL),
-    "ProteinComponent": VizRef(
-        id="protein_component", frame="protein_component", modules=_3DMOL, default_height="560px"
-    ),
+    "TransformationBase": VizRef(id="transformation", frame="transformation"),
+    "ChemicalSystem": VizRef(id="chemical_system", frame="chemical_system"),
+    "LigandAtomMapping": VizRef(id="ligand_atom_mapping", frame="ligand_atom_mapping"),
+    "SmallMoleculeComponent": VizRef(id="small_molecule_component", frame="small_molecule_component"),
+    "ProteinComponent": VizRef(id="protein_component", frame="protein_component", default_height="560px"),
     "SolventComponent": VizRef(id="solvent_component", frame="solvent_component", default_height="320px"),
 }
 

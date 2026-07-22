@@ -14,7 +14,28 @@
 //   { error }                                       serialization failed
 // ============================================================================
 
-var ThreeDmol = $3Dmol;
+// 3Dmol.js is fetched on demand rather than eagerly through modules.json, so
+// the component list paints immediately and solvent/generic components — which
+// never open a viewer — never pay for the engine.
+var ThreeDmol = null;
+var threeDmolPromise = null;
+
+function load3Dmol() {
+  if (threeDmolPromise) return threeDmolPromise;
+  threeDmolPromise = new Promise(function(resolve, reject) {
+    if (window.$3Dmol) { ThreeDmol = window.$3Dmol; resolve(ThreeDmol); return; }
+    const script = document.createElement('script');
+    script.src = 'https://3dmol.org/build/3Dmol-min.js';
+    script.onload = function() {
+      ThreeDmol = window.$3Dmol;
+      if (ThreeDmol) resolve(ThreeDmol);
+      else reject(new Error('3Dmol.js loaded but $3Dmol is undefined'));
+    };
+    script.onerror = function() { reject(new Error('Failed to load 3Dmol.js')); };
+    document.head.appendChild(script);
+  });
+  return threeDmolPromise;
+}
 
 // ============================================================================
 // THEME — flip DARK_MODE to switch the entire app
@@ -239,6 +260,7 @@ let components = [];
 let selectedIdx = -1;
 let cardEls = [];
 let viewer = null;          // active 3Dmol viewer, if the detail pane has one
+let detailToken = 0;        // bumped per selection; guards async 3Dmol loads
 let lastPayloadJson = null; // avoid rebuilding on an identical re-delivery
 
 function destroyViewer() {
@@ -383,7 +405,9 @@ function renderSmallMolecule(comp, sdf) {
   detailPane.appendChild(host.wrap);
   detailPane.appendChild(smilesStrip(comp.smiles));
 
-  try {
+  const token = detailToken;
+  load3Dmol().then(() => {
+    if (token !== detailToken) return;   // a different component was selected
     viewer = ThreeDmol.createViewer(host.container, { backgroundColor: T.viewerBg });
     viewer.addModel(sdf, 'sdf');
     viewer.setStyle({}, {
@@ -392,10 +416,11 @@ function renderSmallMolecule(comp, sdf) {
     });
     viewer.zoomTo();
     viewer.render();
-  } catch (e) {
+  }).catch(e => {
+    if (token !== detailToken) return;
     destroyViewer();
     host.container.appendChild(warnBanner('Failed to render molecule: ' + e.message));
-  }
+  });
 }
 
 function renderProtein(comp, pdb) {
@@ -406,7 +431,9 @@ function renderProtein(comp, pdb) {
   detailPane.appendChild(host.wrap);
   if (stats) detailPane.appendChild(statsStrip(stats));
 
-  try {
+  const token = detailToken;
+  load3Dmol().then(() => {
+    if (token !== detailToken) return;   // a different component was selected
     viewer = ThreeDmol.createViewer(host.container, { backgroundColor: T.viewerBg });
     viewer.addModel(pdb, 'pdb');
     // Order matters: each setStyle replaces the style of the atoms it matches,
@@ -420,10 +447,11 @@ function renderProtein(comp, pdb) {
     viewer.setStyle({ resn: WATER_RESN }, {});   // waters hidden by default
     viewer.zoomTo();
     viewer.render();
-  } catch (e) {
+  }).catch(e => {
+    if (token !== detailToken) return;
     destroyViewer();
     host.container.appendChild(warnBanner('Failed to render structure: ' + e.message));
-  }
+  });
 }
 
 function renderSolvent(comp) {
@@ -468,6 +496,7 @@ function renderGeneric(comp) {
 function renderDetail(comp) {
   destroyViewer();
   detailPane.innerHTML = '';
+  detailToken++;   // invalidates any in-flight 3Dmol load for the previous pick
 
   if (!comp) {
     detailPane.appendChild(el('div',

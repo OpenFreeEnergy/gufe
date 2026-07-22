@@ -11,7 +11,27 @@
 // so tens of thousands of atoms stay responsive.
 // ============================================================================
 
-var ThreeDmol = $3Dmol;
+// 3Dmol.js is fetched on demand rather than eagerly through modules.json, so
+// the toolbar and stats readout paint before the 3D engine arrives.
+var ThreeDmol = null;
+var threeDmolPromise = null;
+
+function load3Dmol() {
+  if (threeDmolPromise) return threeDmolPromise;
+  threeDmolPromise = new Promise(function(resolve, reject) {
+    if (window.$3Dmol) { ThreeDmol = window.$3Dmol; resolve(ThreeDmol); return; }
+    const script = document.createElement('script');
+    script.src = 'https://3dmol.org/build/3Dmol-min.js';
+    script.onload = function() {
+      ThreeDmol = window.$3Dmol;
+      if (ThreeDmol) resolve(ThreeDmol);
+      else reject(new Error('3Dmol.js loaded but $3Dmol is undefined'));
+    };
+    script.onerror = function() { reject(new Error('Failed to load 3Dmol.js')); };
+    document.head.appendChild(script);
+  });
+  return threeDmolPromise;
+}
 
 // ============================================================================
 // THEME — flip DARK_MODE to switch the entire app
@@ -331,6 +351,7 @@ let viewer = null;
 let stats = null;
 let hasModel = false;
 let lastPdb = null;
+let initToken = 0;
 
 function ensureViewer() {
   if (viewer) return viewer;
@@ -466,15 +487,22 @@ function init(pdbText, name) {
     return;
   }
 
+  let parseError = null;
   try {
     stats = parsePdbStats(pdbText);
   } catch (e) {
     stats = null;
-    showStatus('⚠ PDB parse error: ' + e.message, 'error');
+    parseError = '⚠ PDB parse error: ' + e.message;
+    showStatus(parseError, 'error');
   }
   updateStatsReadout();
 
-  try {
+  // Bumped per payload so a slow 3Dmol load can't overwrite a newer structure.
+  const token = ++initToken;
+  if (!parseError) showStatus('Loading 3D viewer…');
+
+  load3Dmol().then(() => {
+    if (token !== initToken) return;   // a newer payload superseded this one
     const v = ensureViewer();
     v.clear();
     try { v.removeAllSurfaces(); } catch (e) { /* none yet */ }
@@ -485,11 +513,14 @@ function init(pdbText, name) {
     v.zoomTo();
     v.spin(toggleState.spin);
     v.render();
-  } catch (e) {
+    // applyStyles() already cleared the "Loading…" status (or replaced it with
+    // the surface-computing message), so nothing to do here.
+  }).catch(e => {
+    if (token !== initToken) return;
     hasModel = false;
     showStatus('⚠ Failed to render structure: ' + e.message, 'error');
     if (typeof logStderr === 'function') logStderr('protein render failed: ' + e.message);
-  }
+  });
 }
 
 // Keep the canvas in step with the pane (the frame can be resized by its host

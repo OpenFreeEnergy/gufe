@@ -9,7 +9,27 @@
 // arrives directly as `inputs.mapping`.
 // ============================================================================
 
-var ThreeDmol = $3Dmol;
+// 3Dmol.js is fetched on demand rather than eagerly through modules.json, so
+// the frame paints immediately and the 2D mode never pays for the 3D engine.
+var ThreeDmol = null;
+var threeDmolPromise = null;
+
+function load3Dmol() {
+  if (threeDmolPromise) return threeDmolPromise;
+  threeDmolPromise = new Promise(function(resolve, reject) {
+    if (window.$3Dmol) { ThreeDmol = window.$3Dmol; resolve(ThreeDmol); return; }
+    const script = document.createElement('script');
+    script.src = 'https://3dmol.org/build/3Dmol-min.js';
+    script.onload = function() {
+      ThreeDmol = window.$3Dmol;
+      if (ThreeDmol) resolve(ThreeDmol);
+      else reject(new Error('3Dmol.js loaded but $3Dmol is undefined'));
+    };
+    script.onerror = function() { reject(new Error('Failed to load 3Dmol.js')); };
+    document.head.appendChild(script);
+  });
+  return threeDmolPromise;
+}
 
 // ============================================================================
 // THEME — flip DARK_MODE to switch the entire app
@@ -865,15 +885,32 @@ function render2D(mols) {
   });
 }
 
+// Bumped per render so a slow 3Dmol load can't paint over a newer mode.
+let modeToken = 0;
+
 function renderMode() {
   if (!currentMols) return;
-  switch (currentMode) {
-    case 'colored': renderColored(currentMols); break;
-    case 'lines':   renderLines(currentMols);   break;
-    case 'overlay': renderOverlay(currentMols); break;
-    case '2d':      render2D(currentMols);      break;
-    default:        renderPlain(currentMols);
-  }
+  const mols = currentMols;
+  const token = ++modeToken;
+
+  // The 2D depiction is pure RDKit — it must never wait on the 3D engine.
+  if (currentMode === '2d') { render2D(mols); return; }
+
+  showMessage('Loading 3D viewer…');
+
+  load3Dmol().then(() => {
+    if (token !== modeToken) return;   // a newer mode superseded this one
+    clearAllBoxes();                   // drop the loading message
+    switch (currentMode) {
+      case 'colored': renderColored(mols); break;
+      case 'lines':   renderLines(mols);   break;
+      case 'overlay': renderOverlay(mols); break;
+      default:        renderPlain(mols);
+    }
+  }).catch(e => {
+    if (token !== modeToken) return;
+    showMessage('3D viewer unavailable: ' + e.message, true);
+  });
 }
 
 // ============================================================================

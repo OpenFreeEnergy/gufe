@@ -7,7 +7,28 @@
 // molA and molB with core atoms grey and unique atoms red (A) / green (B).
 // ============================================================================
 
-var ThreeDmol = $3Dmol;
+// 3Dmol.js is fetched on demand rather than eagerly through modules.json, so
+// the transformation summary paints immediately and a transformation carrying
+// no atom mappings never pays for the 3D engine at all.
+var ThreeDmol = null;
+var threeDmolPromise = null;
+
+function load3Dmol() {
+  if (threeDmolPromise) return threeDmolPromise;
+  threeDmolPromise = new Promise(function(resolve, reject) {
+    if (window.$3Dmol) { ThreeDmol = window.$3Dmol; resolve(ThreeDmol); return; }
+    const script = document.createElement('script');
+    script.src = 'https://3dmol.org/build/3Dmol-min.js';
+    script.onload = function() {
+      ThreeDmol = window.$3Dmol;
+      if (ThreeDmol) resolve(ThreeDmol);
+      else reject(new Error('3Dmol.js loaded but $3Dmol is undefined'));
+    };
+    script.onerror = function() { reject(new Error('Failed to load 3Dmol.js')); };
+    document.head.appendChild(script);
+  });
+  return threeDmolPromise;
+}
 
 var mount = (typeof root !== 'undefined' && root) ? root : document.body;
 
@@ -380,6 +401,7 @@ function renderDiff(stateA, stateB) {
 // ============================================================================
 
 let boxes = [];
+let mappingToken = 0;   // bumped per mapping render; guards async 3Dmol loads
 
 function makeViewerBox(labelText) {
   const box = document.createElement('div');
@@ -474,6 +496,20 @@ function renderMapping(mappingPayload) {
   mappingBar.appendChild(stats);
 
   clearViewers();
+  const token = ++mappingToken;
+  showMappingMessage('Loading 3D viewer…');
+
+  load3Dmol().then(() => {
+    if (token !== mappingToken) return;   // a different mapping was selected
+    clearViewers();                       // drop the loading message
+    buildMappingViewers(molA, molB, coreA, coreB);
+  }).catch(e => {
+    if (token !== mappingToken) return;
+    showMappingMessage('3D viewer unavailable: ' + e.message, true);
+  });
+}
+
+function buildMappingViewers(molA, molB, coreA, coreB) {
   const mols = [molA, molB];
   for (let i = 0; i < mols.length; i++) {
     const b = makeViewerBox(mols[i].name);

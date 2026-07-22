@@ -78,7 +78,15 @@ format. For example `viz_assets/ligand_network/`:
 | -------------- | --------------------------------------------------------------- |
 | `code.js`      | the frame's JavaScript (the actual visualization)               |
 | `og.json`      | title + description metadata                                    |
-| `modules.json` | external classic-script URLs the frame loads (e.g. 3Dmol.js)    |
+| `modules.json` | external classic-script URLs loaded eagerly — no frame ships one |
+
+Heavy third-party libraries are **not** listed in `modules.json`, because
+everything there blocks the frame's first paint. Instead each frame injects what
+it needs on demand — `loadRDKit()` for the 2D depictions and `load3Dmol()` for
+the 3D viewers — so a frame renders immediately and only pays for the engines a
+given view actually opens (`small_molecule_component` draws its 2D depiction
+without waiting on 3Dmol; `ligand_network` fetches 3Dmol only once you click an
+edge, and never in `2d` mode).
 
 To edit a frame live in the browser, run the framejs **local server**, which
 watches these files and auto-saves your edits back to disk. It needs only

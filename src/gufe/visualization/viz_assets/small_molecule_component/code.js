@@ -9,7 +9,27 @@
 // atom/bond counts read off the SDF counts line.
 // ============================================================================
 
-var ThreeDmol = $3Dmol;
+// 3Dmol.js is fetched on demand rather than eagerly through modules.json, so
+// the frame paints before the 3D engine arrives. Mirrors loadRDKit() below.
+var ThreeDmol = null;
+var threeDmolPromise = null;
+
+function load3Dmol() {
+  if (threeDmolPromise) return threeDmolPromise;
+  threeDmolPromise = new Promise(function(resolve, reject) {
+    if (window.$3Dmol) { ThreeDmol = window.$3Dmol; resolve(ThreeDmol); return; }
+    const script = document.createElement('script');
+    script.src = 'https://3dmol.org/build/3Dmol-min.js';
+    script.onload = function() {
+      ThreeDmol = window.$3Dmol;
+      if (ThreeDmol) resolve(ThreeDmol);
+      else reject(new Error('3Dmol.js loaded but $3Dmol is undefined'));
+    };
+    script.onerror = function() { reject(new Error('Failed to load 3Dmol.js')); };
+    document.head.appendChild(script);
+  });
+  return threeDmolPromise;
+}
 
 // ============================================================================
 // THEME — flip DARK_MODE to switch the entire app
@@ -348,19 +368,28 @@ function setSpin(on) {
   try { viewer.spin(spinning ? 'y' : false); } catch (e) {}
 }
 
+// Bumped on every payload so a slow 3Dmol load can't overwrite a newer render.
+let render3DToken = 0;
+
 function render3D(sdf) {
   destroyViewer();
-  try {
+  showMessage(viewerBox, 'Loading 3D viewer…', T.loadingFg);
+  const token = ++render3DToken;
+
+  load3Dmol().then(() => {
+    if (token !== render3DToken) return;   // a newer payload superseded this one
+    viewerBox.innerHTML = '';              // drop the loading message
     viewer = ThreeDmol.createViewer(viewerBox, { backgroundColor: T.viewerBg });
     viewer.addModel(ensureSDFTerminator(sdf), 'sdf');
     viewer.setStyle({}, STYLE_SPECS[currentStyle] || STYLE_SPECS.stick);
     viewer.zoomTo();
     viewer.render();
     updateSwitcherHighlight();
-  } catch (e) {
+  }).catch(e => {
+    if (token !== render3DToken) return;
     viewer = null;
     showMessage(viewerBox, '3D render failed: ' + e.message, T.errorFg);
-  }
+  });
 }
 
 // ============================================================================

@@ -160,11 +160,10 @@ def test_vizref_local_url_encodes_frame():
     assert "onInputs" in decoded
     # og.json sidecar is carried as an og hash param
     assert "&og=" in url
-    # modules.json sidecar (3Dmol.js) MUST be carried — the viz is broken without it
-    assert "&modules=" in url
-    params = urllib.parse.parse_qs(url.split("#?", 1)[1])
-    modules = json.loads(urllib.parse.unquote(base64.b64decode(params["modules"][0]).decode("ascii")))
-    assert any("3Dmol" in m for m in modules)
+    # No frame ships a modules.json: 3Dmol.js is injected on demand by the frame
+    # itself (load3Dmol()) so it stays off the initial-render critical path.
+    assert "&modules=" not in url
+    assert "load3Dmol" in decoded
 
 
 def test_resolve_url_auto_prefers_local():
