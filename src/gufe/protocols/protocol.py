@@ -207,7 +207,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None,
+        mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None = None,
         extends: ProtocolDAGResult | None = None,
         name: str | None = None,
         transformation_key: GufeKey | None = None,
@@ -300,7 +300,7 @@ class Protocol(GufeTokenizable):
         *,
         stateA: ChemicalSystem,
         stateB: ChemicalSystem,
-        mapping: ComponentMapping | list[ComponentMapping] | None,
+        mapping: ComponentMapping | list[ComponentMapping] | None = None,
         extends: ProtocolDAGResult | None = None,
     ):
         r"""Method to override in custom :class:`Protocol` subclasses.
