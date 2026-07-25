@@ -119,9 +119,38 @@ No response header fixes it; `Access-Control-Allow-Private-Network` was the head
 for the older Private Network Access design and is superseded. The viewer page has
 no such problem, because it is served from `localhost:8899` itself — its fetch is
 same-origin, so no address space is crossed — and handing the result to the frame
-is a `postMessage`, which no such policy applies to. `server.hash_inputs()` still
-implements the URL form for the case that does work: data the frame is allowed to
-reach, such as a public `https://` URL.
+is a `postMessage`, which no such policy applies to.
+
+### `--proxy`: remove the barrier instead of working around it
+
+The restriction is about *crossing* address spaces, so it disappears if the frame
+is on this origin too. `openfe view <file> --proxy` re-hosts the framejs.io
+document at `/_framejs/` and forwards anything else it does not recognize
+upstream, so the page, the iframe and the data are all `http://localhost:8899`:
+
+```
+page    http://localhost:8899/181l.pdb
+iframe  http://localhost:8899/_framejs/#?js=…&inputs=…
+fetch   http://localhost:8899/181l.pdb?input=protein.pdb
+```
+
+Nothing is rewritten in transit. framejs's application code is inline in its HTML
+and its dependencies are absolute `https://cdn.jsdelivr.net` imports, which an
+`http://localhost` page loads normally — that direction is an upgrade, not mixed
+content, and localhost is a secure context. Its own root-relative requests
+(`/favicon.svg`, …) fall through the catch-all proxy. Data paths always win over
+the proxy, so a file you pointed the server at is never shadowed.
+
+With the frame able to feed itself, this mode gets the simpler design back:
+inputs are URLs in the iframe's hash (`server.hash_inputs()`), the page contains
+**no JavaScript at all**, and the URL stays small however large the object.
+
+Two things it deliberately does not do. `/sw.js` is refused (`PROXY_DENY`): a
+service worker registered here would take scope `/` over the data endpoints,
+whose contract is that they are re-read from disk, and it would outlive both the
+page and the server — the next thing on that port would inherit it. And proxied
+responses are cached for the life of the process, so restart the server to pick
+up a framejs.io release.
 
 ### Two URL forms
 
@@ -149,6 +178,7 @@ openfe view network_setup/ligand_network.graphml   # serve it, open a browser, w
 openfe view results/                               # a listing: browse every viewable file
 openfe view ligand.sdf --no-browser                # only print the URL (ssh, container)
 openfe view ligand.sdf --url-only                  # no server: one self-contained link
+openfe view ligand.sdf --proxy                     # serve framejs from here too (see below)
 openfe view-ligand-network network.graphml         # the older .graphml-only entry point
 ```
 

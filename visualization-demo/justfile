@@ -58,13 +58,19 @@ dev: _ensure-openfe-demo
 # so it can run alongside `just dev`'s viz service. Ctrl-C stops it.
 # FILE is relative to the gufe repo root (or absolute, for a container path):
 #   just serve src/gufe/tests/data/181l.pdb
-serve FILE="src/gufe/tests/data/ligand_network.graphml":
+serve FILE="src/gufe/tests/data/ligand_network.graphml" *FLAGS="":
     #!/usr/bin/env bash
     set -uo pipefail
     target="{{ FILE }}"; case "$target" in /*) ;; *) target="/src/gufe/$target" ;; esac
     echo -e "{{ bold }}open{{ normal }} {{ green }}http://localhost:8900{{ normal }}  {{ grey }}(Ctrl-C to stop){{ normal }}"
     docker compose run --rm -p 8900:8900 viz \
-      dev-start.sh python -m gufe.visualization.server --host=0.0.0.0 --port=8900 --no-browser "$target"
+      dev-start.sh python -m gufe.visualization.server --host=0.0.0.0 --port=8900 --no-browser {{ FLAGS }} "$target"
+
+# Same, with framejs.io re-hosted on the server's own origin (--proxy). Chrome's
+# Local Network Access blocks the cross-origin form; this sidesteps it, and the
+# served page ends up with no JavaScript in it at all.
+serve-proxy FILE="src/gufe/tests/data/ligand_network.graphml":
+    @just serve "{{ FILE }}" --proxy
 
 # Same as `just dev`, but ALSO mounts your local metaframe-widget (framejs.io)
 # checkout so you can develop the widget while testing it in demo/framejs_demo.ipynb.

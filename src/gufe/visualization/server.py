@@ -26,18 +26,36 @@ Why *this page* does the fetching
 It would be tidier to put the inputs straight in the iframe's URL hash and let the
 frame fetch its own data from ``?input=<key>`` — the frames support exactly that
 (see :func:`hash_inputs`, and ``asText()``/``asObject()`` in every frame, which
-fetch a whitespace-free ``http(s)://`` string). **Browsers no longer allow it.**
-Chrome 142's Local Network Access blocks a public-origin page — which the frame,
-served from framejs.io, is — from reaching a loopback address without an explicit
-user permission prompt, and inside a cross-origin iframe the ``local-network-access``
-Permissions Policy has to be delegated on top. It fails as a CORS error:
-*"Permission was denied for this request to access the `loopback` address space"*.
-(The older Private Network Access opt-in header, ``Access-Control-Allow-Private-Network``,
+fetch a whitespace-free ``http(s)://`` string). **Chrome no longer allows it**
+across origins. Chrome 142's Local Network Access blocks a public-origin page —
+which the frame, served from framejs.io, is — from reaching a loopback address
+without an explicit user permission prompt, and inside a cross-origin iframe the
+``local-network-access`` Permissions Policy has to be delegated on top. It fails
+as a CORS error: *"Permission was denied for this request to access the
+`loopback` address space"*. Firefox has not shipped this and still works. (The
+older Private Network Access opt-in header, ``Access-Control-Allow-Private-Network``,
 is superseded and ignored.)
 
 This page has no such problem: it is served from ``localhost:8899`` itself, so its
 fetch is same-origin — no address space is crossed and nothing prompts — and
 handing the result to the frame is a ``postMessage``, not a network request.
+
+Proxy mode (``--proxy``) removes the barrier instead
+-----------------------------------------------------
+The restriction is about *crossing* address spaces, so it disappears if the frame
+is on this origin too. In proxy mode the server re-hosts the framejs.io document
+at ``/_framejs/`` (and forwards anything else it does not recognize upstream, for
+the app's own ``/sw.js`` and friends), so the iframe, the page and the data are
+all ``http://localhost:8899``. Nothing is rewritten on the way through: framejs's
+application code is inline in its HTML and its dependencies are absolute
+``https://cdn.jsdelivr.net`` imports, which an ``http://localhost`` page — a
+secure context, and an *upgrade* rather than mixed content — loads normally.
+
+That buys back the simpler design: inputs go in the iframe's hash as URLs the
+frame fetches for itself (:func:`hash_inputs`), the page needs no JavaScript at
+all, and the URL stays small however large the object. It is opt-in because it
+depends on framejs.io tolerating being re-hosted, which only a browser can
+confirm.
 
 Why serve at all, rather than just open a URL
 ---------------------------------------------
@@ -97,8 +115,10 @@ __all__ = [
     "DEFAULT_PORT",
     "LOADER_REGISTRY",
     "UnviewableFile",
+    "frame_src_for_proxy",
     "hash_inputs",
     "load_object",
+    "proxy_viewer_html",
     "serve",
     "viewer_html",
 ]
@@ -108,8 +128,25 @@ DEFAULT_PORT = 8899
 
 # The metapage runtime the page uses to host the frame and push it inputs. Pinned
 # to the same version `metaframe_widget`'s anywidget ESM loads, so the terminal
-# and the notebook drive a frame through identical code.
+# and the notebook drive a frame through identical code. Unused in proxy mode,
+# where the frame feeds itself.
 METAPAGE_MODULE = "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.10.11/+esm"
+
+# Where the re-hosted framejs.io document lives in proxy mode. A prefix rather
+# than the root so it cannot collide with the data files, which keep the plain
+# paths; the app's own root-relative requests (/sw.js, /favicon.ico, …) fall
+# through to the catch-all proxy, so nothing in its HTML needs rewriting.
+FRAMEJS_PROXY_PREFIX = "/_framejs/"
+
+#: Upstream paths the proxy refuses rather than forwards.
+#:
+#: Only the service worker, and for two reasons: registered at this origin it
+#: would take scope ``/`` over the *data* endpoints, whose whole contract is that
+#: they are re-read from disk; and a service worker outlives the page and the
+#: server, so the next thing to use this port would inherit it. framejs registers
+#: it inside a try/catch and runs fine without one — it is an asset cache for
+#: framejs.io itself, which is not what this origin is.
+PROXY_DENY = frozenset({"/sw.js"})
 
 # Payload values at or under this many bytes ride inline in the URL hash; bigger
 # ones are replaced by a URL back to this server. Only reachable through
@@ -346,6 +383,49 @@ try {
 </html>
 """
 
+# Proxy mode's page: no script at all, because the frame feeds itself. Four
+# substitutions, each HTML-escaped text or an attribute value.
+_PROXY_VIEWER_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__PATH__ — gufe viz</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+         color: #222; background: #fff; }
+  header { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 6px 10px;
+           border-bottom: 1px solid #e2e2e2; background: #fafafa; }
+  header .path { font-family: ui-monospace, monospace; font-weight: 600; }
+  header .type { color: #777; }
+  header .spacer { flex: 1 1 auto; }
+  header a { font: inherit; color: #555; text-decoration: none; background: none;
+             border: 1px solid #d5d5d5; border-radius: 4px; padding: 2px 8px; }
+  header a:hover { background: #efefef; }
+  iframe { flex: 1 1 auto; min-height: 0; border: 0; display: block; width: 100%; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #ddd; background: #1b1b1b; }
+    header { background: #242424; border-bottom-color: #3a3a3a; }
+    header a { color: #bbb; border-color: #444; }
+    header a:hover { background: #333; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="path">__PATH__</span>
+  <span class="type">__TYPE__</span>
+  <span class="spacer"></span>
+  <a href="" title="re-read the file from disk and re-render">&#8635; reload</a>
+  <a href="__RAW_URL__" download>file</a>
+  <a href="__PARENT_URL__">directory</a>
+</header>
+<iframe src="__FRAME_SRC__" allow="clipboard-write; fullscreen"></iframe>
+</body>
+</html>
+"""
+
 _LISTING_HTML = """<!doctype html>
 <html lang="en">
 <head>
@@ -397,6 +477,52 @@ def viewer_html(
     return _VIEWER_HTML.replace("__CONFIG__", blob)
 
 
+def proxy_viewer_html(
+    *,
+    path: str,
+    frame_src: str,
+    object_type: str,
+    raw_url: str,
+    parent_url: str,
+) -> str:
+    """Render the proxy-mode viewer page: a header and one iframe, no script.
+
+    ``frame_src`` is the whole iframe URL — the re-hosted framejs document plus
+    the object's ``inputs`` hash, as built by :func:`frame_src_for_proxy`.
+    """
+    html = _PROXY_VIEWER_HTML
+    for token, value in (
+        ("__PATH__", path),
+        ("__TYPE__", object_type),
+        ("__RAW_URL__", raw_url),
+        ("__PARENT_URL__", parent_url),
+        ("__FRAME_SRC__", frame_src),
+    ):
+        html = html.replace(token, _escape(value))
+    return html
+
+
+def frame_src_for_proxy(frame_url: str, inputs: dict[str, Any], *, base: str) -> str:
+    """Rewrite a framejs.io viz URL to this server, with ``inputs`` in its hash.
+
+    ``https://framejs.io/#?js=…`` becomes ``<base>/_framejs/#?js=…`` — same
+    document, served from here, so the frame shares an origin with the data it
+    is about to fetch. The ``/j/<uuid>`` form maps just as directly
+    (``<base>/_framejs/j/<uuid>``) because the catch-all proxy resolves the path
+    upstream unchanged.
+
+    Appended ``inputs`` take priority over anything baked into the frame — the
+    same contract :func:`~gufe.visualization.framejs.build_cli_url` relies on.
+    """
+    from .framejs import FRAMEJS_BASE, string_to_base64_string
+
+    if not frame_url.startswith(FRAMEJS_BASE):
+        raise FramejsUnavailable(f"cannot re-host a non-framejs.io viz URL: {frame_url}")
+    rehosted = base + FRAMEJS_PROXY_PREFIX + frame_url[len(FRAMEJS_BASE):].lstrip("/")
+    encoded = string_to_base64_string(json.dumps(inputs))
+    return f"{rehosted}{'&' if '#?' in rehosted else '#?'}inputs={encoded}"
+
+
 def _escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
@@ -429,9 +555,10 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
     server_version = "gufe-viz"
     protocol_version = "HTTP/1.1"
 
-    def __init__(self, *args, root: Path, quiet: bool = False, **kwargs):
+    def __init__(self, *args, root: Path, quiet: bool = False, proxy: bool = False, **kwargs):
         self.root = root
         self.quiet = quiet
+        self.proxy = proxy
         super().__init__(*args, **kwargs)
 
     # -- plumbing ---------------------------------------------------------- #
@@ -482,11 +609,19 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802 - stdlib naming
         split = urllib.parse.urlsplit(self.path)
         query = urllib.parse.parse_qs(split.query)
+
+        if self.proxy and split.path.startswith(FRAMEJS_PROXY_PREFIX):
+            return self._serve_proxied("/" + split.path[len(FRAMEJS_PROXY_PREFIX):], split.query)
+
         path = self._local_path(split.path)
 
         if path is None:
             return self._send_error_page("outside the served directory", 403)
         if not path.exists():
+            # In proxy mode an unknown path is most likely the re-hosted app
+            # asking for one of its own root-relative files (/sw.js, favicons).
+            if self.proxy:
+                return self._serve_proxied(split.path, split.query)
             return self._send_error_page(f"no such file: {split.path}", 404)
         if path.is_dir():
             return self._serve_listing(path, split.path)
@@ -518,22 +653,63 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
     def _serve_viewer(self, path: Path, url_path: str) -> None:
         try:
             obj, frame_url = _viz_url_for(path)
+            payload = _viz_for(obj).payload(obj) if self.proxy else None
         except UnviewableFile as e:
             return self._send_error_page(str(e), 415)
         except Exception as e:  # a malformed file is the user's, not a server fault
             return self._send_error_page(f"could not read {path.name}: {type(e).__name__}: {e}", 422)
+
         quoted = urllib.parse.quote(url_path)
-        self._send_text(
-            viewer_html(
-                path=path.relative_to(self.root).as_posix(),
-                frame_url=frame_url,
-                object_type=type(obj).__name__,
-                inputs_url=f"{quoted}?inputs=1",
-                raw_url=f"{quoted}?raw=1",
-                parent_url=posixpath.dirname(quoted.rstrip("/")) or "/",
-            ),
-            "text/html",
+        common = dict(
+            path=path.relative_to(self.root).as_posix(),
+            object_type=type(obj).__name__,
+            raw_url=f"{quoted}?raw=1",
+            parent_url=posixpath.dirname(quoted.rstrip("/")) or "/",
         )
+
+        if self.proxy:
+            # Frame, page and data all on this origin: the frame can fetch its
+            # own inputs, so the page carries no script.
+            base = self._origin()
+            html = proxy_viewer_html(
+                frame_src=frame_src_for_proxy(
+                    frame_url, hash_inputs(payload, data_url=base + quoted), base=base
+                ),
+                **common,
+            )
+        else:
+            html = viewer_html(frame_url=frame_url, inputs_url=f"{quoted}?inputs=1", **common)
+        self._send_text(html, "text/html")
+
+    def _origin(self) -> str:
+        """This server's origin as the client sees it (``http://localhost:8899``).
+
+        Taken from the request's ``Host`` header rather than the bound address,
+        so a container that publishes its port yields the *browser's* address —
+        the bound ``0.0.0.0`` would be useless to it, and getting this wrong is
+        exactly what re-introduces a cross-origin fetch.
+        """
+        host = self.headers.get("Host") or f"{self.server.server_address[0]}:{self.server.server_address[1]}"
+        return f"http://{host}"
+
+    def _serve_proxied(self, upstream_path: str, query: str) -> None:
+        """Serve ``https://framejs.io<upstream_path>`` from this origin.
+
+        Byte-for-byte: framejs's application code is inline in its HTML and its
+        dependencies are absolute ``https://`` imports, so nothing needs
+        rewriting — only the document's *origin* has to change, which is the
+        whole point (see the module docstring).
+        """
+        from .framejs import FRAMEJS_BASE
+
+        if upstream_path in PROXY_DENY:
+            return self._send_text(f"{upstream_path} is not proxied (see PROXY_DENY)", "text/plain", 404)
+        url = FRAMEJS_BASE + upstream_path + (f"?{query}" if query else "")
+        try:
+            body, content_type = _fetch_upstream(url)
+        except OSError as e:
+            return self._send_error_page(f"could not reach {url}: {e}", 502)
+        self._send(body, content_type)
 
     def _serve_input(self, path: Path, key: str) -> None:
         """Serve one payload value — the endpoint a frame fetches a big input from."""
@@ -582,6 +758,26 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
         self._send_text(listing_html("/" if here in (".", "") else here, entries), "text/html")
 
 
+#: Proxied upstream responses, keyed by URL. The framejs document is ~80 kB and
+#: is re-fetched on every viewer page load, so this is worth having; it is a
+#: session cache with no expiry, which is what `--proxy` being a dev-loop feature
+#: makes appropriate (restart the server to pick up a framejs.io release).
+_UPSTREAM_CACHE: dict[str, tuple[bytes, str]] = {}
+
+
+def _fetch_upstream(url: str, *, timeout: float = 20.0) -> tuple[bytes, str]:
+    """GET ``url``, returning ``(body, content-type)``. Cached for the session."""
+    import urllib.request
+
+    hit = _UPSTREAM_CACHE.get(url)
+    if hit is not None:
+        return hit
+    with urllib.request.urlopen(url, timeout=timeout) as response:
+        result = (response.read(), response.headers.get("Content-Type", "application/octet-stream"))
+    _UPSTREAM_CACHE[url] = result
+    return result
+
+
 def _root_and_url_path(target: Path) -> tuple[Path, str]:
     """Pick what to serve and the URL path of ``target`` within it.
 
@@ -618,6 +814,7 @@ def serve(
     port: int = DEFAULT_PORT,
     open_browser: bool = True,
     quiet: bool = False,
+    proxy: bool = False,
 ) -> None:
     """Serve the visualization of ``target`` and block until Ctrl-C.
 
@@ -637,13 +834,18 @@ def serve(
         container, a remote shell) — the URL is always printed either way.
     quiet
         Suppress the per-request log lines.
+    proxy
+        Re-host the framejs.io document at ``/_framejs/`` so the frame shares this
+        origin, and let it fetch its own inputs instead of the page pushing them.
+        Removes the Local Network Access barrier described in the module
+        docstring, and leaves the page script-free. See there for the caveat.
     """
     target = Path(target)
     if not target.exists():
         raise FileNotFoundError(target)
     root, url_path = _root_and_url_path(target)
 
-    handler = functools.partial(_VizHandler, root=root, quiet=quiet)
+    handler = functools.partial(_VizHandler, root=root, quiet=quiet, proxy=proxy)
     httpd = _bind(host, port, handler)
     bound_port = httpd.server_address[1]
     # 0.0.0.0 is not an address a browser can go to; localhost is, and that is
@@ -653,6 +855,8 @@ def serve(
 
     print(f"gufe viz  →  {url}")
     print(f"  serving {root}{'' if host == DEFAULT_HOST else f' on {host}:{bound_port}'}")
+    if proxy:
+        print(f"  proxying framejs.io at {FRAMEJS_PROXY_PREFIX} (frame and data share this origin)")
     print("  open the URL above (Ctrl-C to stop the server)", flush=True)
 
     if open_browser:
@@ -684,6 +888,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help=f"port (default {DEFAULT_PORT})")
     parser.add_argument("--no-browser", action="store_true", help="only print the URL")
     parser.add_argument("--quiet", action="store_true", help="no per-request logging")
+    parser.add_argument(
+        "--proxy",
+        action="store_true",
+        help="re-host framejs.io on this origin so the frame fetches its own data "
+        "(needed for Chrome, whose Local Network Access blocks the cross-origin form)",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -693,6 +903,7 @@ def main(argv: list[str] | None = None) -> int:
             port=args.port,
             open_browser=not args.no_browser,
             quiet=args.quiet,
+            proxy=args.proxy,
         )
     except (FileNotFoundError, UnviewableFile, OSError) as e:
         print(f"error: {e}", file=sys.stderr)

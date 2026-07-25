@@ -13,11 +13,13 @@ frame that fetches: a frame served from framejs.io is a public origin, and
 browsers now refuse those a loopback address without a user permission prompt.
 """
 
+import base64
 import functools
 import http.server
 import json
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -169,6 +171,117 @@ def test_viewer_url_path_is_the_data_file_path(client):
     config = page_config(body)
     assert config["path"] == "sub/ethanol.sdf"
     assert config["inputs_url"] == "/sub/ethanol.sdf?inputs=1"
+
+
+# --------------------------------------------------------------------------- #
+# Proxy mode — framejs re-hosted here, so the frame can fetch its own data      #
+# --------------------------------------------------------------------------- #
+
+UPSTREAM_DOC = b"<!doctype html><title>framejs</title><script>/* app is inline */</script>"
+
+
+@pytest.fixture
+def proxy_client(data_dir, monkeypatch):
+    """A proxy-mode server, with framejs.io stubbed out (these stay hermetic)."""
+    fetched = []
+
+    def fake_fetch(url, **kwargs):
+        fetched.append(url)
+        return UPSTREAM_DOC, "text/html; charset=utf-8"
+
+    monkeypatch.setattr(server, "_fetch_upstream", fake_fetch)
+    handler = functools.partial(server._VizHandler, root=data_dir.resolve(), quiet=True, proxy=True)
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{httpd.server_address[1]}"
+
+    def get(path):
+        try:
+            with urllib.request.urlopen(base + path, timeout=10) as r:
+                return r.status, r.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode("utf-8")
+
+    get.base = base
+    get.fetched = fetched
+    try:
+        yield get
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+
+
+def iframe_src(body):
+    """The one iframe's src, un-escaped."""
+    return body.split('<iframe src="', 1)[1].split('"', 1)[0].replace("&amp;", "&")
+
+
+def test_proxy_page_has_no_script_and_one_iframe(proxy_client):
+    """With the frame feeding itself there is nothing left for the page to do."""
+    status, body = proxy_client("/network.graphml")
+    assert status == 200
+    assert body.count("<iframe") == 1
+    assert "<script" not in body
+    assert "metapage" not in body.lower()
+
+
+def test_proxy_frame_and_data_share_one_origin(proxy_client):
+    """The whole point: no address space is crossed, so Local Network Access
+    never applies and Chrome does not block the frame's fetch."""
+    _, body = proxy_client("/network.graphml")
+    src = iframe_src(body)
+    assert src.startswith(proxy_client.base + "/_framejs/#?js=")
+
+    encoded = src.split("inputs=", 1)[1].split("&", 1)[0]
+    inputs = json.loads(urllib.parse.unquote(base64.b64decode(encoded).decode("ascii")))
+    assert inputs == {"network.graphml": f"{proxy_client.base}/network.graphml?input=network.graphml"}
+    # frame origin == data origin, which is the invariant that makes this work
+    assert urllib.parse.urlsplit(src).netloc == urllib.parse.urlsplit(inputs["network.graphml"]).netloc
+
+
+def test_proxy_serves_the_framejs_document_from_here(proxy_client):
+    status, body = proxy_client("/_framejs/")
+    assert status == 200
+    assert body == UPSTREAM_DOC.decode()
+    assert proxy_client.fetched == ["https://framejs.io/"]
+
+
+def test_proxy_forwards_the_apps_own_root_relative_requests(proxy_client):
+    """framejs asks for its assets relative to whatever origin it is on — which is
+    now us, so they have to reach upstream unchanged."""
+    assert proxy_client("/favicon.svg")[0] == 200
+    assert proxy_client.fetched == ["https://framejs.io/favicon.svg"]
+
+
+def test_proxy_refuses_to_install_a_service_worker(proxy_client):
+    """A service worker registered here would take scope `/` over the data
+    endpoints and outlive both the page and the server — see PROXY_DENY."""
+    status, body = proxy_client("/sw.js")
+    assert status == 404
+    assert "not proxied" in body
+    assert proxy_client.fetched == []  # never even asked upstream
+
+
+def test_proxy_does_not_shadow_the_data_files(proxy_client):
+    """A path that exists locally is still ours; only unknown paths go upstream."""
+    status, body = proxy_client("/network.graphml?raw=1")
+    assert status == 200
+    assert "<graphml" in body
+    assert proxy_client.fetched == []
+
+
+def test_unknown_paths_are_404_without_proxy(client):
+    assert client("/sw.js")[0] == 404
+
+
+def test_frame_src_for_proxy_rehosts_both_url_forms():
+    from gufe.visualization.framejs import FRAMEJS_BASE
+
+    local = server.frame_src_for_proxy(f"{FRAMEJS_BASE}/#?js=abc", {}, base="http://h:1")
+    assert local.startswith("http://h:1/_framejs/#?js=abc&inputs=")
+    # the /j/<uuid> form maps just as directly; the catch-all proxy resolves it
+    canonical = server.frame_src_for_proxy(f"{FRAMEJS_BASE}/j/deadbeef", {}, base="http://h:1")
+    assert canonical.startswith("http://h:1/_framejs/j/deadbeef#?inputs=")
 
 
 def test_hash_inputs_replaces_only_the_big_values(client):
