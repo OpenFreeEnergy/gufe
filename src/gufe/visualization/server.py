@@ -90,8 +90,8 @@ Anything under the root can be viewed from the one server, so a single
 root is reachable.
 
 Which objects can be viewed is :data:`LOADER_REGISTRY` (file extension -> loader)
-composed with ``framejs.VIZ_REGISTRY`` (gufe class -> viz): a file type is
-viewable when it loads to an object that has a registered viz.
+composed with ``framejs.PAYLOAD_REGISTRY`` (gufe class -> serializer): a file type
+is viewable when it loads to an object gufe knows how to feed the frame.
 """
 
 from __future__ import annotations
@@ -108,7 +108,7 @@ import webbrowser
 from pathlib import Path
 from typing import Any, Callable
 
-from .framejs import FramejsUnavailable, _viz_for
+from .framejs import FramejsUnavailable, payload_for_object, resolve_url
 
 __all__ = [
     "DEFAULT_HOST",
@@ -158,7 +158,7 @@ class UnviewableFile(ValueError):
     """Raised for a file this server cannot turn into a viewable gufe object.
 
     Either the extension is not in :data:`LOADER_REGISTRY`, or it loaded to an
-    object with no viz in ``framejs.VIZ_REGISTRY``.
+    object with no serializer in ``framejs.PAYLOAD_REGISTRY``.
     """
 
 
@@ -237,14 +237,18 @@ def is_viewable(path: Path) -> bool:
 
 
 def _viz_url_for(path: Path) -> tuple[Any, str]:
-    """Load ``path`` and return ``(object, framejs URL of its viz)``.
+    """Load ``path`` and return ``(object, framejs URL of the viz frame)``.
 
     The URL carries the viz JavaScript but *no* object data — the page fetches
-    that separately. Raises :class:`UnviewableFile` if nothing can render it.
+    that separately. It is the same URL whatever the object is (one frame draws
+    them all), but serializing here still makes an object nothing is registered
+    for fail loudly rather than render an empty frame. Raises
+    :class:`UnviewableFile` if nothing can render it.
     """
     obj = load_object(path)
     try:
-        return obj, _viz_for(obj).resolve_url()
+        payload_for_object(obj)
+        return obj, resolve_url()
     except FramejsUnavailable as e:
         raise UnviewableFile(f"no visualization available for {type(obj).__name__}: {e}") from e
 
@@ -257,7 +261,7 @@ def payload_for(path: Path) -> dict[str, Any]:
     """
     obj = load_object(path)
     try:
-        return _viz_for(obj).payload(obj)
+        return payload_for_object(obj)
     except FramejsUnavailable as e:
         raise UnviewableFile(f"no visualization available for {type(obj).__name__}: {e}") from e
 
@@ -653,7 +657,7 @@ class _VizHandler(http.server.BaseHTTPRequestHandler):
     def _serve_viewer(self, path: Path, url_path: str) -> None:
         try:
             obj, frame_url = _viz_url_for(path)
-            payload = _viz_for(obj).payload(obj) if self.proxy else None
+            payload = payload_for_object(obj) if self.proxy else None
         except UnviewableFile as e:
             return self._send_error_page(str(e), 415)
         except Exception as e:  # a malformed file is the user's, not a server fault

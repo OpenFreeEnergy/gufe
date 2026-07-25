@@ -7,9 +7,10 @@ object then renders as an interactive framejs.io widget in Jupyter/marimo/VSCode
 (bare cell or explicit ``.view()``), and :func:`gufe.visualization.framejs.build_cli_url`
 can turn it into a shareable browser URL.
 
-Which viz it gets — the frame that draws it and the serializer that feeds that
-frame — is looked up by class name in ``framejs.VIZ_REGISTRY``, which walks the
-MRO, so a subclass inherits its parent's viz unless it registers its own.
+One frame draws every gufe object; it picks its view from the payload it is
+handed. How an object is serialized into that payload is looked up by class name
+in ``framejs.PAYLOAD_REGISTRY``, which walks the MRO, so a subclass inherits its
+parent's serializer unless it registers its own.
 
 Everything degrades gracefully. With no ``viz`` extra installed, both paths fall
 back to the object's ``_legacy_view()`` (RDKit / py3Dmol) if it defines one:

@@ -1,0 +1,4 @@
+{
+  "title": "gufe",
+  "description": "Interactive viewer for any gufe object: ligand and alchemical networks, transformations, chemical systems, atom mappings, small molecules, proteins and solvents. The view is chosen from whichever payload arrives."
+}

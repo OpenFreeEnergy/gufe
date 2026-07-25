@@ -6,33 +6,36 @@ This is the *infrastructure* layer that lets a gufe object render as an
 interactive framejs.io widget. It is intentionally thin: the rendering is done by
 :class:`metaframe_widget.MetaframeWidget` (an anywidget that hosts the framejs
 iframe in Jupyter / marimo / VSCode and pushes ``inputs`` live over the metapage
-comm channel), and the drawing is done by the frames under ``viz_assets/``.
+comm channel), and the drawing is done by the single frame under
+``viz_assets/gufe/``.
 
-Adding a visualization
-----------------------
-One entry in :data:`VIZ_REGISTRY` plus one frame directory. The registry maps a
-gufe class name to a :class:`VizRef` holding both halves of the contract — which
-frame draws it (``frame``) and how the object is serialized for that frame
-(``payload``). Lookups walk the MRO, so a subclass inherits its base's viz.
+One frame, one URL
+------------------
+Every visualizable gufe class renders through **the same frame**. The frame
+picks its view from the payload it is handed — ``network.graphml`` draws a
+ligand network, ``protein.pdb`` a 3Dmol protein, ``chemical_system`` a component
+browser, and so on — so Python never has to know which drawing code applies. The
+consequences are the point of the design:
 
-By convention ``frame`` is the snake_case form of the class it renders
-(``LigandNetwork`` -> ``ligand_network``), so the frame directory is always
-greppable from the class name and vice versa.
+* the base URL is built once and is identical for every object;
+* adding a visualization is **one entry in** :data:`PAYLOAD_REGISTRY` plus a
+  branch in the frame's ``VIEWS`` table;
+* the shared parts of the drawing code (the atom-mapping viewer, the 3D engine
+  loaders, the SDF/PDB parsers, the theme) exist once instead of once per class.
 
 Payload keys (the contract with ``onInputs``)
 ---------------------------------------------
-A payload is a **flat** dict. Two kinds of key, and no others:
+A payload is a **flat** dict, and its keys are what the frame dispatches on. Two
+kinds of key, and no others:
 
 * **file-shaped values** use a descriptive ``<thing>.<ext>`` key — ``molecule.sdf``,
-  ``protein.pdb``, ``network.graphml``, ``molA.sdf``/``molB.sdf``. Frames read these
-  through their ``asText()`` helper, which accepts a string, ``Blob``,
+  ``protein.pdb``, ``network.graphml``, ``molA.sdf``/``molB.sdf``. The frame reads
+  these through its ``asText()`` helper, which accepts a string, ``Blob``,
   ``ArrayBuffer`` or a dropped file, so these keys double as file-drop targets.
-  They are descriptive rather than frame-named because one frame may take several
-  (the mapping viewer takes two SDFs).
 * **everything else** is a bare snake_case field (``name``, ``smiles``,
   ``total_charge``, ``mapping``, ``annotations``). Where a viz takes a single
-  structured object rather than loose fields, that object's key is the **frame
-  name** — ``chemical_system``, ``transformation``, ``alchemical_network``,
+  structured object rather than loose fields, that object's key names the thing
+  it describes — ``chemical_system``, ``transformation``, ``alchemical_network``,
   ``solvent_component``.
 
 Renaming a payload key is a breaking change for any frame already published to a
@@ -41,19 +44,19 @@ names as the API they are.
 
 Two URL forms
 -------------
-The viz source lives in the repo as a framejs frame directory under
-``viz_assets/<frame>/`` — the on-disk format documented at
+The viz source lives in the repo as a framejs frame directory at
+``viz_assets/gufe/`` — the on-disk format documented at
 https://framejs.io/docs/guide/local-file-io (``code.js`` required; ``og.json`` /
 ``modules.json`` / ``inputs.json`` / ``options.json`` / ``definition.json``
 optional). From that one source gufe builds either of two equivalent URLs:
 
 * **local** (the default everywhere) — a self-contained hash-param URL built from
   the frame directory, ``https://framejs.io/#?js=<b64>&og=<b64>…``. Never expires,
-  always matches the installed code, needs no account. See :meth:`VizRef.local_url`.
+  always matches the installed code, needs no account. See :func:`local_url`.
 * **canonical** — a pinned short URL ``https://framejs.io/j/<uuid>`` minted by
   publishing the frame directory once (``just publish-viz``). Its one advantage is
   size, so it is opt-in exactly where size matters: ``build_cli_url(obj,
-  short=True)``. See :meth:`VizRef.canonical_url`.
+  short=True)``. See :func:`canonical_url` and :data:`FRAME_UUID`.
 
 Either way the per-object data rides on top of the base URL — the viz JavaScript
 is never re-derived per object:
@@ -80,7 +83,6 @@ import base64
 import json
 import urllib.parse
 import warnings
-from dataclasses import dataclass
 from importlib import resources
 from typing import TYPE_CHECKING, Any, Callable
 
@@ -88,6 +90,19 @@ if TYPE_CHECKING:
     from metaframe_widget import MetaframeWidget
 
 FRAMEJS_BASE = "https://framejs.io"
+
+#: The one frame directory under ``viz_assets/`` that draws every gufe object.
+FRAME = "gufe"
+
+#: The frame's canonical framejs.io id, once it has been published to
+#: ``https://framejs.io/j/<uuid>`` — ``None`` until then, in which case only the
+#: local (on-disk) URL form is available. Mint one with ``just publish-viz`` and
+#: pin it here.
+FRAME_UUID: str | None = None
+
+#: CSS size used for the widget when the caller does not override it.
+DEFAULT_HEIGHT = "500px"
+DEFAULT_WIDTH = "100%"
 
 
 class FramejsUnavailable(RuntimeError):
@@ -108,130 +123,104 @@ def string_to_base64_string(value: str) -> str:
     return base64.b64encode(encoded_uri_component.encode("ascii")).decode("ascii")
 
 
-@dataclass(frozen=True)
-class VizRef:
-    """How one gufe class is visualized: which frame draws it, and how it is fed.
+# --------------------------------------------------------------------------- #
+# The frame: where it lives on disk, and the URLs built from it                 #
+# --------------------------------------------------------------------------- #
 
-    Parameters
-    ----------
-    frame
-        Name of the frame directory under ``gufe/visualization/viz_assets/``, in
-        the framejs local-file-io format (``<frame>/code.js`` plus optional JSON
-        sidecars). By convention the snake_case gufe class name, so the directory
-        is greppable from the class and vice versa.
-    payload
-        Serializer turning the object into the frame's ``inputs`` dict. Its keys
-        are the contract with the frame's ``onInputs`` — see the module docstring
-        for the naming convention.
-    uuid
-        The framejs.io canonical frame id, if this viz has been published to
-        ``https://framejs.io/j/<uuid>``. ``None`` until it is, in which case only
-        the local (on-disk) URL form is available.
-    default_height, default_width
-        CSS sizes used when the caller does not override them.
+
+def _frame_dir():
+    """The importable frame directory traversable."""
+    return resources.files("gufe.visualization.viz_assets").joinpath(FRAME)
+
+
+def has_local() -> bool:
+    """True if the on-disk frame directory exists and has a ``code.js``."""
+    try:
+        return _frame_dir().joinpath("code.js").is_file()
+    except (FileNotFoundError, ModuleNotFoundError, OSError):
+        return False
+
+
+def js_source() -> str:
+    """Return the viz JavaScript (``gufe/code.js``) from package data."""
+    try:
+        return _frame_dir().joinpath("code.js").read_text(encoding="utf-8")
+    except (FileNotFoundError, ModuleNotFoundError, OSError) as e:
+        raise FramejsUnavailable(f"viz frame {FRAME!r} has no readable code.js: {e}") from e
+
+
+def _frame_json(name: str):
+    """Read a JSON sidecar (``og.json``/``modules.json``/…) or return None."""
+    try:
+        return json.loads(_frame_dir().joinpath(name).read_text(encoding="utf-8"))
+    except (FileNotFoundError, ModuleNotFoundError, OSError):
+        return None
+
+
+def local_url() -> str:
+    """Return a self-contained framejs.io URL built from the on-disk frame.
+
+    Encodes ``code.js`` and any JSON sidecars into hash params exactly as the
+    framejs runtime expects — ``https://framejs.io/#?js=<b64>&og=<b64>…`` — where
+    each value is ``base64(encodeURIComponent(text))`` (raw text for ``js``,
+    compact JSON for the rest). This mirrors ``framejs_frame.py restore`` and the
+    framejs local server, so the URL round-trips with them. Raises
+    :class:`FramejsUnavailable` if the frame directory is missing.
     """
+    parts = [f"js={string_to_base64_string(js_source())}"]
+    # Order mirrors the framejs local server's frameToUrl (hash-query keys).
+    for key in ("options", "inputs", "definition", "og", "modules"):
+        value = _frame_json(f"{key}.json")
+        if value is None:
+            continue
+        encoded = string_to_base64_string(json.dumps(value, separators=(",", ":")))
+        parts.append(f"{key}={encoded}")
+    return f"{FRAMEJS_BASE}/#?" + "&".join(parts)
 
-    frame: str
-    payload: Callable[[Any], dict[str, Any]]
-    uuid: str | None = None
-    default_height: str = "500px"
-    default_width: str = "100%"
 
-    # -- canonical form: the pinned https://framejs.io/j/<uuid> ---------------- #
+def canonical_url() -> str:
+    """Return the pinned ``https://framejs.io/j/<uuid>`` URL for the frame.
 
-    @property
-    def published(self) -> bool:
-        """True if this viz has a canonical framejs.io uuid to point at."""
-        return bool(self.uuid)
-
-    def canonical_url(self) -> str:
-        """Return the pinned ``https://framejs.io/j/<uuid>`` URL for this viz.
-
-        Raises :class:`FramejsUnavailable` if the viz has not been published.
-        """
-        if not self.uuid:
-            raise FramejsUnavailable(
-                f"viz {self.frame!r} has no published framejs.io uuid yet; publish it "
-                f"with `just publish-viz` and pin the uuid in VIZ_REGISTRY."
-            )
-        # On the /j/<uuid> route, `inputs` appended in the hash (the CLI path)
-        # take priority over the frame's baked-in inputs — what gufe relies on.
-        return f"{FRAMEJS_BASE}/j/{self.uuid}"
-
-    # -- local form: a self-contained URL built from the frame directory ------- #
-
-    def _frame_dir(self):
-        """The importable frame directory traversable."""
-        return resources.files("gufe.visualization.viz_assets").joinpath(self.frame)
-
-    def has_local(self) -> bool:
-        """True if the on-disk frame directory exists and has a ``code.js``."""
-        try:
-            return self._frame_dir().joinpath("code.js").is_file()
-        except (FileNotFoundError, ModuleNotFoundError, OSError):
-            return False
-
-    def js_source(self) -> str:
-        """Return the viz JavaScript (``<frame>/code.js``) from package data."""
-        try:
-            return self._frame_dir().joinpath("code.js").read_text(encoding="utf-8")
-        except (FileNotFoundError, ModuleNotFoundError, OSError) as e:
-            raise FramejsUnavailable(f"viz frame {self.frame!r} has no readable code.js: {e}") from e
-
-    def _frame_json(self, name: str):
-        """Read a JSON sidecar (``og.json``/``modules.json``/…) or return None."""
-        try:
-            return json.loads(self._frame_dir().joinpath(name).read_text(encoding="utf-8"))
-        except (FileNotFoundError, ModuleNotFoundError, OSError):
-            return None
-
-    def local_url(self) -> str:
-        """Return a self-contained framejs.io URL built from the on-disk frame.
-
-        Encodes ``code.js`` and any JSON sidecars into hash params exactly as the
-        framejs runtime expects — ``https://framejs.io/#?js=<b64>&og=<b64>…`` —
-        where each value is ``base64(encodeURIComponent(text))`` (raw text for
-        ``js``, compact JSON for the rest). This mirrors ``framejs_frame.py
-        restore`` and the framejs local server, so the URL round-trips with them.
-        Raises :class:`FramejsUnavailable` if the frame directory is missing.
-        """
-        parts = [f"js={string_to_base64_string(self.js_source())}"]
-        # Order mirrors the framejs local server's frameToUrl (hash-query keys).
-        for key in ("options", "inputs", "definition", "og", "modules"):
-            value = self._frame_json(f"{key}.json")
-            if value is None:
-                continue
-            encoded = string_to_base64_string(json.dumps(value, separators=(",", ":")))
-            parts.append(f"{key}={encoded}")
-        return f"{FRAMEJS_BASE}/#?" + "&".join(parts)
-
-    def resolve_url(self) -> str:
-        """Return the base viz URL: the on-disk frame if present, else the uuid.
-
-        Local is preferred because it always matches the installed code, needs
-        nothing from framejs.io's frame store, and cannot expire. The canonical
-        form is a deliberate opt-in — see ``short=True`` in :func:`build_cli_url`.
-
-        Raises :class:`FramejsUnavailable` if neither form is available.
-        """
-        if self.has_local():
-            return self.local_url()
-        if self.published:
-            return self.canonical_url()
+    Raises :class:`FramejsUnavailable` if the frame has not been published.
+    """
+    if not FRAME_UUID:
         raise FramejsUnavailable(
-            f"viz {self.frame!r} has neither an on-disk frame directory nor a published "
-            f"uuid; add viz_assets/{self.frame}/ or publish it (`just publish-viz`)."
+            f"viz frame {FRAME!r} has no published framejs.io uuid yet; publish it "
+            f"with `just publish-viz` and pin the uuid as FRAME_UUID."
         )
+    # On the /j/<uuid> route, `inputs` appended in the hash (the CLI path) take
+    # priority over the frame's baked-in inputs — what gufe relies on.
+    return f"{FRAMEJS_BASE}/j/{FRAME_UUID}"
+
+
+def resolve_url() -> str:
+    """Return the base viz URL: the on-disk frame if present, else the uuid.
+
+    Local is preferred because it always matches the installed code, needs
+    nothing from framejs.io's frame store, and cannot expire. The canonical form
+    is a deliberate opt-in — see ``short=True`` in :func:`build_cli_url`.
+
+    Raises :class:`FramejsUnavailable` if neither form is available.
+    """
+    if has_local():
+        return local_url()
+    if FRAME_UUID:
+        return canonical_url()
+    raise FramejsUnavailable(
+        f"viz frame {FRAME!r} has neither an on-disk directory nor a published uuid; "
+        f"add viz_assets/{FRAME}/ or publish it (`just publish-viz`)."
+    )
 
 
 # --------------------------------------------------------------------------- #
 # Payload builders: object -> the frame's `inputs` dict.                        #
-# Keys follow the convention documented in the module docstring.                #
+# Keys follow the convention documented in the module docstring, and are what    #
+# the frame dispatches on.                                                      #
 # --------------------------------------------------------------------------- #
 
 
 def _ligand_network_payload(net) -> dict[str, Any]:
-    """Serialize a :class:`gufe.LigandNetwork` for the ``ligand_network`` frame.
+    """Serialize a :class:`gufe.LigandNetwork` for the ligand-network view.
 
     We push the exact ``LigandNetwork.to_graphml()`` output — the same
     serialization gufe uses everywhere — and the frame parses the GraphML itself,
@@ -342,8 +331,8 @@ def _alchemical_network_payload(net) -> dict[str, Any]:
 # -- shared component shapes ------------------------------------------------- #
 #
 # ChemicalSystem, Transformation and AlchemicalNetwork all describe the components
-# they contain. They share these two shapes so their frames can render a component
-# with the same code:
+# they contain. They share these two shapes so the frame can render a component
+# with the same code wherever it turns up:
 #
 #   summary    {"label", "type", "name"}                     — topology only
 #   descriptor summary + {"sdf"|"pdb"|solvent fields, ...}   — enough to draw it
@@ -371,7 +360,7 @@ def _component_descriptor(label: str, comp) -> dict[str, Any]:
 
 
 def _chemical_system_fields(system) -> dict[str, Any]:
-    """The inner object shared by the chemical_system and transformation vizzes."""
+    """The inner object shared by the chemical-system and transformation views."""
     return {
         "name": system.name,
         "components": [_component_descriptor(label, comp) for label, comp in sorted(system.components.items())],
@@ -409,35 +398,23 @@ def _json_safe(value: Any) -> Any:
 
 
 # --------------------------------------------------------------------------- #
-# The registry: gufe class name -> its visualization.                           #
+# The registry: gufe class name -> how it is serialized for the frame.          #
 # --------------------------------------------------------------------------- #
 #
 # Looked up over the object's MRO (see `_registry_lookup`), so subclasses such as
 # `SolvatedPDBComponent` (a `ProteinComponent`) and `NonTransformation` (a
-# `TransformationBase`) inherit their base's viz and serializer for free.
-#
-# `LigandNetwork` is the one viz published to framejs.io so far; the rest have no
-# uuid and so resolve via their on-disk frame. To publish one, run
-# `just publish-viz` and pin the uuid it prints here.
-VIZ_REGISTRY: dict[str, VizRef] = {
-    "LigandNetwork": VizRef(
-        frame="ligand_network",
-        payload=_ligand_network_payload,
-        uuid="019f2b55e1f57722af0293acbda78362",
-    ),
-    "AlchemicalNetwork": VizRef(frame="alchemical_network", payload=_alchemical_network_payload),
+# `TransformationBase`) inherit their base's serializer for free.
+PAYLOAD_REGISTRY: dict[str, Callable[[Any], dict[str, Any]]] = {
+    "LigandNetwork": _ligand_network_payload,
+    "AlchemicalNetwork": _alchemical_network_payload,
     # Registered on the base so `Transformation` and `NonTransformation` (which are
     # siblings, not parent/child) both resolve to it.
-    "TransformationBase": VizRef(frame="transformation", payload=_transformation_payload),
-    "ChemicalSystem": VizRef(frame="chemical_system", payload=_chemical_system_payload),
-    "LigandAtomMapping": VizRef(frame="ligand_atom_mapping", payload=_ligand_atom_mapping_payload),
-    "SmallMoleculeComponent": VizRef(frame="small_molecule_component", payload=_small_molecule_component_payload),
-    "ProteinComponent": VizRef(
-        frame="protein_component", payload=_protein_component_payload, default_height="560px"
-    ),
-    "SolventComponent": VizRef(
-        frame="solvent_component", payload=_solvent_component_payload, default_height="320px"
-    ),
+    "TransformationBase": _transformation_payload,
+    "ChemicalSystem": _chemical_system_payload,
+    "LigandAtomMapping": _ligand_atom_mapping_payload,
+    "SmallMoleculeComponent": _small_molecule_component_payload,
+    "ProteinComponent": _protein_component_payload,
+    "SolventComponent": _solvent_component_payload,
 }
 
 
@@ -445,7 +422,7 @@ def _registry_lookup(obj, registry: dict[str, Any]):
     """Look ``obj``'s type up in a registry, walking the MRO for the best match.
 
     Exact class first, then base classes in MRO order — so a subclass gets its
-    parent's viz unless it registers its own. Returns ``None`` on no match.
+    parent's entry unless it registers its own. Returns ``None`` on no match.
     """
     for klass in type(obj).__mro__:
         hit = registry.get(klass.__name__)
@@ -454,12 +431,15 @@ def _registry_lookup(obj, registry: dict[str, Any]):
     return None
 
 
-def _viz_for(obj) -> VizRef:
-    """The :class:`VizRef` registered for ``obj``'s class (or a base of it)."""
-    viz = _registry_lookup(obj, VIZ_REGISTRY)
-    if viz is None:
+def payload_for_object(obj) -> dict[str, Any]:
+    """Serialize ``obj`` into the frame's ``inputs`` dict.
+
+    Raises :class:`FramejsUnavailable` if nothing is registered for its class.
+    """
+    builder = _registry_lookup(obj, PAYLOAD_REGISTRY)
+    if builder is None:
         raise FramejsUnavailable(f"no framejs viz registered for {type(obj).__name__!r}")
-    return viz
+    return builder(obj)
 
 
 # --------------------------------------------------------------------------- #
@@ -468,26 +448,25 @@ def _viz_for(obj) -> VizRef:
 
 
 def _build_widget(obj, *, width: str | None = None, height: str | None = None) -> "MetaframeWidget":
-    """Build the notebook widget for ``obj``: load its viz URL, push its data.
+    """Build the notebook widget for ``obj``: load the viz URL, push its data.
 
-    Raises :class:`FramejsUnavailable` if no viz is registered, the widget
-    dependency is missing, or no URL form is available.
+    Raises :class:`FramejsUnavailable` if nothing is registered for the object,
+    the widget dependency is missing, or no URL form is available.
     """
-    viz = _viz_for(obj)
+    payload = payload_for_object(obj)
     try:
         from metaframe_widget import MetaframeWidget
     except ImportError as e:
         raise FramejsUnavailable(
-            "metaframe-widget is not installed; install the visualization extra "
-            "with `pip install gufe[viz]`"
+            "metaframe-widget is not installed; install the visualization extra with `pip install gufe[viz]`"
         ) from e
 
     widget = MetaframeWidget(
-        url=viz.resolve_url(),
-        width=width or viz.default_width,
-        height=height or viz.default_height,
+        url=resolve_url(),
+        width=width or DEFAULT_WIDTH,
+        height=height or DEFAULT_HEIGHT,
     )
-    widget.set_inputs(viz.payload(obj))  # live over the comm channel — never in the URL
+    widget.set_inputs(payload)  # live over the comm channel — never in the URL
     return widget
 
 
@@ -592,18 +571,17 @@ def build_cli_url(obj, *, short: bool = False) -> str:
     ----------
     short
         Build on the pinned ``/j/<uuid>`` instead of inlining the frame's
-        JavaScript, which is what makes these URLs big — for a ``LigandNetwork``
-        that is ~10 kB rather than ~140 kB, the difference between a link you can
-        paste somewhere and one you cannot. Requires the viz to have been
-        published; raises :class:`FramejsUnavailable` if it has not been.
+        JavaScript, which is what makes these URLs big — the difference between a
+        link you can paste somewhere and one you cannot. Requires the frame to
+        have been published; raises :class:`FramejsUnavailable` if it has not been.
 
         The default (``False``) is self-contained: it needs nothing from
         framejs.io's frame store, always matches the installed gufe, and cannot
         expire.
     """
-    viz = _viz_for(obj)
-    base = viz.canonical_url() if short else viz.resolve_url()
-    encoded = string_to_base64_string(json.dumps(viz.payload(obj)))
+    payload = payload_for_object(obj)
+    base = canonical_url() if short else resolve_url()
+    encoded = string_to_base64_string(json.dumps(payload))
     # The local URL already carries a `#?js=…` hash — merge inputs into it with
     # `&`; the canonical `/j/<uuid>` URL has no hash yet, so start one with `#?`.
     sep = "&" if "#?" in base else "#?"

@@ -128,7 +128,7 @@ def test_viewer_page_bakes_in_the_frame_url_but_no_data(client, data_dir):
     assert status == 200
     config = page_config(body)
     # the viz JavaScript is baked in by Python...
-    assert config["frame_url"] == server._viz_for(server.load_object(data_dir / "network.graphml")).resolve_url()
+    assert config["frame_url"] == server.resolve_url()
     assert config["object_type"] == "LigandNetwork"
     # ...and the object is NOT: it is fetched from the server, like the notebook
     # pushes it over the comm channel.

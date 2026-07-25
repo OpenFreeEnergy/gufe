@@ -178,12 +178,12 @@ ci: dev wait-ready test-framejs
 
 # Print the full hash-param framejs.io URL for a frame dir (offline, no account).
 # This is exactly the URL gufe builds by default from disk.
-@viz-url FRAME=(VIZ_ASSETS / "network"):
+@viz-url FRAME=(VIZ_ASSETS / "gufe"):
     {{ FRAME_HELPER }} restore "{{ FRAME }}"
 
 # Save a framejs.io URL (…/#?js=…&og=…) back into a frame dir — captures edits to
 # disk as code.js/og.json/…  e.g. after tweaking a frame in the browser editor.
-@viz-save URL FRAME=(VIZ_ASSETS / "network"):
+@viz-save URL FRAME=(VIZ_ASSETS / "gufe"):
     {{ FRAME_HELPER }} save "{{ URL }}" "{{ FRAME }}"
 
 # Browse & live-edit every on-disk frame under viz_assets/ in the browser. Needs
@@ -204,11 +204,11 @@ viz-edit ROOT=VIZ_ASSETS PORT="4700":
 # ── Publish a frame dir to a canonical framejs.io /j/<uuid> (HOST-side; node+net) ─
 # OPTIONAL — the default runtime path builds a local URL from disk and needs no
 # account. Publish only to get a short, shareable /j/<uuid> you can update without
-# re-releasing gufe. Prints the uuid to pin in VIZ_REGISTRY (or export as
+# re-releasing gufe. Prints the uuid to pin as FRAME_UUID
 # ⚠ A fresh frame is ANONYMOUS and EXPIRES — open
 # the printed page and CLAIM it under a (free) framejs account to keep the uuid.
 # Override the publish helper with FRAMEJS_HELPER=<path to framejs.mjs>.
-publish-viz FRAME=(VIZ_ASSETS / "network") ID="network":
+publish-viz FRAME=(VIZ_ASSETS / "gufe") ID="gufe":
     #!/usr/bin/env bash
     set -euo pipefail
     helper="${FRAMEJS_HELPER:-$HOME/.claude/skills/framejs/scripts/framejs.mjs}"
@@ -236,6 +236,6 @@ publish-viz FRAME=(VIZ_ASSETS / "network") ID="network":
     uuid="$(printf '%s\n' "$url" | sed -E 's#.*/j/([^/?]+).*#\1#')"
     echo ""
     echo "  canonical url : https://framejs.io/j/$uuid"
-    echo "  pin in gufe   : VIZ_REGISTRY['…'] uuid=\"$uuid\"   (src/gufe/visualization/framejs.py)"
+    echo "  pin in gufe   : FRAME_UUID=\"$uuid\"   (src/gufe/visualization/framejs.py)"
     echo ""
     echo "  ⚠ open $url while logged in to a framejs account and CLAIM it (anonymous frames expire)."
