@@ -1,12 +1,18 @@
 name: gufe-viz
 
-# Self-contained dev stack for the gufe framejs visualizations. gufe env, NATIVE
-# arm64, fast. Covers all `.view()` development (every target class lives in gufe),
-# a JupyterLab demo, and a marimo demo. `just dev` brings it up.
+# Two self-contained demos of the gufe framejs visualization. Plain Docker
+# Compose — no `just`, nothing installed on the host but Docker:
+#
+#   docker compose up notebook      → Demo 1: .view() in JupyterLab  (http://localhost:8888/lab)
+#   docker compose up openfe-view   → Demo 2: `openfe view` server    (http://localhost:8899)
+#
+# Both build the same fast native-arm64 gufe image and editable-install the
+# checkout one level up, so host edits to `src/gufe/` (including the frame,
+# `viz_assets/gufe/code.js`) are live — restart the kernel / the service.
 x-gufe: &gufe
   build:
-    # Context is the repo root (one level up) so the build can see the core
-    # gufe files it needs — environment.yml lives there, not in this subdir.
+    # Context is the gufe repo root (one level up): the build needs environment.yml,
+    # which lives there, not in this subdir.
     context: ..
     dockerfile: visualization-demo/Dockerfile
     args:
@@ -15,27 +21,20 @@ x-gufe: &gufe
   environment:
     - SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0+docker
   volumes:
-    # The gufe checkout (repo root, one level up), editable-installed over the
-    # env (host edits are live — just restart the kernel, no rebuild). Mounted
-    # at /src so its `gufe` dir name doesn't shadow the editable-installed
-    # package (src layout).
+    # The gufe checkout (repo root), editable-installed over the env. Mounted at
+    # /src so its `gufe` dir name doesn't shadow the installed package (src layout).
     - ..:/src/gufe
-    # Notebook surfaces served under /workspace.
     - ./demo:/workspace/demo
     - ./scratch:/workspace/scratch
-    # Cloned locally by `just dev` (git-ignored) — real OpenFE demo inputs +
-    # notebook, available for richer demoing. See `just _ensure-openfe-demo`.
-    - ./openfe-demo:/workspace/openfe-demo
-    # To develop the metaframe-widget itself (instead of the PyPI build), use
-    # `just dev-widget` — it layers docker-compose.widget.yml to mount your local
-    # checkout ($FRAMEJS_IO_REPO/python) over the image's widget.
 
 services:
-  # JupyterLab — primary notebook surface. http://localhost:8888/lab
-  # Open demo/framejs_demo.ipynb to see LigandNetwork.view() render.
-  jupyter:
+  # ── Demo 1 — the NOTEBOOK implementation ──────────────────────────────────
+  # `.view()` and bare-cell rendering of gufe objects. Open demo/framejs_demo.ipynb;
+  # it builds one of every visualizable gufe type from the bundled test data and
+  # renders each. Self-contained — no openfe, no external data.
+  notebook:
     <<: *gufe
-    container_name: gufe-viz-jupyter
+    container_name: gufe-viz-notebook
     command:
       - dev-start.sh
       - jupyter
@@ -49,17 +48,23 @@ services:
     ports:
       - "8888:8888"
 
-  # The TERMINAL path, in miniature: gufe's local viz server — what `openfe view
-  # <file>` runs. http://localhost:8899 lists every viewable fixture; click one
-  # and the page loads its framejs visualization and feeds it the file's data,
-  # exactly as the notebook widget does. Point it elsewhere with VIZ_TARGET.
+  # ── Demo 2 — the `openfe view` implementation ─────────────────────────────
+  # The local viz server: this is exactly what `openfe view <file>` runs (the
+  # openfe CLI command is a thin wrapper around gufe.visualization.server). It
+  # serves a browsable listing of gufe's test fixtures at http://localhost:8899;
+  # click any file to see its visualization.
   #
-  # Note --host=0.0.0.0: inside a container the server must bind all interfaces
-  # to be reachable through the published port, and there is no browser to open,
-  # so it only prints the URL (`docker compose logs viz` shows it).
-  viz:
+  #  --proxy re-hosts framejs.io on this origin so the frame and the data share
+  #          an origin — required for Chrome (Local Network Access), harmless in
+  #          Firefox. See ../src/gufe/visualization/README.md.
+  #  --host 0.0.0.0 : reachable through the published port from the host.
+  #  --no-browser   : there is no browser inside the container; open the URL yourself.
+  #
+  # Point it at one file (or your own directory) with VIZ_TARGET:
+  #   VIZ_TARGET=/src/gufe/src/gufe/tests/data/181l.pdb docker compose up openfe-view
+  openfe-view:
     <<: *gufe
-    container_name: gufe-viz-server
+    container_name: gufe-viz-openfe-view
     command:
       - dev-start.sh
       - python
@@ -68,13 +73,17 @@ services:
       - --host=0.0.0.0
       - --port=8899
       - --no-browser
+      - --proxy
       - ${VIZ_TARGET:-/src/gufe/src/gufe/tests/data}
     ports:
       - "8899:8899"
 
-  # marimo — proves the py3Dmol→anywidget fix renders. http://localhost:2718
+  # ── Optional — the same .view() rendering in marimo ───────────────────────
+  # marimo renders anywidgets natively (where legacy py3Dmol output breaks).
+  #   docker compose --profile marimo up marimo   → http://localhost:2718
   marimo:
     <<: *gufe
+    profiles: ["marimo"]
     container_name: gufe-viz-marimo
     command:
       - dev-start.sh

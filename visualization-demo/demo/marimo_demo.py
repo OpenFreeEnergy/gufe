@@ -1,6 +1,6 @@
 """marimo demo for the gufe framejs visualizations.
 
-Run with:  just dev  (marimo → http://localhost:2718)
+Run with:  docker compose --profile marimo up marimo  (→ http://localhost:2718)
 
 marimo is where the py3Dmol pain point shows: py3Dmol does not produce an
 anywidget and breaks here, whereas MetaframeWidget (what gufe `.view()` returns)

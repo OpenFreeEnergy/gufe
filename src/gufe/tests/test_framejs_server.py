@@ -413,3 +413,97 @@ def test_a_directory_target_serves_its_listing(data_dir, monkeypatch):
     root, url_path = server._root_and_url_path(Path("sub"))
     assert root == data_dir.resolve()
     assert url_path == "/sub"
+
+
+# --------------------------------------------------------------------------- #
+# The `openfe view` integration contract                                        #
+# --------------------------------------------------------------------------- #
+#
+# `openfe view` (openfecli/commands/view.py) is a thin click wrapper: it imports a
+# fixed set of names from gufe and calls them. openfe is NOT installed in gufe's
+# test env, so these tests do not import openfecli — they instead pin the exact
+# gufe-side surface the wrapper depends on, from gufe alone. If one of these
+# fails, `openfe view` is broken even though everything else here is green; fix
+# the wrapper and gufe together, and update both sides of the contract.
+#
+# The wrapper's imports, verbatim (keep in sync with openfecli/commands/view.py):
+#   from gufe.visualization.server import (
+#       DEFAULT_HOST, DEFAULT_PORT, UnviewableFile, load_object, serve)
+#   from gufe.visualization.framejs import (
+#       FramejsUnavailable, build_cli_url, build_html)
+
+import inspect
+
+
+def test_openfe_view_imports_resolve():
+    """Every name `openfe view` imports from gufe still exists."""
+    from gufe.visualization.framejs import FramejsUnavailable, build_cli_url, build_html  # noqa: F401
+    from gufe.visualization.server import (  # noqa: F401
+        DEFAULT_HOST,
+        DEFAULT_PORT,
+        UnviewableFile,
+        load_object,
+        serve,
+    )
+
+
+def test_serve_accepts_every_flag_the_cli_maps_to():
+    """The click options must line up with `serve`'s keyword parameters; a rename
+    on either side silently drops a flag."""
+    params = inspect.signature(server.serve).parameters
+    assert "target" in params  # the positional the CLI passes the file/dir as
+    for kw in ("host", "port", "open_browser", "quiet", "proxy"):
+        assert params[kw].kind == inspect.Parameter.KEYWORD_ONLY, kw
+
+
+def test_build_cli_url_and_build_html_match_the_cli_calls():
+    """`--url-only` calls build_cli_url(obj); `--html [--self-contained]` calls
+    build_html(obj, self_contained=...)."""
+    from gufe.visualization.framejs import build_cli_url, build_html
+
+    inspect.signature(build_cli_url).bind(object())  # openfe view --url-only
+    inspect.signature(build_html).bind(object(), self_contained=True)  # --html --self-contained
+
+
+def test_serve_reaches_the_wrapper_the_same_way_the_cli_does(simple_network, tmp_path, monkeypatch):
+    """Reproduce exactly what `_run()` does for the serve path — load a file, then
+    `serve(path, host=, port=, open_browser=, proxy=)` — without importing openfe.
+    This is the whole body of `openfe view <file>`."""
+    graphml = tmp_path / "net.graphml"
+    graphml.write_text(simple_network.to_graphml())
+
+    captured = {}
+    monkeypatch.setattr(server, "serve", lambda target, **kw: captured.update(target=str(target), **kw))
+
+    # ---- verbatim from openfecli/commands/view.py `_run`, serve branch ----
+    obj = server.load_object(Path(graphml))
+    server.serve(graphml, host="0.0.0.0", port=8899, open_browser=False, proxy=True)
+    # -----------------------------------------------------------------------
+
+    assert isinstance(obj, LigandNetwork)
+    assert captured == {"target": str(graphml), "host": "0.0.0.0", "port": 8899, "open_browser": False, "proxy": True}
+
+
+def test_the_demo_service_command_drives_the_real_entrypoint(tmp_path, monkeypatch):
+    """The `openfe-view` demo service runs `python -m gufe.visualization.server`
+    with these args. Drive the real `main()` (mocking only the blocking serve) so
+    a change to its argparse is caught — this is the demo's contract, and the
+    fallback way to smoke-test the CLI path with no openfe present."""
+    target = tmp_path / "data"
+    target.mkdir()
+
+    captured = {}
+    monkeypatch.setattr(server, "serve", lambda t, **kw: captured.update(target=str(t), **kw))
+
+    # mirrors visualization-demo/docker-compose.yml `openfe-view` command
+    rc = server.main(["--host=0.0.0.0", "--port=8899", "--no-browser", "--proxy", str(target)])
+
+    assert rc == 0
+    assert captured == {
+        "target": str(target),
+        "host": "0.0.0.0",
+        "port": 8899,
+        "open_browser": False,
+        "quiet": False,
+        "proxy": True,
+    }

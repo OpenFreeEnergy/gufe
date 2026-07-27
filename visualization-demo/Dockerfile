@@ -29,7 +29,7 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 # Notebook tooling, the widget (PyPI), and editable-install build backends.
 # Backends must be present for `pip install -e --no-build-isolation`:
 #   setuptools/setuptools-scm → gufe;  hatchling/editables → metaframe-widget
-#   (only needed for `just dev-widget`, harmless otherwise).
+#   (only needed for the docker-compose.widget.yml override, harmless otherwise).
 RUN --mount=type=cache,target=/home/mambauser/.cache/pip,uid=57439,gid=57439,sharing=locked \
     python -m pip install \
       jupyterlab marimo ipykernel \
