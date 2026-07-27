@@ -259,6 +259,125 @@ def test_build_cli_url_short_raises_when_unpublished(simple_network):
         framejs.build_cli_url(simple_network, short=True)
 
 
+# --------------------------------------------------------------------------- #
+# Standalone HTML — one file, no server, no framejs.io                          #
+# --------------------------------------------------------------------------- #
+
+
+def test_build_html_inlines_the_frame_and_the_payload(simple_network):
+    page = framejs.build_html(simple_network)
+    assert page.startswith("<!doctype html>")
+    # the viz JavaScript is in the file, not linked to framejs.io
+    assert "framejs.io" not in page
+    assert "export async function onInputs" in page
+    assert '<script type="module">' in page
+    # ...and so is the object
+    inputs = json.loads(page.split('type="application/json">', 1)[1].split("</script>", 1)[0].replace("<\\/", "</"))
+    assert "<graphml" in inputs["network.graphml"]
+    assert inputs == framejs.payload_for_object(simple_network)
+
+
+def test_build_html_bootstraps_the_frame(simple_network):
+    """The frame is an ES module reading a global `root`, so the page must set
+    that up before the module runs and then hand it the payload itself."""
+    page = framejs.build_html(simple_network)
+    assert 'window.root = document.getElementById("gufe-root");' in page
+    # the classic script setting `root` must come before the deferred module
+    assert page.index("window.root =") < page.index('<script type="module">')
+    assert "await onInputs(JSON.parse(" in page
+    assert "onResize()" in page
+
+
+def test_build_html_titles_the_page_with_the_object_type(simple_network):
+    assert "<title>LigandNetwork</title>" in framejs.build_html(simple_network)
+    assert "<title>my run</title>" in framejs.build_html(simple_network, title="my run")
+
+
+def test_build_html_escapes_the_title(simple_network):
+    page = framejs.build_html(simple_network, title="<script>alert(1)</script>")
+    assert "<title>&lt;script&gt;alert(1)&lt;/script&gt;</title>" in page
+
+
+def test_build_html_defaults_to_cdn_engines(simple_network):
+    """The default file is small and pulls the engines when opened; that is what
+    keeps a report emailable."""
+    page = framejs.build_html(simple_network)
+    # the frame *reads* the pre-seed hook (it is in code.js), but nothing sets it
+    assert "window.__gufeEngines = {" not in page
+    assert "locateFile" not in page
+    assert len(page.encode()) < 1_000_000
+
+
+def test_build_html_payload_cannot_close_the_script_block():
+    """A molecule name (or any payload string) containing `</script>` must not be
+    able to break out of the JSON block."""
+    from gufe import SolventComponent
+
+    obj = SolventComponent()
+    page = framejs.build_html(obj)
+    body = page.split('type="application/json">', 1)[1].split("</script>", 1)[0]
+    assert "</" not in body  # every one was escaped to `<\/`
+    # and it is still valid JSON once unescaped, which is what the page does
+    json.loads(body.replace("<\\/", "</"))
+
+
+def test_script_safe_neutralizes_a_closing_tag():
+    assert framejs._script_safe('var s = "</script>";') == 'var s = "<\\/script>";'
+    assert framejs._script_safe("var s = '</SCRIPT>';") == "var s = '<\\/SCRIPT>';"
+    assert framejs._script_safe("a < b") == "a < b"  # untouched
+
+
+def test_the_frame_code_needs_no_escaping():
+    """Belt and braces: `_script_safe` is applied to code.js, but the frame should
+    not contain the sequence in the first place."""
+    assert "</script" not in framejs.js_source().lower()
+
+
+def test_build_html_requires_the_frame_on_disk(simple_network, published_frame):
+    """Unlike the URL forms, a pinned uuid is no substitute — the whole point is
+    to have the code in the file."""
+    with pytest.raises(framejs.FramejsUnavailable):
+        framejs.build_html(simple_network)
+
+
+def test_build_html_unregistered_type_raises():
+    with pytest.raises(framejs.FramejsUnavailable):
+        framejs.build_html(object())
+
+
+def test_build_html_self_contained_inlines_the_engines(simple_network, monkeypatch):
+    """Hermetic: the downloader is stubbed, so this pins the *wiring* — the
+    engines end up inline and pre-seeded through the hook code.js reads."""
+    fetched = []
+
+    def fake_fetch(url, **kwargs):
+        fetched.append(url)
+        return b"/* wasm */" if url.endswith(".wasm") else f"/* {url} */".encode()
+
+    monkeypatch.setattr(framejs, "_fetch_engine", fake_fetch)
+    page = framejs.build_html(simple_network, self_contained=True)
+
+    assert sorted(fetched) == sorted(framejs.ENGINE_URLS.values())
+    for url in framejs.ENGINE_URLS.values():
+        if not url.endswith(".wasm"):
+            assert f"/* {url} */" in page
+    # the hook the frame's loaders check, with all three engines on it
+    assert "window.__gufeEngines = { threeDmol: window.$3Dmol, d3: window.d3, rdkit: rdkitReady };" in page
+    # RDKit's wasm has no neighbouring file to find, so it rides as a data: URL
+    assert 'locateFile: () => "data:application/wasm;base64,' in page
+    assert base64.b64encode(b"/* wasm */").decode() in page
+    # engines must be inlined before the module that consumes them
+    assert page.index("__gufeEngines") < page.index('<script type="module">')
+
+
+def test_the_frame_reads_the_engine_preseed_hook():
+    """The contract between build_html(self_contained=True) and code.js."""
+    src = framejs.js_source()
+    assert "__gufeEngines" in src
+    for engine in ("threeDmol", "d3", "rdkit"):
+        assert f"preseededEngine('{engine}')" in src
+
+
 def test_module_reads_no_environment_variables():
     """Behaviour comes from the registry and the caller's arguments, not the env.
 

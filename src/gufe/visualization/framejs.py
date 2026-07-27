@@ -68,6 +68,12 @@ is never re-derived per object:
   URL's hash as ``inputs=<b64>``. Appended ``inputs`` take priority over anything
   baked into the frame. See :func:`build_cli_url`.
 
+There is one artifact that uses neither URL: :func:`build_html` writes a
+standalone page with the frame's JavaScript and the object both inlined, so it
+needs no server and nothing from framejs.io. It is what ``openfe view --html``
+produces, and with ``self_contained=True`` it embeds RDKit / 3Dmol / d3 as well
+and needs no network at all.
+
 This module reads no environment variables: what it does is determined by the
 registry and the caller's arguments.
 
@@ -81,6 +87,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 import urllib.parse
 import warnings
 from importlib import resources
@@ -586,3 +593,166 @@ def build_cli_url(obj, *, short: bool = False) -> str:
     # `&`; the canonical `/j/<uuid>` URL has no hash yet, so start one with `#?`.
     sep = "&" if "#?" in base else "#?"
     return f"{base}{sep}inputs={encoded}"
+
+
+# --------------------------------------------------------------------------- #
+# Standalone HTML — one file, no server, no framejs.io                          #
+# --------------------------------------------------------------------------- #
+#
+# The third artifact, alongside the served page and the shareable URL. It has
+# neither of their constraints: no process has to stay alive, and the object is
+# not squeezed through a URL, so a solvated AlchemicalNetwork fits. What it gives
+# up is live data — the object is frozen into the file when it is written.
+#
+# The frame is an ES module reading a global `root`, so the page sets that up in
+# a classic script (which runs first) and inlines `code.js` into a module script
+# with a bootstrap appended that hands it the baked-in payload.
+
+#: Where ``self_contained=True`` fetches the engines from. These are the same
+#: builds ``code.js`` loads on demand, except d3, which is taken as the UMD
+#: bundle (it must set ``window.d3`` for a classic ``<script>``) rather than the
+#: ESM one the frame ``import()``s.
+ENGINE_URLS = {
+    "threeDmol": "https://3dmol.org/build/3Dmol-min.js",
+    "d3": "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js",
+    "rdkit": "https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js",
+    "rdkit_wasm": "https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.wasm",
+}
+
+_STANDALONE_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column;
+         font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+  #gufe-root { flex: 1 1 auto; min-height: 0; }
+  #gufe-error { display: none; flex: 0 0 auto; padding: 12px 16px; white-space: pre-wrap;
+                font-family: ui-monospace, monospace; color: #991b1b; background: #fee2e2; }
+</style>
+</head>
+<body>
+<div id="gufe-error"></div>
+<div id="gufe-root"></div>
+<script id="gufe-inputs" type="application/json">__INPUTS__</script>
+__ENGINES__
+<script>window.root = document.getElementById("gufe-root");</script>
+<script type="module">
+__CODE__
+
+// ---- standalone bootstrap: hand the frame the payload baked into this file ----
+window.addEventListener("resize", () => onResize());
+try {
+  await onInputs(JSON.parse(document.getElementById("gufe-inputs").textContent));
+} catch (e) {
+  const err = document.getElementById("gufe-error");
+  err.textContent = String((e && e.stack) || e);
+  err.style.display = "block";
+}
+</script>
+</body>
+</html>
+"""
+
+_CDN_ENGINES_NOTE = (
+    "<!-- RDKit / 3Dmol / d3 are fetched from their CDNs on demand, and only by a\n"
+    "     view that needs them. Export with `self_contained=True` to inline them\n"
+    "     instead and drop the network requirement entirely. -->"
+)
+
+
+def _script_safe(text: str) -> str:
+    """Neutralize the one sequence that can close a ``<script>`` block early.
+
+    ``</script`` inside minified JavaScript only ever occurs within a string or
+    regex literal, where ``<\\/script`` is an identity escape meaning exactly the
+    same thing.
+    """
+    return re.sub(r"</(script)", r"<\\/\1", text, flags=re.IGNORECASE)
+
+
+def _fetch_engine(url: str, *, timeout: float = 120.0) -> bytes:
+    """Download one engine bundle for :func:`build_html`'s self-contained mode."""
+    import urllib.request
+
+    with urllib.request.urlopen(url, timeout=timeout) as response:
+        return response.read()
+
+
+def _inlined_engines() -> str:
+    """Inline RDKit, 3Dmol and d3, and pre-seed them for the frame's loaders.
+
+    RDKit is an Emscripten module whose ``.wasm`` normally sits next to its
+    ``.js``; with the ``.js`` inlined there is no such neighbour, so the binary
+    rides along as a ``data:`` URL that ``locateFile`` points at. This is where
+    almost all of the file size goes (~7 MB before base64).
+    """
+    wasm = base64.b64encode(_fetch_engine(ENGINE_URLS["rdkit_wasm"])).decode("ascii")
+    blocks = [
+        "<script>" + _script_safe(_fetch_engine(ENGINE_URLS[name]).decode("utf-8")) + "</script>"
+        for name in ("threeDmol", "d3", "rdkit")
+    ]
+    blocks.append(
+        "<script>\n"
+        "// Hand the engines to the frame so its loaders never reach the network.\n"
+        'const rdkitReady = window.initRDKitModule({ locateFile: () => "data:application/wasm;base64,'
+        + wasm
+        + '" });\n'
+        "rdkitReady.catch(() => {});  // a view that never needs RDKit must not warn\n"
+        "window.__gufeEngines = { threeDmol: window.$3Dmol, d3: window.d3, rdkit: rdkitReady };\n"
+        "</script>"
+    )
+    return "\n".join(blocks)
+
+
+def build_html(obj, *, self_contained: bool = False, title: str | None = None) -> str:
+    """Return a standalone HTML page that renders ``obj``, as one self-sufficient file.
+
+    The frame's JavaScript and this object's ``inputs`` are both inlined, so the
+    page needs no server, no framejs.io and no gufe install to open — but the data
+    in it is frozen at the moment it was written.
+
+    Parameters
+    ----------
+    self_contained
+        Also inline RDKit, 3Dmol and d3, so the page renders with no network at
+        all. Requires network *now* (the engines are downloaded) and costs about
+        10 MB, almost all of it RDKit's WebAssembly binary. The default leaves
+        them to be fetched from their CDNs when the page is opened, which keeps
+        the file small and is what you want for anything that will be read online.
+    title
+        The page ``<title>``. Defaults to the object's class name.
+
+    Raises
+    ------
+    FramejsUnavailable
+        If nothing is registered for the object's class, or the frame directory
+        is missing (unlike the URL forms, a pinned uuid is no substitute here —
+        the point is to have the code in the file).
+    OSError
+        If ``self_contained`` is set and an engine cannot be downloaded.
+    """
+    payload = payload_for_object(obj)
+    code = js_source()  # raises if the frame directory is missing
+
+    substitutions = {
+        "__TITLE__": _escape_html(title or type(obj).__name__),
+        # `</` cannot appear inside a <script> block, whatever the payload holds;
+        # `\/` is a legal JSON escape, so this survives JSON.parse unchanged.
+        "__INPUTS__": json.dumps(payload).replace("</", "<\\/"),
+        "__ENGINES__": _inlined_engines() if self_contained else _CDN_ENGINES_NOTE,
+        "__CODE__": _script_safe(code),
+    }
+    # One pass, so a token appearing inside a substituted value is left alone.
+    return re.sub(
+        "|".join(substitutions),
+        lambda m: substitutions[m.group(0)],
+        _STANDALONE_HTML,
+    )
+
+
+def _escape_html(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

@@ -97,12 +97,13 @@ Every path serializes the object with the same `PAYLOAD_REGISTRY` builder and
 loads the same base URL, built once from the one on-disk frame. They differ
 **only** in how that payload reaches the frame.
 
-| | Notebook | Terminal | Shareable link |
-| --- | --- | --- | --- |
-| entry point | `.view()` / bare cell → `view_object()` / `repr_mimebundle()` | `server.serve(path)` → `openfe view <file>` | `build_cli_url(obj)` → `openfe view --url-only` |
-| carrier | `MetaframeWidget.set_inputs()` — live over the widget comm channel | `fetch()` from the served page → `metapage.setInputs()` | `…&inputs=<base64(json)>` appended to the URL hash |
-| size limit | none | none | the URL's |
-| result | an iframe inline in the cell, updatable in place | a page at `http://localhost:8899/<the file's path>` | one link you can paste anywhere |
+| | Notebook | Terminal | Shareable link | Standalone file |
+| --- | --- | --- | --- | --- |
+| entry point | `.view()` / bare cell → `view_object()` / `repr_mimebundle()` | `server.serve(path)` → `openfe view <file>` | `build_cli_url(obj)` → `openfe view --url-only` | `build_html(obj)` → `openfe view --html FILE` |
+| carrier | `MetaframeWidget.set_inputs()` — live over the widget comm channel | `fetch()` from the served page → `metapage.setInputs()` | `…&inputs=<base64(json)>` appended to the URL hash | a `<script type="application/json">` block in the page |
+| size limit | none | none | the URL's | none |
+| needs | a kernel | a running server | framejs.io | nothing (`--self-contained`: not even a network) |
+| result | an iframe inline in the cell, updatable in place | a page at `http://localhost:8899/<the file's path>` | one link you can paste anywhere | one `.html` you can attach to an email |
 
 The first two are the same design — load the frame, then push data into it — which
 is why a frame does not care which one is hosting it, and why neither has a size
@@ -110,6 +111,25 @@ limit. The third bakes the object into the link instead: no server, but the data
 is frozen at the moment the link was made, and a solvated `AlchemicalNetwork` will
 not fit in a URL. Appended `inputs` take priority over anything baked into the
 frame, which is what makes that form work at all.
+
+### The standalone file
+
+`build_html()` is the only one that does not load a framejs.io URL at all: it
+inlines `code.js` into a `<script type="module">` and the payload into a JSON
+block, and appends a bootstrap that hands one to the other. The frame reads a
+global `root`, so a classic `<script>` — which runs before any deferred module —
+sets that up first.
+
+By default the page still fetches RDKit / 3Dmol / d3 from their CDNs when it is
+opened, and only the ones the view actually needs; that keeps it around 130 kB. A
+view whose engine cannot be reached degrades rather than dies (a solvent card
+loses its 2D depiction and keeps its chips and schematic).
+
+`self_contained=True` inlines the engines too, through `window.__gufeEngines` —
+the hook `code.js`'s three loaders check before they fetch anything. That is what
+makes the page work with no network whatsoever, at a cost of about 10 MB, nearly
+all of it RDKit's WebAssembly binary (which rides along as a `data:` URL, because
+with `RDKit_minimal.js` inlined there is no neighbouring file for it to find).
 
 **Inputs may be content or a URL to content**, and the frame accepts both:
 `asText()` / `asObject()` fetch a whitespace-free `http(s)://` string and use
@@ -198,6 +218,8 @@ openfe view network_setup/ligand_network.graphml   # serve it, open a browser, w
 openfe view results/                               # a listing: browse every viewable file
 openfe view ligand.sdf --no-browser                # only print the URL (ssh, container)
 openfe view ligand.sdf --url-only                  # no server: one self-contained link
+openfe view ligand.sdf --html report.html          # no server: one self-contained *file*
+openfe view ligand.sdf --html report.html --self-contained   # …that also needs no network
 openfe view ligand.sdf --proxy                     # serve framejs from here too (see below)
 openfe view-ligand-network network.graphml         # the older .graphml-only entry point
 ```

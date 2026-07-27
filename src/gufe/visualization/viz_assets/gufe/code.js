@@ -188,13 +188,29 @@ const T = DARK_MODE ? THEMES.dark : THEMES.light;
 // frame's first paint. Each engine is fetched the first time a view actually
 // needs it: a solvent card never pays for 3Dmol, a 2D depiction never waits on
 // it, and only the two graph views pull d3.
+//
+// A host may instead **pre-seed** an engine through `window.__gufeEngines`, in
+// which case nothing is fetched at all. That is how gufe's standalone HTML
+// export (`openfe view --html --self-contained`) produces a page that renders
+// with no network: it inlines the engines and hands them over here. A seeded
+// value may be the module itself or a promise for it.
 // ============================================================================
+
+function preseededEngine(name) {
+  const seeded = globalThis.__gufeEngines && globalThis.__gufeEngines[name];
+  return seeded ? Promise.resolve(seeded) : null;
+}
 
 var ThreeDmol = null;
 let threeDmolPromise = null;
 
 function load3Dmol() {
   if (threeDmolPromise) return threeDmolPromise;
+  const seeded = preseededEngine('threeDmol');
+  if (seeded) {
+    threeDmolPromise = seeded.then(m => (ThreeDmol = m || window.$3Dmol));
+    return threeDmolPromise;
+  }
   threeDmolPromise = new Promise((resolve, reject) => {
     if (window.$3Dmol) { ThreeDmol = window.$3Dmol; resolve(ThreeDmol); return; }
     const script = document.createElement('script');
@@ -214,6 +230,11 @@ let rdkitPromise = null;
 
 function loadRDKit() {
   if (rdkitPromise) return rdkitPromise;
+  const seeded = preseededEngine('rdkit');
+  if (seeded) {
+    rdkitPromise = seeded.then(m => (window.RDKit = m));
+    return rdkitPromise;
+  }
   rdkitPromise = new Promise((resolve, reject) => {
     if (window.RDKit) { resolve(window.RDKit); return; }
     const script = document.createElement('script');
@@ -230,7 +251,9 @@ function loadRDKit() {
 let d3Promise = null;
 
 function loadD3() {
-  if (!d3Promise) d3Promise = import('https://cdn.jsdelivr.net/npm/d3@7/+esm');
+  if (!d3Promise) {
+    d3Promise = preseededEngine('d3') || import('https://cdn.jsdelivr.net/npm/d3@7/+esm');
+  }
   return d3Promise;
 }
 
@@ -282,6 +305,18 @@ function el(tag, css, text) {
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Describe a thrown value. The engines do not always reject with an `Error` —
+ * 3Dmol hands back a bare object when WebGL is unavailable, which turned every
+ * such failure into the message "undefined".
+ */
+function errText(e) {
+  if (e == null) return 'unknown error';
+  if (errText(e)) return errText(e);
+  const text = String(e);
+  return text === '[object Object]' ? (e.name || 'unknown error') : text;
 }
 
 const fmt = (n) => n.toLocaleString('en-US');
@@ -488,7 +523,7 @@ function depictSVG(RDKit, source, size) {
     try { rdmol.set_new_coords(true); } catch (e) { /* SMILES have no coords */ }
     return rdmol.get_svg(size, size) || null;
   } catch (e) {
-    console.warn('[gufe] depictSVG threw -', e.message);
+    console.warn('[gufe] depictSVG threw -', errText(e));
     return null;
   } finally {
     if (rdmol) { try { rdmol.delete(); } catch (e) { /* already freed */ } }
@@ -940,7 +975,7 @@ function createMappingViewer(host, initialMode) {
       if (myToken !== token) return;
       pending.forEach(p => {
         p.container.innerHTML =
-          '<div style="color:' + T.errorFg + ';font-size:12px;padding:10px;">RDKit failed to load: ' + esc(err.message) + '</div>';
+          '<div style="color:' + T.errorFg + ';font-size:12px;padding:10px;">RDKit failed to load: ' + esc(errText(err)) + '</div>';
       });
     });
   }
@@ -963,7 +998,7 @@ function createMappingViewer(host, initialMode) {
       else renderPlain();
     }).catch(e => {
       if (myToken !== token) return;
-      message('3D viewer unavailable: ' + e.message, true);
+      message('3D viewer unavailable: ' + errText(e), true);
     });
   }
 
@@ -1122,9 +1157,9 @@ function applyProteinStyles(viewer, opts, stats, onStatus) {
         { opacity: PROTEIN_CONFIG.surfaceOpacity, ...color },
         SEL_POLYMER
       )).then(() => { status(null); viewer.render(); })
-        .catch(err => status('Surface failed: ' + err.message, 'error'));
+        .catch(err => status('Surface failed: ' + errText(err), 'error'));
     } catch (err) {
-      status('Surface failed: ' + err.message, 'error');
+      status('Surface failed: ' + errText(err), 'error');
     }
   }, 30);
 }
@@ -1294,7 +1329,7 @@ async function viewSmallMolecule(host, inputs) {
     else { depictBox.innerHTML = ''; depictBox.appendChild(centredMessage('Failed to parse molecule', true)); }
   }).catch(err => {
     depictBox.innerHTML = '';
-    depictBox.appendChild(centredMessage('RDKit failed to load: ' + err.message, true));
+    depictBox.appendChild(centredMessage('RDKit failed to load: ' + errText(err), true));
   });
 
   // ─── 3D ───
@@ -1329,7 +1364,7 @@ async function viewSmallMolecule(host, inputs) {
     viewer.render();
   }).catch(e => {
     host3D.container.innerHTML = '';
-    host3D.container.appendChild(centredMessage('3D render failed: ' + e.message, true));
+    host3D.container.appendChild(centredMessage('3D render failed: ' + errText(e), true));
   });
 
   return {
@@ -1447,7 +1482,7 @@ async function viewProtein(host, inputs) {
     stats = parsePdbStats(pdb);
     statsEl.textContent = proteinStatsText(stats);
   } catch (e) {
-    showStatus('⚠ PDB parse error: ' + e.message, 'error');
+    showStatus('⚠ PDB parse error: ' + errText(e), 'error');
   }
 
   showStatus('Loading 3D viewer…');
@@ -1461,7 +1496,7 @@ async function viewProtein(host, inputs) {
     viewer.spin(!!opts.spin);
     viewer.render();
   }).catch(e => {
-    showStatus('⚠ Failed to render structure: ' + e.message, 'error');
+    showStatus('⚠ Failed to render structure: ' + errText(e), 'error');
   });
 
   return {
@@ -1750,7 +1785,7 @@ async function viewChemicalSystem(host, inputs) {
     }).catch(e => {
       if (myToken !== detailToken) return;
       destroyViewer();
-      pane.container.appendChild(warnBanner('Failed to render: ' + e.message));
+      pane.container.appendChild(warnBanner('Failed to render: ' + errText(e)));
     });
     return pane;
   }
@@ -2006,7 +2041,7 @@ async function viewTransformation(host, inputs) {
       molA = parseSDF(payload['molA.sdf'], payload.nameA || 'molecule A');
       molB = parseSDF(payload['molB.sdf'], payload.nameB || 'molecule B');
     } catch (e) {
-      viewer.message('SDF parse error: ' + e.message, true);
+      viewer.message('SDF parse error: ' + errText(e), true);
       return;
     }
     if (payload.nameA) molA.name = payload.nameA;
@@ -2130,7 +2165,7 @@ function parseGraphML(xmlStr) {
       molecules[id] = mol;
       nodes.push({ id, name: mol.name });
     } catch (e) {
-      if (typeof logStderr === 'function') logStderr('Failed to parse node ' + id + ': ' + e.message);
+      if (typeof logStderr === 'function') logStderr('Failed to parse node ' + id + ': ' + errText(e));
     }
   }
 
@@ -2209,15 +2244,15 @@ async function viewLigandNetwork(host, inputs) {
   try {
     graph = parseGraphML(xml);
   } catch (e) {
-    if (typeof logStderr === 'function') logStderr('GraphML parse failed: ' + e.message);
-    floatingWarning(svgWrap, 'GraphML parse error: ' + e.message);
+    if (typeof logStderr === 'function') logStderr('GraphML parse failed: ' + errText(e));
+    floatingWarning(svgWrap, 'GraphML parse error: ' + errText(e));
     mappingViewer.message('No network to show.');
     return { onResize: mappingViewer.resize, cleanup: mappingViewer.destroy };
   }
 
   // Depictions are RDKit-only, so start them without waiting on anything else.
   const rdkitReady = loadRDKit().catch(err => {
-    if (typeof logStderr === 'function') logStderr('RDKit load failed: ' + err.message);
+    if (typeof logStderr === 'function') logStderr('RDKit load failed: ' + errText(err));
     return null;
   });
 
@@ -2898,7 +2933,7 @@ async function viewLigandAtomMapping(host, inputs) {
     molA = parseSDF(sdfA, nameA || 'molecule A');
     molB = parseSDF(sdfB, nameB || 'molecule B');
   } catch (e) {
-    viewer.message('SDF parse error: ' + e.message, true);
+    viewer.message('SDF parse error: ' + errText(e), true);
     return { onResize: viewer.resize, cleanup: viewer.destroy };
   }
   // Payload names win over whatever title line the SDF happens to carry.
@@ -2991,8 +3026,8 @@ export async function onInputs(inputs) {
     active = { key: view.key, handle: await view.render(host, inputs) };
   } catch (e) {
     console.warn('[gufe] ' + view.key + ' failed:', e);
-    if (typeof logStderr === 'function') logStderr('gufe viz ' + view.key + ' failed: ' + e.message);
-    host.appendChild(centredMessage('Failed to render ' + view.key + ': ' + e.message, true));
+    if (typeof logStderr === 'function') logStderr('gufe viz ' + view.key + ' failed: ' + errText(e));
+    host.appendChild(centredMessage('Failed to render ' + view.key + ': ' + errText(e), true));
   }
 }
 
