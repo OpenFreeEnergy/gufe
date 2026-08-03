@@ -142,8 +142,9 @@ Deduplication of ``GufeTokenizable``\s
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are two types of deduplication of ``GufeTokenizable``\s:
-* Objects are deduplicated in memory because **gufe** keeps a registry of all instantiated ``GufeTokenizable``\s.
-* Objects can be deduplicated on storage to disk because we store by reference to the **gufe** key.
+
+1. Objects are deduplicated in memory because **gufe** keeps a registry of all instantiated ``GufeTokenizable``\s.
+2. Objects can be deduplicated on storage to disk because we store by reference to the **gufe** key.
 
 .. _gufe-memory-deduplication:
 
