@@ -15,6 +15,68 @@ from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, Ther
 from gufe.settings.typing import BoxQuantity, NanometerArrayQuantity
 
 
+def test_settings_schema():
+    """Settings schema should be stable"""
+    expected_schema = {
+        "$defs": {
+            "BaseForceFieldSettings": {
+                "additionalProperties": False,
+                "description": "Base class for ForceFieldSettings objects",
+                "properties": {},
+                "title": "BaseForceFieldSettings",
+                "type": "object",
+            },
+            "ThermoSettings": {
+                "additionalProperties": False,
+                "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is possible.",
+                "properties": {
+                    "temperature": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius')``. See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
+                        "title": "Temperature",
+                    },
+                    "pressure": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pressure in bar. Compatible units will be converted to bar.",
+                        "title": "Pressure",
+                    },
+                    "ph": {
+                        "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation pH.",
+                        "title": "Ph",
+                    },
+                    "redox_potential": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "default": None,
+                        "description": "Simulation redox potential in millivolts (mV). Compatible units will be converted to mV.",
+                        "title": "Redox Potential",
+                    },
+                },
+                "title": "ThermoSettings",
+                "type": "object",
+            },
+        },
+        "additionalProperties": False,
+        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
+        "properties": {
+            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings", "title": "Forcefield Settings"},
+            "thermo_settings": {"$ref": "#/$defs/ThermoSettings", "title": "Thermo Settings"},
+        },
+        "required": ["forcefield_settings", "thermo_settings"],
+        "title": "Settings",
+        "type": "object",
+    }
+
+    ser_schema = Settings.model_json_schema(mode="serialization")
+    val_schema = Settings.model_json_schema(mode="validation")
+
+    assert ser_schema == expected_schema
+    assert val_schema == expected_schema
+
+
 @pytest.fixture
 def settings_validation_schema():
     val_schema = {
