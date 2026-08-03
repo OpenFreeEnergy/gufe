@@ -195,8 +195,8 @@ When you want to load this object back into memory, you would use something like
 
 .. _serialization:
 
-1. Serializable Representations of ``GufeTokenizable``\s
---------------------------------------------------------
+1. Serialization of ``GufeTokenizable``\s
+-----------------------------------------
 
 ``GufeTokenizable``\s are also designed to be easily serializable, allowing them to be reliably passed between processes on the same or different machines, written to disk, stored in databases, etc. There are multiple *serialization* methods available, and a variety of *representations* ``GufeTokenizable``\s can take on, to meet different use cases.
 
