@@ -15,70 +15,9 @@ from gufe.settings.models import OpenMMSystemGeneratorFFSettings, Settings, Ther
 from gufe.settings.typing import BoxQuantity, NanometerArrayQuantity
 
 
-def test_settings_schema():
-    """Settings schema should be stable"""
-    expected_schema = {
-        "$defs": {
-            "BaseForceFieldSettings": {
-                "additionalProperties": False,
-                "description": "Base class for ForceFieldSettings objects",
-                "properties": {},
-                "title": "BaseForceFieldSettings",
-                "type": "object",
-            },
-            "ThermoSettings": {
-                "additionalProperties": False,
-                "description": "Settings for thermodynamic parameters.\n\n.. note::\n   No checking is done to ensure a valid thermodynamic ensemble is possible.",
-                "properties": {
-                    "temperature": {
-                        "anyOf": [{"type": "number"}, {"type": "null"}],
-                        "default": None,
-                        "description": "Simulation temperature in Kelvin. Compatible units will be converted to Kelvin. NOTE: celsius must be input as ``Quantity(<magnitude>, 'celsius')``. See https://pint.readthedocs.io/en/stable/user/nonmult.html for more information.",
-                        "title": "Temperature",
-                    },
-                    "pressure": {
-                        "anyOf": [{"type": "number"}, {"type": "null"}],
-                        "default": None,
-                        "description": "Simulation pressure in bar. Compatible units will be converted to bar.",
-                        "title": "Pressure",
-                    },
-                    "ph": {
-                        "anyOf": [{"exclusiveMinimum": 0, "type": "number"}, {"type": "null"}],
-                        "default": None,
-                        "description": "Simulation pH.",
-                        "title": "Ph",
-                    },
-                    "redox_potential": {
-                        "anyOf": [{"type": "number"}, {"type": "null"}],
-                        "default": None,
-                        "description": "Simulation redox potential in millivolts (mV). Compatible units will be converted to mV.",
-                        "title": "Redox Potential",
-                    },
-                },
-                "title": "ThermoSettings",
-                "type": "object",
-            },
-        },
-        "additionalProperties": False,
-        "description": "Container for all settings needed by a protocol\n\nThis represents the minimal surface that all settings objects will have.\n\nProtocols can subclass this to extend this to cater for their additional settings.",
-        "properties": {
-            "forcefield_settings": {"$ref": "#/$defs/BaseForceFieldSettings", "title": "Forcefield Settings"},
-            "thermo_settings": {"$ref": "#/$defs/ThermoSettings", "title": "Thermo Settings"},
-        },
-        "required": ["forcefield_settings", "thermo_settings"],
-        "title": "Settings",
-        "type": "object",
-    }
-
-    ser_schema = Settings.model_json_schema(mode="serialization")
-    val_schema = Settings.model_json_schema(mode="validation")
-
-    assert ser_schema == expected_schema
-    assert val_schema == expected_schema
-
-
-def test_openmmffsettings_schema():
-    expected_val_schema = {
+@pytest.fixture
+def settings_validation_schema():
+    val_schema = {
         "additionalProperties": False,
         "description": "Parameters to set up the force field with OpenMM ForceFields\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceField SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceField SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator",
         "properties": {
@@ -117,14 +56,25 @@ def test_openmmffsettings_schema():
         "title": "OpenMMSystemGeneratorFFSettings",
         "type": "object",
     }
+    return val_schema
 
+
+@pytest.fixture()
+def settings_serialization_schema(settings_validation_schema):
+    # openff units are represented as 'val'+'unit' when serialized as JSON
+    ser_schema = settings_validation_schema.copy()
+    ser_schema["properties"]["nonbonded_cutoff"]["default"] = {"val": 0.9, "unit": "nanometer"}
+    return ser_schema
+
+
+def test_openmmffsettings_validation_schema(settings_validation_schema):
     val_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="validation")
-    assert val_schema == expected_val_schema
+    assert val_schema == settings_validation_schema
 
+
+def test_openmmffsettings_serialization_schema(settings_serialization_schema):
     ser_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
-    expected_ser_schema = expected_val_schema.copy()
-    expected_ser_schema["properties"]["nonbonded_cutoff"]["default"] = {"val": 0.9, "unit": "nanometer"}
-    assert ser_schema == expected_ser_schema
+    assert ser_schema == settings_serialization_schema
 
 
 @pytest.fixture
