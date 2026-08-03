@@ -105,10 +105,15 @@ the code for our codec for ``pathlib.Path`` objects:
 .. code::
 
     PATH_CODEC = JSONCodec(
-        cls=pathlib.Path,
-        to_dict=lambda p: {'path': str(p)},
-        from_dict=lambda dct: pathlib.Path(dct['path'])
+        cls=pathlib.PosixPath,
+        to_dict=lambda p: {
+            "__module__": "pathlib",
+            "path": str(p),
+        },
+        from_dict=lambda dct: pathlib.PosixPath(dct["path"]),
+        is_my_dict=is_python_313_path_dict,
     )
+
 
 Here the ``to_dict`` and ``from_dict`` are lambdas. The ideas of these are
 the same as the ``GufeTokenizable._to_dict`` and
