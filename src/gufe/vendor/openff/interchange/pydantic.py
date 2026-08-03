@@ -15,7 +15,7 @@ class _BaseModel(BaseModel):
     )
 
     def model_dump(self, **kwargs) -> dict[str, Any]:
-        return super().model_dump(**kwargs)
+        return super().model_dump(polymorphic_serialization=True, **kwargs)
 
     def model_dump_json(self, **kwargs) -> str:
-        return super().model_dump_json(**kwargs)
+        return super().model_dump_json(polymorphic_serialization=True, **kwargs)
