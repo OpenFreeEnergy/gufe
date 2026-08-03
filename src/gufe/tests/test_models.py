@@ -6,8 +6,6 @@ json round trip, and physical unit testing belongs here.
 
 from __future__ import annotations
 
-import json
-
 import numpy as np
 import pytest
 from openff.units import Quantity, unit
@@ -124,11 +122,40 @@ def test_openmmffsettings_schema():
     assert val_schema == expected_schema
 
 
-def test_default_settings():
+@pytest.fixture
+def expected_model_dump():
+    model_dump = {
+        "forcefield_settings": {
+            "constraints": "hbonds",
+            "rigid_water": True,
+            "hydrogen_mass": 3.0,
+            "forcefields": [
+                "amber/ff14SB.xml",
+                "amber/tip3p_standard.xml",
+                "amber/tip3p_HFE_multivalent.xml",
+                "amber/phosaa10.xml",
+                "amber/lipid17_merged.xml",
+            ],
+            "small_molecule_forcefield": "openff-2.2.1",
+            "nonbonded_method": "PME",
+            "nonbonded_cutoff": {"val": 1.1, "unit": "nanometer"},
+        },
+        "thermo_settings": {
+            "temperature": {"val": 298, "unit": "kelvin"},
+            "pressure": None,
+            "ph": None,
+            "redox_potential": None,
+        },
+    }
+    return model_dump
+
+
+def test_default_settings(expected_model_dump):
     my_settings = Settings.get_defaults()
     my_settings.thermo_settings.temperature = 298 * unit.kelvin
-    my_settings.model_dump_json()
-    json.dumps(my_settings.model_json_schema(mode="serialization"), indent=2)
+    my_settings.forcefield_settings.nonbonded_cutoff = 1.1 * unit.nanometer
+    model_dump = my_settings.model_dump()
+    assert model_dump == expected_model_dump
 
 
 class TestSettingsValidation:
