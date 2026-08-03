@@ -4,7 +4,8 @@
 
 **Changed:**
 
-*
+* For all ``gufe.settings`` models, ``model_dump()`` uses ``polymorphic_serialization``, meaning that sub-models will be included in the output.
+  See `Pydantic's docs on the new polymorphic serialization behavior <https://pydantic.dev/articles/pydantic-v2-13-release#polymorphic-serialization>`_ for more info.
 
 **Deprecated:**
 
