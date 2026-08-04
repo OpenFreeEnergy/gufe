@@ -10,6 +10,8 @@ from openmm import app
 from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
+from openff.units import Quantity
+from openff.units import unit as offunit
 
 from gufe.utils import magic_open
 
@@ -17,6 +19,7 @@ from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from .errors import ComponentValidationError
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
@@ -634,3 +637,79 @@ class ProteinComponent(ExplicitMoleculeComponent):
         }
 
         return d
+
+    def _check_for_uncapped_residue_breaks(self, peptide_bond_cutoff: Quantity):
+        """
+        Check for missing residues or capping groups by detecting large peptide bond distances.
+
+        Parameters
+        ----------
+        peptide_bond_cutoff : Quantity
+            The cutoff used to detect large peptide bond distances with units.
+
+        Notes
+        -----
+        We only check single bonded C-N inter-residue distances for this check, as these are the most indicative of missing residues or capping groups.
+
+        Raises
+        ------
+        ComponentValidationError
+            If any inter-residue peptide C-N bonds are found to be longer than the specified cutoff,
+            indicating likely uncapped or missing residues.
+        """
+        rd_mol = self._rdkit
+        conf = rd_mol.GetConformer(0)
+        xyz = np.asarray(conf.GetPositions())  # angstrom
+        bond_threshold = peptide_bond_cutoff.m_as(offunit.angstrom)
+
+        possible_bad_bonds = []
+        for b in rd_mol.GetBonds():
+            a1, a2 = b.GetBeginAtom(), b.GetEndAtom()
+            m1, m2 = a1.GetMonomerInfo(), a2.GetMonomerInfo()
+            if m1 is None or m2 is None:
+                continue
+
+            # only inter-residue, same-chain bonds
+            if m1.GetResidueNumber() == m2.GetResidueNumber():
+                continue
+            if m1.GetChainId() != m2.GetChainId():
+                continue
+
+            # we want peptide C-N single bonds only
+            if not b.GetBondType() == Chem.BondType.SINGLE:
+                continue
+
+            names = {m1.GetName().strip(), m2.GetName().strip()}
+            if names != {"C", "N"}:
+                continue
+
+            i, j = a1.GetIdx(), a2.GetIdx()
+            d = np.linalg.norm(xyz[i] - xyz[j])
+            if d > bond_threshold:
+                possible_bad_bonds.append((m1, m2, d))
+
+        if possible_bad_bonds:
+            msg = "\n".join(
+                f"{m1.GetChainId()}:{m1.GetResidueName()}{m1.GetResidueNumber()}:{m1.GetName().strip()} - "
+                f"{m2.GetChainId()}:{m2.GetResidueName()}{m2.GetResidueNumber()}:{m2.GetName().strip()} = {d:.2f} A"
+                for m1, m2, d in possible_bad_bonds
+            )
+            raise ComponentValidationError(
+                "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n" + msg
+            )
+
+    def validate(self, peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom):
+        """
+        Validate we have a suitably prepared protein structure for simulation.
+
+        Parameters
+        ----------
+        peptide_bond_cutoff : Quantity, default=2.0 * offunit.angstrom
+            The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
+
+        Raises
+        ------
+        ComponentValidationError
+            * If the protein has missing residues without capping groups or model breaks.
+        """
+        self._check_for_uncapped_residue_breaks(peptide_bond_cutoff=peptide_bond_cutoff)

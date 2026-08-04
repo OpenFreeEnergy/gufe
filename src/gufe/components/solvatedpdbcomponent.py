@@ -108,6 +108,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         self,
         *,
         min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
+        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -116,11 +117,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         ----------
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
+        peptide_bond_cutoff : openff.units.Quantity. Default: 2.0 * offunit.angstrom
+            The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
 
         Raises
         ------
         ComponentValidationError
-            If the density is lower than the minimum density.
+            * If the density is lower than the minimum density.
+            * If the protein has missing residues without capping groups or model breaks.
         """
         if self.density < min_density:  # type: ignore
             raise ComponentValidationError(
@@ -128,6 +132,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 f"Density: {self.density:.3f} (expected ≥ {min_density}). "
                 "This usually indicates missing solvent or incorrect box vectors."
             )
+        # run the bond distance validation
+        super().validate(peptide_bond_cutoff=peptide_bond_cutoff)
 
     @staticmethod
     def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):
@@ -391,7 +397,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
     -----
     * All requirements and guarantees of :class:`SolvatedPDBComponent` apply.
     * The membrane distinction is conveyed solely through the component type.
-    * Validation includes density and minimum water-count checks.
+    * Validation includes density, minimum water-count checks and inherited missing residue or capping group checks.
     """
 
     @staticmethod
@@ -450,6 +456,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         *,
         min_waters: int = 50,
         min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
+        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -460,6 +467,8 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             Minimum number of water molecules. Default: 50
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
+        peptide_bond_cutoff : openff.units.Quantity. Default: 2.0 * offunit.angstrom
+            The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
 
         Raises
         ------
@@ -471,7 +480,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
 
         # 1. Density check
         try:
-            super().validate(min_density=min_density)
+            super().validate(min_density=min_density, peptide_bond_cutoff=peptide_bond_cutoff)
         except ComponentValidationError as e:
             errors.append(str(e))
 
@@ -483,5 +492,5 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             raise ComponentValidationError(
                 "ProteinMembraneComponent validation failed:\n"
                 + "\n".join(f"- {e}" for e in errors)
-                + "\nThis usually indicates missing solvent or incorrect box vectors."
+                + "\nThis usually indicates missing solvent, incorrect box vectors or missing residues or capping groups."
             )
