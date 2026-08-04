@@ -67,7 +67,7 @@ _INT_TO_BONDSTEREO = {
     4: Chem.rdchem.BondStereo.STEREOCIS,
     5: Chem.rdchem.BondStereo.STEREOTRANS,
     6: Chem.rdchem.BondStereo.STEREOATROPCW,
-    7: Chem.rdchem.BondStereo.STEREOATROPCCW
+    7: Chem.rdchem.BondStereo.STEREOATROPCCW,
 }
 _BONDSTEREO_TO_INT = {v: k for k, v in _INT_TO_BONDSTEREO.items()}
 

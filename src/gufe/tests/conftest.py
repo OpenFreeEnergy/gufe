@@ -396,6 +396,7 @@ def stereo_chem_mapping():
 
     return LigandAtomMapping(mols[0], mols[1], expected_mapping)
 
+
 @pytest.fixture
 def atropisomeric_sdf():
     with importlib.resources.path("gufe.tests.data", "atropisomeric_mol.sdf") as f:
