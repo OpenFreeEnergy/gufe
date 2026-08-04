@@ -6,12 +6,12 @@ from string import digits
 from typing import TextIO
 
 import numpy as np
+from openff.units import Quantity
+from openff.units import unit as offunit
 from openmm import app
 from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
-from openff.units import Quantity
-from openff.units import unit as offunit
 
 from gufe.utils import magic_open
 
@@ -695,7 +695,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 for m1, m2, d in possible_bad_bonds
             )
             raise ComponentValidationError(
-                "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n" + msg
+                "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n"
+                + msg
             )
 
     def validate(self, peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom):

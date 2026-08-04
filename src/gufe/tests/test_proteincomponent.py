@@ -425,6 +425,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         with pytest.raises(ComponentValidationError, match="A:VAL177:C - A:SER192:N = 31.19 A"):
             pc.validate()
 
+
 def test_no_monomer_info_error(ethane):
     with pytest.raises(TypeError):
         _ = ProteinComponent(rdkit=ethane.to_rdkit())

@@ -108,7 +108,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         self,
         *,
         min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
-        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom
+        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom,
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -456,7 +456,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         *,
         min_waters: int = 50,
         min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
-        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom
+        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom,
     ):
         """
         Run heuristic validation checks on the solvated system.
