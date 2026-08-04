@@ -399,5 +399,5 @@ def stereo_chem_mapping():
 
 @pytest.fixture()
 def PDB_pxr_1nrl_path():
-    with importlib.resources.path("gufe.tests.data", "pxr_1nrl.pdb") as f:
+    with importlib.resources.path("gufe.tests.data", "pxr_1nrl.pdb.gz") as f:
         yield str(f)
