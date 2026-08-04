@@ -699,7 +699,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 + msg
             )
 
-    def validate(self, peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom):
+    def validate(self, *, peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom):
         """
         Validate we have a suitably prepared protein structure for simulation.
 
