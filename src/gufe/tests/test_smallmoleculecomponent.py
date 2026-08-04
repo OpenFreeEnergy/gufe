@@ -245,6 +245,15 @@ class TestSmallMoleculeComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComp
         smc_from_dict = SmallMoleculeComponent._from_dict(d)
         assert smc_from_dict._to_dict()["residue_info"] == d["residue_info"]
 
+    def test_atropisomeric_bonds(self, atropisomeric_sdf):
+        # see gufe 684
+        smc = SmallMoleculeComponent.from_sdf_file(atropisomeric_sdf)
+        # check the stereo assigned to the bond
+        data = smc.to_dict()
+        stereo_bonds = [bond for bond in data["bonds"] if bond[3] in [6, 7]]
+        # there should be a single stereo bond
+        assert len(stereo_bonds) == 1
+
 
 @pytest.mark.skipif(not HAS_OFFTK, reason="no openff toolkit available")
 class TestSmallMoleculeComponentConversion:
