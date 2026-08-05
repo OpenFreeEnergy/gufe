@@ -303,7 +303,7 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     "__module__": "gufe.settings.models",
                     ":is_custom:": True,
                     "temperature": {
-                        "magnitude": 300,
+                        "magnitude": 300.0,
                         "unit": "kelvin",
                         ":is_custom:": True,
                         "pint_unit_registry": "openff_units",
