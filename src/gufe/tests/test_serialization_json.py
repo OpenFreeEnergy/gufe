@@ -292,10 +292,10 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     "small_molecule_forcefield": "openff-2.2.1",
                     "nonbonded_method": "PME",
                     "nonbonded_cutoff": {
-                        "magnitude": 1.8,
-                        "unit": "nanometer",
                         ":is_custom:": True,
+                        "magnitude": 1.8,
                         "pint_unit_registry": "openff_units",
+                        "unit": "nanometer",
                     },
                 },
                 "thermo_settings": {
@@ -303,10 +303,10 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     "__module__": "gufe.settings.models",
                     ":is_custom:": True,
                     "temperature": {
-                        "magnitude": 300.0,
-                        "unit": "kelvin",
                         ":is_custom:": True,
+                        "magnitude": 300.0,
                         "pint_unit_registry": "openff_units",
+                        "unit": "kelvin",
                     },
                     "pressure": None,
                     "ph": None,
