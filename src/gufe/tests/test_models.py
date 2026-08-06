@@ -77,8 +77,9 @@ def test_settings_schema():
     assert val_schema == expected_schema
 
 
-def test_openmmffsettings_schema():
-    expected_schema = {
+@pytest.fixture
+def settings_validation_schema():
+    val_schema = {
         "additionalProperties": False,
         "description": "Parameters to set up the force field with OpenMM ForceFields\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceField SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceField SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator",
         "properties": {
@@ -108,6 +109,7 @@ def test_openmmffsettings_schema():
             },
             "nonbonded_method": {"default": "PME", "title": "Nonbonded Method", "type": "string"},
             "nonbonded_cutoff": {
+                "default": '{"magnitude": 0.9, "units": "nanometer"}',
                 "description": "Cutoff value for short range nonbonded interactions in nm. Compatible units will be converted to nm.",
                 "title": "Nonbonded Cutoff",
                 "type": "number",
@@ -116,10 +118,25 @@ def test_openmmffsettings_schema():
         "title": "OpenMMSystemGeneratorFFSettings",
         "type": "object",
     }
-    ser_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
+    return val_schema
+
+
+@pytest.fixture()
+def settings_serialization_schema(settings_validation_schema):
+    # openff units are represented as 'val'+'unit' when serialized as JSON
+    ser_schema = settings_validation_schema.copy()
+    ser_schema["properties"]["nonbonded_cutoff"]["default"] = {"val": 0.9, "unit": "nanometer"}
+    return ser_schema
+
+
+def test_openmmffsettings_validation_schema(settings_validation_schema):
     val_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="validation")
-    assert ser_schema == expected_schema
-    assert val_schema == expected_schema
+    assert val_schema == settings_validation_schema
+
+
+def test_openmmffsettings_serialization_schema(settings_serialization_schema):
+    ser_schema = OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")
+    assert ser_schema == settings_serialization_schema
 
 
 @pytest.fixture
