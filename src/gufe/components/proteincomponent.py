@@ -688,9 +688,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
                     continue
 
                 # Check if we have the same residue AND the same insertion code
-                if (
-                    (mi1.GetResidueNumber() == mi2.GetResidueNumber()) and
-                    (mi1.GetInsertionCode() == mi2.GetInsertionCode())
+                if (mi1.GetResidueNumber() == mi2.GetResidueNumber()) and (
+                    mi1.GetInsertionCode() == mi2.GetInsertionCode()
                 ):
                     continue
 
@@ -704,11 +703,8 @@ class ProteinComponent(ExplicitMoleculeComponent):
         idx_i = np.array([c[2] for c in candidates])
         idx_j = np.array([c[3] for c in candidates])
         distances = np.linalg.norm(xyz[idx_i] - xyz[idx_j], axis=1)
-  
-        possible_bad_bonds = [
-            (m1, m2, d) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold
-        ]
 
+        possible_bad_bonds = [(m1, m2, d) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold]
 
         if possible_bad_bonds:
             msg = "\n".join(
@@ -720,7 +716,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n"
                 + msg
             )
-
 
     def validate(self, *, peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom):
         """
