@@ -662,31 +662,53 @@ class ProteinComponent(ExplicitMoleculeComponent):
         xyz = np.asarray(conf.GetPositions())  # angstrom
         bond_threshold = peptide_bond_cutoff.m_as(offunit.angstrom)
 
-        possible_bad_bonds = []
-        for b in rd_mol.GetBonds():
-            a1, a2 = b.GetBeginAtom(), b.GetEndAtom()
-            m1, m2 = a1.GetMonomerInfo(), a2.GetMonomerInfo()
-            if m1 is None or m2 is None:
+        # Look for peptide bonds, these always involve C (residue i) - N (residue i+1)
+        # We walk through atoms first to avoid performance issues with rd_mol.GetBonds()
+        candidates = []
+
+        for atom in rd_mol.GetAtoms():
+            mi1 = atom.GetMonomerInfo()
+
+            # Skip if we don't have monomer info or the wrong atom
+            if (mi1 is None) or (mi1.GetName().strip() != "C"):
                 continue
 
-            # only inter-residue, same-chain bonds
-            if m1.GetResidueNumber() == m2.GetResidueNumber():
-                continue
-            if m1.GetChainId() != m2.GetChainId():
-                continue
+            for bond in atom.GetBonds():
+                # Only want single bonds
+                if bond.GetBondType() != Chem.BondType.SINGLE:
+                    continue
 
-            # we want peptide C-N single bonds only
-            if not b.GetBondType() == Chem.BondType.SINGLE:
-                continue
+                other = bond.GetOtherAtom(atom)
+                mi2 = other.GetMonomerInfo()
 
-            names = {m1.GetName().strip(), m2.GetName().strip()}
-            if names != {"C", "N"}:
-                continue
+                if (mi2 is None) or (mi2.GetName().strip() != "N"):
+                    continue
 
-            i, j = a1.GetIdx(), a2.GetIdx()
-            d = np.linalg.norm(xyz[i] - xyz[j])
-            if d > bond_threshold:
-                possible_bad_bonds.append((m1, m2, d))
+                if mi1.GetChainId() != mi2.GetChainId():
+                    continue
+
+                # Check if we have the same residue AND the same insertion code
+                if (
+                    (mi1.GetResidueNumber() == mi2.GetResidueNumber()) and
+                    (mi1.GetInsertionCode() == mi2.GetInsertionCode())
+                ):
+                    continue
+
+                candidates.append((mi1, mi2, atom.GetIdx(), other.GetIdx())
+
+        if not candidates:
+            return
+
+        # TODO: this needs fixing to account for PBC
+        # batch the distance calculation for every candidate bond at once
+        idx_i = np.array([c[2] for c in candidates])
+        idx_j = np.array([c[3] for c in candidates])
+        distances = np.linalg.norm(xyz[idx_i] - xyz[idx_j], axis=1)
+  
+        possible_bad_bonds = [
+            (m1, m2, d) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold
+        ]
+
 
         if possible_bad_bonds:
             msg = "\n".join(
@@ -698,6 +720,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n"
                 + msg
             )
+
 
     def validate(self, *, peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom):
         """
