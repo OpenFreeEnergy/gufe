@@ -694,7 +694,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 ):
                     continue
 
-                candidates.append((mi1, mi2, atom.GetIdx(), other.GetIdx())
+                candidates.append((mi1, mi2, atom.GetIdx(), other.GetIdx()))
 
         if not candidates:
             return
