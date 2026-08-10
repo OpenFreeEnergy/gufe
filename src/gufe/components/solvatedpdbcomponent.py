@@ -133,7 +133,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
                 "This usually indicates missing solvent or incorrect box vectors."
             )
         # run the bond distance validation
-        super().validate(peptide_bond_cutoff=peptide_bond_cutoff)
+        self._check_for_uncapped_residue_breaks(peptide_bond_cutoff=peptide_bond_cutoff, box_vectors=self.box_vectors)
 
     @staticmethod
     def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):

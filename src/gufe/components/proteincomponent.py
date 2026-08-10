@@ -638,7 +638,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         return d
 
-    def _check_for_uncapped_residue_breaks(self, peptide_bond_cutoff: Quantity):
+    def _check_for_uncapped_residue_breaks(self, peptide_bond_cutoff: Quantity, box_vectors: Quantity | None = None):
         """
         Check for missing residues or capping groups by detecting large peptide bond distances.
 
@@ -646,10 +646,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ----------
         peptide_bond_cutoff : Quantity
             The cutoff used to detect large peptide bond distances with units.
+        box_vectors : Quantity, default None
+            Periodic box vectors with units of length, compatible with
+            nanometers. Must be a (3, 3) array in reduced form.
 
         Notes
         -----
-        We only check single bonded C-N inter-residue distances for this check, as these are the most indicative of missing residues or capping groups.
+        * We only check single bonded C-N inter-residue distances for this check, as these are the most indicative of missing residues or capping groups.
+        * PBC can optionaly be used during the distance calculation.
 
         Raises
         ------
@@ -658,9 +662,9 @@ class ProteinComponent(ExplicitMoleculeComponent):
             indicating likely uncapped or missing residues.
         """
         rd_mol = self._rdkit
-        conf = rd_mol.GetConformer(0)
-        xyz = np.asarray(conf.GetPositions())  # angstrom
-        bond_threshold = peptide_bond_cutoff.m_as(offunit.angstrom)
+        conf = np.asarray(self.to_openmm_positions().value_in_unit(omm_unit.nanometer))
+
+        bond_threshold = peptide_bond_cutoff.m_as(offunit.nanometer)
 
         # Look for peptide bonds, these always involve C (residue i) - N (residue i+1)
         # We walk through atoms first to avoid performance issues with rd_mol.GetBonds()
@@ -698,18 +702,22 @@ class ProteinComponent(ExplicitMoleculeComponent):
         if not candidates:
             return
 
-        # TODO: this needs fixing to account for PBC
-        # batch the distance calculation for every candidate bond at once
-        idx_i = np.array([c[2] for c in candidates])
-        idx_j = np.array([c[3] for c in candidates])
-        distances = np.linalg.norm(xyz[idx_i] - xyz[idx_j], axis=1)
+        if box_vectors is None:
+            idx_i = np.array([c[2] for c in candidates])
+            idx_j = np.array([c[3] for c in candidates])
+            distances = np.linalg.norm(conf[idx_i] - conf[idx_j], axis=1)
+        else:
+            from openmm.app.internal import compiled
+            # Use OpenMM's compiled functions to compute distances with PBC
+            periodic_distance_func = compiled.periodicDistance(box_vectors.m_as(offunit.nanometer))
+            distances = [periodic_distance_func(conf[c[2]], conf[c[3]]) for c in candidates]
 
-        possible_bad_bonds = [(m1, m2, d) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold]
+        possible_bad_bonds = [(m1, m2, d * offunit.nanometer) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold]
 
         if possible_bad_bonds:
             msg = "\n".join(
                 f"{m1.GetChainId()}:{m1.GetResidueName()}{m1.GetResidueNumber()}:{m1.GetName().strip()} - "
-                f"{m2.GetChainId()}:{m2.GetResidueName()}{m2.GetResidueNumber()}:{m2.GetName().strip()} = {d:.2f} A"
+                f"{m2.GetChainId()}:{m2.GetResidueName()}{m2.GetResidueNumber()}:{m2.GetName().strip()} = {d.m_as(offunit.angstrom):.2f} A"
                 for m1, m2, d in possible_bad_bonds
             )
             raise ComponentValidationError(
