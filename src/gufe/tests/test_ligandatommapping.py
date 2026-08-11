@@ -247,7 +247,7 @@ def test_heavy_atom_mapping(benzene_phenol_mapping):
     benzene = benzene_phenol_mapping.componentA.to_rdkit()
     phenol = benzene_phenol_mapping.componentB.to_rdkit()
     assert len(heavy_atom_mapping) == 6
-    for b_atom, p_atom  in heavy_atom_mapping.items():
+    for b_atom, p_atom in heavy_atom_mapping.items():
         assert benzene.GetAtomWithIdx(b_atom).GetAtomicNum() != 1
         assert phenol.GetAtomWithIdx(p_atom).GetAtomicNum() != 1
 
@@ -255,7 +255,7 @@ def test_heavy_atom_mapping(benzene_phenol_mapping):
 def test_heavy_atom_mapping_ratio(benzene_phenol_mapping):
     # make sure only heavy atoms are used in the ratio, there should be 1 unique atom in phenol
     mapping_ratio = benzene_phenol_mapping.get_heavy_atom_mapping_ratio()
-    assert mapping_ratio == pytest.approx(1/6)
+    assert mapping_ratio == pytest.approx(1 / 6)
 
 
 class TestLigandAtomMappingSerialization:

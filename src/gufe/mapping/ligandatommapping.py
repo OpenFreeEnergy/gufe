@@ -316,7 +316,15 @@ class LigandAtomMapping(AtomMapping):
         mol_a = self.componentA.to_rdkit()
         mol_b = self.componentB.to_rdkit()
 
-        num_unique_heavy_atoms_a = sum(1 for atom in mol_a.GetAtoms() if atom.GetAtomicNum() != 1 and atom.GetIdx() not in heavy_atom_mapping.keys())
-        num_unique_heavy_atoms_b = sum(1 for atom in mol_b.GetAtoms() if atom.GetAtomicNum() != 1 and atom.GetIdx() not in heavy_atom_mapping.values())
+        num_unique_heavy_atoms_a = sum(
+            1
+            for atom in mol_a.GetAtoms()
+            if atom.GetAtomicNum() != 1 and atom.GetIdx() not in heavy_atom_mapping.keys()
+        )
+        num_unique_heavy_atoms_b = sum(
+            1
+            for atom in mol_b.GetAtoms()
+            if atom.GetAtomicNum() != 1 and atom.GetIdx() not in heavy_atom_mapping.values()
+        )
 
         return (num_unique_heavy_atoms_a + num_unique_heavy_atoms_b) / num_mapped_heavy_atoms
