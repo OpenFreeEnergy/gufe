@@ -85,6 +85,30 @@ class LigandAtomMapping(AtomMapping):
         return dict(self._compA_to_compB)
 
     @property
+    def heavy_atom_componentA_to_componentB(self) -> dict[int, int]:
+        """
+        Return the heavy atoms mapped between componentA and componentB, heavy to hydrogen mappings are also removed.
+
+        Returns
+        -------
+        dict[int, int]:
+            A dictionary mapping heavy atom indices from componentA to componentB.
+        """
+        atom_map = self.componentA_to_componentB
+        mol_a = self.componentA.to_rdkit()
+        mol_b = self.componentB.to_rdkit()
+
+        mapped_heavy_atoms = dict()
+        for atom_idx_a, atom_idx_b in atom_map.items():
+            atom_a = mol_a.GetAtomWithIdx(atom_idx_a)
+            atom_b = mol_b.GetAtomWithIdx(atom_idx_b)
+
+            if atom_a.GetAtomicNum() != 1 and atom_b.GetAtomicNum() != 1:
+                mapped_heavy_atoms[atom_idx_a] = atom_idx_b
+
+        return mapped_heavy_atoms
+
+    @property
     def componentB_to_componentA(self) -> dict[int, int]:
         return {v: k for k, v in self._compA_to_compB.items()}
 
@@ -279,29 +303,6 @@ class LigandAtomMapping(AtomMapping):
         charge_b = Chem.rdmolops.GetFormalCharge(self.componentB.to_rdkit())
         return charge_a - charge_b
 
-    def get_heavy_atom_componentA_to_componentB(self) -> dict[int, int]:
-        """
-        Return the heavy atoms mapped between componentA and componentB, heavy to hydrogen mappings are also removed.
-
-        Returns
-        -------
-        dict[int, int]:
-            A dictionary mapping heavy atom indices from componentA to componentB.
-        """
-        atom_map = self.componentA_to_componentB
-        mol_a = self.componentA.to_rdkit()
-        mol_b = self.componentB.to_rdkit()
-
-        mapped_heavy_atoms = dict()
-        for atom_idx_a, atom_idx_b in atom_map.items():
-            atom_a = mol_a.GetAtomWithIdx(atom_idx_a)
-            atom_b = mol_b.GetAtomWithIdx(atom_idx_b)
-
-            if atom_a.GetAtomicNum() != 1 and atom_b.GetAtomicNum() != 1:
-                mapped_heavy_atoms[atom_idx_a] = atom_idx_b
-
-        return mapped_heavy_atoms
-
     def get_heavy_atom_mapping_ratio(self) -> float:
         """
         Return the ratio of alchemical to mapped heavy atoms between componentA and componentB.
@@ -311,7 +312,7 @@ class LigandAtomMapping(AtomMapping):
         float:
             The ratio of alchemical heavy atoms to mapped heavy atoms.
         """
-        heavy_atom_mapping = self.get_heavy_atom_componentA_to_componentB()
+        heavy_atom_mapping = self.heavy_atom_componentA_to_componentB
         num_mapped_heavy_atoms = len(heavy_atom_mapping)
         mol_a = self.componentA.to_rdkit()
         mol_b = self.componentB.to_rdkit()
