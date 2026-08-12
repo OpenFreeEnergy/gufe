@@ -314,6 +314,11 @@ class LigandAtomMapping(AtomMapping):
         """
         heavy_atom_mapping = self.heavy_atom_componentA_to_componentB
         num_mapped_heavy_atoms = len(heavy_atom_mapping)
+
+        # quick return if there are no mapped atoms to avoid zero division errors
+        if num_mapped_heavy_atoms == 0:
+            return 0
+
         mol_a = self.componentA.to_rdkit()
         mol_b = self.componentB.to_rdkit()
 

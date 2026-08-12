@@ -243,7 +243,7 @@ def test_draw_mapping_svg(tmp_path, other_mapping):
 
 def test_heavy_atom_mapping(benzene_phenol_mapping):
     # make sure only heavy atoms are in the mapping
-    heavy_atom_mapping = benzene_phenol_mapping.get_heavy_atom_componentA_to_componentB()
+    heavy_atom_mapping = benzene_phenol_mapping.heavy_atom_componentA_to_componentB
     benzene = benzene_phenol_mapping.componentA.to_rdkit()
     phenol = benzene_phenol_mapping.componentB.to_rdkit()
     assert len(heavy_atom_mapping) == 6
@@ -256,6 +256,15 @@ def test_heavy_atom_mapping_ratio(benzene_phenol_mapping):
     # make sure only heavy atoms are used in the ratio, there should be 1 unique atom in phenol
     mapping_ratio = benzene_phenol_mapping.get_heavy_atom_mapping_ratio()
     assert mapping_ratio == pytest.approx(1 / 6)
+
+
+def test_heavy_atom_mapping_ratio_no_mapping(benzene_phenol_mapping):
+    new_mapping = LigandAtomMapping(
+        componentA=benzene_phenol_mapping.componentA,
+        componentB=benzene_phenol_mapping.componentB,
+        componentA_to_componentB={}
+    )
+    assert new_mapping.get_heavy_atom_mapping_ratio() == 0.0
 
 
 class TestLigandAtomMappingSerialization:
