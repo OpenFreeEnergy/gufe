@@ -262,7 +262,7 @@ def test_heavy_atom_mapping_ratio_no_mapping(benzene_phenol_mapping):
     new_mapping = LigandAtomMapping(
         componentA=benzene_phenol_mapping.componentA,
         componentB=benzene_phenol_mapping.componentB,
-        componentA_to_componentB={}
+        componentA_to_componentB={},
     )
     assert new_mapping.get_heavy_atom_mapping_ratio() == 0.0
 
