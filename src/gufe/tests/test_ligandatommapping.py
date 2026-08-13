@@ -260,7 +260,7 @@ def test_heavy_atom_mapping_ratio(benzene_phenol_mapping):
     reverse_mapping = LigandAtomMapping(
         componentA=benzene_phenol_mapping.componentB,
         componentB=benzene_phenol_mapping.componentA,
-        componentA_to_componentB=benzene_phenol_mapping.componentB_to_componentA
+        componentA_to_componentB=benzene_phenol_mapping.componentB_to_componentA,
     )
     reverse_ratio = reverse_mapping.get_heavy_atom_mapping_ratio()
     assert reverse_ratio == pytest.approx(1 / 6)
