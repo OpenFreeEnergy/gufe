@@ -87,7 +87,7 @@ class LigandAtomMapping(AtomMapping):
     @property
     def heavy_atom_componentA_to_componentB(self) -> dict[int, int]:
         """
-        Return the heavy atoms mapped between componentA and componentB, heavy to hydrogen mappings are also removed.
+        Return a subset of the ``componentA_to_componentB`` mapping where the atoms in both components are heavy (non-hydrogen) atoms.
 
         Returns
         -------
@@ -322,15 +322,7 @@ class LigandAtomMapping(AtomMapping):
         mol_a = self.componentA.to_rdkit()
         mol_b = self.componentB.to_rdkit()
 
-        num_unique_heavy_atoms_a = sum(
-            1
-            for atom in mol_a.GetAtoms()
-            if atom.GetAtomicNum() != 1 and atom.GetIdx() not in heavy_atom_mapping.keys()
-        )
-        num_unique_heavy_atoms_b = sum(
-            1
-            for atom in mol_b.GetAtoms()
-            if atom.GetAtomicNum() != 1 and atom.GetIdx() not in heavy_atom_mapping.values()
-        )
+        num_unique_heavy_atoms_a = mol_a.GetNumHeavyAtoms() - num_mapped_heavy_atoms
+        num_unique_heavy_atoms_b = mol_b.GetNumHeavyAtoms() - num_mapped_heavy_atoms
 
         return (num_unique_heavy_atoms_a + num_unique_heavy_atoms_b) / num_mapped_heavy_atoms
