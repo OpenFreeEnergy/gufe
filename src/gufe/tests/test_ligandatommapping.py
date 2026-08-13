@@ -279,7 +279,7 @@ def test_heavy_atom_mapping_ratio_not_symmetric(atom_mapping_basic_test_files):
     reverse_mapping = LigandAtomMapping(
         componentA=atom_mapping_basic_test_files["2-methylnaphthalene"],
         componentB=atom_mapping_basic_test_files["1,3,7-trimethylnaphthalene"],
-        componentA_to_componentB=forward_mapping.componentB_to_componentA
+        componentA_to_componentB=forward_mapping.componentB_to_componentA,
     )
     assert reverse_mapping.get_heavy_atom_mapping_ratio() == pytest.approx(10 / 7)
 
