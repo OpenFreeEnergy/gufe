@@ -23,7 +23,8 @@ def file_storage(tmp_path):
     with open(inner_dir / "directory.txt", "wb") as with_dir:
         with_dir.write(b"in a directory")
 
-    return FileStorage(tmp_path)
+    # TODO: why are we manually writing these files instead of using the methods?
+    return FileStorage(tmp_path, exist_ok=True)
 
 
 class TestFileStorage:
@@ -68,9 +69,9 @@ class TestFileStorage:
             assert as_bytes == f.read()
 
     def test_eq(self, tmp_path):
-        reference = FileStorage(tmp_path)
-        assert reference == FileStorage(tmp_path)
-        assert reference != FileStorage(tmp_path / "foo")
+        reference = FileStorage(tmp_path / "foo")
+        assert reference == FileStorage(tmp_path / "foo", exist_ok=True)
+        assert reference != FileStorage(tmp_path / "foo" / "bar")
         assert reference != MemoryStorage()
 
     def test_delete(self, file_storage):
@@ -103,7 +104,7 @@ class TestFileStorage:
             with open(path, "wb") as f:
                 f.write(b"")
 
-        storage = FileStorage(tmp_path)
+        storage = FileStorage(tmp_path, exist_ok=True)
 
         assert set(storage.iter_contents(prefix)) == expected
 
@@ -121,7 +122,7 @@ class TestFileStorage:
             with open(path, "wb") as f:
                 f.write(b"")
 
-        storage = FileStorage(tmp_path)
+        storage = FileStorage(tmp_path, exist_ok=True)
         # We do this to ensure that the expected and the base iter_contents
         # stay together.
         # This should help check if we break the underlying API
