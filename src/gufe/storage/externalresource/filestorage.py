@@ -15,11 +15,11 @@ class FileStorage(ExternalStorage):
         Parameters
         ----------
         root_dir : pathlib.Path | str
-            directory at which to create the file store.
+            Directory at which to create the file store.
         exist_ok : bool, optional
             If False, requires that `root_dir` not exist, by default False
         """
-        self.root_dir = pathlib.Path(root_dir)
+        self.root_dir = pathlib.Path(root_dir).resolve()
         self.root_dir.mkdir(exist_ok=exist_ok)
 
     def _exists(self, location):
