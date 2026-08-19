@@ -492,5 +492,5 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             raise ComponentValidationError(
                 "ProteinMembraneComponent validation failed:\n"
                 + "\n".join(f"- {e}" for e in errors)
-                + "\nThis usually indicates missing solvent, incorrect box vectors or missing residues or capping groups."
+                + "\nThis usually indicates missing solvent, incorrect box vectors or an incorrect protein structure."
             )
