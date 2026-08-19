@@ -129,6 +129,19 @@ class TestFileStorage:
         assert set(storage) == expected
         assert set(storage) == set(storage.iter_contents())
 
+    def test_exist_ok(self, tmp_path):
+        store_dir = tmp_path / "store_dir"
+
+        _ = FileStorage(store_dir, exist_ok=False)
+        assert store_dir.is_dir()
+
+        file_store = FileStorage(store_dir, exist_ok=True)
+        assert file_store.root_dir == store_dir
+
+        with pytest.raises(FileExistsError, match=str(store_dir)):
+            # default exist_ok=False
+            file_store = FileStorage(store_dir)
+
     def test_delete_error_not_existing(self, file_storage):
         with pytest.raises(MissingExternalResourceError, match="does not exist"):
             file_storage.delete("baz.txt")
