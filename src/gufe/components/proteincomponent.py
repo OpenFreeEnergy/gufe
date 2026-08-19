@@ -708,11 +708,14 @@ class ProteinComponent(ExplicitMoleculeComponent):
             distances = np.linalg.norm(conf[idx_i] - conf[idx_j], axis=1)
         else:
             from openmm.app.internal import compiled
+
             # Use OpenMM's compiled functions to compute distances with PBC
             periodic_distance_func = compiled.periodicDistance(box_vectors.m_as(offunit.nanometer))
             distances = [periodic_distance_func(conf[c[2]], conf[c[3]]) for c in candidates]
 
-        possible_bad_bonds = [(m1, m2, d * offunit.nanometer) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold]
+        possible_bad_bonds = [
+            (m1, m2, d * offunit.nanometer) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold
+        ]
 
         if possible_bad_bonds:
             msg = "\n".join(

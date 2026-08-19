@@ -24,6 +24,7 @@ from .solventcomponent import BaseSolventComponent
 
 _g_per_ml = offunit.gram / offunit.ml
 
+
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
     PDB component with explicit solvent and box vectors.
@@ -105,12 +106,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return total_mass.to("gram") / volume_L
 
-    def _collect_validation_errors(
-        self,
-        *,
-        min_density : Quantity,
-        peptide_bond_cutoff: Quantity
-    ) -> list[str]:
+    def _collect_validation_errors(self, *, min_density: Quantity, peptide_bond_cutoff: Quantity) -> list[str]:
         """
         Helper function to collect validation errors without raising exceptions,
         useful for derived classes that want to extend validation.
@@ -489,11 +485,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         return sum(ProteinMembraneComponent._is_water_fragment(rdkit_mol, frag) for frag in frags)
 
     def _collect_validation_errors(
-        self,
-        *,
-        min_density : Quantity,
-        peptide_bond_cutoff: Quantity,
-        min_waters: int = 50
+        self, *, min_density: Quantity, peptide_bond_cutoff: Quantity, min_waters: int = 50
     ) -> list[str]:
         """
         Helper function to collect validation errors without raising exceptions,
@@ -549,9 +541,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             errors are aggregated and reported together.
         """
         errors = self._collect_validation_errors(
-            min_density=min_density,
-            peptide_bond_cutoff=peptide_bond_cutoff,
-            min_waters=min_waters
+            min_density=min_density, peptide_bond_cutoff=peptide_bond_cutoff, min_waters=min_waters
         )
 
         if errors:
