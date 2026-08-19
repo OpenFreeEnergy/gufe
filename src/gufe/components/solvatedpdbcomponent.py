@@ -22,6 +22,7 @@ from .errors import ComponentValidationError
 from .proteincomponent import ProteinComponent
 from .solventcomponent import BaseSolventComponent
 
+_g_per_ml = offunit.gram / offunit.ml
 
 class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
     """
@@ -127,10 +128,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             List of validation error messages. Empty if no errors were found.
         """
         errors = []
-        if self.density < min_density:
+        if self.density.m_as(_g_per_ml) < min_density.m_as(_g_per_ml):
             errors.append(
                 "Estimated system density is very low.\n  "
-                f"Density: {self.density.m_as(offunit.gram / offunit.ml):.3f} (expected ≥ {min_density.m_as(offunit.gram / offunit.ml)}). "
+                f"Density: {self.density.m_as(_g_per_ml):.3f} (expected ≥ {min_density.m_as(_g_per_ml)}). "
                 "This usually indicates missing solvent or incorrect box vectors."
             )
         try:
@@ -492,7 +493,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         *,
         min_density : Quantity,
         peptide_bond_cutoff: Quantity,
-        min_waters: int
+        min_waters: int = 50
     ) -> list[str]:
         """
         Helper function to collect validation errors without raising exceptions,
@@ -501,7 +502,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         Parameters
         ----------
         min_density : openff.units.Quantity
-            Minimum acceptable density.
+            Minimum number of water molecules. Default: 50
         peptide_bond_cutoff : openff.units.Quantity
             The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
         min_waters: int
