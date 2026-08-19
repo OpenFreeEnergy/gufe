@@ -253,9 +253,12 @@ class TestSettingsCodec(CustomJSONCodingTest):
             OPENFF_QUANTITY_CODEC,
             OPENFF_UNIT_CODEC,
         ]
-        self.objs = [
-            models.Settings.get_defaults(),
-        ]
+
+        # explicitly set nonbonded_cutoff to *not* be the default,
+        # but keep it coupled so this test fails if defaults change
+        settings = models.Settings.get_defaults()
+        settings.forcefield_settings.nonbonded_cutoff *= 2
+        self.objs = [settings]
         self.dcts = [
             {
                 "__class__": "Settings",
@@ -290,7 +293,7 @@ class TestSettingsCodec(CustomJSONCodingTest):
                     "nonbonded_method": "PME",
                     "nonbonded_cutoff": {
                         ":is_custom:": True,
-                        "magnitude": 0.9,
+                        "magnitude": 1.8,
                         "pint_unit_registry": "openff_units",
                         "unit": "nanometer",
                     },

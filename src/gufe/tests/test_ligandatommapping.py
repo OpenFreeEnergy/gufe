@@ -241,6 +241,58 @@ def test_draw_mapping_svg(tmp_path, other_mapping):
     assert fpath.exists()
 
 
+def test_heavy_atom_mapping(benzene_phenol_mapping):
+    # make sure only heavy atoms are in the mapping
+    heavy_atom_mapping = benzene_phenol_mapping.heavy_atom_componentA_to_componentB
+    benzene = benzene_phenol_mapping.componentA.to_rdkit()
+    phenol = benzene_phenol_mapping.componentB.to_rdkit()
+    assert len(heavy_atom_mapping) == 6
+    for b_atom, p_atom in heavy_atom_mapping.items():
+        assert benzene.GetAtomWithIdx(b_atom).GetAtomicNum() != 1
+        assert phenol.GetAtomWithIdx(p_atom).GetAtomicNum() != 1
+
+
+def test_heavy_atom_mapping_ratio(benzene_phenol_mapping):
+    # make sure only heavy atoms are used in the ratio, there should be 1 unique atom in phenol
+    mapping_ratio = benzene_phenol_mapping.get_heavy_atom_mapping_ratio()
+    assert mapping_ratio == pytest.approx(1 / 6)
+    # make sure the result is symmetrical if we reverse the mapping
+    reverse_mapping = LigandAtomMapping(
+        componentA=benzene_phenol_mapping.componentB,
+        componentB=benzene_phenol_mapping.componentA,
+        componentA_to_componentB=benzene_phenol_mapping.componentB_to_componentA,
+    )
+    reverse_ratio = reverse_mapping.get_heavy_atom_mapping_ratio()
+    assert reverse_ratio == pytest.approx(1 / 6)
+
+
+def test_heavy_atom_mapping_ratio_not_symmetric(atom_mapping_basic_test_files):
+    # make sure the correct ratio is found when the mapping is not symmetric
+    # build the forward mapping for 1,3,7-trimethylnaphthalene -> 2-methylnaphthalene
+    forward_mapping = LigandAtomMapping(
+        componentA=atom_mapping_basic_test_files["1,3,7-trimethylnaphthalene"],
+        componentB=atom_mapping_basic_test_files["2-methylnaphthalene"],
+        componentA_to_componentB={0: 0, 1: 1, 2: 10, 3: 9, 8: 8, 9: 3, 10: 2, 16: 20, 20: 14, 14: 12, 13: 11, 15: 13},
+    )
+    assert forward_mapping.get_heavy_atom_mapping_ratio() == pytest.approx(10 / 7)
+
+    reverse_mapping = LigandAtomMapping(
+        componentA=atom_mapping_basic_test_files["2-methylnaphthalene"],
+        componentB=atom_mapping_basic_test_files["1,3,7-trimethylnaphthalene"],
+        componentA_to_componentB=forward_mapping.componentB_to_componentA,
+    )
+    assert reverse_mapping.get_heavy_atom_mapping_ratio() == pytest.approx(10 / 7)
+
+
+def test_heavy_atom_mapping_ratio_no_mapping(benzene_phenol_mapping):
+    new_mapping = LigandAtomMapping(
+        componentA=benzene_phenol_mapping.componentA,
+        componentB=benzene_phenol_mapping.componentB,
+        componentA_to_componentB={},
+    )
+    assert new_mapping.get_heavy_atom_mapping_ratio() == 0.0
+
+
 class TestLigandAtomMappingSerialization:
     def test_deserialize_roundtrip(self, benzene_phenol_mapping, benzene_anisole_mapping):
         roundtrip = LigandAtomMapping.from_dict(benzene_phenol_mapping.to_dict())
