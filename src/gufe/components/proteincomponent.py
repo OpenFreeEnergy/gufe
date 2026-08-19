@@ -734,7 +734,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
 
         Parameters
         ----------
-        peptide_bond_cutoff : Quantity, default=2.0 * offunit.angstrom
+        peptide_bond_cutoff : Quantity, Default: 3.0 * offunit.angstrom
             The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
 
         Raises

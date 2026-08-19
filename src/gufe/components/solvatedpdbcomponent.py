@@ -143,7 +143,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         self,
         *,
         min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
-        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom,
+        peptide_bond_cutoff: Quantity = 3.0 * offunit.angstrom,
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -152,7 +152,7 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         ----------
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
-        peptide_bond_cutoff : openff.units.Quantity. Default: 2.0 * offunit.angstrom
+        peptide_bond_cutoff : openff.units.Quantity. Default: 3.0 * offunit.angstrom
             The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
 
         Raises
@@ -520,7 +520,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         *,
         min_waters: int = 50,
         min_density: Quantity = 0.7 * offunit.gram / offunit.ml,
-        peptide_bond_cutoff: Quantity = 2.0 * offunit.angstrom,
+        peptide_bond_cutoff: Quantity = 3.0 * offunit.angstrom,
     ):
         """
         Run heuristic validation checks on the solvated system.
@@ -531,7 +531,7 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             Minimum number of water molecules. Default: 50
         min_density : openff.units.Quantity
             Minimum acceptable density. Default: 0.7 g/ml
-        peptide_bond_cutoff : openff.units.Quantity. Default: 2.0 * offunit.angstrom
+        peptide_bond_cutoff : openff.units.Quantity. Default: 3.0 * offunit.angstrom
             The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
 
         Raises
