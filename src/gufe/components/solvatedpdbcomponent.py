@@ -104,6 +104,44 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         return total_mass.to("gram") / volume_L
 
+    def _collect_validation_errors(
+        self,
+        *,
+        min_density : Quantity,
+        peptide_bond_cutoff: Quantity
+    ) -> list[str]:
+        """
+        Helper function to collect validation errors without raising exceptions,
+        useful for derived classes that want to extend validation.
+
+        Parameters
+        ----------
+        min_density : openff.units.Quantity
+            Minimum acceptable density
+        peptide_bond_cutoff : openff.units.Quantity
+            The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
+
+        Returns
+        -------
+        list[str]
+            List of validation error messages. Empty if no errors were found.
+        """
+        errors = []
+        if self.density < min_density:
+            errors.append(
+                "Estimated system density is very low.\n  "
+                f"Density: {self.density.m_as(offunit.gram / offunit.ml):.3f} (expected ≥ {min_density.m_as(offunit.gram / offunit.ml)}). "
+                "This usually indicates missing solvent or incorrect box vectors."
+            )
+        try:
+            self._check_for_uncapped_residue_breaks(
+                peptide_bond_cutoff=peptide_bond_cutoff,
+                box_vectors=self.box_vectors,
+            )
+        except ComponentValidationError as e:
+            errors.append(str(e))
+        return errors
+
     def validate(
         self,
         *,
@@ -126,14 +164,12 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             * If the density is lower than the minimum density.
             * If the protein has missing residues without capping groups or model breaks.
         """
-        if self.density < min_density:  # type: ignore
-            raise ComponentValidationError(
-                "Estimated system density is very low.\n  "
-                f"Density: {self.density:.3f} (expected ≥ {min_density}). "
-                "This usually indicates missing solvent or incorrect box vectors."
-            )
-        # run the bond distance validation
-        self._check_for_uncapped_residue_breaks(peptide_bond_cutoff=peptide_bond_cutoff, box_vectors=self.box_vectors)
+        errors = self._collect_validation_errors(
+            min_density=min_density,
+            peptide_bond_cutoff=peptide_bond_cutoff,
+        )
+        if errors:
+            raise ComponentValidationError("...\n" + "\n".join(f"- {e}" for e in errors))
 
     @staticmethod
     def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):
@@ -451,6 +487,41 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
         frags = Chem.rdmolops.GetMolFrags(rdkit_mol, asMols=False)
         return sum(ProteinMembraneComponent._is_water_fragment(rdkit_mol, frag) for frag in frags)
 
+    def _collect_validation_errors(
+        self,
+        *,
+        min_density : Quantity,
+        peptide_bond_cutoff: Quantity,
+        min_waters: int
+    ) -> list[str]:
+        """
+        Helper function to collect validation errors without raising exceptions,
+        useful for derived classes that want to extend validation.
+
+        Parameters
+        ----------
+        min_density : openff.units.Quantity
+            Minimum acceptable density.
+        peptide_bond_cutoff : openff.units.Quantity
+            The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
+        min_waters: int
+            Minimum number of water molecules.
+
+        Returns
+        -------
+        list[str]
+            List of validation error messages. Empty if no errors were found.
+        """
+        errors = super()._collect_validation_errors(
+            min_density=min_density,
+            peptide_bond_cutoff=peptide_bond_cutoff,
+        )
+
+        if self.n_waters < min_waters:
+            errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
+
+        return errors
+
     def validate(
         self,
         *,
@@ -476,17 +547,11 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
             If one or more validation checks fail. All detected validation
             errors are aggregated and reported together.
         """
-        errors = []
-
-        # 1. Density check
-        try:
-            super().validate(min_density=min_density, peptide_bond_cutoff=peptide_bond_cutoff)
-        except ComponentValidationError as e:
-            errors.append(str(e))
-
-        # 2. Water count check
-        if self.n_waters < min_waters:
-            errors.append(f"Only {self.n_waters} water molecules detected (expected ≥ {min_waters}).")
+        errors = self._collect_validation_errors(
+            min_density=min_density,
+            peptide_bond_cutoff=peptide_bond_cutoff,
+            min_waters=min_waters
+        )
 
         if errors:
             raise ComponentValidationError(

@@ -164,6 +164,18 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         with pytest.raises(ComponentValidationError, match="density is very low"):
             instance.validate(min_density=500 * offunit.gram / offunit.liter)
 
+    def test_validate_low_density_and_missing_residues_raises(self, PDB_pxr_1nrl_path):
+        comp = SolvatedPDBComponent.from_pdb_file(PDB_pxr_1nrl_path, infer_box_vectors=True)
+        with pytest.raises(ComponentValidationError) as err_info:
+            comp.validate()
+
+        # check for both error messages
+        err_msg = str(err_info.value)
+        assert "- Estimated system density is very low." in err_msg
+        assert "- Detected long inter-residue peptide C-N bonds" in err_msg
+        assert "A:VAL177:C - A:SER192:N = 31.19 A" in err_msg
+        assert "B:VAL177:C - B:ARG193:N = 32.49 A" in err_msg
+
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer
 
