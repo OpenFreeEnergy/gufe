@@ -144,7 +144,9 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
             errors.append(str(e))
 
         if errors:
-            raise ComponentValidationError("SolvatedPDBComponent validation failed:\n" + "\n".join(f"- {e}" for e in errors))
+            raise ComponentValidationError(
+                "SolvatedPDBComponent validation failed:\n" + "\n".join(f"- {e}" for e in errors)
+            )
 
     @staticmethod
     def _estimate_box(omm_structure, padding=0.2 * offunit.nanometer):
@@ -504,6 +506,5 @@ class ProteinMembraneComponent(SolvatedPDBComponent):
 
         if errors:
             raise ComponentValidationError(
-                "ProteinMembraneComponent validation failed:\n"
-                + "\n".join(e for e in errors)
+                "ProteinMembraneComponent validation failed:\n" + "\n".join(e for e in errors)
             )
