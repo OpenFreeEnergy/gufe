@@ -312,3 +312,14 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
         err_msg = str(excinfo.value)
         assert "water molecules detected" in err_msg
         assert "density is very low" in err_msg
+
+    def test_validate_missing_caps_water_bed_density(self, PDB_pxr_1nrl_path):
+        comp = ProteinMembraneComponent.from_pdb_file(PDB_pxr_1nrl_path, infer_box_vectors=True)
+        with pytest.raises(ComponentValidationError) as excinfo:
+            comp.validate()
+
+        # make sure all errors are present in the message
+        err_msg = str(excinfo.value)
+        assert "Only 0 water molecules detected" in err_msg
+        assert "Estimated system density is very low." in err_msg
+        assert "Detected long inter-residue peptide C-N bonds" in err_msg

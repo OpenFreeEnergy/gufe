@@ -718,13 +718,13 @@ class ProteinComponent(ExplicitMoleculeComponent):
         ]
 
         if possible_bad_bonds:
-            msg = "\n".join(
+            msg = "\n  ".join(
                 f"{m1.GetChainId()}:{m1.GetResidueName()}{m1.GetResidueNumber()}:{m1.GetName().strip()} - "
                 f"{m2.GetChainId()}:{m2.GetResidueName()}{m2.GetResidueNumber()}:{m2.GetName().strip()} = {d.m_as(offunit.angstrom):.2f} A"
                 for m1, m2, d in possible_bad_bonds
             )
             raise ComponentValidationError(
-                "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n"
+                "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n  "
                 + msg
             )
 
