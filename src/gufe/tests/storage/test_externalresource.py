@@ -23,8 +23,7 @@ def file_storage(tmp_path):
     with open(inner_dir / "directory.txt", "wb") as with_dir:
         with_dir.write(b"in a directory")
 
-    # TODO: why are we manually writing these files instead of using the methods?
-    return FileStorage(tmp_path, exist_ok=True)
+    return FileStorage(tmp_path)
 
 
 class TestFileStorage:
@@ -69,9 +68,9 @@ class TestFileStorage:
             assert as_bytes == f.read()
 
     def test_eq(self, tmp_path):
-        reference = FileStorage(tmp_path / "foo")
-        assert reference == FileStorage(tmp_path / "foo", exist_ok=True)
-        assert reference != FileStorage(tmp_path / "foo" / "bar")
+        reference = FileStorage(tmp_path)
+        assert reference == FileStorage(tmp_path)
+        assert reference != FileStorage(tmp_path / "foo")
         assert reference != MemoryStorage()
 
     def test_delete(self, file_storage):
@@ -104,7 +103,7 @@ class TestFileStorage:
             with open(path, "wb") as f:
                 f.write(b"")
 
-        storage = FileStorage(tmp_path, exist_ok=True)
+        storage = FileStorage(tmp_path)
 
         assert set(storage.iter_contents(prefix)) == expected
 
@@ -122,25 +121,12 @@ class TestFileStorage:
             with open(path, "wb") as f:
                 f.write(b"")
 
-        storage = FileStorage(tmp_path, exist_ok=True)
+        storage = FileStorage(tmp_path)
         # We do this to ensure that the expected and the base iter_contents
         # stay together.
         # This should help check if we break the underlying API
         assert set(storage) == expected
         assert set(storage) == set(storage.iter_contents())
-
-    def test_exist_ok(self, tmp_path):
-        store_dir = tmp_path / "store_dir"
-
-        _ = FileStorage(store_dir, exist_ok=False)
-        assert store_dir.is_dir()
-
-        file_store = FileStorage(store_dir, exist_ok=True)
-        assert file_store.root_dir == store_dir
-
-        with pytest.raises(FileExistsError, match=str(store_dir)):
-            # default exist_ok=False
-            file_store = FileStorage(store_dir)
 
     def test_delete_error_not_existing(self, file_storage):
         with pytest.raises(MissingExternalResourceError, match="does not exist"):
