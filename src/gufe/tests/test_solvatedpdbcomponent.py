@@ -179,9 +179,13 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
     def test_validate_missing_residues_wrapped_pbc(self, PDB_181l_wrapped_pbc_path):
         # Make sure that a wrapped PDB with missing residues does not raise a validation error
         # when the box vectors are provided.
-        comp = SolvatedPDBComponent.from_pdb_file(PDB_181l_wrapped_pbc_path, infer_box_vectors=True, box_padding=0.0 * offunit.nm)
+        comp = SolvatedPDBComponent.from_pdb_file(
+            PDB_181l_wrapped_pbc_path, infer_box_vectors=True, box_padding=0.0 * offunit.nm
+        )
         # this check should not raise
-        comp._check_for_uncapped_residue_breaks(peptide_bond_cutoff=3.0 * offunit.angstroms, box_vectors=comp.box_vectors)
+        comp._check_for_uncapped_residue_breaks(
+            peptide_bond_cutoff=3.0 * offunit.angstroms, box_vectors=comp.box_vectors
+        )
         # check again with no vectors
         with pytest.raises(ComponentValidationError, match="Detected long inter-residue peptide C-N bonds"):
             comp._check_for_uncapped_residue_breaks(peptide_bond_cutoff=3.0 * offunit.angstroms)

@@ -426,7 +426,10 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
     def test_validation_wrapped_pbc_fail(self, PDB_181l_wrapped_pbc_path):
         # Make sure validation fails for a valid protein component with wrapped coordinates across periodic boundary conditions
         pc = self.cls.from_pdb_file(PDB_181l_wrapped_pbc_path)
-        with pytest.raises(ComponentValidationError, match="Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues."):
+        with pytest.raises(
+            ComponentValidationError,
+            match="Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues.",
+        ):
             pc.validate()
 
     def test_missing_residue_validation(self, PDB_pxr_1nrl_path):
@@ -434,6 +437,7 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
         pc = self.cls.from_pdb_file(PDB_pxr_1nrl_path)
         with pytest.raises(ComponentValidationError, match="A:VAL177:C - A:SER192:N = 31.19 A"):
             pc.validate()
+
 
 def test_no_monomer_info_error(ethane):
     with pytest.raises(TypeError):
