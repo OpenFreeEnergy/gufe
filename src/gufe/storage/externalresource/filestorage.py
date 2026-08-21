@@ -20,7 +20,7 @@ class FileStorage(ExternalStorage):
             If False, requires that `root_dir` not exist, by default False
         """
         self.root_dir = pathlib.Path(root_dir).resolve()
-        self.root_dir.mkdir(exist_ok=exist_ok)
+        self.root_dir.mkdir(parents=True, exist_ok=exist_ok)
 
     def _exists(self, location):
         return self._as_path(location).exists()
