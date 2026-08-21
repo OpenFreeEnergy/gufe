@@ -165,7 +165,7 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
             instance.validate(min_density=500 * offunit.gram / offunit.liter)
 
     def test_validate_low_density_and_missing_residues_raises(self, PDB_pxr_1nrl_path):
-        comp = SolvatedPDBComponent.from_pdb_file(PDB_pxr_1nrl_path, infer_box_vectors=True)
+        comp = SolvatedPDBComponent.from_pdb_file(PDB_pxr_1nrl_path)
         with pytest.raises(ComponentValidationError) as err_info:
             comp.validate()
 
@@ -175,6 +175,16 @@ class TestSolvatedPDBComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCompon
         assert "- Detected long inter-residue peptide C-N bonds" in err_msg
         assert "A:VAL177:C - A:SER192:N = 31.19 A" in err_msg
         assert "B:VAL177:C - B:ARG193:N = 32.49 A" in err_msg
+
+    def test_validate_missing_residues_wrapped_pbc(self, PDB_181l_wrapped_pbc_path):
+        # Make sure that a wrapped PDB with missing residues does not raise a validation error
+        # when the box vectors are provided.
+        comp = SolvatedPDBComponent.from_pdb_file(PDB_181l_wrapped_pbc_path, infer_box_vectors=True, box_padding=0.0 * offunit.nm)
+        # this check should not raise
+        comp._check_for_uncapped_residue_breaks(peptide_bond_cutoff=3.0 * offunit.angstroms, box_vectors=comp.box_vectors)
+        # check again with no vectors
+        with pytest.raises(ComponentValidationError, match="Detected long inter-residue peptide C-N bonds"):
+            comp._check_for_uncapped_residue_breaks(peptide_bond_cutoff=3.0 * offunit.angstroms)
 
     def test_box_vectors_affect_equality(self, instance):
         v = np.eye(3) * 2.0 * offunit.nanometer

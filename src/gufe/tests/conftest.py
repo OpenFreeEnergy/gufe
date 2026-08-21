@@ -407,3 +407,9 @@ def atropisomeric_sdf():
 def PDB_pxr_1nrl_path():
     with importlib.resources.path("gufe.tests.data", "pxr_1nrl.pdb.gz") as f:
         yield str(f)
+
+
+@pytest.fixture()
+def PDB_181l_wrapped_pbc_path():
+    with importlib.resources.path("gufe.tests.data", "181l_wrapped_over_pbc.pdb.gz") as f:
+        yield str(f)
