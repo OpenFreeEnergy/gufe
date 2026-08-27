@@ -106,3 +106,21 @@ def test_regression_archive_serialization():
         assert len(pdrs) == 1
 
     assert archive.version_gufe == "1.7.1.dev46+gb75e1476f.d20260203"
+
+
+@pytest.mark.parametrize("version", ["1.12.0a0", "1.12.0-alpha.1", "1.12.0-beta"])
+def test_version_alphanumeric(alchem_network_benzene_variants, version):
+    alchemical_network = alchem_network_benzene_variants
+    transformations = sorted(list(alchemical_network.edges))
+    # create fake results for the transformations
+    transformation_results = []
+    for transformation in transformations:
+        transformation_results.append([transformation, [pdr_from_transformation(transformation)]])
+    metadata = {"test_meta_key": "test_meta_value", "meta_ordered": [3, 2, 1]}
+    archive = AlchemicalArchive(
+        network=alchemical_network,
+        transformation_results=transformation_results,
+        metadata=metadata,
+        version_gufe=version,
+    )
+    assert archive.version_gufe == version
