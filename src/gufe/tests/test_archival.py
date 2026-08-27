@@ -36,12 +36,15 @@ class TestArchival(GufeTokenizableTestsMixin):
         # fixture will generate correct version
         assert instance.version_gufe == gufe.__version__
 
+    # only warn for a difference in major or minor version,
+    # do not warn for difference in patch or dev version
     @pytest.mark.parametrize(
         "archive_ver,current_ver,should_warn",
         [
             ("1.12.0", "1.13.0", True),
             ("1.12.0", "1.12.1", False),
             ("1.12.0a0", "1.12.0", False),
+            ("1.12.0-a0", "1.12.0", False),
             ("1.12.1", "1.13", True),
             ("1.13", "2.0", True),
         ],
