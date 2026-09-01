@@ -103,7 +103,7 @@ def settings_validation_schema():
                 "type": "array",
             },
             "small_molecule_forcefield": {
-                "default": "openff-2.2.1",
+                "default": "openff-2.2.1.offxml",
                 "title": "Small Molecule Forcefield",
                 "type": "string",
             },
@@ -153,7 +153,7 @@ def expected_model_dump():
                 "amber/phosaa10.xml",
                 "amber/lipid17_merged.xml",
             ],
-            "small_molecule_forcefield": "openff-2.2.1",
+            "small_molecule_forcefield": "openff-2.2.1.offxml",
             "nonbonded_method": "PME",
             "nonbonded_cutoff": {"val": 1.1, "unit": "nanometer"},
         },
