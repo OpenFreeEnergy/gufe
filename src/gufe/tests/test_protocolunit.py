@@ -5,7 +5,27 @@ import pytest
 
 from gufe.protocols.errors import ExecutionInterrupt
 from gufe.protocols.protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
+from gufe.storage.externalresource import MemoryStorage
 from gufe.tests.test_tokenization import GufeTokenizableTestsMixin
+
+
+@pytest.fixture
+def scratch_storage(tmpdir):
+    """Fixture to provide a scratch directory for ProtocolUnit tests."""
+    with tmpdir.as_cwd():
+        scratch = Path("scratch")
+        scratch.mkdir(parents=True)
+        yield scratch
+
+
+@pytest.fixture
+def shared_storage():
+    yield MemoryStorage()
+
+
+@pytest.fixture
+def permanent_storage():
+    yield MemoryStorage()
 
 
 class DummyUnit(ProtocolUnit):
@@ -62,25 +82,33 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         assert u1.key != u2.key
 
     @pytest.mark.parametrize("capture_stderr_stdout", [False, True])
-    def test_execute(self, tmp_path, capture_stderr_stdout):
+    def test_execute(self, tmpdir, scratch_storage, shared_storage, permanent_storage, capture_stderr_stdout):
         unit = DummyUnit()
 
-        shared = Path(tmp_path / "shared") / str(unit.key)
-        shared.mkdir(parents=True)
-
-        scratch = Path(tmp_path / "scratch") / str(unit.key)
-        scratch.mkdir(parents=True)
-
         if capture_stderr_stdout:
-            stderr = Path(tmp_path / "stderr") / str(unit.key)
+            stderr = Path("stderr") / str(unit.key)
             stderr.mkdir(parents=True)
 
-            stdout = Path(tmp_path / "stdout") / str(unit.key)
+            stdout = Path("stdout") / str(unit.key)
             stdout.mkdir(parents=True)
 
-            ctx = Context(shared=shared, scratch=scratch, stderr=stderr, stdout=stdout)
+            ctx = Context(
+                scratch=scratch_storage,
+                dag_label="test",
+                unit_label=unit.key,
+                stderr=stderr,
+                stdout=stdout,
+                shared_storage=shared_storage,
+                permanent_storage=permanent_storage,
+            )
         else:
-            ctx = Context(shared=shared, scratch=scratch)
+            ctx = Context(
+                scratch=scratch_storage,
+                dag_label="test",
+                unit_label=unit.key,
+                shared_storage=shared_storage,
+                permanent_storage=permanent_storage,
+            )
 
         u: ProtocolUnitFailure = unit.execute(context=ctx, an_input=3)
         assert u.exception[0] == "ValueError"
@@ -99,16 +127,22 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
         with pytest.raises(ValueError, match="should always be 2"):
             unit.execute(context=ctx, raise_error=True, an_input=3)
 
-    def test_execute_ExecutionInterrupt(self, tmp_path):
+    def test_execute_ExecutionInterrupt(self, scratch_storage, shared_storage, permanent_storage):
         unit = DummyExecutionInterruptUnit()
 
-        shared = Path(tmp_path / "shared") / str(unit.key)
+        shared = Path("shared") / str(unit.key)
         shared.mkdir(parents=True)
 
-        scratch = Path(tmp_path / "scratch") / str(unit.key)
+        scratch = Path("scratch") / str(unit.key)
         scratch.mkdir(parents=True)
 
-        ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+        ctx = Context(
+            shared_storage=shared_storage,
+            permanent_storage=permanent_storage,
+            dag_label="test",
+            unit_label=unit.key,
+            scratch=scratch_storage,
+        )
 
         with pytest.raises(ExecutionInterrupt):
             unit.execute(context=ctx, an_input=3)
@@ -117,16 +151,22 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
         assert u.outputs == {"foo": "bar"}
 
-    def test_execute_KeyboardInterrupt(self, tmp_path):
+    def test_execute_KeyboardInterrupt(self, scratch_storage, permanent_storage, shared_storage):
         unit = DummyKeyboardInterruptUnit()
 
-        shared = Path(tmp_path / "shared") / str(unit.key)
+        shared = Path("shared") / str(unit.key)
         shared.mkdir(parents=True)
 
-        scratch = Path(tmp_path / "scratch") / str(unit.key)
+        scratch = Path("scratch") / str(unit.key)
         scratch.mkdir(parents=True)
 
-        ctx = Context(shared=shared, scratch=scratch, stderr=None, stdout=None)
+        ctx = Context(
+            shared_storage=shared_storage,
+            permanent_storage=permanent_storage,
+            dag_label="test",
+            unit_label=unit.key,
+            scratch=scratch_storage,
+        )
 
         with pytest.raises(KeyboardInterrupt):
             unit.execute(context=ctx, an_input=3)
@@ -140,3 +180,79 @@ class TestProtocolUnit(GufeTokenizableTestsMixin):
 
         assert thingy.startswith("DummyUnit-")
         assert all(t in string.hexdigits for t in thingy.partition("-")[-1])
+
+
+class TestContext:
+    """Test the Context class context manager functionality."""
+
+    def test_context_manager_enter_exit(
+        self, scratch_storage, shared_storage: MemoryStorage, permanent_storage: MemoryStorage
+    ):
+        """Test that Context can be used as a context manager."""
+        ctx = Context(
+            dag_label="test",
+            unit_label="test_unit",
+            scratch=scratch_storage,
+            shared_storage=shared_storage,
+            permanent_storage=permanent_storage,
+        )
+        file_text = b"Hello World!"
+
+        # Test __enter__
+        with ctx as context:
+            assert context is ctx
+            assert ctx.shared.scratch_dir == scratch_storage
+            assert ctx.permanent.scratch_dir == scratch_storage
+            filename = "test.txt"
+            test_file = context.scratch / filename
+            context.shared.register(filename)
+            context.permanent.register(filename)
+            with test_file.open("b+w") as f:
+                f.write(file_text)
+
+        # Test __exit__ - should transfer the file to a namespaced location in shared_storage
+        assert shared_storage.exists("test/test_unit/test.txt")
+        with shared_storage.load_stream("test/test_unit/test.txt") as item:
+            out = item.read()
+            assert out == file_text
+
+        assert permanent_storage.exists("test/test_unit/test.txt")
+        with permanent_storage.load_stream("test/test_unit/test.txt") as item:
+            out = item.read()
+            assert out == file_text
+
+    def test_context_manager_cleanup_stdout_stderr(
+        self, scratch_storage, shared_storage: MemoryStorage, permanent_storage: MemoryStorage, tmp_path
+    ):
+        stdout: Path = tmp_path / "stdout"
+        stdout.mkdir()
+        # We write something into stdout
+        stderr: Path = tmp_path / "stderr"
+        stderr.mkdir()
+
+        ctx = Context(
+            dag_label="test",
+            unit_label="test_unit",
+            scratch=scratch_storage,
+            shared_storage=shared_storage,
+            permanent_storage=permanent_storage,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        # Validate the directory is empty
+        assert any(Path(stdout).iterdir()) == False
+        assert any(Path(stderr).iterdir()) == False
+        file_text = b"Hello world"
+        with ctx as context:
+            filename = "test.txt"
+            stdout_file = context.stdout / filename
+            stderr_file = context.stderr / filename
+            with stdout_file.open("b+w") as f:
+                f.write(file_text)
+            with stderr_file.open("b+w") as f:
+                f.write(file_text)
+            assert any(Path(stdout).iterdir()) == True
+            assert any(Path(stderr).iterdir()) == True
+        # Validate we cleanup
+        assert not Path(stderr).exists()
+        assert not Path(stdout).exists()
