@@ -289,7 +289,7 @@ class TestSettingsCodec(CustomJSONCodingTest):
                         "amber/phosaa10.xml",
                         "amber/lipid17_merged.xml",
                     ],
-                    "small_molecule_forcefield": "openff-2.2.1.offxml",
+                    "small_molecule_forcefield": "openff-2.2.1",
                     "nonbonded_method": "PME",
                     "nonbonded_cutoff": {
                         ":is_custom:": True,
