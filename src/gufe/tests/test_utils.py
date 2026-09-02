@@ -8,7 +8,7 @@ import lzma
 
 import pytest
 
-from gufe.utils import ensure_filelike, magic_open
+from gufe.utils import ensure_filelike, iter_bonds, magic_open
 
 
 @pytest.mark.parametrize("input_type", ["str", "path", "TextIO", "BytesIO", "StringIO"])
@@ -229,3 +229,40 @@ class TestOpenTextStream:
             assert not binary_stream.closed
             binary_stream.seek(0)
             assert binary_stream.read() == PLAIN_TEXT
+
+
+class TestIterBonds:
+    """``iter_bonds`` stands in for ``Mol.GetBonds()`` without its quadratic cost."""
+
+    @pytest.fixture
+    def mol(self):
+        from rdkit import Chem
+
+        # something with a mix of bond orders and aromaticity
+        return Chem.AddHs(Chem.MolFromSmiles("c1ccccc1C(=O)NCC#N"))
+
+    def test_matches_getbonds(self, mol):
+        assert [b.GetIdx() for b in iter_bonds(mol)] == [b.GetIdx() for b in mol.GetBonds()]
+
+    def test_returns_every_bond(self, mol):
+        assert len(iter_bonds(mol)) == mol.GetNumBonds()
+
+    def test_bonds_are_in_index_order(self, mol):
+        assert [b.GetIdx() for b in iter_bonds(mol)] == list(range(mol.GetNumBonds()))
+
+    def test_bonds_are_the_molecules_own(self, mol):
+        for bond, expected in zip(iter_bonds(mol), mol.GetBonds()):
+            assert bond.GetBeginAtomIdx() == expected.GetBeginAtomIdx()
+            assert bond.GetEndAtomIdx() == expected.GetEndAtomIdx()
+            assert bond.GetBondType() == expected.GetBondType()
+            assert bond.GetIsAromatic() == expected.GetIsAromatic()
+
+    def test_no_bonds(self):
+        from rdkit import Chem
+
+        assert iter_bonds(Chem.MolFromSmiles("[Na+]")) == []
+
+    def test_no_atoms(self):
+        from rdkit import Chem
+
+        assert iter_bonds(Chem.Mol()) == []

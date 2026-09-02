@@ -384,11 +384,14 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         if box_vectors is None:
             raise ValueError("box_vectors must be present in the serialized dict")
 
-        prot = ProteinComponent._from_dict(d.copy(), name=name)
+        # build the molecule directly rather than by way of an intermediate
+        # `ProteinComponent`; constructing one would compute its key, which
+        # serializes it in full only for it to be thrown away
+        rdkit, name = ProteinComponent._rdkit_from_dict(d, name=name)
 
         return cls(
-            rdkit=prot._rdkit,
-            name=prot.name,
+            rdkit=rdkit,
+            name=name,
             box_vectors=box_vectors,
         )
 
