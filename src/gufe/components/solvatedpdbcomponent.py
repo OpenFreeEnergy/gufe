@@ -388,10 +388,10 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
         # `ProteinComponent`; constructing one would compute its key, which
         # serializes it in full only for it to be thrown away. `d` is read but
         # not mutated, so it needs no defensive copy
-        rdkit, name = ProteinComponent._rdkit_from_dict(d, name=name)
+        rd_mol, name = ProteinComponent._rdkit_from_dict(d, name=name)
 
         return cls(
-            rdkit=rdkit,
+            rdkit=rd_mol,
             name=name,
             box_vectors=box_vectors,
         )
