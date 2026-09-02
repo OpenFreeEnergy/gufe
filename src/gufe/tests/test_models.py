@@ -81,7 +81,7 @@ def test_settings_schema():
 def settings_validation_schema():
     val_schema = {
         "additionalProperties": False,
-        "description": "Parameters to set up the force field with `OpenMMForceFields <https://github.com/openmm/openmmforcefields>`\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceFields SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceField SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator",
+        "description": "Parameters to set up the force field with `OpenMMForceFields <https://github.com/openmm/openmmforcefields>`.\n\n.. note::\n   Currently, this stores what is needed for the\n   :class:`openmmforcefields.system_generators.SystemGenerator` signature.\n   See the `OpenMMForceFields SystemGenerator documentation`_ for more details.\n\n\n.. _`OpenMMForceFields SystemGenerator documentation`:\n   https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator",
         "properties": {
             "constraints": {
                 "anyOf": [{"enum": ["hbonds", "allbonds", "hangles"], "type": "string"}, {"type": "null"}],
