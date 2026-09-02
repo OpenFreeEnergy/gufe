@@ -386,7 +386,8 @@ class SolvatedPDBComponent(ProteinComponent, BaseSolventComponent):
 
         # build the molecule directly rather than by way of an intermediate
         # `ProteinComponent`; constructing one would compute its key, which
-        # serializes it in full only for it to be thrown away
+        # serializes it in full only for it to be thrown away. `d` is read but
+        # not mutated, so it needs no defensive copy
         rdkit, name = ProteinComponent._rdkit_from_dict(d, name=name)
 
         return cls(

@@ -258,7 +258,7 @@ def requires_package(package_name: str) -> Callable:
     return test_import_for_require_package
 
 
-def iter_bonds(mol: RDKitMol) -> list[Chem.Bond]:
+def get_bonds(mol: RDKitMol) -> list[Chem.Bond]:
     """Return a molecule's bonds in index order, in linear time.
 
     ``Mol.GetBonds()`` walks a molecule by index, and RDKit's
@@ -273,8 +273,7 @@ def iter_bonds(mol: RDKitMol) -> list[Chem.Bond]:
     is ``O(n_bonds)`` overall. Atom lookup does not have the same problem:
     atoms are stored in an indexable container.
 
-    Bonds come back in the same order ``Mol.GetBonds()`` gives them, so this is
-    a drop-in replacement.
+    Bonds are returned in the same order as ``Mol.GetBonds()``.
 
     Parameters
     ----------

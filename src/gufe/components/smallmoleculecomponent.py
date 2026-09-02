@@ -12,7 +12,7 @@ from typing import Any
 from rdkit import Chem
 
 from ..molhashing import deserialize_numpy, serialize_numpy
-from ..utils import iter_bonds
+from ..utils import get_bonds
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
 _INT_TO_ATOMCHIRAL = {
@@ -247,7 +247,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
         output["atoms"] = atoms
 
         bonds = []
-        for bond in iter_bonds(self._rdkit):
+        for bond in get_bonds(self._rdkit):
             bonds.append(
                 (
                     bond.GetBeginAtomIdx(),
@@ -319,7 +319,7 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         m = em.GetMol()
 
-        for bond, b in zip(d["bonds"], iter_bonds(m)):
+        for bond, b in zip(d["bonds"], get_bonds(m)):
             b.SetStereo(_INT_TO_BONDSTEREO[bond[3]])
             _setprops(b, bond[4])
 

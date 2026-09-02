@@ -340,15 +340,7 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
 
 
 class TestDeserializationSerializesOnce:
-    """Deserializing must not build a throwaway intermediate component.
-
-    Every ``GufeTokenizable`` computes its key on construction, and computing a
-    key serializes the object in full. Building an intermediate
-    ``ProteinComponent`` on the way to a ``SolvatedPDBComponent`` therefore
-    costs an extra whole-object serialization, which for a solvated system is
-    the dominant cost of deserialization.
-
-    """
+    """Deserializing must not build a throwaway intermediate component."""
 
     @pytest.fixture
     def to_dict_calls(self, monkeypatch):
@@ -363,20 +355,16 @@ class TestDeserializationSerializesOnce:
 
         return calls
 
-    @pytest.mark.parametrize(
-        "cls, path_fixture",
-        [
-            (SolvatedPDBComponent, "PDB_hif2a_solvated_ligands"),
-            (ProteinMembraneComponent, "PDB_hif2a_solvated_ligands"),
-        ],
-    )
-    def test_from_dict_serializes_once(self, cls, path_fixture, request, to_dict_calls):
-        component = cls.from_pdb_file(request.getfixturevalue(path_fixture))
+    @pytest.mark.parametrize("cls", [SolvatedPDBComponent, ProteinMembraneComponent])
+    def test_from_dict_serializes_once(self, cls, PDB_hif2a_solvated_ligands, to_dict_calls):
+        component = cls.from_pdb_file(PDB_hif2a_solvated_ligands)
         serialized = component.to_dict()
         to_dict_calls.clear()
 
         rebuilt = cls.from_dict(serialized)
 
         assert rebuilt == component
-        # exactly one: the key of the component actually being returned
+        # exactly one: the key of the component actually being returned.
+        # Constructing an intermediate `ProteinComponent` would compute its key
+        # too, and computing a key serializes the object in full
         assert len(to_dict_calls) == 1

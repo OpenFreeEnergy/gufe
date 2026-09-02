@@ -444,57 +444,46 @@ def test_no_monomer_info_error(ethane):
         _ = ProteinComponent(rdkit=ethane.to_rdkit())
 
 
-@pytest.fixture
-def getbonds_calls(monkeypatch):
-    """Record uses of ``Mol.GetBonds()``.
+class TestBondIterationIsLinear:
+    """``ProteinComponent`` must not iterate ``Mol.GetBonds()``.
 
-    ``Mol.GetBonds()`` reaches each bond through ``Mol.GetBondWithIdx``, which
-    RDKit implements as an ``O(n_bonds)`` search because bonds are graph edges
-    rather than an indexable container. Iterating it is therefore
-    ``O(n_bonds ** 2)``: unnoticeable for a ligand, but minutes per traversal
-    for a solvated system of a few hundred thousand atoms. Paths that touch
-    every bond must go through :func:`gufe.utils.iter_bonds` instead.
+    Doing so is quadratic in the number of bonds; see
+    :func:`gufe.utils.get_bonds`.
 
     """
-    calls = []
-    original = Chem.rdchem.Mol.GetBonds
 
-    def counting_getbonds(self):
-        calls.append(self)
-        return original(self)
+    @pytest.fixture
+    def rdkit_get_bonds_calls(self, monkeypatch):
+        """Record uses of ``Mol.GetBonds()``."""
+        calls = []
+        original = Chem.rdchem.Mol.GetBonds
 
-    monkeypatch.setattr(Chem.rdchem.Mol, "GetBonds", counting_getbonds)
+        def counting_get_bonds(self):
+            calls.append(self)
+            return original(self)
 
-    return calls
+        monkeypatch.setattr(Chem.rdchem.Mol, "GetBonds", counting_get_bonds)
 
-
-class TestBondIterationIsLinear:
-    """The serialization and topology paths must not iterate ``Mol.GetBonds()``."""
+        return calls
 
     @pytest.fixture
     def protein(self, PDB_181L_path):
-        return ProteinComponent.from_pdb_file(str(PDB_181L_path))
+        return ProteinComponent.from_pdb_file(PDB_181L_path)
 
-    def test_to_dict(self, protein, getbonds_calls):
-        protein._to_dict()
+    def test_to_dict(self, protein, rdkit_get_bonds_calls):
+        protein.to_dict()
 
-        assert getbonds_calls == []
+        assert rdkit_get_bonds_calls == []
 
-    def test_from_dict(self, protein, getbonds_calls):
+    def test_from_dict(self, protein, rdkit_get_bonds_calls):
         serialized = protein.to_dict()
-        getbonds_calls.clear()
+        rdkit_get_bonds_calls.clear()
 
         ProteinComponent.from_dict(serialized)
 
-        assert getbonds_calls == []
+        assert rdkit_get_bonds_calls == []
 
-    def test_to_openmm_topology(self, protein, getbonds_calls):
+    def test_to_openmm_topology(self, protein, rdkit_get_bonds_calls):
         protein.to_openmm_topology()
 
-        assert getbonds_calls == []
-
-    def test_key(self, protein, getbonds_calls):
-        # computing a key serializes the whole object
-        protein._gufe_tokenize()
-
-        assert getbonds_calls == []
+        assert rdkit_get_bonds_calls == []
