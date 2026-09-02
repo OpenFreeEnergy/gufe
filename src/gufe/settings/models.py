@@ -169,9 +169,7 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
     E.g. does not include SMIRNOFF force fields.
     """
 
-    small_molecule_forcefield: str = (
-        "openff-2.2.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
-    )
+    small_molecule_forcefield: str = "openff-2.2.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
     """Name of the force field to be used for :class:`SmallMoleculeComponent`.
     E.g. includes SMIRNOFF force fields.
     """
