@@ -271,7 +271,9 @@ def get_bonds(mol: RDKitMol) -> list[Chem.Bond]:
     Every bond is incident to exactly two atoms, and ``Atom.GetBonds()`` is
     ``O(degree)``, so collecting bonds atom by atom visits each one twice and
     is ``O(n_bonds)`` overall. Atom lookup does not have the same problem:
-    atoms are stored in an indexable container.
+    atoms are stored in an indexable container. Each bond knows its own index,
+    so it can be assigned straight into place and no intermediate mapping is
+    needed.
 
     Bonds are returned in the same order as ``Mol.GetBonds()``.
 
@@ -285,10 +287,10 @@ def get_bonds(mol: RDKitMol) -> list[Chem.Bond]:
     list[rdkit.Chem.Bond]
         The molecule's bonds, ordered by bond index.
     """
-    bonds: dict[int, Chem.Bond] = {}
+    bonds = [None] * mol.GetNumBonds()
 
     for atom in mol.GetAtoms():
         for bond in atom.GetBonds():
             bonds[bond.GetIdx()] = bond
 
-    return [bonds[index] for index in range(mol.GetNumBonds())]
+    return bonds
