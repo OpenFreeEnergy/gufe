@@ -136,15 +136,15 @@ def _to_lowercase(value: Any):
 
 
 class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
-    """Parameters to set up the force field with OpenMM ForceFields
+    """Parameters to set up the force field with `OpenMMForceFields <https://github.com/openmm/openmmforcefields>`.
 
     .. note::
        Currently, this stores what is needed for the
        :class:`openmmforcefields.system_generators.SystemGenerator` signature.
-       See the `OpenMMForceField SystemGenerator documentation`_ for more details.
+       See the `OpenMMForceFields SystemGenerator documentation`_ for more details.
 
 
-    .. _`OpenMMForceField SystemGenerator documentation`:
+    .. _`OpenMMForceFields SystemGenerator documentation`:
        https://github.com/openmm/openmmforcefields#automating-force-field-management-with-systemgenerator
     """
 
@@ -164,12 +164,15 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
         "amber/phosaa10.xml",  # Handles THE TPO
         "amber/lipid17_merged.xml",  # lipids
     ]
-    """List of force field paths for all components except :class:`SmallMoleculeComponent` """
+    """
+    List of XML force field paths for all Components except :class:`SmallMoleculeComponent`.
+    E.g. does not include SMIRNOFF force fields.
+    """
 
-    small_molecule_forcefield: str = (
-        "openff-2.2.1.offxml"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
-    )
-    """Name of the force field to be used for :class:`SmallMoleculeComponent` """
+    small_molecule_forcefield: str = "openff-2.2.1"  # other default ideas 'openff-2.0.0', 'gaff-2.11', 'espaloma-0.2.0'
+    """Name of the force field to be used for :class:`SmallMoleculeComponent`.
+    E.g. includes SMIRNOFF force fields.
+    """
 
     nonbonded_method: str = "PME"
     """
