@@ -13,7 +13,7 @@ from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
-from gufe.utils import magic_open
+from gufe.utils import get_bonds, magic_open
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
@@ -342,8 +342,24 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls(rdkit=rd_mol, name=name)
 
     @classmethod
-    def _from_dict(cls, ser_dict: dict, name: str = ""):
-        """Deserialize from dict representation"""
+    def _rdkit_from_dict(cls, ser_dict: dict, name: str = "") -> tuple[RDKitMol, str]:
+        """Rebuild the rdkit molecule and name from a dict representation.
+
+        Split out from :meth:`_from_dict` for the benefit of subclasses whose
+        constructors take additional arguments.
+
+        Parameters
+        ----------
+        ser_dict : dict
+            serialized form of the component
+        name : str, optional
+            name to use if ``ser_dict`` does not carry one
+
+        Returns
+        -------
+        tuple[RDKitMol, str]
+            the molecule and its name
+        """
 
         # Mol
         rd_mol = Mol()
@@ -392,13 +408,20 @@ class ProteinComponent(ExplicitMoleculeComponent):
             rd_mol.AddConformer(conf)
 
         # Adding missing bond info
-        for bond_id, bond in enumerate(rd_mol.GetBonds()):
+        for bond_id, bond in enumerate(get_bonds(rd_mol)):
             # Can't set these on an editable mol, go round a second time
             _, _, _, arom = ser_dict["bonds"][bond_id]
             bond.SetIsAromatic(arom == "Y")
 
         if "name" in ser_dict:
             name = ser_dict["name"]
+
+        return rd_mol, name
+
+    @classmethod
+    def _from_dict(cls, ser_dict: dict, name: str = ""):
+        """Deserialize from dict representation"""
+        rd_mol, name = cls._rdkit_from_dict(ser_dict, name=name)
 
         return cls(rdkit=rd_mol, name=name)
 
@@ -476,7 +499,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 )
             atom_lookup[atom.GetIdx()] = a
 
-        for bond in self._rdkit.GetBonds():
+        for bond in get_bonds(self._rdkit):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             rdkit_bond_type = bond.GetBondType()
@@ -620,7 +643,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 "Y" if bond.GetIsAromatic() else "N",
                 # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
             )
-            for bond in self._rdkit.GetBonds()
+            for bond in get_bonds(self._rdkit)
         ]
 
         conformers = [
