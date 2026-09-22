@@ -12,7 +12,7 @@ v1.13.0
 * ``LigandAtomMapping.heavy_atom_componentA_to_componentB`` property to get a mapping of heavy atoms only between the components (`PR #826 <https://github.com/OpenFreeEnergy/gufe/pull/826>`_).
 * ``LigandAtomMapping.get_heavy_atom_mapping_ratio`` method to get the ratio of alchemical to mapped heavy atoms between the components (`PR #826 <https://github.com/OpenFreeEnergy/gufe/pull/826>`_).
 * ProteinComponent and derived classes (SolvatedPDBComponent and ProteinMembraneComponent) will raise an error during validation (``validate()``) if the protein structure has missing residues without capping groups (`PR #821 <https://github.com/OpenFreeEnergy/gufe/pull/821>`_).
-* Added support for **Pydantic 2.13** and **Python 3.14** (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
+* Added support for Pydantic 2.13 and Python 3.14 (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
 * ``SmallMoleculeComponent`` serialization now preserves per-atom PDB residue information (residue name, number and chain ID) across ``to_dict``/ ``from_dict``.
   Residue names set on a component are retained through round-tripping (`PR #811 <https://github.com/OpenFreeEnergy/gufe/pull/811>`_).
 
@@ -24,7 +24,7 @@ v1.13.0
 
 **Deprecated:**
 
-* Dropped support for **Python 3.11** (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
+* Dropped support for Python 3.11 (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
 
 **Removed:**
 
@@ -32,7 +32,7 @@ v1.13.0
 
 **Fixed:**
 
-* When creating a pydantic JSON serialization schema, for a ``settings`` (e.g.``OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")``), default settings that contain ``openff.units`` are now included (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
+* When creating a pydantic JSON serialization schema, for a ``settings`` (e.g. ``OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")``), default settings that contain ``openff.units`` are now included (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
 
 
 
@@ -55,7 +55,7 @@ v1.12.0
 **Fixed:**
 
 * Normalized serialized ``pathlib.PosixPath`` objects to use the public ``pathlib`` module name while continuing to read the Python 3.13 ``pathlib._local`` form (`PR #796 <https://github.com/OpenFreeEnergy/gufe/pull/796>`_).
-* Fixed pickling of ``SmallMoleculeComponent``/``ExplicitMoleculeComponent`` objects so RDKit molecule properties, such as ``_Name``, are preserved across serialization round-trips.
+* Fixed pickling of ``SmallMoleculeComponent``/ ``ExplicitMoleculeComponent`` objects so RDKit molecule properties, such as ``_Name``, are preserved across serialization round-trips.
   This will fix issues from using multiprocessing with these objects (`PR #797 <https://github.com/OpenFreeEnergy/gufe/pull/797>`_).
 * ``Transformations`` and ``NonTransformations`` now call the initialization of the parent ``TransformationBase``.
   This fix doesn't affect behavior of the classes as implemented in gufe, but may affect external classes that inherit from them (`PR #798 <https://github.com/OpenFreeEnergy/gufe/pull/798>`_).
