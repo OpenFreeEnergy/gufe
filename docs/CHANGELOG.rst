@@ -9,31 +9,30 @@ v1.13.0
 
 **Added:**
 
-* ``LigandAtomMapping.heavy_atom_componentA_to_componentB`` property to get a mapping of heavy atoms only between the components.
-* ``LigandAtomMapping.get_heavy_atom_mapping_ratio`` method to get the ratio of alchemical to mapped heavy atoms between the components.
-* ProteinComponent and derived classes (SolvatedPDBComponent and ProteinMembraneComponent) will raise an error during validation (``validate()``) if the protein structure has missing residues without capping groups.
-* Added support for **Pydantic 2.13** and **Python 3.14**.
-* ``SmallMoleculeComponent`` serialization now preserves per-atom PDB residue
-  information (residue name, number and chain ID) across
-  ``to_dict``/``from_dict``. Residue names set on a component are retained
-  through round-tripping (PR #811).
+* ``LigandAtomMapping.heavy_atom_componentA_to_componentB`` property to get a mapping of heavy atoms only between the components (`PR #826 <https://github.com/OpenFreeEnergy/gufe/pull/826>`_).
+* ``LigandAtomMapping.get_heavy_atom_mapping_ratio`` method to get the ratio of alchemical to mapped heavy atoms between the components (`PR #826 <https://github.com/OpenFreeEnergy/gufe/pull/826>`_).
+* ProteinComponent and derived classes (SolvatedPDBComponent and ProteinMembraneComponent) will raise an error during validation (``validate()``) if the protein structure has missing residues without capping groups (`PR #821 <https://github.com/OpenFreeEnergy/gufe/pull/821>`_).
+* Added support for **Pydantic 2.13** and **Python 3.14** (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
+* ``SmallMoleculeComponent`` serialization now preserves per-atom PDB residue information (residue name, number and chain ID) across ``to_dict``/ ``from_dict``.
+  Residue names set on a component are retained through round-tripping (`PR #811 <https://github.com/OpenFreeEnergy/gufe/pull/811>`_).
 
 **Changed:**
 
-* ``FileStorage`` objects now create ``root_dir`` upon initialization by default. To replicate previous behavior, pass ``exists_okay=True`` (`PR #827 <https://github.com/OpenFreeEnergy/gufe/pull/827>`_).
+* ``FileStorage`` objects now create ``root_dir`` upon initialization by default.
+  To replicate previous behavior, pass ``exists_okay=True`` (`PR #827 <https://github.com/OpenFreeEnergy/gufe/pull/827>`_).
 * Protocols no longer require ``mapping`` as an argument, by default ``mapping=None`` (`PR #809 <https://github.com/OpenFreeEnergy/gufe/pull/809/>`_).
 
 **Deprecated:**
 
-* Dropped support for **Python 3.11**
+* Dropped support for **Python 3.11** (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
 
 **Removed:**
 
-* Removed ``LigandNetwork.to_rbfe_alchemical_network()``.
+* Removed ``LigandNetwork.to_rbfe_alchemical_network()`` (`PR #819 <https://github.com/OpenFreeEnergy/gufe/pull/819>`_).
 
 **Fixed:**
 
-* When creating a pydantic JSON serialization schema, for a ``settings`` (e.g.``OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")``), default settings that contain ``openff.units`` are now included.
+* When creating a pydantic JSON serialization schema, for a ``settings`` (e.g.``OpenMMSystemGeneratorFFSettings.model_json_schema(mode="serialization")``), default settings that contain ``openff.units`` are now included (`PR #808 <https://github.com/OpenFreeEnergy/gufe/pull/808>`_).
 
 
 
