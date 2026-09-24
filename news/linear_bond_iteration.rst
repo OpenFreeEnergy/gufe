@@ -1,6 +1,6 @@
 **Added:**
 
-* ``gufe.utils.get_bonds``, which returns a molecule's bonds in index order in linear time (`PR #834 <https://github.com/OpenFreeEnergy/gufe/pull/834>`_).
+* ``gufe.utils.get_bonds``, which returns an RDKit molecule's bonds in index order in linear time (`PR #834 <https://github.com/OpenFreeEnergy/gufe/pull/834>`_).
 
 **Changed:**
 
