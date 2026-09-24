@@ -13,7 +13,7 @@ from rdkit.Chem import AllChem, Draw
 from rdkit.Geometry.rdGeometry import Point3D
 
 from ..mapping import AtomMapping
-from ..utils import requires_package
+from ..utils import get_bonds, requires_package
 
 # highlight core element changes differently from unique atoms
 # RGBA color value needs to be between 0 and 1, so divide by 255
@@ -90,7 +90,7 @@ def _get_unique_bonds_and_atoms(mapping: dict[int, int], mol1: Chem.Mol, mol2: C
         elif not _match_elements(mol1, idx, mol2, mapping[idx]):
             uniques["elements"].add(idx)
 
-    for bond in mol1.GetBonds():
+    for bond in get_bonds(mol1):
         bond_at_idxs = [bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()]
         for at in chain(uniques["atoms"], uniques["elements"]):
             if at in bond_at_idxs:

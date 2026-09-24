@@ -7,8 +7,9 @@ import io
 import lzma
 
 import pytest
+from rdkit import Chem
 
-from gufe.utils import ensure_filelike, magic_open
+from gufe.utils import ensure_filelike, get_bonds, magic_open
 
 
 @pytest.mark.parametrize("input_type", ["str", "path", "TextIO", "BytesIO", "StringIO"])
@@ -229,3 +230,21 @@ class TestOpenTextStream:
             assert not binary_stream.closed
             binary_stream.seek(0)
             assert binary_stream.read() == PLAIN_TEXT
+
+
+class TestGetBonds:
+    """Tests for :func:`gufe.utils.get_bonds`."""
+
+    @pytest.fixture
+    def mol(self):
+        # something with a mix of bond orders and aromaticity
+        return Chem.AddHs(Chem.MolFromSmiles("c1ccccc1C(=O)NCC#N"))
+
+    def test_matches_getbonds(self, mol):
+        """The same bonds, in the same order."""
+        assert [bond.GetIdx() for bond in get_bonds(mol)] == [bond.GetIdx() for bond in mol.GetBonds()]
+
+    @pytest.mark.parametrize("smiles", ["[Na+]", None], ids=["no bonds", "no atoms"])
+    def test_bondless(self, smiles):
+        mol = Chem.MolFromSmiles(smiles) if smiles else Chem.Mol()
+        assert get_bonds(mol) == []

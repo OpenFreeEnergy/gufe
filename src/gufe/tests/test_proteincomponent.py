@@ -442,3 +442,48 @@ class TestProteinComponent(GufeTokenizableTestsMixin, ExplicitMoleculeComponentM
 def test_no_monomer_info_error(ethane):
     with pytest.raises(TypeError):
         _ = ProteinComponent(rdkit=ethane.to_rdkit())
+
+
+class TestBondIterationIsLinear:
+    """``ProteinComponent`` must not iterate ``Mol.GetBonds()``.
+
+    Doing so is quadratic in the number of bonds; see
+    :func:`gufe.utils.get_bonds`.
+
+    """
+
+    @pytest.fixture
+    def rdkit_get_bonds_calls(self, monkeypatch):
+        """Record uses of ``Mol.GetBonds()``."""
+        calls = []
+        original = Chem.rdchem.Mol.GetBonds
+
+        def counting_get_bonds(self):
+            calls.append(self)
+            return original(self)
+
+        monkeypatch.setattr(Chem.rdchem.Mol, "GetBonds", counting_get_bonds)
+
+        return calls
+
+    @pytest.fixture
+    def protein(self, PDB_181L_path):
+        return ProteinComponent.from_pdb_file(PDB_181L_path)
+
+    def test_to_dict(self, protein, rdkit_get_bonds_calls):
+        protein.to_dict()
+
+        assert rdkit_get_bonds_calls == []
+
+    def test_from_dict(self, protein, rdkit_get_bonds_calls):
+        serialized = protein.to_dict()
+        rdkit_get_bonds_calls.clear()
+
+        ProteinComponent.from_dict(serialized)
+
+        assert rdkit_get_bonds_calls == []
+
+    def test_to_openmm_topology(self, protein, rdkit_get_bonds_calls):
+        protein.to_openmm_topology()
+
+        assert rdkit_get_bonds_calls == []
