@@ -9,7 +9,7 @@ import lzma
 import pytest
 from rdkit import Chem
 
-from gufe.utils import ensure_filelike, get_bonds, magic_open
+from gufe.utils import _get_bonds, ensure_filelike, magic_open
 
 
 @pytest.mark.parametrize("input_type", ["str", "path", "TextIO", "BytesIO", "StringIO"])
@@ -233,18 +233,27 @@ class TestOpenTextStream:
 
 
 class TestGetBonds:
-    """Tests for :func:`gufe.utils.get_bonds`."""
+    """Tests for :func:`gufe.utils._get_bonds`."""
 
     @pytest.fixture
-    def mol(self):
+    def small_molecule(self):
         # something with a mix of bond orders and aromaticity
         return Chem.AddHs(Chem.MolFromSmiles("c1ccccc1C(=O)NCC#N"))
 
-    def test_matches_getbonds(self, mol):
+    @pytest.fixture
+    def protein(self, prot_comp):
+        # a molecule holding many disconnected fragments: a capped protein
+        # chain, two chloride ions, and waters left after preparation
+        return prot_comp.to_rdkit()
+
+    @pytest.mark.parametrize("mol", ["small_molecule", "protein"])
+    def test_matches_getbonds(self, mol, request):
         """The same bonds, in the same order."""
-        assert [bond.GetIdx() for bond in get_bonds(mol)] == [bond.GetIdx() for bond in mol.GetBonds()]
+        mol = request.getfixturevalue(mol)
+
+        assert [bond.GetIdx() for bond in _get_bonds(mol)] == [bond.GetIdx() for bond in mol.GetBonds()]
 
     @pytest.mark.parametrize("smiles", ["[Na+]", None], ids=["no bonds", "no atoms"])
     def test_bondless(self, smiles):
         mol = Chem.MolFromSmiles(smiles) if smiles else Chem.Mol()
-        assert get_bonds(mol) == []
+        assert _get_bonds(mol) == []

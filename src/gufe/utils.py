@@ -258,24 +258,14 @@ def requires_package(package_name: str) -> Callable:
     return test_import_for_require_package
 
 
-def get_bonds(mol: RDKitMol) -> list[Chem.Bond]:
-    """Return a molecule's bonds in index order, in linear time.
+def _get_bonds(mol: RDKitMol) -> list[Chem.Bond]:
+    """Return an RDKit molecule's bonds, ordered by bond index.
 
-    ``Mol.GetBonds()`` walks a molecule by index, and RDKit's
-    ``Mol.GetBondWithIdx`` is ``O(n_bonds)`` because bonds are held as graph
-    edges rather than in an indexable container. Iterating ``GetBonds()`` is
-    therefore ``O(n_bonds ** 2)``. For a solvated system of a few hundred
-    thousand atoms that is minutes per traversal rather than fractions of a
-    second, which is enough to dominate serialization entirely.
-
-    Every bond is incident to exactly two atoms, and ``Atom.GetBonds()`` is
-    ``O(degree)``, so collecting bonds atom by atom visits each one twice and
-    is ``O(n_bonds)`` overall. Atom lookup does not have the same problem:
-    atoms are stored in an indexable container. Each bond knows its own index,
-    so it can be assigned straight into place and no intermediate mapping is
-    needed.
-
-    Bonds are returned in the same order as ``Mol.GetBonds()``.
+    Each bond is reached through the atoms it is incident to, and placed at its
+    own index in the returned list. The result is the same as
+    ``list(mol.GetBonds())``, but the time taken scales linearly with the
+    number of bonds rather than quadratically, as measured with rdkit 2024.09.2
+    and later.
 
     Parameters
     ----------

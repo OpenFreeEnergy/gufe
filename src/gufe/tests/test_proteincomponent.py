@@ -447,8 +447,11 @@ def test_no_monomer_info_error(ethane):
 class TestBondIterationIsLinear:
     """``ProteinComponent`` must not iterate ``Mol.GetBonds()``.
 
-    Doing so is quadratic in the number of bonds; see
-    :func:`gufe.utils.get_bonds`.
+    Doing so costs quadratic rather than linear time in the number of bonds;
+    see :func:`gufe.utils._get_bonds`. These are regression guards on a
+    performance fix: counting the calls is deterministic, where asserting on
+    elapsed time would be flaky and would need a molecule too large to ship as
+    test data.
 
     """
 

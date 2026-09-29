@@ -13,7 +13,7 @@ from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
-from gufe.utils import get_bonds, magic_open
+from gufe.utils import _get_bonds, magic_open
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
@@ -408,7 +408,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
             rd_mol.AddConformer(conf)
 
         # Adding missing bond info
-        for bond_id, bond in enumerate(get_bonds(rd_mol)):
+        for bond_id, bond in enumerate(_get_bonds(rd_mol)):
             # Can't set these on an editable mol, go round a second time
             _, _, _, arom = ser_dict["bonds"][bond_id]
             bond.SetIsAromatic(arom == "Y")
@@ -499,7 +499,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 )
             atom_lookup[atom.GetIdx()] = a
 
-        for bond in get_bonds(self._rdkit):
+        for bond in _get_bonds(self._rdkit):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             rdkit_bond_type = bond.GetBondType()
@@ -643,7 +643,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 "Y" if bond.GetIsAromatic() else "N",
                 # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
             )
-            for bond in get_bonds(self._rdkit)
+            for bond in _get_bonds(self._rdkit)
         ]
 
         conformers = [

@@ -340,7 +340,15 @@ class TestProteinMembraneComponent(GufeTokenizableTestsMixin, ExplicitMoleculeCo
 
 
 class TestDeserializationSerializesOnce:
-    """Deserializing must not build a throwaway intermediate component."""
+    """Deserializing must not build a throwaway intermediate component.
+
+    A regression guard on a performance fix: every ``GufeTokenizable``
+    serializes itself in full on construction to compute its key, so an
+    intermediate component silently doubles the cost of deserializing. Counting
+    the serializations is deterministic, where asserting on elapsed time would
+    be flaky.
+
+    """
 
     @pytest.fixture
     def to_dict_calls(self, monkeypatch):
