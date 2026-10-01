@@ -47,6 +47,9 @@ class FileStorage(ExternalStorage):
         start_dir = (self.root_dir / pathlib.Path(prefix).parent).resolve()
         for dirpath, _, filenames in os.walk(start_dir):
             for filename in filenames:
+                # TODO: add option to show hidden files
+                if filename.startswith("."):
+                    continue
                 path = pathlib.Path(dirpath) / filename
                 location = self._get_location(path)
                 if location.startswith(prefix):
