@@ -96,6 +96,7 @@ class TestFileStorage:
             "foo.txt",
             "foo_dir/a.txt",
             "foo_dir/b.txt",
+            "foo_dir/._a.txt",
         ]
         for file in files:
             path = tmp_path / file
