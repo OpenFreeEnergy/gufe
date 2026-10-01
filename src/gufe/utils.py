@@ -12,6 +12,10 @@ from contextlib import ExitStack, contextmanager
 from os import PathLike
 from typing import BinaryIO, TextIO, cast
 
+from rdkit import Chem
+
+from .custom_typing import RDKitMol
+
 # Ordered longest-to-shortest so more-specific signatures win.
 _MAGIC_SIGNATURES = [
     (b"\xfd\x37\x7a\x58\x5a\x00", lzma.open),  # xz
@@ -252,3 +256,31 @@ def requires_package(package_name: str) -> Callable:
         return wrapper
 
     return test_import_for_require_package
+
+
+def _get_bonds(mol: RDKitMol) -> list[Chem.Bond]:
+    """Return an RDKit molecule's bonds, ordered by bond index.
+
+    Each bond is reached through the atoms it is incident to, and placed at its
+    own index in the returned list. The result is the same as
+    ``list(mol.GetBonds())``, but the time taken scales linearly with the
+    number of bonds rather than quadratically, as measured with rdkit 2024.09.2
+    and later.
+
+    Parameters
+    ----------
+    mol : rdkit.Chem.Mol
+        Molecule whose bonds to return.
+
+    Returns
+    -------
+    list[rdkit.Chem.Bond]
+        The molecule's bonds, ordered by bond index.
+    """
+    bonds = [None] * mol.GetNumBonds()
+
+    for atom in mol.GetAtoms():
+        for bond in atom.GetBonds():
+            bonds[bond.GetIdx()] = bond
+
+    return bonds
