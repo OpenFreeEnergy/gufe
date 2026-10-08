@@ -40,6 +40,50 @@ find.namespaces = false
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
 
+[tool.pixi]
+tasks = {}
+[tool.pixi.workspace]
+channels = [ "conda-forge" ]
+platforms = [ "linux-64", "osx-64", "osx-arm64" ]
+[tool.pixi.dependencies]
+annotated-types = "*"
+msgpack-python = "*"
+networkx = "*"
+numpy = "*"
+openff-interchange = ">=0.5.4"
+openff-toolkit-base = ">=0.15.1"
+openff-units = ">=0.4.0"
+openmm = "*"
+pint = "*"
+pooch = ">=1.9.0"  # min needed for https://github.com/fatiando/pooch/issues/502
+pydantic = "~=2.13.0"
+rdkit = ">=2024.9.1"  # github.com/OpenFreeEnergy/gufe/issues/664
+typing-extensions = "*"
+zstandard = "*"
+[tool.pixi.pypi-dependencies]
+gufe = { path = ".", editable = true }
+[tool.pixi.environments]
+dev.dependencies.coverage = "*"
+dev.dependencies.pytest = "*"
+dev.dependencies.pytest-cov = "*"
+dev.dependencies.pytest-xdist = "*"
+dev.features = []
+[tool.pixi.environments.docs]
+features = []
+[tool.pixi.environments.docs.dependencies]
+autodoc-pydantic = ">=2"
+pydantic = "~=2.13.0"
+openff-units = "*"
+python = "3.12.*"
+sphinx = ">=9.1.0,<10"
+furo = ">=2025.12.19,<2026"
+openmm = ">=8.6.1,<9"
+networkx = ">=3.7,<4"
+[tool.pixi.environments.viz]
+features = []
+dependencies.py3dmol = ">=2.5.4,<3"
+dependencies.ipywidgets = ">=8.1.9,<9"
+
 [tool.ruff]
 target-version = "py311"
 line-length = 120
@@ -71,7 +115,7 @@ isort.known-first-party = [ "gufe" ]
 [tool.interrogate]
 fail-under = 0
 ignore-regex = [ ".*BaseClass.*", "^get$", "^mock_.*" ]
-exclude = [ "build", "docs" ]
+exclude = [ ".pixi", "build", "docs" ]
 color = true
 # possible values for verbose: 0 (minimal output), 1 (-v), 2 (-vv)
 verbose = 2
