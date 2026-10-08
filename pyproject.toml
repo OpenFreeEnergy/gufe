@@ -115,7 +115,7 @@ isort.known-first-party = [ "gufe" ]
 [tool.interrogate]
 fail-under = 0
 ignore-regex = [ ".*BaseClass.*", "^get$", "^mock_.*" ]
-exclude = [ "build", "docs" ]
+exclude = [ ".pixi", "build", "docs" ]
 color = true
 # possible values for verbose: 0 (minimal output), 1 (-v), 2 (-vv)
 verbose = 2
