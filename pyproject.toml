@@ -11,7 +11,6 @@ description = ""
 readme = "README.md"
 license = "MIT"
 license-files = [ "LICENSE" ]
-authors = [ { name = "The OpenFE developers", email = "openfe@omsf.io" } ]
 requires-python = ">=3.11,<3.15"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -27,12 +26,16 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 urls = { Homepage = "https://github.com/OpenFreeEnergy/gufe" }
+[[project.authors]]
+name = "The OpenFE developers"
+email = "openfe@omsf.io"
 
 [tool.setuptools]
-packages.find.where = [ "src" ]
-packages.find.namespaces = false
 include-package-data = true
 zip-safe = false
+[tool.setuptools.packages]
+find.where = [ "src" ]
+find.namespaces = false
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
@@ -41,9 +44,11 @@ fallback_version = "0.0.0"
 target-version = "py311"
 line-length = 120
 exclude = [ "src/gufe/vendor/*" ]
-format.docstring-code-format = true
+[tool.ruff.format]
+docstring-code-format = true
+[tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-lint.select = [
+select = [
   "F",  # Pyflakes
   "I",  # isort
   # "E", # pycodestyle errors
@@ -51,7 +56,7 @@ lint.select = [
   "UP",
   "W",  # pycodestyle warnings
 ]
-lint.ignore = [
+ignore = [
   "E402", # module-level import not at top (conflicts w/ isort)
   "E722", # bare excepts (TODO: we should fix these in a follow-up PR)
   "E731", # lambda expressions (TODO: we should fix these)
@@ -60,8 +65,8 @@ lint.ignore = [
   "F841", # vars assigned but not used (TODO: fix these)
 ]
 # ignore "unused import" error for all __init__.py files
-lint.per-file-ignores."__init__.py" = [ "F401" ]
-lint.isort.known-first-party = [ "gufe" ]
+per-file-ignores."__init__.py" = [ "F401" ]
+isort.known-first-party = [ "gufe" ]
 
 [tool.interrogate]
 fail-under = 0
@@ -70,6 +75,9 @@ exclude = [ "build", "docs" ]
 color = true
 # possible values for verbose: 0 (minimal output), 1 (-v), 2 (-vv)
 verbose = 2
+
+[tool.pyproject-fmt]
+table_format = "long"
 
 [tool.mypy]
 files = "src/"
@@ -81,13 +89,15 @@ overrides = [
 ]
 
 [tool.coverage]
-run.omit = [
+[tool.coverage.run]
+omit = [
   "src/*/_version.py",
   "src/*/tests/dev/*py",
   "src/gufe/tests/*",
   "src/gufe/vendor/*",
 ]
-report.exclude_lines = [
+[tool.coverage.report]
+exclude_lines = [
   "-no-cov",
   "\\.\\.\\.",
   "pragma: no cover",
