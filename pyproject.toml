@@ -68,6 +68,17 @@ dev.dependencies.pytest = "*"
 dev.dependencies.pytest-cov = "*"
 dev.dependencies.pytest-xdist = "*"
 dev.features = []
+[tool.pixi.environments.docs]
+features = []
+[tool.pixi.environments.docs.dependencies]
+autodoc-pydantic = ">=2"
+pydantic = "~=2.13.0"
+openff-units = "*"
+python = "3.12.*"
+sphinx = ">=9.1.0,<10"
+furo = ">=2025.12.19,<2026"
+openmm = ">=8.6.1,<9"
+networkx = ">=3.7,<4"
 [tool.pixi.environments.viz]
 features = []
 dependencies.py3dmol = ">=2.5.4,<3"
