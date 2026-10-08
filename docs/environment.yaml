@@ -3,7 +3,7 @@ channels:
 - https://conda.anaconda.org/conda-forge
 dependencies:
 - autodoc-pydantic >=2.0
-- pydantic <2.12
+- pydantic >=2.13
 - openff-units
 - python=3.12
 - sphinx
