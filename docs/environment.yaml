@@ -3,12 +3,10 @@ channels:
 - https://conda.anaconda.org/conda-forge
 dependencies:
 - autodoc-pydantic >=2.0
-- pydantic ==2.13
+- pydantic >=2.13
 - openff-units
 - python=3.12
 - sphinx
 - openmm
 - networkx
 - furo
-- pip:
-  - git+https://github.com/atravitz/pydantic@docs/fix_model_json_schema_docstring
