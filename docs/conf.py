@@ -28,7 +28,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
-    "sphinxcontrib.autodoc_pydantic",
     "sphinx.ext.intersphinx",
 ]
 
@@ -45,9 +44,6 @@ autodoc_default_options = {
     "undoc-members": True,
 }
 
-# TODO: temporary workaround to get docs to build until defaults can be validated in pydantic v2.12
-autodoc_pydantic_model_show_json_error_strategy = "coerce"
-
 autosummary_generate = True
 
 intersphinx_mapping = {
@@ -62,11 +58,7 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-autodoc_mock_imports = [
-    "msgpack",
-    "rdkit",
-    "zstandard",
-]
+autodoc_mock_imports = ["msgpack", "rdkit", "zstandard", "pydantic"]
 
 
 # -- Options for HTML output -------------------------------------------------
