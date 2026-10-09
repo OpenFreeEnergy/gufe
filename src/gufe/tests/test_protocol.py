@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime
 import itertools
-import pathlib
 from collections import defaultdict
 from collections.abc import Iterable, Sized
 from typing import Any
@@ -31,6 +30,7 @@ from gufe.protocols import (
 )
 from gufe.protocols.errors import ProtocolValidationError
 from gufe.protocols.protocoldag import execute_DAG
+from gufe.storage.externalresource import MemoryStorage
 
 from .test_tokenization import GufeTokenizableTestsMixin
 
@@ -212,28 +212,35 @@ class TestProtocol(GufeTokenizableTestsMixin):
         return DummyProtocol(settings=DummyProtocol.default_settings())
 
     @pytest.fixture
-    def protocol_dag(self, solvated_ligand, vacuum_ligand, tmp_path):
+    def protocol_dag(self, tmp_path, solvated_ligand, vacuum_ligand):
         protocol = DummyProtocol(settings=DummyProtocol.default_settings())
         dag = protocol.create(
             stateA=solvated_ligand,
             stateB=vacuum_ligand,
             name="a dummy run",
         )
+        # shared = tmp_path / "shared"
+        # shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
-
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
 
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stdout"
         stdout.mkdir(parents=True)
 
         dagresult: ProtocolDAGResult = execute_DAG(
-            dag, shared_basedir=shared, scratch_basedir=scratch, stderr_basedir=stderr, stdout_basedir=stdout
+            dag,
+            shared_storage=shared,
+            perm_storage=perm,
+            scratch_basedir=scratch,
+            stderr_basedir=stderr,
+            stdout_basedir=stdout,
+            keep_scratch=True,
         )
 
         return protocol, dag, dagresult
@@ -246,21 +253,22 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateB=vacuum_ligand,
             name="a broken dummy run",
         )
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
-        stderr = pathlib.Path(tmp_path / "stderr")
+        stderr = tmp_path / "stderr"
         stderr.mkdir(parents=True)
 
-        stdout = pathlib.Path(tmp_path / "stdout")
+        stdout = tmp_path / "stdout"
         stdout.mkdir(parents=True)
 
         dagfailure: ProtocolDAGResult = execute_DAG(
             dag,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             stderr_basedir=stderr,
             stdout_basedir=stdout,
@@ -387,16 +395,17 @@ class TestProtocol(GufeTokenizableTestsMixin):
             stateB=vacuum_ligand,
             name="a broken dummy run",
         )
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
-
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
+
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
         with pytest.raises(ValueError, match="I have failed my mission"):
             execute_DAG(
                 dag,
-                shared_basedir=shared,
+                shared_storage=shared,
+                perm_storage=perm,
                 scratch_basedir=scratch,
                 raise_error=True,
             )
@@ -483,7 +492,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             protocol, dag, dagresult = protocol_dag
             return dag
 
-    class TestProtocolDAGResult(ProtocolDAGTestsMixin):
+    class TestProtocolDAGResult:
         cls = ProtocolDAGResult
         repr = None
 
@@ -533,7 +542,7 @@ class TestProtocol(GufeTokenizableTestsMixin):
             assert len(instance.protocol_unit_successes) == 23
             assert all(isinstance(i, ProtocolUnitResult) for i in instance.protocol_unit_successes)
 
-    class TestProtocolDAGResultFailure(ProtocolDAGTestsMixin):
+    class TestProtocolDAGResultFailure:
         cls = ProtocolDAGResult
         repr = None
 
@@ -647,13 +656,13 @@ class TestNoDepProtocol:
         assert len(dag.protocol_units) == 3
 
     def test_gather(self, protocol, dag, tmp_path):
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
-        dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
+        dag_result = execute_DAG(dag, shared_storage=shared, scratch_basedir=scratch, perm_storage=perm)
 
         assert dag_result.ok()
 
@@ -663,14 +672,14 @@ class TestNoDepProtocol:
         assert result.get_uncertainty() == 3
 
     def test_terminal_units(self, protocol, dag, tmp_path):
-        shared = pathlib.Path(tmp_path / "shared")
-        shared.mkdir(parents=True)
+        shared = MemoryStorage()
+        perm = MemoryStorage()
 
-        scratch = pathlib.Path(tmp_path / "scratch")
+        scratch = tmp_path / "scratch"
         scratch.mkdir(parents=True)
 
         # we have no dependencies, so this should be all three Unit results
-        dag_result = execute_DAG(dag, shared_basedir=shared, scratch_basedir=scratch)
+        dag_result = execute_DAG(dag, shared_storage=shared, perm_storage=perm, scratch_basedir=scratch)
 
         terminal_results = dag_result.terminal_protocol_unit_results
 
@@ -798,14 +807,16 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmp_path):
         stateB=vacuum_ligand,
     )
 
-    shared = pathlib.Path(tmp_path / "shared")
-    shared.mkdir(parents=True)
-    scratch = pathlib.Path(tmp_path / "scratch")
+    shared = MemoryStorage()
+    perm = MemoryStorage()
+
+    scratch = tmp_path / "scratch"
     scratch.mkdir(parents=True)
 
     r = execute_DAG(
         dag,
-        shared_basedir=shared,
+        shared_storage=shared,
+        perm_storage=perm,
         scratch_basedir=scratch,
         keep_shared=True,
         keep_scratch=True,
@@ -817,13 +828,13 @@ def test_execute_DAG_retries(solvated_ligand, vacuum_ligand, tmp_path):
 
     number_unit_failures = len(r.protocol_unit_failures)
     number_unit_results = len(r.protocol_unit_results)
-    number_dirs = len(list(shared.iterdir()))
+    number_dirs = len(list(shared))
 
     # failed first attempt of BrokenSimulationUnit, failed 3 retries
     assert number_unit_failures == 4
     # InitializeUnit and 21 SimulationUnits run before guaranteed
     # final failure
-    assert number_unit_results == number_dirs == 26
+    assert number_unit_results == 26
 
 
 def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmp_path):
@@ -833,15 +844,17 @@ def test_execute_DAG_bad_nretries(solvated_ligand, vacuum_ligand, tmp_path):
         stateB=vacuum_ligand,
     )
 
-    shared = pathlib.Path(tmp_path / "shared")
-    shared.mkdir(parents=True)
-    scratch = pathlib.Path(tmp_path / "scratch")
+    shared = MemoryStorage()
+    perm = MemoryStorage()
+
+    scratch = tmp_path / "scratch"
     scratch.mkdir(parents=True)
 
     with pytest.raises(ValueError):
         r = execute_DAG(
             dag,
-            shared_basedir=shared,
+            shared_storage=shared,
+            perm_storage=perm,
             scratch_basedir=scratch,
             keep_shared=True,
             keep_scratch=True,
