@@ -24,12 +24,12 @@ defaults:
 jobs:
   tests:
     runs-on: ${{ matrix.OS }}
-    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🎨-${{ matrix.py3Dmol }}"
+    name: "💻-${{matrix.os }} 🐍-${{ matrix.python-version }} 🧚-${{ matrix.pixi_env }}"
     strategy:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest']
-        py3Dmol: ["no"]
+        pixi_env: ["dev"]
         python-version:
           - "3.12"
           - "3.13"
@@ -37,9 +37,10 @@ jobs:
         include:
           - os: "macos-latest"
             python-version: "3.14"
+            pixi_env: "viz"
           - os: "ubuntu-latest"
             python-version: "3.12"
-            py3Dmol: "yes"
+            pixi_env: "viz"
 
     env:
       OE_LICENSE: ${{ github.workspace }}/oe_license.txt
@@ -55,11 +56,11 @@ jobs:
           cache: true
           auth-host: prefix.dev
           auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
-      # TODO: add viz test
+
       - name: "Test imports"
         run: |
           # if we add more to this, consider changing to for + env vars
-          pixi run python -Ic "import gufe; print(gufe.__version__)"
+          pixi run -e ${{ matrix.pixi_env }} python -Ic "import gufe; print(gufe.__version__)"
 
       - name: "Environment Information"
         run: |
@@ -81,7 +82,7 @@ jobs:
 
       - name: "Run tests"
         run: |
-          pixi run -e dev pytest -n 2 -v --cov=gufe --cov-report=xml
+          pixi run -e ${{ matrix.pixi_env }} pytest -n 2 -v --cov=gufe --cov-report=xml
 
       - name: codecov
         if: ${{ github.repository == 'OpenFreeEnergy/gufe'
