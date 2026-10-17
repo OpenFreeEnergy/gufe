@@ -61,7 +61,7 @@ jobs:
       - name: "Test imports"
         run: |
           # if we add more to this, consider changing to for + env vars
-          pixi run python -Ic "import gufe; print(gufe.__version__)"
+          pixi run -e ${{ matrix.pixi_env }} python -Ic "import gufe; print(gufe.__version__)"
 
       - name: "Environment Information"
         run: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: "Run tests"
         run: |
-          pixi run pytest -n 2 -v --cov=gufe --cov-report=xml
+          pixi run -e ${{ matrix.pixi_env }} pytest -n 2 -v --cov=gufe --cov-report=xml
 
       - name: codecov
         if: ${{ github.repository == 'OpenFreeEnergy/gufe'
