@@ -49,35 +49,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Setup Micromamba"
-        uses: mamba-org/setup-micromamba@v3
+      - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94  # v0.11.2
         with:
-          micromamba-binary-path: ~/.local/bin/micromamba
-          environment-file: environment.yml
-          environment-name: gufe
-          cache-environment: true
-          cache-downloads: true
-          create-args: >-
-            python=${{ matrix.python-version }}
-          init-shell: bash
-
-      - name: "Install py3Dmol (optional)"
-        if: ${{ matrix.py3Dmol == 'yes' }}
-        run: micromamba install py3Dmol
-
-
-      - name: "Install"
-        run: python -m pip install --no-deps -e .
-
+          pixi-version: v0.81.0
+          cache: true
+          auth-host: prefix.dev
+          auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
+      # TODO: add viz test
       - name: "Test imports"
         run: |
           # if we add more to this, consider changing to for + env vars
-          python -Ic "import gufe; print(gufe.__version__)"
+          pixi run python -Ic "import gufe; print(gufe.__version__)"
 
       - name: "Environment Information"
         run: |
-          micromamba info
-          micromamba list
+          pixi info
+          pixi list
 
       - name: Cache Pooch data
         uses: actions/cache@v5
@@ -94,7 +81,7 @@ jobs:
 
       - name: "Run tests"
         run: |
-          pytest -n 2 -v --cov=gufe --cov-report=xml
+          pixi run -e dev pytest -n 2 -v --cov=gufe --cov-report=xml
 
       - name: codecov
         if: ${{ github.repository == 'OpenFreeEnergy/gufe'
