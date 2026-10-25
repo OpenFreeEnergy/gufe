@@ -32,7 +32,6 @@ extensions = [
     "sphinx.ext.intersphinx",
 ]
 
-autoclass_content = "both"
 
 autodoc_default_options = {
     "members": True,
@@ -67,6 +66,10 @@ autodoc_mock_imports = [
     "rdkit",
     "zstandard",
 ]
+
+# Automatically extract typehints when specified and place them in
+# descriptions of the relevant function/method.
+autodoc_typehints = "description"
 
 
 # -- Options for HTML output -------------------------------------------------
