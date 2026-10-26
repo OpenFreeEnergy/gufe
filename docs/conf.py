@@ -29,6 +29,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib.autodoc_pydantic",
 ]
 
 autoclass_content = "both"
@@ -43,7 +44,7 @@ autodoc_default_options = {
     "inherited-members": "GufeTokenizable, int",
     "undoc-members": True,
 }
-
+autodoc_pydantic_model_show_json_error_strategy = "coerce"
 autosummary_generate = True
 
 intersphinx_mapping = {
@@ -58,7 +59,7 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-autodoc_mock_imports = ["msgpack", "rdkit", "zstandard", "pydantic"]
+autodoc_mock_imports = ["msgpack", "rdkit", "zstandard"]
 
 
 # -- Options for HTML output -------------------------------------------------
