@@ -30,10 +30,10 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.autodoc_pydantic",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
 ]
 
 autoclass_content = "both"
-
 autodoc_default_options = {
     "members": True,
     "member-order": "bysource",
@@ -68,6 +68,10 @@ autodoc_mock_imports = [
     "zstandard",
 ]
 
+# Automatically extract typehints when specified and place them in
+# descriptions of the relevant function/method.
+autodoc_typehints = "description"
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -83,7 +87,7 @@ html_theme = "furo"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
+html_title = "gufe docs"
 # replace macros
 rst_prolog = """
 .. |rdkit.mol| replace:: :class:`rdkit.Chem.rdchem.Mol`
