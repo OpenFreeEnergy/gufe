@@ -1,0 +1,11 @@
+name: gufe-docs
+channels:
+- https://conda.anaconda.org/conda-forge
+dependencies:
+- autodoc-pydantic >=2.0
+- pydantic >=2.13
+- openff-units
+- sphinx
+- openmm
+- networkx
+- furo
