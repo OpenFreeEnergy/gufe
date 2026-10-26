@@ -33,7 +33,7 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
-
+autoclass_content = "both"
 autodoc_default_options = {
     "members": True,
     "member-order": "bysource",
