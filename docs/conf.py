@@ -44,7 +44,7 @@ autodoc_default_options = {
     "inherited-members": "GufeTokenizable, int",
     "undoc-members": True,
 }
-autodoc_pydantic_model_show_json_error_strategy = "coerce"
+
 autosummary_generate = True
 
 intersphinx_mapping = {
