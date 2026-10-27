@@ -13,6 +13,7 @@ import json
 import logging
 from unittest import mock
 
+import numpy as np
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -324,6 +325,17 @@ class TestSmallMoleculeComponentPartialCharges:
         for i, charge in enumerate(off_mol.partial_charges.m):
             rdkit_atom = rdkit_mol_with_charges.GetAtomWithIdx(i)
             assert rdkit_atom.GetDoubleProp("PartialCharge") == charge
+
+    def test_partial_charges_property(self, charged_off_ethane):
+        smc = SmallMoleculeComponent.from_openff(charged_off_ethane)
+
+        np.testing.assert_allclose(
+            smc.partial_charges.m_as(unit.elementary_charge),
+            charged_off_ethane.partial_charges.m_as(unit.elementary_charge),
+        )
+
+    def test_partial_charges_property_none(self, named_ethane):
+        assert named_ethane.partial_charges is None
 
     def test_inconsistent_charges(self, charged_off_ethane):
         """
