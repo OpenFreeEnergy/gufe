@@ -217,6 +217,23 @@ class SmallMoleculeComponent(ExplicitMoleculeComponent):
 
         return m
 
+    @property
+    def partial_charges(self):
+        """Partial charges of this molecule, if any are present.
+
+        Returns
+        -------
+        openff.units.Quantity or None
+            Array of per-atom partial charges in units of elementary charge,
+            or ``None`` if the molecule has no partial charges.
+
+        Note
+        ----
+        This requires the OpenFF Toolkit, as charges are obtained via
+        :meth:`.to_openff`.
+        """
+        return self.to_openff().partial_charges
+
     @classmethod
     def from_openff(cls, openff, name: str = ""):
         """Construct from an OpenFF toolkit Molecule"""
