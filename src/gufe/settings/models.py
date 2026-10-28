@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import abc
 import pprint
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
 from annotated_types import Ge
 from openff.units import unit
@@ -31,7 +31,7 @@ class SettingsBaseModel(_BaseModel):
     def _ipython_display_(self):
         pprint.pprint(self.model_dump())
 
-    def frozen_copy(self):
+    def frozen_copy(self) -> Self:
         """A copy of this Settings object which cannot be modified
 
         This is intended to be used by Protocols to make their stored Settings
@@ -207,8 +207,8 @@ class Settings(SettingsBaseModel):
     thermo_settings: InstanceOf[ThermoSettings]
 
     @classmethod
-    def get_defaults(cls):
-        return Settings(
+    def get_defaults(cls) -> Self:
+        return cls(
             forcefield_settings=OpenMMSystemGeneratorFFSettings(),
             thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),
         )
