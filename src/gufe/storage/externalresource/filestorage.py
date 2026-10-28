@@ -8,10 +8,19 @@ from ..errors import MissingExternalResourceError
 from .base import ExternalStorage
 
 
-# TODO: this should use pydantic to check init inputs
 class FileStorage(ExternalStorage):
-    def __init__(self, root_dir: pathlib.Path | str):
-        self.root_dir = pathlib.Path(root_dir)
+    def __init__(self, root_dir: pathlib.Path | str, exist_ok=False):
+        """File-system based ExternalStorage
+
+        Parameters
+        ----------
+        root_dir : pathlib.Path | str
+            Directory at which to create the file store.
+        exist_ok : bool, optional
+            If False, requires that `root_dir` not exist, by default False
+        """
+        self.root_dir = pathlib.Path(root_dir).resolve()
+        self.root_dir.mkdir(exist_ok=exist_ok)
 
     def _exists(self, location):
         return self._as_path(location).exists()
@@ -38,6 +47,9 @@ class FileStorage(ExternalStorage):
         start_dir = (self.root_dir / pathlib.Path(prefix).parent).resolve()
         for dirpath, _, filenames in os.walk(start_dir):
             for filename in filenames:
+                # TODO: add option to show hidden files
+                if filename.startswith("."):
+                    continue
                 path = pathlib.Path(dirpath) / filename
                 location = self._get_location(path)
                 if location.startswith(prefix):

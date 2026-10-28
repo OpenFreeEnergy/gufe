@@ -85,6 +85,30 @@ class LigandAtomMapping(AtomMapping):
         return dict(self._compA_to_compB)
 
     @property
+    def heavy_atom_componentA_to_componentB(self) -> dict[int, int]:
+        """
+        Return a subset of the ``componentA_to_componentB`` mapping where the atoms in both components are heavy (non-hydrogen) atoms.
+
+        Returns
+        -------
+        dict[int, int]:
+            A dictionary mapping heavy atom indices from componentA to componentB.
+        """
+        atom_map = self.componentA_to_componentB
+        mol_a = self.componentA.to_rdkit()
+        mol_b = self.componentB.to_rdkit()
+
+        mapped_heavy_atoms = dict()
+        for atom_idx_a, atom_idx_b in atom_map.items():
+            atom_a = mol_a.GetAtomWithIdx(atom_idx_a)
+            atom_b = mol_b.GetAtomWithIdx(atom_idx_b)
+
+            if atom_a.GetAtomicNum() != 1 and atom_b.GetAtomicNum() != 1:
+                mapped_heavy_atoms[atom_idx_a] = atom_idx_b
+
+        return mapped_heavy_atoms
+
+    @property
     def componentB_to_componentA(self) -> dict[int, int]:
         return {v: k for k, v in self._compA_to_compB.items()}
 
@@ -278,3 +302,27 @@ class LigandAtomMapping(AtomMapping):
         charge_a = Chem.rdmolops.GetFormalCharge(self.componentA.to_rdkit())
         charge_b = Chem.rdmolops.GetFormalCharge(self.componentB.to_rdkit())
         return charge_a - charge_b
+
+    def get_heavy_atom_mapping_ratio(self) -> float:
+        """
+        Return the ratio of alchemical to mapped heavy atoms between componentA and componentB.
+
+        Returns
+        -------
+        float:
+            The ratio of alchemical heavy atoms to mapped heavy atoms.
+        """
+        heavy_atom_mapping = self.heavy_atom_componentA_to_componentB
+        num_mapped_heavy_atoms = len(heavy_atom_mapping)
+
+        # quick return if there are no mapped atoms to avoid zero division errors
+        if num_mapped_heavy_atoms == 0:
+            return 0
+
+        mol_a = self.componentA.to_rdkit()
+        mol_b = self.componentB.to_rdkit()
+
+        num_unique_heavy_atoms_a = mol_a.GetNumHeavyAtoms() - num_mapped_heavy_atoms
+        num_unique_heavy_atoms_b = mol_b.GetNumHeavyAtoms() - num_mapped_heavy_atoms
+
+        return (num_unique_heavy_atoms_a + num_unique_heavy_atoms_b) / num_mapped_heavy_atoms

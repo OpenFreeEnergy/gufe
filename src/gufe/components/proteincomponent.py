@@ -6,17 +6,20 @@ from string import digits
 from typing import TextIO
 
 import numpy as np
+from openff.units import Quantity
+from openff.units import unit as offunit
 from openmm import app
 from openmm import unit as omm_unit
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdchem import Atom, BondType, Conformer, EditableMol, Mol
 
-from gufe.utils import magic_open
+from gufe.utils import _get_bonds, magic_open
 
 from ..custom_typing import RDKitMol
 from ..molhashing import deserialize_numpy, serialize_numpy
 from ..vendor.pdb_file.pdbfile import PDBFile
 from ..vendor.pdb_file.pdbxfile import PDBxFile
+from .errors import ComponentValidationError
 from .explicitmoleculecomponent import ExplicitMoleculeComponent
 
 _BONDORDERS_OPENMM_TO_RDKIT = {
@@ -339,8 +342,24 @@ class ProteinComponent(ExplicitMoleculeComponent):
         return cls(rdkit=rd_mol, name=name)
 
     @classmethod
-    def _from_dict(cls, ser_dict: dict, name: str = ""):
-        """Deserialize from dict representation"""
+    def _rdkit_from_dict(cls, ser_dict: dict, name: str = "") -> tuple[RDKitMol, str]:
+        """Rebuild the rdkit molecule and name from a dict representation.
+
+        Split out from :meth:`_from_dict` for the benefit of subclasses whose
+        constructors take additional arguments.
+
+        Parameters
+        ----------
+        ser_dict : dict
+            serialized form of the component
+        name : str, optional
+            name to use if ``ser_dict`` does not carry one
+
+        Returns
+        -------
+        tuple[RDKitMol, str]
+            the molecule and its name
+        """
 
         # Mol
         rd_mol = Mol()
@@ -389,13 +408,20 @@ class ProteinComponent(ExplicitMoleculeComponent):
             rd_mol.AddConformer(conf)
 
         # Adding missing bond info
-        for bond_id, bond in enumerate(rd_mol.GetBonds()):
+        for bond_id, bond in enumerate(_get_bonds(rd_mol)):
             # Can't set these on an editable mol, go round a second time
             _, _, _, arom = ser_dict["bonds"][bond_id]
             bond.SetIsAromatic(arom == "Y")
 
         if "name" in ser_dict:
             name = ser_dict["name"]
+
+        return rd_mol, name
+
+    @classmethod
+    def _from_dict(cls, ser_dict: dict, name: str = ""):
+        """Deserialize from dict representation"""
+        rd_mol, name = cls._rdkit_from_dict(ser_dict, name=name)
 
         return cls(rdkit=rd_mol, name=name)
 
@@ -473,7 +499,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 )
             atom_lookup[atom.GetIdx()] = a
 
-        for bond in self._rdkit.GetBonds():
+        for bond in _get_bonds(self._rdkit):
             a1 = atom_lookup[bond.GetBeginAtomIdx()]
             a2 = atom_lookup[bond.GetEndAtomIdx()]
             rdkit_bond_type = bond.GetBondType()
@@ -617,7 +643,7 @@ class ProteinComponent(ExplicitMoleculeComponent):
                 "Y" if bond.GetIsAromatic() else "N",
                 # bond.GetStereo() or "",  do we need this? i.e. are openff ffs going to use cis/trans SMARTS?
             )
-            for bond in self._rdkit.GetBonds()
+            for bond in _get_bonds(self._rdkit)
         ]
 
         conformers = [
@@ -634,3 +660,109 @@ class ProteinComponent(ExplicitMoleculeComponent):
         }
 
         return d
+
+    def _check_for_uncapped_residue_breaks(self, peptide_bond_cutoff: Quantity, box_vectors: Quantity | None = None):
+        """
+        Check for missing residues or capping groups by detecting large peptide bond distances.
+
+        Parameters
+        ----------
+        peptide_bond_cutoff : Quantity
+            The cutoff used to detect large peptide bond distances with units.
+        box_vectors : Quantity, default None
+            Periodic box vectors with units of length, compatible with
+            nanometers. Must be a (3, 3) array in reduced form.
+
+        Notes
+        -----
+        * We only check single bonded C-N inter-residue distances for this check, as these are the most indicative of missing residues or capping groups.
+        * PBC can optionaly be used during the distance calculation.
+
+        Raises
+        ------
+        ComponentValidationError
+            If any inter-residue peptide C-N bonds are found to be longer than the specified cutoff,
+            indicating likely uncapped or missing residues.
+        """
+        rd_mol = self._rdkit
+        conf = np.asarray(self.to_openmm_positions().value_in_unit(omm_unit.nanometer))
+
+        bond_threshold = peptide_bond_cutoff.m_as(offunit.nanometer)
+
+        # Look for peptide bonds, these always involve C (residue i) - N (residue i+1)
+        # We walk through atoms first to avoid performance issues with rd_mol.GetBonds()
+        candidates = []
+
+        for atom in rd_mol.GetAtoms():
+            mi1 = atom.GetMonomerInfo()
+
+            # Skip if we don't have monomer info or the wrong atom
+            if (mi1 is None) or (mi1.GetName().strip() != "C"):
+                continue
+
+            for bond in atom.GetBonds():
+                # Only want single bonds
+                if bond.GetBondType() != Chem.BondType.SINGLE:
+                    continue
+
+                other = bond.GetOtherAtom(atom)
+                mi2 = other.GetMonomerInfo()
+
+                if (mi2 is None) or (mi2.GetName().strip() != "N"):
+                    continue
+
+                if mi1.GetChainId() != mi2.GetChainId():
+                    continue
+
+                # Check if we have the same residue AND the same insertion code
+                if (mi1.GetResidueNumber() == mi2.GetResidueNumber()) and (
+                    mi1.GetInsertionCode() == mi2.GetInsertionCode()
+                ):
+                    continue
+
+                candidates.append((mi1, mi2, atom.GetIdx(), other.GetIdx()))
+
+        if not candidates:
+            return
+
+        if box_vectors is None:
+            idx_i = np.array([c[2] for c in candidates])
+            idx_j = np.array([c[3] for c in candidates])
+            distances = np.linalg.norm(conf[idx_i] - conf[idx_j], axis=1)
+        else:
+            from openmm.app.internal import compiled
+
+            # Use OpenMM's compiled functions to compute distances with PBC
+            periodic_distance_func = compiled.periodicDistance(box_vectors.m_as(offunit.nanometer))
+            distances = [periodic_distance_func(conf[c[2]], conf[c[3]]) for c in candidates]
+
+        possible_bad_bonds = [
+            (m1, m2, d * offunit.nanometer) for (m1, m2, _, _), d in zip(candidates, distances) if d > bond_threshold
+        ]
+
+        if possible_bad_bonds:
+            msg = "\n  ".join(
+                f"{m1.GetChainId()}:{m1.GetResidueName()}{m1.GetResidueNumber()}:{m1.GetName().strip()} - "
+                f"{m2.GetChainId()}:{m2.GetResidueName()}{m2.GetResidueNumber()}:{m2.GetName().strip()} = {d.m_as(offunit.angstrom):.2f} A"
+                for m1, m2, d in possible_bad_bonds
+            )
+            raise ComponentValidationError(
+                "Detected long inter-residue peptide C-N bonds, likely uncapped/missing residues. Check the following bonds:\n  "
+                + msg
+            )
+
+    def validate(self, *, peptide_bond_cutoff: Quantity = 3.0 * offunit.angstrom):
+        """
+        Validate we have a suitably prepared protein structure for simulation.
+
+        Parameters
+        ----------
+        peptide_bond_cutoff : Quantity, Default: 3.0 * offunit.angstrom
+            The cutoff used to detect large peptide bond distances in the protein due to missing residues or capping groups.
+
+        Raises
+        ------
+        ComponentValidationError
+            * If the protein has missing residues without capping groups or model breaks.
+        """
+        self._check_for_uncapped_residue_breaks(peptide_bond_cutoff=peptide_bond_cutoff)

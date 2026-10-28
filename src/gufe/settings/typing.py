@@ -11,7 +11,6 @@ import numpy
 from openff.units import Quantity
 from pydantic import (
     AfterValidator,
-    Field,
     PlainSerializer,
     PlainValidator,
     WithJsonSchema,
@@ -60,7 +59,6 @@ def _is_array(quantity) -> Quantity:
 # TODO: enforce that this is *not* a list?
 GufeQuantity = Annotated[
     Quantity,
-    Field(validate_default=True),  # fail fast up front if the default isn't valid.
     PlainValidator(_plain_quantity_validator),
     WithJsonSchema({"type": "number"}),  # this keeps backward compatibility for the JSON schema
     PlainSerializer(_plain_quantity_serializer),

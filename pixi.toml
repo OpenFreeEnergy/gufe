@@ -1,0 +1,30 @@
+[workspace]
+channels = ["conda-forge"]
+name = "gufe"
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+
+[tasks]
+
+[dependencies]
+
+[environments.docs]
+no-default-feature = true
+channels = ["https://conda.anaconda.org/conda-forge"]
+
+[environments.docs.dependencies]
+autodoc-pydantic = ">=2.0"
+pydantic = "<2.12"
+openff-units = "*"
+python = "3.12.*"
+sphinx = "*"
+sphinx-autobuild = "*"  # TODO: make optional
+openmm = "*"
+networkx = "*"
+furo = "*"
+
+[environments.docs.pypi-dependencies]
+gufe = { path = ".", editable = true }
+
+[environments.docs.tasks]
+docs-build = { cmd = "sphinx-build -T -b html . _build/html", cwd = "docs" , description = "Build docs as html with sphinx."}
+docs-autobuild = { cmd = "sphinx-autobuild -T -b html . _build/html", cwd = "docs", description = "Serve auto-updating docs with sphinx-autodoc."}

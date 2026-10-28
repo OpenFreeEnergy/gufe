@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import warnings
 from collections.abc import Iterable
 from itertools import chain
 
 import networkx as nx
 
-import gufe
 from gufe import SmallMoleculeComponent
 
 from .mapping import LigandAtomMapping
@@ -243,115 +241,6 @@ class LigandNetwork(GufeTokenizable):
         graph.remove_edges_from([(edge.componentA, edge.componentB) for edge in edges])
 
         return LigandNetwork(edges=[obj for u, v, obj in graph.edges.data("object")], nodes=graph.nodes)
-
-    def _to_rfe_alchemical_network(
-        self,
-        components: dict[str, gufe.Component],
-        leg_labels: dict[str, list[str]],
-        protocol: gufe.Protocol,
-        *,
-        alchemical_label: str = "ligand",
-        autoname=True,
-        autoname_prefix="",
-    ) -> gufe.AlchemicalNetwork:
-        """Create an :class:`.AlchemicalNetwork` from this :class:`.LigandNetwork`.
-
-        Parameters
-        ----------
-        components: dict[str, :class:`.Component`]
-            Non-alchemical components (components that will be on both sides
-            of a transformation).
-        leg_labels: dict[str, list[str]]
-            Mapping of the names for legs (the keys of this dict) to a list of
-            the component names. The component names must be the same as used
-            in the ``components`` dict.
-        protocol: :class:`.Protocol`
-            The protocol to apply.
-        alchemical_label: str
-            The label for the component undergoing an alchemical transformation
-            (default ``'ligand'``).
-        """
-
-        transformations = []
-        for edge in self.edges:
-            for leg_name, labels in leg_labels.items():
-                # define a helper func to avoid repeated code
-                def sys_from_dict(component):
-                    """
-                    Input component alchemically changing. Other info taken
-                    from the outer scope.
-                    """
-                    syscomps = {alchemical_label: component}
-                    other_labels = set(labels) - {alchemical_label}
-                    syscomps.update({label: components[label] for label in other_labels})
-
-                    if autoname:
-                        name = f"{component.name}_{leg_name}"
-                    else:
-                        name = ""
-
-                    return gufe.ChemicalSystem(syscomps, name=name)
-
-                sysA = sys_from_dict(edge.componentA)
-                sysB = sys_from_dict(edge.componentB)
-                if autoname:
-                    prefix = f"{autoname_prefix}_" if autoname_prefix else ""
-                    name = f"{prefix}{sysA.name}_{sysB.name}"
-                else:
-                    name = ""
-
-                transformation = gufe.Transformation(sysA, sysB, protocol, mapping=edge, name=name)
-
-                transformations.append(transformation)
-
-        return gufe.AlchemicalNetwork(transformations)
-
-    def to_rbfe_alchemical_network(
-        self,
-        solvent: gufe.SolventComponent,
-        protein: gufe.ProteinComponent,
-        protocol: gufe.Protocol,
-        *,
-        autoname: bool = True,
-        autoname_prefix: str = "easy_rbfe",
-        **other_components,
-    ) -> gufe.AlchemicalNetwork:
-        """Create an :class:`.AlchemicalNetwork` from this :class:`.LigandNetwork`.
-
-        .. deprecated:: 1.8.0
-            This function is deprecated and will be removed in version 1.13.0.
-
-        Parameters
-        ----------
-        protocol: Protocol
-            The method to apply to edges.
-        autoname: bool
-            Whether to automatically name objects by the ligand name and state
-            label.
-        autoname_prefix: str
-            Prefix for the autonaming; only used if autonaming is ``True``.
-        other_components:
-            Additional non-alchemical components; keyword will be the string
-            label for the component.
-        """
-
-        warnings.warn(
-            ("to_rbfe_alchemical_network() is deprecated and will be removed in version 1.13.0."),
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        components = {"protein": protein, "solvent": solvent, **other_components}
-        leg_labels = {
-            "solvent": ["ligand", "solvent"],
-            "complex": (["ligand", "solvent", "protein"] + list(other_components)),
-        }
-        return self._to_rfe_alchemical_network(
-            components=components,
-            leg_labels=leg_labels,
-            protocol=protocol,
-            autoname=autoname,
-            autoname_prefix=autoname_prefix,
-        )
 
     def is_connected(self) -> bool:
         """Indicates whether all ligands in the network are (directly or indirectly)

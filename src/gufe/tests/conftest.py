@@ -395,3 +395,21 @@ def stereo_chem_mapping():
     expected_mapping = {4: 4, 5: 5, 6: 6, 0: 0, 1: 1, 3: 3}
 
     return LigandAtomMapping(mols[0], mols[1], expected_mapping)
+
+
+@pytest.fixture
+def atropisomeric_sdf():
+    with importlib.resources.path("gufe.tests.data", "atropisomeric_mol.sdf") as f:
+        yield str(f)
+
+
+@pytest.fixture()
+def PDB_pxr_1nrl_path():
+    with importlib.resources.path("gufe.tests.data", "pxr_1nrl.pdb.gz") as f:
+        yield str(f)
+
+
+@pytest.fixture()
+def PDB_181l_wrapped_pbc_path():
+    with importlib.resources.path("gufe.tests.data", "181l_wrapped_over_pbc.pdb.gz") as f:
+        yield str(f)

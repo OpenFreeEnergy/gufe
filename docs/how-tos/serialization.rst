@@ -105,10 +105,15 @@ the code for our codec for ``pathlib.Path`` objects:
 .. code::
 
     PATH_CODEC = JSONCodec(
-        cls=pathlib.Path,
-        to_dict=lambda p: {'path': str(p)},
-        from_dict=lambda dct: pathlib.Path(dct['path'])
+        cls=pathlib.PosixPath,
+        to_dict=lambda p: {
+            "__module__": "pathlib",
+            "path": str(p),
+        },
+        from_dict=lambda dct: pathlib.PosixPath(dct["path"]),
+        is_my_dict=is_python_313_path_dict,
     )
+
 
 Here the ``to_dict`` and ``from_dict`` are lambdas. The ideas of these are
 the same as the ``GufeTokenizable._to_dict`` and
@@ -184,12 +189,12 @@ avoids duplication of dependent :class:`.GufeTokenizables` in the serialized
 JSON representation.
 
 Convenient serialization
-~~~~~~~~~~~~------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 We also provide convenience methods to convert any :class:`.GufeTokenizable` to
 and from JSON using a space-efficient serialization strategy based on our
 :class:`.KeyedChain` representation. This is intended for developers that want
-to serialise these objects using the current best practice and are not
+to serialize these objects using the current best practice and are not
 concerned with the details of the process. The :func:`to_json
 <gufe.tokenization.GufeTokenizable.to_json>` API offers the flexibility to
 convert to JSON directly or to write to a filelike object:
@@ -214,7 +219,7 @@ classmethod:
     obj = cls.from_json(content=json)
 
 When your object has recursive references
------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some cases, your object may have recursive references to other objects.
 For example, you may have objects ``parent`` and ``child``, where
