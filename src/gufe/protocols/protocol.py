@@ -360,7 +360,6 @@ class Protocol(GufeTokenizable):
         :meth:`Protocol.create`
 
         """
-
         if isinstance(mapping, dict):
             warnings.warn(
                 "mapping input as a dict is deprecated, instead use either a single Mapping or list",
