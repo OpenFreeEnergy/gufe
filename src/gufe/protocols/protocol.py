@@ -12,7 +12,7 @@ from openff.units import Quantity
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
-from ..settings import Settings, SettingsBaseModel
+from ..settings import SettingsBaseModel
 from ..tokenization import GufeKey, GufeTokenizable
 from .errors import ProtocolValidationError
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
@@ -80,7 +80,7 @@ class ProtocolResult(GufeTokenizable):
 class Protocol(GufeTokenizable):
     """A method that via an alchemical transformation estimates free energy difference
 
-    Takes a :class:`.Settings` object customised for this protocol on creation.
+    Takes a :class:`.SettingsBaseModel` object customised for this protocol on creation.
     This configures the protocol for repeated execution on (pairs of)
     :class:`ChemicalSystem` objects.
 
@@ -98,22 +98,22 @@ class Protocol(GufeTokenizable):
 
     """
 
-    _settings: Settings
+    _settings: SettingsBaseModel
     _settings_cls: type[SettingsBaseModel]
     result_cls: type[ProtocolResult]
     """Corresponding `ProtocolResult` subclass."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: SettingsBaseModel):
         """
         Parameters
         ----------
-        settings : Settings
+        settings : SettingsBaseModel
           The parameters for this particular method.  This will be a specialised
           subclass for this particular Protocol.
 
         Note
         ----
-        Once the Protocol object is created, the input Settings are frozen,
+        Once the Protocol object is created, the input SettingsBaseModel are frozen,
         so should be finalised before creating the Protocol instance.
         """
 
@@ -130,7 +130,7 @@ class Protocol(GufeTokenizable):
         self._settings = settings.frozen_copy()
 
     @property
-    def settings(self) -> Settings:
+    def settings(self) -> SettingsBaseModel:
         """A read-only view of the settings for this ``Protocol`` instance."""
         return self._settings
 
@@ -147,17 +147,17 @@ class Protocol(GufeTokenizable):
 
     @classmethod
     @abc.abstractmethod
-    def _default_settings(cls) -> Settings:
+    def _default_settings(cls) -> SettingsBaseModel:
         """Method to override in custom `Protocol` subclasses.
 
-        Gives a usable instance of ``Settings`` that function as
+        Gives a usable instance of ``SettingsBaseModel`` that function as
         reasonable defaults for this `Protocol` subclass.
 
         """
         raise NotImplementedError()
 
     @classmethod
-    def default_settings(cls) -> Settings:
+    def default_settings(cls) -> SettingsBaseModel:
         """Get the default settings for this ``Protocol``.
 
         These represent the current best-practices for the use of this
@@ -308,7 +308,7 @@ class Protocol(GufeTokenizable):
         This method should take two ``ChemicalSystem``s, optionally one or more
         ``ComponentMapping`` objects, and optionally a ``ProtocolDAGResult``
         object used for extensions. It should validate this combination for
-        internal consistency with this ``Protocol``s ``Settings``.
+        internal consistency with this ``Protocol``s ``SettingsBaseModel``.
 
         This method should raise a :class:`ProtocolValidationError` where
         validation is not successful.
@@ -333,7 +333,7 @@ class Protocol(GufeTokenizable):
 
         This method allows for the validation of inputs that will be used to
         create a ``ProtocolDAG``, in particular checking these inputs against
-        each other and this ``Protocol`` 's ``Settings``.
+        each other and this ``Protocol`` 's ``SettingsBaseModel``.
 
         Parameters
         ----------
@@ -347,7 +347,7 @@ class Protocol(GufeTokenizable):
         extends : Optional[ProtocolDAGResult]
             If provided, the :class:`.ProtocolDAGResult` from a
             previous execution may be validated against the current
-            :class:`.Protocol` object's ``Settings``, depending on the
+            :class:`.Protocol` object's ``SettingsBaseModel``, depending on the
             ``Protocol`` implementation.
 
         Raises

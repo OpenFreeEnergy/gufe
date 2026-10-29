@@ -82,6 +82,7 @@ table_format = "long"
 [tool.mypy]
 files = "src/"
 ignore_missing_imports = true
+plugins = [ "pydantic.mypy" ]
 overrides = [
   { module = "gufe.vendor.*", ignore_errors = true },
   # TODO: troubleshoot these missing imports, add tests

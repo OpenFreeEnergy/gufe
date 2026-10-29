@@ -69,7 +69,7 @@ class FinishUnit(ProtocolUnit):
         return dict(log=output, key_results=key_results)
 
 
-class DummySpecificSettings(settings.Settings):
+class DummySpecificSettings(settings.SettingsBaseModel):
     n_repeats: int
 
 
@@ -602,7 +602,7 @@ class NoDepsProtocol(Protocol):
     """A protocol without dependencies"""
 
     result_cls = NoDepResults
-    _settings_cls = settings.Settings
+    _settings_cls = settings.SettingsBaseModel
 
     @classmethod
     def _defaults(cls):
@@ -610,7 +610,7 @@ class NoDepsProtocol(Protocol):
 
     @classmethod
     def _default_settings(cls):
-        return settings.Settings.get_defaults()
+        return settings.SettingsBaseModel.get_defaults()
 
     def _create(
         self,
@@ -879,7 +879,7 @@ class TestEnforcedProtocolSettings:
 
         @classmethod
         def _default_settings(cls):
-            return settings.Settings.get_defaults()
+            return settings.SettingsBaseModel.get_defaults()
 
         # we don't need _create in these tests
         def _create(self):
@@ -899,11 +899,11 @@ class TestEnforcedProtocolSettings:
             )
 
     def test_protocol_wrong_settings(self):
-        # Basic subclass of Settings
-        class PhonySettings(settings.Settings):
+        # Basic subclass of SettingsBaseModel
+        class PhonySettings(settings.SettingsBaseModel):
             pass
 
-        # Define a protocol that expects the above Settings
+        # Define a protocol that expects the above SettingsBaseModel
         class ProtocolWithSettingsClass(TestEnforcedProtocolSettings.ProtocolMissingSettingsClass):
             _settings_cls = PhonySettings
 
