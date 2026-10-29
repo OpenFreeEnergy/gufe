@@ -12,7 +12,7 @@ from typing import Annotated, Any, Literal, Self
 
 from annotated_types import Ge
 from openff.units import unit
-from pydantic import BeforeValidator, ConfigDict, Field, InstanceOf, PositiveFloat, PrivateAttr, field_validator
+from pydantic import BeforeValidator, ConfigDict, Field, PositiveFloat, PrivateAttr, field_validator
 
 from ..vendor.openff.interchange.pydantic import _BaseModel
 from .typing import BarQuantity, KelvinQuantity, NanometerQuantity, VoltsQuantity
@@ -99,6 +99,11 @@ class SettingsBaseModel(_BaseModel):
             return self.model_dump() == other.model_dump()
         else:
             return self.model_dump() == other
+
+    @classmethod
+    @abc.abstractmethod
+    def get_defaults(cls) -> Self:
+        raise NotImplementedError
 
 
 class ThermoSettings(SettingsBaseModel):
@@ -192,23 +197,3 @@ class OpenMMSystemGeneratorFFSettings(BaseForceFieldSettings):
             errmsg = f"Only {options} are allowed nonbonded_methods"
             raise ValueError(errmsg)
         return v
-
-
-class Settings(SettingsBaseModel):
-    """
-    Container for all settings needed by a protocol
-
-    This represents the minimal surface that all settings objects will have.
-
-    Protocols can subclass this to extend this to cater for their additional settings.
-    """
-
-    forcefield_settings: InstanceOf[BaseForceFieldSettings]
-    thermo_settings: InstanceOf[ThermoSettings]
-
-    @classmethod
-    def get_defaults(cls) -> Self:
-        return cls(
-            forcefield_settings=OpenMMSystemGeneratorFFSettings(),
-            thermo_settings=ThermoSettings(temperature=300 * unit.kelvin),
-        )

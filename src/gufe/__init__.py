@@ -30,7 +30,7 @@ from .protocols import (  # potentially many DAGs together, giving an estimate
     ProtocolUnit,  # the individual step within a method
     ProtocolUnitResult,  # the result of a single Unit
 )
-from .settings import Settings
+from .settings import SettingsBaseModel
 from .transformations import NonTransformation, Transformation
 
 __version__ = version("gufe")

@@ -34,7 +34,7 @@ class WriterUnit(gufe.ProtocolUnit):
         }
 
 
-class WriterSettings(gufe.settings.Settings):
+class WriterSettings(gufe.settings.SettingsBaseModel):
     n_repeats: int
 
 
