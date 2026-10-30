@@ -13,10 +13,11 @@ from openff.units import Quantity
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
 from ..settings import Settings, SettingsBaseModel
-from ..tokenization import GufeKey, GufeTokenizable
+from ..tokenization import GufeTokenizable
 from .errors import ProtocolValidationError
 from .protocoldag import ProtocolDAG, ProtocolDAGResult
 from .protocolunit import ProtocolUnit
+from .transformation import TransformationBase
 
 
 class ProtocolResult(GufeTokenizable):
@@ -210,7 +211,7 @@ class Protocol(GufeTokenizable):
         mapping: ComponentMapping | list[ComponentMapping] | dict[str, ComponentMapping] | None = None,
         extends: ProtocolDAGResult | None = None,
         name: str | None = None,
-        transformation_key: GufeKey | None = None,
+        transformation: TransformationBase | None = None,
     ) -> ProtocolDAG:
         r"""Prepare a `ProtocolDAG` with all information required for execution.
 
@@ -266,7 +267,7 @@ class Protocol(GufeTokenizable):
                 mapping=mapping,
                 extends=extends,
             ),
-            transformation_key=transformation_key,
+            transformation=transformation,
             extends_key=extends.key if extends is not None else None,
         )
 
