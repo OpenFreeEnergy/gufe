@@ -2,6 +2,7 @@
 # For details, see https://github.com/OpenFreeEnergy/gufe
 
 from collections.abc import Generator, Iterable
+from functools import cache
 from typing import Self
 
 import networkx as nx
@@ -15,7 +16,6 @@ class AlchemicalNetwork(GufeTokenizable):
     _edges: frozenset[Transformation]
     _nodes: frozenset[ChemicalSystem]
     _name: str | None
-    _graph: nx.MultiDiGraph | None  # lazily created and cached
 
     """A network with all the information needed for a simulation campaign.
 
@@ -49,8 +49,6 @@ class AlchemicalNetwork(GufeTokenizable):
 
         self._nodes = self._nodes | frozenset(e.stateA for e in self._edges) | frozenset(e.stateB for e in self._edges)
 
-        self._graph = None
-
     @staticmethod
     def _generate_graph(edges, nodes) -> nx.MultiDiGraph:
         g = nx.MultiDiGraph()
@@ -62,6 +60,7 @@ class AlchemicalNetwork(GufeTokenizable):
 
         return nx.freeze(g)
 
+    @cache
     @property
     def graph(self) -> nx.MultiDiGraph:
         """A networkx representation of the AlchemicalNetwork
@@ -69,9 +68,8 @@ class AlchemicalNetwork(GufeTokenizable):
         Nodes are represented as :class:`.ChemicalSystem` objects and directed
         edges are represented as :class:`.Transformation` objects
         """
-        if self._graph is None:
-            self._graph = self._generate_graph(self._edges, self._nodes)
-        return self._graph.copy(as_view=True)
+        graph = self._generate_graph(self._edges, self._nodes)
+        return graph.copy(as_view=True)
 
     @property
     def edges(self) -> frozenset[Transformation]:

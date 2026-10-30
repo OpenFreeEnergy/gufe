@@ -549,7 +549,7 @@ def execute_DAG(
         name=protocoldag.name,
         protocol_units=protocoldag.protocol_units,
         protocol_unit_results=all_results,
-        transformation_key=protocoldag.transformation_key,
+        transformation=protocoldag.transformation,
         extends_key=protocoldag.extends_key,
     )
 

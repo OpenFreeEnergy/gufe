@@ -276,7 +276,7 @@ class Transformation(TransformationBase):
             mapping=self.mapping,
             extends=extends,
             name=name,
-            transformation_key=self.key,
+            transformation=self,
         )
 
 
