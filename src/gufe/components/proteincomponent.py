@@ -766,3 +766,6 @@ class ProteinComponent(ExplicitMoleculeComponent):
             * If the protein has missing residues without capping groups or model breaks.
         """
         self._check_for_uncapped_residue_breaks(peptide_bond_cutoff=peptide_bond_cutoff)
+
+    def is_valid(self):
+        self.validate()

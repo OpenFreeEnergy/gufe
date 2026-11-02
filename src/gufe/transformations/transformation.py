@@ -227,14 +227,17 @@ class Transformation(TransformationBase):
         self._mapping = mapping
 
         if validate:
-            self.protocol.validate(
-                stateA=self.stateA,
-                stateB=self.stateB,
-                mapping=self.mapping,
-            )
+            self.is_valid()
 
     def __repr__(self):
         return f"{self.__class__.__name__}(stateA={self.stateA}, stateB={self.stateB}, protocol={self.protocol}, name={self.name}, metadata={self.metadata})"
+
+    def is_valid(self):
+        self.protocol.validate(
+            stateA=self.stateA,
+            stateB=self.stateB,
+            mapping=self.mapping,
+        )
 
     @property
     def stateA(self) -> ChemicalSystem:
