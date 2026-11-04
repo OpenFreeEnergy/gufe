@@ -12,9 +12,9 @@ from typing import Any
 import networkx as nx
 
 from ..tokenization import GufeKey, GufeTokenizable
+from ..transformations import Transformation
 from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolDAGExecutionError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
-from .transformation import Transformation
 
 
 class DAGMixin:
