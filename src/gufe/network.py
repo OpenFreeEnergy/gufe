@@ -10,6 +10,50 @@ from .chemicalsystem import ChemicalSystem
 from .tokenization import GufeTokenizable
 from .transformations import Transformation
 
+# class ResultsNetwork(GufeTokenizable):
+#     _edges: frozenset[ProtocolDAGResult]
+
+#     def __init__(
+#         self,
+#         edges: Iterable[ProtocolDAGResult],
+#         name: str | None = None,
+#     ):
+
+#         self._edges = frozenset(edges)
+#         self._name = name
+
+#     @property
+#     def name(self) -> str | None:
+#         """Optional identifier for the network."""
+#         return self._name
+
+#     @property
+#     def edges(self) -> frozenset(ProtocolDAGResult):
+#         return self._edges
+
+#     @property  # TODO: cache this
+#     def nodes(self) -> frozenset[ChemicalSystem]:
+#         """
+#         Network nodes as a ``frozenset`` of :class:`.ChemicalSystem` instances.
+#         """
+#         self._nodes = frozenset(e.transformation.stateA for e in self.edges) | frozenset(e.transformation.stateB for e in self.edges)
+
+#         return self._nodes
+
+#     def _to_dict(self) -> dict:
+#         return {
+#             "edges": sorted(self.edges),
+#             "name": self.name,
+#         }
+
+#     @classmethod
+#     def _from_dict(cls, d: dict) -> Self:
+#         return cls(edges=frozenset(d["edges"]), name=d.get("name"))
+
+#     @classmethod
+#     def _defaults(cls):
+#         return super()._defaults()
+
 
 class AlchemicalNetwork(GufeTokenizable):
     _edges: frozenset[Transformation]

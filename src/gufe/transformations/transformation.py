@@ -6,13 +6,16 @@ import copy
 import json
 import warnings
 from collections.abc import Iterable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..chemicalsystem import ChemicalSystem
 from ..mapping import ComponentMapping
-from ..protocols import Protocol, ProtocolDAG, ProtocolDAGResult, ProtocolResult
+from ..protocols import Protocol, ProtocolDAGResult
 from ..tokenization import JSON_HANDLER, GufeTokenizable
 from ..utils import ensure_filelike
+
+if TYPE_CHECKING:
+    from ..protocols import ProtocolDAG, ProtocolResult  # just return types
 
 
 class TransformationBase(GufeTokenizable):
