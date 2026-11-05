@@ -12,6 +12,7 @@ from typing import Any
 import networkx as nx
 
 from ..tokenization import GufeKey, GufeTokenizable
+from ..transformations import TransformationBase
 from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolDAGExecutionError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
@@ -25,7 +26,7 @@ class DAGMixin:
     # labels for identifying source of this DAG
 
     ## the Transformation this DAG corresponds to
-    # _transformation: Transformation
+    _transformation: TransformationBase
 
     ## key of the ProtocolDAG this DAG extends
     _extends_key: GufeKey | None
@@ -66,7 +67,7 @@ class DAGMixin:
         return list(self._iterate_dag_order(self._graph))
 
     @property
-    def transformation(self):  ## -> Transformation:
+    def transformation(self) -> TransformationBase:
         return self._transformation
 
     @property
@@ -99,7 +100,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         *,
         protocol_units: list[ProtocolUnit],
         protocol_unit_results: list[ProtocolUnitResult],
-        transformation,  #: Transformation,
+        transformation: TransformationBase,
         extends_key: GufeKey | None = None,
         name: str | None = None,
     ):
@@ -303,7 +304,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self,
         *,
         protocol_units: list[ProtocolUnit],
-        transformation,  #: Transformation,
+        transformation: TransformationBase,
         extends_key: GufeKey | None = None,
         name: str | None = None,
     ):
@@ -314,8 +315,8 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         protocol_units : Iterable[ProtocolUnit]
             The `ProtocolUnit` s that make up this `ProtocolDAG`, with
             dependencies included as inputs.
-        transformation : Transformation
-            The `Transformation` that this `ProtocolDAG` was created by to, if
+        transformation : TransformationBase
+            The `Transformation` or `NonTransformation` that this `ProtocolDAG` was created by, if
             applicable. This functions as a label for identifying the source of
             this `ProtocolDAG`. This label will be passed on to the
             `ProtocolDAGResult` resulting from execution of this `ProtocolDAG`.
