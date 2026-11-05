@@ -12,7 +12,6 @@ from typing import Any
 import networkx as nx
 
 from ..tokenization import GufeKey, GufeTokenizable
-from ..transformations import Transformation
 from .errors import MissingUnitResultError, ProtocolDAGError, ProtocolDAGExecutionError, ProtocolUnitFailureError
 from .protocolunit import Context, ProtocolUnit, ProtocolUnitFailure, ProtocolUnitResult
 
@@ -26,7 +25,7 @@ class DAGMixin:
     # labels for identifying source of this DAG
 
     ## the Transformation this DAG corresponds to
-    _transformation: Transformation
+    # _transformation: Transformation
 
     ## key of the ProtocolDAG this DAG extends
     _extends_key: GufeKey | None
@@ -67,7 +66,7 @@ class DAGMixin:
         return list(self._iterate_dag_order(self._graph))
 
     @property
-    def transformation(self) -> Transformation:
+    def transformation(self):  ## -> Transformation:
         return self._transformation
 
     @property
@@ -100,7 +99,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         *,
         protocol_units: list[ProtocolUnit],
         protocol_unit_results: list[ProtocolUnitResult],
-        transformation: Transformation,
+        transformation,  #: Transformation,
         extends_key: GufeKey | None = None,
         name: str | None = None,
     ):
@@ -108,7 +107,7 @@ class ProtocolDAGResult(GufeTokenizable, DAGMixin):
         self._protocol_units = protocol_units
         self._protocol_unit_results = protocol_unit_results
 
-        self._transformation
+        self._transformation = transformation
         self._extends_key = GufeKey(extends_key) if extends_key is not None else None
 
         # build graph from protocol units
@@ -304,7 +303,7 @@ class ProtocolDAG(GufeTokenizable, DAGMixin):
         self,
         *,
         protocol_units: list[ProtocolUnit],
-        transformation: Transformation,
+        transformation,  #: Transformation,
         extends_key: GufeKey | None = None,
         name: str | None = None,
     ):
